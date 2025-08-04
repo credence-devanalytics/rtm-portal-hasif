@@ -46,48 +46,114 @@ const RTMDashboard = () => {
   const [selectedUnit, setSelectedUnit] = useState('all');
 
   // Mock data for demonstration - replace with actual data loading
+  // Load data from CSV file
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         
-        // Mock data structure - replace with actual API call
-        const mockData = Array.from({ length: 1000 }, (_, i) => {
-          const platforms = ['facebook', 'instagram', 'twitter', 'tiktok'];
-          const units = ['Radio', 'TV', 'Berita'];
-          const sentiments = ['positive', 'negative', 'neutral'];
-          const categories = ['Health Policy', 'Vaccination', 'Public Health', 'Medical Services', 'Health Education', 'Emergency Response'];
+        // Read CSV file from public directory
+        const response = await fetch('/data/combined_classify_mentions.csv');
+        if (!response.ok) {
+          throw new Error('Failed to fetch CSV file');
+        }
+        
+        const csvText = await response.text();
+        
+        // Parse CSV using Papa Parse
+        const Papa = await import('papaparse');
+        const results = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          dynamicTyping: true,
+          delimitersToGuess: [',', '\t', '|', ';']
+        });
+        
+        if (results.errors.length > 0) {
+          console.warn('CSV parsing warnings:', results.errors);
+        }
+        
+        // Transform CSV data to match our component structure
+        const transformedData = results.data.map((row, index) => {
+          // Parse date from insertTime or insertDate
+          let date = new Date();
+          if (row.insertTime) {
+            date = new Date(row.insertTime);
+          } else if (row.insertDate) {
+            date = new Date(row.insertDate);
+          }
           
-          const date = new Date();
-          date.setDate(date.getDate() - Math.floor(Math.random() * 90));
+          // Determine platform from type field
+          let platform = 'other';
+          if (row.type) {
+            const type = row.type.toLowerCase();
+            if (type.includes('facebook')) platform = 'facebook';
+            else if (type.includes('instagram')) platform = 'instagram';
+            else if (type.includes('twitter')) platform = 'twitter';
+            else if (type.includes('tiktok')) platform = 'tiktok';
+            else if (type.includes('youtube')) platform = 'youtube';
+          }
+          
+          // Determine unit from groupName or author
+          let unit = 'Other';
+          if (row.groupName) {
+            const groupName = row.groupName.toLowerCase();
+            if (groupName.includes('radio')) unit = 'Radio';
+            else if (groupName.includes('tv')) unit = 'TV';
+            else if (groupName.includes('berita') || groupName.includes('news')) unit = 'Berita';
+          }
+          
+          // Parse sentiment
+          let sentiment = 'neutral';
+          if (row.sentiment || row.autoSentiment) {
+            const sentimentValue = (row.sentiment || row.autoSentiment || '').toLowerCase();
+            if (sentimentValue.includes('positive')) sentiment = 'positive';
+            else if (sentimentValue.includes('negative')) sentiment = 'negative';
+            else sentiment = 'neutral';
+          }
+          
+          // Parse engagement metrics
+          const likeCount = parseInt(row.likeCount) || parseInt(row.favoriteCount) || parseInt(row.diggCount) || 0;
+          const shareCount = parseInt(row.shareCount) || parseInt(row.retweetCount) || 0;
+          const commentCount = parseInt(row.commentCount) || parseInt(row.replyCount) || 0;
+          const viewCount = parseInt(row.viewCount) || parseInt(row.playCount) || 0;
+          const reach = parseInt(row.reach) || parseInt(row.sourceReach) || viewCount || 1000;
+          const followerCount = parseInt(row.followersCount) || parseInt(row.authorFollowerCount) || 0;
           
           return {
-            id: i,
-            author: `User${Math.floor(Math.random() * 500)}`,
-            sentiment: sentiments[Math.floor(Math.random() * sentiments.length)],
-            category: categories[Math.floor(Math.random() * categories.length)],
+            id: row.id || index,
+            author: row.author || row.from || row.influencer || `User${index}`,
+            sentiment,
+            category: row.Topic || 'General',
             date: date.toISOString().split('T')[0],
-            platform: platforms[Math.floor(Math.random() * platforms.length)],
-            unit: units[Math.floor(Math.random() * units.length)],
-            keywords: ['health', 'ministry', 'medical', 'vaccine', 'hospital'][Math.floor(Math.random() * 5)],
-            likeCount: Math.floor(Math.random() * 1000),
-            shareCount: Math.floor(Math.random() * 100),
-            commentCount: Math.floor(Math.random() * 200),
-            interactions: Math.floor(Math.random() * 1000),
-            reach: Math.floor(Math.random() * 10000),
-            engagementRate: Math.random() * 10,
-            location: ['Malaysia', 'Singapore', 'Indonesia', 'Thailand'][Math.floor(Math.random() * 4)],
-            influenceScore: Math.floor(Math.random() * 100),
-            followerCount: Math.floor(Math.random() * 50000),
-            mentionSnippet: `Sample mention about health policy and medical services from ${units[Math.floor(Math.random() * units.length)]}...`,
-            isInfluencer: Math.random() > 0.8
+            platform,
+            unit,
+            keywords: (row.keywords || row.keywordNames || '').toString(),
+            likeCount,
+            shareCount,
+            commentCount,
+            interactions: likeCount + shareCount + commentCount,
+            reach,
+            engagementRate: parseFloat(row.engagementRate) || ((likeCount + shareCount + commentCount) / Math.max(reach, 1) * 100),
+            location: row.locations || 'Malaysia',
+            influenceScore: parseInt(row.influenceScore) || 0,
+            followerCount,
+            mentionSnippet: row.mention || row.fullMention || row.title || 'No content available',
+            isInfluencer: (row.influencer && row.influencer !== row.author) || followerCount > 10000,
+            originalData: row // Keep original data for debugging
           };
-        });
-
-        setData(mockData);
-        setFilteredData(mockData);
+        }).filter(item => item.date && !isNaN(new Date(item.date))); // Filter out invalid dates
+        
+        console.log(`Loaded ${transformedData.length} records from CSV`);
+        console.log('Sample transformed data:', transformedData.slice(0, 3));
+        
+        setData(transformedData);
+        setFilteredData(transformedData);
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading CSV data:', error);
+        // Fallback to empty data or show error message
+        setData([]);
+        setFilteredData([]);
       } finally {
         setLoading(false);
       }
@@ -261,6 +327,7 @@ const RTMDashboard = () => {
               <SelectItem value="instagram">Instagram</SelectItem>
               <SelectItem value="twitter">Twitter</SelectItem>
               <SelectItem value="tiktok">TikTok</SelectItem>
+              <SelectItem value="youtube">YouTube</SelectItem>
             </SelectContent>
           </Select>
 
