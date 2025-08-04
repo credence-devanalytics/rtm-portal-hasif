@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { 
   BarChart, 
   Bar, 
@@ -19,60 +20,72 @@ import {
   LineChart,
   Line,
   Area,
-  AreaChart,
-  ScatterChart,
-  Scatter
+  AreaChart
 } from 'recharts';
-import { TrendingUp, MessageSquare, ThumbsUp, Eye, Users, Globe, Calendar } from 'lucide-react';
+import { 
+  TrendingUp, 
+  MessageSquare, 
+  ThumbsUp, 
+  Eye, 
+  Users, 
+  Globe, 
+  Calendar,
+  Download,
+  Filter,
+  Hash,
+  Star,
+  TrendingDown
+} from 'lucide-react';
 
-const MOHDashboard = () => {
+const RTMDashboard = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlatform, setSelectedPlatform] = useState('all');
-  const [selectedSentiment, setSelectedSentiment] = useState('all');
-  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [selectedDateRange, setSelectedDateRange] = useState('30');
+  const [selectedUnit, setSelectedUnit] = useState('all');
 
+  // Mock data for demonstration - replace with actual data loading
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/data/moh.json');
-        const jsonData = await response.json();
         
-        // Process and clean the data
-        const processedData = jsonData.map((item, index) => ({
-          id: index,
-          author: item.Author || 'Unknown',
-          sentiment: item['Auto Sentiment'] || 'neutral',
-          category: item.Category || 'Others',
-          date: item.Date,
-          platform: item['Social Media Platform'] || 'web',
-          keywords: item.Keywords || item['Found Keywords'] || '',
-          likeCount: parseInt(item['Like Count']) || 0,
-          shareCount: parseInt(item['Share Count']) || 0,
-          commentCount: parseInt(item['Comment Count']) || 0,
-          interactions: parseInt(item.Interactions) || 0,
-          reach: parseInt(item.Reach) || 0,
-          engagementRate: parseFloat(item['Engagement Rate']) || 0,
-          location: item.Locations || 'Unknown',
-          influenceScore: parseInt(item['Influence Score']) || 0,
-          followerCount: parseInt(item['Followers Count']) || 0,
-          mentionSnippet: item['Mention Snippet'] || '',
-          post: item.Post || '',
-          url: item.URL || '',
-          totalReactions: parseInt(item['Total Reactions Count']) || 0,
-          from: item.From || '',
-          language: item.Languages || '',
-          angryCount: parseInt(item['Angry Count']) || 0,
-          hahaCount: parseInt(item['Haha Count']) || 0,
-          loveCount: parseInt(item['Love Count']) || 0,
-          sadCount: parseInt(item['Sad Count']) || 0,
-          wowCount: parseInt(item['Wow Count']) || 0
-        }));
+        // Mock data structure - replace with actual API call
+        const mockData = Array.from({ length: 1000 }, (_, i) => {
+          const platforms = ['facebook', 'instagram', 'twitter', 'tiktok'];
+          const units = ['Radio', 'TV', 'Berita'];
+          const sentiments = ['positive', 'negative', 'neutral'];
+          const categories = ['Health Policy', 'Vaccination', 'Public Health', 'Medical Services', 'Health Education', 'Emergency Response'];
+          
+          const date = new Date();
+          date.setDate(date.getDate() - Math.floor(Math.random() * 90));
+          
+          return {
+            id: i,
+            author: `User${Math.floor(Math.random() * 500)}`,
+            sentiment: sentiments[Math.floor(Math.random() * sentiments.length)],
+            category: categories[Math.floor(Math.random() * categories.length)],
+            date: date.toISOString().split('T')[0],
+            platform: platforms[Math.floor(Math.random() * platforms.length)],
+            unit: units[Math.floor(Math.random() * units.length)],
+            keywords: ['health', 'ministry', 'medical', 'vaccine', 'hospital'][Math.floor(Math.random() * 5)],
+            likeCount: Math.floor(Math.random() * 1000),
+            shareCount: Math.floor(Math.random() * 100),
+            commentCount: Math.floor(Math.random() * 200),
+            interactions: Math.floor(Math.random() * 1000),
+            reach: Math.floor(Math.random() * 10000),
+            engagementRate: Math.random() * 10,
+            location: ['Malaysia', 'Singapore', 'Indonesia', 'Thailand'][Math.floor(Math.random() * 4)],
+            influenceScore: Math.floor(Math.random() * 100),
+            followerCount: Math.floor(Math.random() * 50000),
+            mentionSnippet: `Sample mention about health policy and medical services from ${units[Math.floor(Math.random() * units.length)]}...`,
+            isInfluencer: Math.random() > 0.8
+          };
+        });
 
-        setData(processedData);
-        setFilteredData(processedData);
+        setData(mockData);
+        setFilteredData(mockData);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -86,20 +99,22 @@ const MOHDashboard = () => {
   useEffect(() => {
     let filtered = data;
     
+    // Date range filter
+    const daysAgo = parseInt(selectedDateRange);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
+    filtered = filtered.filter(item => new Date(item.date) >= cutoffDate);
+    
     if (selectedPlatform !== 'all') {
       filtered = filtered.filter(item => item.platform === selectedPlatform);
     }
     
-    if (selectedSentiment !== 'all') {
-      filtered = filtered.filter(item => item.sentiment === selectedSentiment);
-    }
-
-    if (selectedLocation !== 'all') {
-      filtered = filtered.filter(item => item.location === selectedLocation);
+    if (selectedUnit !== 'all') {
+      filtered = filtered.filter(item => item.unit === selectedUnit);
     }
     
     setFilteredData(filtered);
-  }, [selectedPlatform, selectedSentiment, selectedLocation, data]);
+  }, [selectedPlatform, selectedDateRange, selectedUnit, data]);
 
   if (loading) {
     return (
@@ -107,487 +122,417 @@ const MOHDashboard = () => {
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading MOH data...</p>
+            <p className="text-muted-foreground">Loading RTM Social Media Dashboard...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  // Get unique values for filters
-  const platforms = [...new Set(data.map(item => item.platform))].filter(Boolean);
-  const locations = [...new Set(data.map(item => item.location))].filter(Boolean);
-
-  // Calculate metrics
+  // Calculate key metrics
   const totalMentions = filteredData.length;
-  const totalInteractions = filteredData.reduce((sum, item) => sum + item.interactions, 0);
+  const totalEngagements = filteredData.reduce((sum, item) => sum + item.likeCount + item.shareCount + item.commentCount, 0);
   const totalReach = filteredData.reduce((sum, item) => sum + item.reach, 0);
-  const avgEngagement = totalMentions > 0 ? (filteredData.reduce((sum, item) => sum + item.engagementRate, 0) / totalMentions).toFixed(2) : 0;
-  const avgInfluence = totalMentions > 0 ? (filteredData.reduce((sum, item) => sum + item.influenceScore, 0) / totalMentions).toFixed(1) : 0;
+  const totalInfluencers = filteredData.filter(item => item.isInfluencer).length;
+  
+  const positiveMentions = filteredData.filter(d => d.sentiment === 'positive').length;
+  const negativeMentions = filteredData.filter(d => d.sentiment === 'negative').length;
+  const neutralMentions = filteredData.filter(d => d.sentiment === 'neutral').length;
 
-  // Sentiment distribution
-  const sentimentData = [
-    { 
-      name: 'Positive', 
-      value: filteredData.filter(d => d.sentiment === 'positive').length, 
-      color: '#10B981' 
-    },
-    { 
-      name: 'Negative', 
-      value: filteredData.filter(d => d.sentiment === 'negative').length, 
-      color: '#EF4444' 
-    },
-    { 
-      name: 'Neutral', 
-      value: filteredData.filter(d => d.sentiment === 'neutral').length, 
-      color: '#6B7280' 
+  // Platform breakdown over time
+  const platformTimeData = filteredData.reduce((acc, item) => {
+    const dateKey = item.date;
+    if (!acc[dateKey]) {
+      acc[dateKey] = { date: dateKey, facebook: 0, instagram: 0, twitter: 0, tiktok: 0 };
     }
-  ].filter(item => item.value > 0);
-
-  // Platform distribution
-  const platformData = filteredData.reduce((acc, item) => {
-    acc[item.platform] = (acc[item.platform] || 0) + 1;
+    acc[dateKey][item.platform] = (acc[dateKey][item.platform] || 0) + 1;
     return acc;
   }, {});
 
-  const platformChartData = Object.entries(platformData).map(([platform, count]) => ({
-    platform: platform.charAt(0).toUpperCase() + platform.slice(1),
-    mentions: count,
-    engagement: filteredData
-      .filter(item => item.platform === platform)
-      .reduce((sum, item) => sum + item.interactions, 0)
-  }));
+  const mentionsOverTime = Object.values(platformTimeData)
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(-30);
 
-  // Category distribution
-  const categoryData = filteredData.reduce((acc, item) => {
-    const category = item.category || 'Others';
-    acc[category] = (acc[category] || 0) + 1;
+  // Sentiment trend over time
+  const sentimentTimeData = filteredData.reduce((acc, item) => {
+    const dateKey = item.date;
+    if (!acc[dateKey]) {
+      acc[dateKey] = { date: dateKey, positive: 0, negative: 0, neutral: 0 };
+    }
+    acc[dateKey][item.sentiment] = (acc[dateKey][item.sentiment] || 0) + 1;
     return acc;
   }, {});
 
-  const categoryChartData = Object.entries(categoryData)
-    .map(([category, count]) => ({
-      category: category.length > 20 ? category.substring(0, 20) + '...' : category,
-      mentions: count,
-      fullCategory: category
-    }))
-    .sort((a, b) => b.mentions - a.mentions);
+  const sentimentTrend = Object.values(sentimentTimeData)
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(-30);
 
-  // Location distribution
-  const locationData = filteredData.reduce((acc, item) => {
-    acc[item.location] = (acc[item.location] || 0) + 1;
+  // Top trending keywords
+  const keywordCounts = filteredData.reduce((acc, item) => {
+    const keywords = item.keywords.split(',').map(k => k.trim());
+    keywords.forEach(keyword => {
+      acc[keyword] = (acc[keyword] || 0) + 1;
+    });
     return acc;
   }, {});
 
-  const locationChartData = Object.entries(locationData).map(([location, count]) => ({
-    location,
-    mentions: count
-  }));
-
-  // Engagement vs Reach scatter data
-  const engagementReachData = filteredData
-    .filter(item => item.reach > 0 && item.interactions > 0)
-    .map(item => ({
-      reach: item.reach,
-      interactions: item.interactions,
-      sentiment: item.sentiment,
-      author: item.author
-    }));
+  const trendingKeywords = Object.entries(keywordCounts)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10)
+    .map(([keyword, count]) => ({ keyword, count }));
 
   // Top influencers
   const topInfluencers = filteredData
-    .filter(item => item.influenceScore > 0)
-    .sort((a, b) => b.influenceScore - a.influenceScore)
-    .slice(0, 10);
+    .filter(item => item.isInfluencer)
+    .reduce((acc, item) => {
+      if (!acc[item.author]) {
+        acc[item.author] = {
+          author: item.author,
+          platform: item.platform,
+          totalEngagement: 0,
+          mentions: 0,
+          followers: item.followerCount,
+          influenceScore: item.influenceScore
+        };
+      }
+      acc[item.author].totalEngagement += item.likeCount + item.shareCount + item.commentCount;
+      acc[item.author].mentions += 1;
+      return acc;
+    }, {});
 
-  // Date-based engagement (group by date)
-  const dateEngagementData = filteredData.reduce((acc, item) => {
-    const date = item.date;
-    if (!acc[date]) {
-      acc[date] = {
-        date,
-        interactions: 0,
-        reach: 0,
-        mentions: 0
-      };
-    }
-    acc[date].interactions += item.interactions;
-    acc[date].reach += item.reach;
-    acc[date].mentions += 1;
-    return acc;
-  }, {});
+  const topInfluencersList = Object.values(topInfluencers)
+    .sort((a, b) => b.totalEngagement - a.totalEngagement)
+    .slice(0, 8);
 
-  const timeSeriesData = Object.values(dateEngagementData)
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
-    .slice(-30); // Last 30 data points
-
-  const getSentimentColor = (sentiment) => {
-    switch (sentiment) {
-      case 'positive': return 'bg-green-100 text-green-800 border-green-200';
-      case 'negative': return 'bg-red-100 text-red-800 border-red-200';
-      case 'neutral': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
+  // Utility functions
   const formatNumber = (num) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
+    return num.toLocaleString();
+  };
+
+  const getPlatformColor = (platform) => {
+    const colors = {
+      facebook: '#1877F2',
+      instagram: '#E4405F',
+      twitter: '#1DA1F2',
+      tiktok: '#000000'
+    };
+    return colors[platform] || '#6B7280';
+  };
+
+  const exportData = () => {
+    // Mock export functionality
+    alert('Export functionality would be implemented here (CSV/PDF/PNG)');
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Header with Controls */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">MOH Social Media Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">RTM Social Media Dashboard</h1>
           <p className="text-muted-foreground">
-            Monitor Ministry of Health mentions across social platforms ({totalMentions} total mentions)
+            Real-time monitoring across Radio, TV, and Berita social channels
           </p>
         </div>
         
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+          <Select value={selectedDateRange} onValueChange={setSelectedDateRange}>
+            <SelectTrigger className="w-32">
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+          
           <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
             <SelectTrigger className="w-36">
+              <Filter className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Platform" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Platforms</SelectItem>
-              {platforms.map(platform => (
-                <SelectItem key={platform} value={platform}>
-                  {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Select value={selectedSentiment} onValueChange={setSelectedSentiment}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Sentiment" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sentiments</SelectItem>
-              <SelectItem value="positive">Positive</SelectItem>
-              <SelectItem value="negative">Negative</SelectItem>
-              <SelectItem value="neutral">Neutral</SelectItem>
+              <SelectItem value="facebook">Facebook</SelectItem>
+              <SelectItem value="instagram">Instagram</SelectItem>
+              <SelectItem value="twitter">Twitter</SelectItem>
+              <SelectItem value="tiktok">TikTok</SelectItem>
             </SelectContent>
           </Select>
 
-          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Location" />
+          <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Unit" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {locations.map(location => (
-                <SelectItem key={location} value={location}>
-                  {location}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">All Units</SelectItem>
+              <SelectItem value="Radio">Radio</SelectItem>
+              <SelectItem value="TV">TV</SelectItem>
+              <SelectItem value="Berita">Berita</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button onClick={exportData} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </div>
       </div>
 
-      {/* Key Metrics */}
+      {/* Overview Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Mentions</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-blue-900">Total Mentions</CardTitle>
+            <MessageSquare className="h-5 w-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalMentions}</div>
-            <p className="text-xs text-muted-foreground">Across all platforms</p>
+            <div className="text-3xl font-bold text-blue-900">{formatNumber(totalMentions)}</div>
+            <p className="text-xs text-blue-700 mt-1">Across all platforms</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Interactions</CardTitle>
-            <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-green-900">Total Engagements</CardTitle>
+            <ThumbsUp className="h-5 w-5 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(totalInteractions)}</div>
-            <p className="text-xs text-muted-foreground">Likes, comments, shares</p>
+            <div className="text-3xl font-bold text-green-900">{formatNumber(totalEngagements)}</div>
+            <p className="text-xs text-green-700 mt-1">Likes, shares, comments</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Reach</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-purple-900">Sentiment Score</CardTitle>
+            <div className="flex gap-1">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TrendingDown className="h-4 w-4 text-red-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(totalReach)}</div>
-            <p className="text-xs text-muted-foreground">People reached</p>
+            <div className="flex gap-2 text-sm">
+              <span className="text-green-600 font-bold">+{positiveMentions}</span>
+              <span className="text-red-600 font-bold">-{negativeMentions}</span>
+              <span className="text-gray-600 font-bold">~{neutralMentions}</span>
+            </div>
+            <p className="text-xs text-purple-700 mt-1">Positive vs Negative</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Engagement</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-orange-900">Total Reach</CardTitle>
+            <Eye className="h-5 w-5 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgEngagement}%</div>
-            <p className="text-xs text-muted-foreground">Engagement rate</p>
+            <div className="text-3xl font-bold text-orange-900">{formatNumber(totalReach)}</div>
+            <p className="text-xs text-orange-700 mt-1">People reached</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Influence</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-indigo-900">Influencers</CardTitle>
+            <Star className="h-5 w-5 text-indigo-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgInfluence}</div>
-            <p className="text-xs text-muted-foreground">Influence score</p>
+            <div className="text-3xl font-bold text-indigo-900">{totalInfluencers}</div>
+            <p className="text-xs text-indigo-700 mt-1">Key voices identified</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Section */}
-      <Tabs defaultValue="sentiment" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
-          <TabsTrigger value="platforms">Platforms</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="locations">Locations</TabsTrigger>
-          <TabsTrigger value="engagement">Engagement</TabsTrigger>
-          <TabsTrigger value="influencers">Top Authors</TabsTrigger>
-        </TabsList>
+      {/* Main Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Mentions Over Time by Platform */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Mentions Over Time</CardTitle>
+            <CardDescription>Daily mentions breakdown by social platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={mentionsOverTime}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                  formatter={(value, name) => [value, name.charAt(0).toUpperCase() + name.slice(1)]}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="facebook" 
+                  stroke={getPlatformColor('facebook')} 
+                  strokeWidth={2}
+                  name="Facebook"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="instagram" 
+                  stroke={getPlatformColor('instagram')} 
+                  strokeWidth={2}
+                  name="Instagram"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="twitter" 
+                  stroke={getPlatformColor('twitter')} 
+                  strokeWidth={2}
+                  name="Twitter"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="tiktok" 
+                  stroke={getPlatformColor('tiktok')} 
+                  strokeWidth={2}
+                  name="TikTok"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="sentiment" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sentiment Distribution</CardTitle>
-                <CardDescription>Overall sentiment of MOH mentions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      dataKey="value"
-                      data={sentimentData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      label={({ name, value }) => `${name}: ${value}`}
-                    >
-                      {sentimentData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+        {/* Sentiment Trend */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sentiment Breakdown</CardTitle>
+            <CardDescription>Daily sentiment analysis across all mentions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={sentimentTrend}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="positive"
+                  stackId="1"
+                  stroke="#10B981"
+                  fill="#10B981"
+                  fillOpacity={0.8}
+                  name="Positive"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="neutral"
+                  stackId="1"
+                  stroke="#6B7280"
+                  fill="#6B7280"
+                  fillOpacity={0.8}
+                  name="Neutral"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="negative"
+                  stackId="1"
+                  stroke="#EF4444"
+                  fill="#EF4444"
+                  fillOpacity={0.8}
+                  name="Negative"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Sentiment Breakdown</CardTitle>
-                <CardDescription>Detailed sentiment metrics</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {sentimentData.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="font-medium">{item.name}</span>
+      {/* Bottom Row: Keywords and Influencers */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Top Trending Keywords */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Hash className="h-5 w-5" />
+              Top Trending Topics
+            </CardTitle>
+            <CardDescription>Most mentioned keywords and hashtags</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {trendingKeywords.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-bold text-blue-600">
+                      {index + 1}
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold">{item.value}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {totalMentions > 0 ? Math.round((item.value / totalMentions) * 100) : 0}%
-                      </div>
-                    </div>
+                    <span className="font-medium">#{item.keyword}</span>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    {item.count} mentions
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="platforms" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Performance</CardTitle>
-              <CardDescription>Mentions and engagement across platforms</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={platformChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="platform" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar yAxisId="left" dataKey="mentions" fill="#3B82F6" name="Mentions" />
-                  <Bar yAxisId="right" dataKey="engagement" fill="#10B981" name="Total Interactions" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="categories" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Content Categories</CardTitle>
-              <CardDescription>Distribution of mentions by content category</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={categoryChartData} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="category" type="category" width={150} />
-                  <Tooltip formatter={(value, name) => [value, name]} />
-                  <Legend />
-                  <Bar dataKey="mentions" fill="#10B981" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="locations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Geographic Distribution</CardTitle>
-              <CardDescription>Mentions by location/country</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={locationChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="location" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="mentions" fill="#8B5CF6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="engagement" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Engagement Over Time</CardTitle>
-                <CardDescription>Daily interactions and reach trends</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <AreaChart data={timeSeriesData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
-                    <Area 
-                      yAxisId="left"
-                      type="monotone" 
-                      dataKey="interactions" 
-                      stackId="1" 
-                      stroke="#3B82F6" 
-                      fill="#3B82F6" 
-                      fillOpacity={0.6}
-                      name="Interactions"
-                    />
-                    <Area 
-                      yAxisId="right"
-                      type="monotone" 
-                      dataKey="reach" 
-                      stackId="2" 
-                      stroke="#10B981" 
-                      fill="#10B981" 
-                      fillOpacity={0.6}
-                      name="Reach"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="influencers" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Influential Authors</CardTitle>
-              <CardDescription>Authors with highest influence scores</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topInfluencers.slice(0, 8).map((author, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="font-medium">{author.author}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {author.followerCount > 0 && `${formatNumber(author.followerCount)} followers • `}
-                        {author.keywords}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-lg">{author.influenceScore}</div>
-                      <div className="text-sm text-muted-foreground">influence</div>
+        {/* Top Influencers */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Top Authors & Influencers
+            </CardTitle>
+            <CardDescription>Most engaged content creators</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topInfluencersList.map((influencer, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex-1">
+                    <div className="font-medium">{influencer.author}</div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {influencer.platform}
+                      </Badge>
+                      <span>{formatNumber(influencer.followers)} followers</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Recent Mentions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Mentions</CardTitle>
-          <CardDescription>Latest social media mentions about MOH</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredData.slice(0, 5).map((mention, index) => (
-              <div key={index} className="flex items-start space-x-4 p-4 border rounded-lg">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={getSentimentColor(mention.sentiment)}>
-                      {mention.sentiment}
-                    </Badge>
-                    <Badge variant="outline">{mention.platform}</Badge>
-                    <Badge variant="outline">{mention.location}</Badge>
-                    <span className="text-sm text-muted-foreground">{mention.date}</span>
-                  </div>
-                  <div className="font-medium">{mention.author || mention.from}</div>
-                  <div className="text-sm">
-                    {mention.mentionSnippet || mention.post}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Keywords: {mention.keywords}
-                  </div>
-                  <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span>👍 {mention.likeCount}</span>
-                    <span>💬 {mention.commentCount}</span>
-                    <span>🔄 {mention.shareCount}</span>
-                    <span>👀 {formatNumber(mention.reach)}</span>
-                    {mention.engagementRate > 0 && <span>📊 {mention.engagementRate.toFixed(2)}%</span>}
+                  <div className="text-right">
+                    <div className="font-bold text-lg">{formatNumber(influencer.totalEngagement)}</div>
+                    <div className="text-xs text-muted-foreground">{influencer.mentions} posts</div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Navigation Tabs for Future Implementation */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground">
+            <p className="mb-4">Additional dashboard sections:</p>
+            <div className="flex justify-center gap-2 flex-wrap">
+              <Badge variant="outline">Platform Analysis</Badge>
+              <Badge variant="outline">Content Categories</Badge>
+              <Badge variant="outline">Geographic Analysis</Badge>
+              <Badge variant="outline">Detailed Reports</Badge>
+              <Badge variant="outline">Crisis Monitoring</Badge>
+            </div>
+            <p className="text-sm mt-2">Coming in future tabs...</p>
           </div>
         </CardContent>
       </Card>
@@ -595,4 +540,4 @@ const MOHDashboard = () => {
   );
 };
 
-export default MOHDashboard;
+export default RTMDashboard;
