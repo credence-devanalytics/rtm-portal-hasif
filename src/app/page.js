@@ -36,6 +36,11 @@ import {
   Star,
   TrendingDown
 } from 'lucide-react';
+import { Sen } from 'next/font/google';
+import SentimentBarChart from '@/components/SentimentBarChart';
+import OverallMentionsChart from '@/components/OverallMentionsChart';
+import PlatformDonutChart from '@/components/PlatformDonutChart';
+import PopularMentionsTable from '@/components/PopularMentionsTable ';
 
 const RTMDashboard = () => {
   const [data, setData] = useState([]);
@@ -204,6 +209,7 @@ const RTMDashboard = () => {
   const positiveMentions = filteredData.filter(d => d.sentiment === 'positive').length;
   const negativeMentions = filteredData.filter(d => d.sentiment === 'negative').length;
   const neutralMentions = filteredData.filter(d => d.sentiment === 'neutral').length;
+  
 
   // Platform breakdown over time
   const platformTimeData = filteredData.reduce((acc, item) => {
@@ -292,6 +298,7 @@ const RTMDashboard = () => {
     alert('Export functionality would be implemented here (CSV/PDF/PNG)');
   };
 
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header with Controls */}
@@ -351,7 +358,7 @@ const RTMDashboard = () => {
       </div>
 
       {/* Overview Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-900">Total Mentions</CardTitle>
@@ -402,188 +409,34 @@ const RTMDashboard = () => {
             <p className="text-xs text-orange-700 mt-1">People reached</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-indigo-900">Influencers</CardTitle>
-            <Star className="h-5 w-5 text-indigo-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-indigo-900">{totalInfluencers}</div>
-            <p className="text-xs text-indigo-700 mt-1">Key voices identified</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Main Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-1">
+        {/* Mentions Over Time by Platform */}
+        <Card>
+          <OverallMentionsChart mentionsOverTime={mentionsOverTime} />
+        </Card>
+
+      </div>
+      
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Mentions Over Time by Platform */}
         <Card>
-          <CardHeader>
-            <CardTitle>Mentions Over Time</CardTitle>
-            <CardDescription>Daily mentions breakdown by social platform</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={mentionsOverTime}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip 
-                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                  formatter={(value, name) => [value, name.charAt(0).toUpperCase() + name.slice(1)]}
-                />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="facebook" 
-                  stroke={getPlatformColor('facebook')} 
-                  strokeWidth={2}
-                  name="Facebook"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="instagram" 
-                  stroke={getPlatformColor('instagram')} 
-                  strokeWidth={2}
-                  name="Instagram"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="twitter" 
-                  stroke={getPlatformColor('twitter')} 
-                  strokeWidth={2}
-                  name="Twitter"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="tiktok" 
-                  stroke={getPlatformColor('tiktok')} 
-                  strokeWidth={2}
-                  name="TikTok"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
+          <PlatformDonutChart data={data} />
         </Card>
 
-        {/* Sentiment Trend */}
+{/* Sentiment Trend */}
         <Card>
-          <CardHeader>
-            <CardTitle>Sentiment Breakdown</CardTitle>
-            <CardDescription>Daily sentiment analysis across all mentions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={sentimentTrend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip 
-                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                />
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="positive"
-                  stackId="1"
-                  stroke="#10B981"
-                  fill="#10B981"
-                  fillOpacity={0.8}
-                  name="Positive"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="neutral"
-                  stackId="1"
-                  stroke="#6B7280"
-                  fill="#6B7280"
-                  fillOpacity={0.8}
-                  name="Neutral"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="negative"
-                  stackId="1"
-                  stroke="#EF4444"
-                  fill="#EF4444"
-                  fillOpacity={0.8}
-                  name="Negative"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
+          <SentimentBarChart sentimentTrend={ sentimentTrend } />
         </Card>
       </div>
 
       {/* Bottom Row: Keywords and Influencers */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Top Trending Keywords */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Hash className="h-5 w-5" />
-              Top Trending Topics
-            </CardTitle>
-            <CardDescription>Most mentioned keywords and hashtags</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {trendingKeywords.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-bold text-blue-600">
-                      {index + 1}
-                    </div>
-                    <span className="font-medium">#{item.keyword}</span>
-                  </div>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    {item.count} mentions
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Influencers */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Top Authors & Influencers
-            </CardTitle>
-            <CardDescription>Most engaged content creators</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {topInfluencersList.map((influencer, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex-1">
-                    <div className="font-medium">{influencer.author}</div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {influencer.platform}
-                      </Badge>
-                      <span>{formatNumber(influencer.followers)} followers</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg">{formatNumber(influencer.totalEngagement)}</div>
-                    <div className="text-xs text-muted-foreground">{influencer.mentions} posts</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
+          <PopularMentionsTable data={ data } />
         </Card>
       </div>
 
