@@ -10,19 +10,19 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Using the same sentimentTrend data source from your original component
+// Using the same data data source from your original component
 
-const SentimentBarChart = ({ sentimentTrend }) => {
-  // Calculate overall totals across all dates
-  const overallSentiment = sentimentTrend.reduce(
-    (totals, day) => ({
-      positive: totals.positive + day.positive,
-      neutral: totals.neutral + day.neutral,
-      negative: totals.negative + day.negative,
-    }),
+const SentimentBarChart = ({ data }) => {
+  // Now data will default to an empty array if undefined
+  const overallSentiment = data.reduce(
+    (totals, item) => {
+      totals[item.sentiment] = (totals[item.sentiment] || 0) + 1;
+      return totals;
+    },
     { positive: 0, neutral: 0, negative: 0 }
   );
 
+  console.log("overallSentiment from component", data.sentiment);
   // Convert to array format for BarChart
   const chartData = [
     {
@@ -39,7 +39,7 @@ const SentimentBarChart = ({ sentimentTrend }) => {
   ];
 
   return (
-    <div className="w-full p-6 bg-white rounded-lg shadow-lg">
+    <div className="w-full p-6 bg-white">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Overall Sentiment Breakdown
@@ -50,7 +50,7 @@ const SentimentBarChart = ({ sentimentTrend }) => {
       </div>
 
       <div className="w-full">
-        <ResponsiveContainer width="100%" height={620}>
+        <ResponsiveContainer width="100%" height={485}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="sentiment" tick={{ fontSize: 12 }} />

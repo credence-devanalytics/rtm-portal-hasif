@@ -11,31 +11,35 @@ import {
 const PlatformDonutChart = ({ data }) => {
   // Count mentions by platform
   const platformCounts = data.reduce((acc, item) => {
-    console.log(item.platform);
+    // console.log(item.platform);
     const platform = item.platform || "Unknown";
 
     acc[platform] = (acc[platform] || 0) + 1;
     return acc;
   }, {});
 
+  console.log("Platform Counts:", platformCounts);
   // Convert to chart data format
-  const chartData = Object.entries(platformCounts).map(([platform, count]) => ({
-    name: platform,
-    value: count,
-    percentage: ((count / data.length) * 100).toFixed(1),
-  }));
+  // Sort the chartData after creating it
+  const chartData = Object.entries(platformCounts)
+    .map(([platform, count]) => ({
+      name: platform,
+      value: count,
+      percentage: ((count / data.length) * 100).toFixed(1),
+    }))
+    .sort((a, b) => b.value - a.value); // Sort by value descending
 
   // Platform colors
   const platformColors = {
-    facebook: "#1877F2",
-    instagram: "#E4405F",
-    twitter: "#1DA1F2",
-    tiktok: "#000000",
-    youtube: "#FF0000",
-    linkedin: "#0A66C2",
-    reddit: "#FF4500",
-    unknown: "#6B7280",
-    other: "#9CA3AF",
+    Facebook: "#1877F2",
+    Instagram: "#E4405F",
+    Twitter: "#1DA1F2",
+    TikTok: "#000000",
+    YouTube: "#FF0000",
+    LinkedIn: "#0A66C2",
+    Reddit: "#FF4500",
+    Unknown: "#6B7280",
+    Other: "#9CA3AF",
   };
 
   // Get color for platform or use a default
@@ -66,7 +70,7 @@ const PlatformDonutChart = ({ data }) => {
   };
 
   return (
-    <div className="w-full p-6 bg-white rounded-lg shadow-lg">
+    <div className="w-full p-6 bg-white">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Sources Distribution - Mentions
@@ -78,7 +82,7 @@ const PlatformDonutChart = ({ data }) => {
       </div>
 
       <div className="w-full">
-        <ResponsiveContainer width="100%" height={600}>
+        <ResponsiveContainer width="100%" height={440}>
           <PieChart>
             <Pie
               data={chartData}

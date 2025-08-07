@@ -15,19 +15,32 @@ import {
 // Using the same sentimentTrend data source from your original component
 
 const OverallMentionsChart = ({ mentionsOverTime }) => {
+  if (!mentionsOverTime || mentionsOverTime.length === 0) {
+    return <div>No data available</div>;
+  }
   // Calculate total mentions for each date
-  const overallData = mentionsOverTime.map((day) => ({
-    date: day.date,
-    total:
+  const overallData = mentionsOverTime.map((day) => {
+    const total =
       (day.facebook || 0) +
       (day.instagram || 0) +
       (day.twitter || 0) +
-      (day.tiktok || 0),
-  }));
+      (day.tiktok || 0) +
+      (day.youtube || 0) +
+      (day.reddit || 0) +
+      (day.linkedin || 0);
 
+    // console.log(`Date: ${day.date}, Total: ${total}`); // Debug log
+
+    return {
+      date: day.date,
+      total,
+    };
+  });
+  // Add this logging in your component to see what data you're actually getting
+  // console.log("mentionsOverTime data:", mentionsOverTime?.slice(0, 3));
   return (
     <div className="w-full">
-      <div className="p-6 bg-white rounded-lg shadow-lg">
+      <div className="p-6 bg-white rounded-lg">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Mentions Over Time
@@ -38,7 +51,7 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
         </div>
 
         <div className="w-full">
-          <ResponsiveContainer width="100%" height={600}>
+          <ResponsiveContainer width="100%" height={350}>
             <LineChart data={overallData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis

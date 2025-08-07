@@ -1,5 +1,5 @@
 import { db } from '../src/lib/db/index.js';
-import { mentions, users } from '../src/lib/db/schema.js';
+import { mentions, users } from '../src/lib/schema.js';
 import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
 import path from 'path';

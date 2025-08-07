@@ -243,7 +243,7 @@ const PopularMentionsTable = ({ data }) => {
       </div>
 
       {/* Summary Footer */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+      {/* <div className="mt-6 p-4 bg-gray-50 rounded-lg">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-gray-800">
@@ -268,7 +268,7 @@ const PopularMentionsTable = ({ data }) => {
             <p className="text-sm text-gray-600">Top Mentions</p>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
