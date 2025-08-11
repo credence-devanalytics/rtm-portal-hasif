@@ -151,7 +151,7 @@ const EngagementOverTimeChart = ({ data }) => {
         </div>
 
         <div className="w-full">
-          <ResponsiveContainer width="100%" height={350}>
+          <ResponsiveContainer width="100%" height={220}>
             <AreaChart
               data={engagementData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}

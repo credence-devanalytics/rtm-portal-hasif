@@ -45,24 +45,24 @@ export default function Header() {
             <nav className="hidden md:flex space-x-8">
               {[
                 { name: "Home", href: "/" },
-                { name: "Social Media RTM Account", href: "SocMedAcc" },
+                { name: "SocMed RTM Account", href: "SocMedAcc" },
                 {
-                  name: "Social Media Public Statement",
-                  href: "#public-statement",
+                  name: "SocMed Public Sentiment",
+                  href: "#public-Sentiment",
                 },
                 { name: "AI", href: "#ai" },
                 { name: "Determ", href: "#determ" },
                 { name: "Contact Us", href: "#contact" },
                 { name: "Login", href: "#login" },
               ].map((item) => (
-                <button
+                <a
                   key={item.name}
                   href={item.href}
                   className="text-gray-900 font-medium relative transition-colors duration-300 hover:text-orange-500 group"
                 >
                   {item.name}
                   <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full group-hover:left-0" />
-                </button>
+                </a>
               ))}
             </nav>
 
@@ -104,10 +104,10 @@ export default function Header() {
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
               {[
                 { name: "Home", href: "#home" },
-                { name: "Social Media RTM Account", href: "#SocMedAcc" },
+                { name: "SocMed RTM Account", href: "#SocMedAcc" },
                 {
-                  name: "Social Media Public Statement",
-                  href: "#public-statement",
+                  name: "SocMed Public Sentiment",
+                  href: "#public-Sentiment",
                 },
                 { name: "AI", href: "#ai" },
                 { name: "Determ", href: "#determ" },

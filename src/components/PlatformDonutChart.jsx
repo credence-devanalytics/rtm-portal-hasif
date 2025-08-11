@@ -82,7 +82,7 @@ const PlatformDonutChart = ({ data }) => {
       </div>
 
       <div className="w-full">
-        <ResponsiveContainer width="100%" height={440}>
+        <ResponsiveContainer width="100%" height={400}>
           <PieChart>
             <Pie
               data={chartData}

@@ -51,7 +51,7 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
         </div>
 
         <div className="w-full">
-          <ResponsiveContainer width="100%" height={350}>
+          <ResponsiveContainer width="100%" height={250}>
             <LineChart data={overallData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis

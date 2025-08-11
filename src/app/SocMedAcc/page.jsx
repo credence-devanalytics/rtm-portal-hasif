@@ -42,6 +42,7 @@ import PopularMentionsTable from "@/components/PopularMentionsTable";
 import EngagementOverTimeChart from "@/components/EngagementOverTimeChart";
 import PlatformMentionsChart from "@/components/PlatformMentionsChart";
 import ClassificationMentionsChart from "@/components/ClassificationMentionsChart";
+import RTMUnitsPieChart from "@/components/RTMUnitsPieChart";
 import Header from "@/components/Header";
 import RTMTabs from "@/components/RTMTabs";
 
@@ -102,8 +103,10 @@ const RTMDashboard = () => {
               else if (type.includes("linkedin")) platform = "LinkedIn";
             }
 
-            // Determine unit from groupname or channel
+            // Determine unit from groupname, from, or author (instead of channel)
             let unit = "Other";
+
+            // First check groupname
             if (row.groupname) {
               const groupName = row.groupname.toLowerCase();
               if (groupName.includes("radio")) unit = "Radio";
@@ -115,14 +118,58 @@ const RTMDashboard = () => {
                 unit = "News";
               else if (groupName.includes("blog")) unit = "Blog";
               else if (groupName.includes("forum")) unit = "Forum";
-            } else if (row.channel) {
-              const channel = row.channel.toLowerCase();
-              if (channel.includes("radio")) unit = "Radio";
-              else if (channel.includes("tv")) unit = "TV";
-              else if (channel.includes("news")) unit = "News";
             }
 
-            // Parse sentiment - use the new sentiment field first, fallback to autosentiment
+            // If no unit found from groupname, check 'from' field
+            if (unit === "Other" && row.from) {
+              const fromField = row.from.toLowerCase();
+              if (fromField.includes("radio")) unit = "Radio";
+              else if (fromField.includes("tv")) unit = "TV";
+              else if (
+                fromField.includes("news") ||
+                fromField.includes("berita")
+              )
+                unit = "News";
+              else if (fromField.includes("blog")) unit = "Blog";
+              else if (fromField.includes("forum")) unit = "Forum";
+              else if (fromField.includes("youtube")) unit = "YouTube";
+              else if (fromField.includes("facebook")) unit = "Social Media";
+              else if (fromField.includes("instagram")) unit = "Social Media";
+              else if (
+                fromField.includes("twitter") ||
+                fromField.includes("x.com")
+              )
+                unit = "Social Media";
+              else if (fromField.includes("tiktok")) unit = "Social Media";
+              else if (fromField.includes("reddit")) unit = "Forum";
+              else if (fromField.includes("linkedin")) unit = "Professional";
+            }
+
+            // If still no unit found, check 'author' field as final fallback
+            if (unit === "Other" && row.author) {
+              const authorField = row.author.toLowerCase();
+              if (authorField.includes("radio")) unit = "Radio";
+              else if (authorField.includes("tv")) unit = "TV";
+              else if (
+                authorField.includes("news") ||
+                authorField.includes("berita")
+              )
+                unit = "News";
+              else if (authorField.includes("blog")) unit = "Blog";
+              else if (authorField.includes("forum")) unit = "Forum";
+              else if (authorField.includes("youtube")) unit = "YouTube";
+              else if (authorField.includes("facebook")) unit = "Social Media";
+              else if (authorField.includes("instagram")) unit = "Social Media";
+              else if (
+                authorField.includes("twitter") ||
+                authorField.includes("x.com")
+              )
+                unit = "Social Media";
+              else if (authorField.includes("tiktok")) unit = "Social Media";
+              else if (authorField.includes("reddit")) unit = "Forum";
+              else if (authorField.includes("linkedin")) unit = "Professional";
+            }
+
             // Parse sentiment - use the new sentiment field first, fallback to autosentiment
             let sentiment = "neutral"; // Default to neutral
             const sentimentValue = (
@@ -159,9 +206,7 @@ const RTMDashboard = () => {
             const totalReactions = Number(row.totalreactionscount || 0);
 
             // Calculate reach - use sourcereach first, then reach, then viewcount, or default
-            const reach = Number(
-              row.sourcereach || row.reach || viewCount || 1000
-            );
+            const reach = Number(row.reach);
 
             // Get follower count
             const followerCount = Number(
@@ -191,12 +236,7 @@ const RTMDashboard = () => {
 
             return {
               id: row.id || row.idpk || index,
-              author:
-                row.author ||
-                row.from ||
-                row.instagramprofilename ||
-                row.twitterhandle ||
-                `User${index}`,
+              author: row.channel || `User${index}`,
               sentiment,
               category: row.topic || "General",
               date: date.toISOString().split("T")[0],
@@ -334,19 +374,6 @@ const RTMDashboard = () => {
         };
 
         const mentionsOverTimeData = createMentionsOverTime(transformedData);
-        // console.log(
-        //   "Mentions over time data:",
-        //   mentionsOverTimeData.slice(0, 3)
-        // );
-
-        // console.log(`Loaded ${transformedData.length} records from database`);
-        // console.log("Sample transformed data:", transformedData.slice(0, 3));
-        // console.log("Available platforms:", [
-        //   ...new Set(transformedData.map((d) => d.platform)),
-        // ]);
-        // console.log("Available units:", [
-        //   ...new Set(transformedData.map((d) => d.unit)),
-        // ]);
 
         setData(transformedData);
         setFilteredData(transformedData);
@@ -519,6 +546,7 @@ const RTMDashboard = () => {
           </p>
         </div>
 
+        {/* Date Range Seletor */}
         <div className="flex gap-2 flex-wrap items-center">
           <Select
             value={selectedDateRange}
@@ -659,6 +687,7 @@ const RTMDashboard = () => {
         <RTMTabs />
       </div>
 
+      {/* MAIN CHARTS */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Mentions Over Time by Platform */}
         <Card>
@@ -671,7 +700,6 @@ const RTMDashboard = () => {
         </Card>
       </div>
 
-      {/* Main Charts Row */}
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Mentions Over Time by Platform */}
         <Card>
@@ -686,10 +714,13 @@ const RTMDashboard = () => {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-1">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Top Platforms */}
         <Card>
           <PlatformMentionsChart data={data} />
+        </Card>
+        <Card>
+          <RTMUnitsPieChart data={data} />
         </Card>
       </div>
 

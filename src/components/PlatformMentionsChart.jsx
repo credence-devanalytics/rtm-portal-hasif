@@ -14,7 +14,7 @@ import { TrendingUp, Users, Filter, Search } from "lucide-react";
 const PlatformMentionsChart = ({ data = [] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("count"); // 'count' or 'alphabetical'
-  const [showTop, setShowTop] = useState(20); // Show top N platforms
+  const [showTop, setShowTop] = useState(10); // Show top N platforms (reduced default)
 
   // Process the data to count mentions per author (platform)
   const processedData = useMemo(() => {
@@ -37,7 +37,7 @@ const PlatformMentionsChart = ({ data = [] }) => {
         author,
         count,
         displayName:
-          author.length > 20 ? author.substring(0, 17) + "..." : author,
+          author.length > 12 ? author.substring(0, 10) + "..." : author,
       }));
 
       // Filter by search term
@@ -72,18 +72,25 @@ const PlatformMentionsChart = ({ data = [] }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
+      const fullAuthor =
+        processedData.find((item) => item.displayName === label)?.author ||
+        label;
       return (
         <div className="bg-white max-w-xs">
-          <p className="font-semibold text-gray-800 mb-1 break-words">
-            {label}
+          <p className="font-semibold text-gray-800 text-xs mb-1 break-words">
+            {fullAuthor}
           </p>
-          <p className="text-blue-600 font-medium">
+          <p className="text-blue-600 text-xs font-medium">
             Mentions:{" "}
-            <span className="font-bold">{data.value.toLocaleString()}</span>
+            <span className="font-bold">
+              {data.value?.toLocaleString() || "N/A"}
+            </span>
           </p>
-          <p className="text-gray-500 text-sm">
-            {((data.value / totalMentions) * 100).toFixed(1)}% of total
-          </p>
+          {totalMentions > 0 && (
+            <p className="text-gray-500 text-xs">
+              {((data.value / totalMentions) * 100).toFixed(1)}% of total
+            </p>
+          )}
         </div>
       );
     }
@@ -93,15 +100,15 @@ const PlatformMentionsChart = ({ data = [] }) => {
   // Loading state
   if (!data) {
     return (
-      <div className="">
+      <div className="h-full">
         <div className="animate-pulse">
-          <div className="flex items-center justify-between mb-6">
-            <div className="h-6 bg-gray-200 rounded w-48"></div>
-            <div className="h-8 bg-gray-200 rounded w-32"></div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-4 bg-gray-200 rounded w-32"></div>
+            <div className="h-6 bg-gray-200 rounded w-20"></div>
           </div>
-          <div className="space-y-3">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-8 bg-gray-200 rounded"></div>
+          <div className="space-y-2">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-6 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -112,14 +119,12 @@ const PlatformMentionsChart = ({ data = [] }) => {
   // Empty state
   if (data.length === 0) {
     return (
-      <div className="bg-white text-center">
-        <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <div className="bg-white h-full flex flex-col items-center justify-center p-4 text-center">
+        <TrendingUp className="h-8 w-8 text-gray-400 mb-2" />
+        <h3 className="text-sm font-medium text-gray-900 mb-1">
           No Data Available
         </h3>
-        <p className="text-gray-500">
-          No social media mentions found to display.
-        </p>
+        <p className="text-xs text-gray-500">No social media mentions found.</p>
       </div>
     );
   }
@@ -127,156 +132,130 @@ const PlatformMentionsChart = ({ data = [] }) => {
   // No results after filtering
   if (processedData.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Users className="h-5 w-5 mr-2 text-blue-600" />
-              Platform Mentions
-            </h2>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search platforms..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+      <div className="bg-white h-full flex flex-col">
+        <div className="p-3 border-b border-gray-200">
+          <h2 className="text-sm font-semibold text-gray-900 flex items-center mb-2">
+            <Users className="h-4 w-4 mr-1 text-blue-600" />
+            Channel Mentions
+          </h2>
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-7 pr-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent w-full"
+            />
           </div>
         </div>
-        <div className="p-8 text-center">
-          <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No Results Found
-          </h3>
-          <p className="text-gray-500">
-            No platforms match your search criteria.
-          </p>
+        <div className="flex-1 flex items-center justify-center p-4 text-center">
+          <div>
+            <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-gray-900 mb-1">
+              No Results
+            </h3>
+            <p className="text-xs text-gray-500">
+              No platforms match your search.
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white ">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Users className="h-5 w-5 mr-2 text-blue-600" />
-              Platform Mentions
+    <div className="bg-white h-[600px] flex flex-col">
+      {/* Compact Header */}
+      <div className="p-3 border-b border-gray-200 flex-shrink-0">
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[24px] font-bold text-gray-900 flex items-center">
+              Channel Mentions
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {totalMentions.toLocaleString()} total mentions across{" "}
-              {uniquePlatforms} platforms
-            </p>
+            <span className="text-xs text-gray-500">
+              {totalMentions.toLocaleString()}
+            </span>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          {/* Controls Row 1 */}
+          <div className="flex space-x-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search platforms..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="pl-7 pr-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent w-full"
               />
             </div>
-
-            {/* Sort */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="count">Sort by Count</option>
-              <option value="alphabetical">Sort Alphabetically</option>
-            </select>
-
-            {/* Show Top N */}
             <select
               value={showTop}
               onChange={(e) => setShowTop(Number(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
             >
               <option value={10}>Top 10</option>
               <option value={20}>Top 20</option>
               <option value={50}>Top 50</option>
-              <option value={100}>Top 100</option>
             </select>
           </div>
+
+          {/* Controls Row 2 */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent w-full"
+          >
+            <option value="count">Sort by Count</option>
+            <option value="alphabetical">Sort Alphabetically</option>
+          </select>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="p-6">
-        <div className="h-80 sm:h-[350px] lg:h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={processedData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
-              barCategoryGap="10%"
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis
-                dataKey="displayName"
-                angle={-45}
-                textAnchor="end"
-                height={100}
-                interval={0}
-                fontSize={12}
-                stroke="#666"
-              />
-              <YAxis
-                fontSize={12}
-                stroke="#666"
-                tickFormatter={(value) => value.toLocaleString()}
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ fill: "rgba(59, 130, 246, 0.1)" }}
-              />
-              <Bar
-                dataKey="count"
-                fill="#3b82f6"
-                radius={[4, 4, 0, 0]}
-                name="Mentions"
-              ></Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      <div className="flex-1 p-3 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={processedData}
+            layout="vertical"
+            margin={{
+              left: 5,
+              right: 20,
+              top: 5,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis
+              type="number"
+              dataKey="count"
+              fontSize={10}
+              stroke="#666"
+              tickFormatter={(value) =>
+                value >= 1000
+                  ? `${(value / 1000).toFixed(0)}k`
+                  : value.toString()
+              }
+              domain={[0, "dataMax"]}
+              allowDecimals={false}
+            />
+            <YAxis
+              dataKey="displayName"
+              type="category"
+              tickLine={false}
+              tickMargin={5}
+              axisLine={false}
+              fontSize={9}
+              stroke="#666"
+              width={60}
+              interval={0}
+            />
+            <Tooltip cursor={false} content={<CustomTooltip />} />
+            <Bar dataKey="count" fill="#3b82f6" radius={2} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
-
-      {/* Summary Stats */}
-      {/* <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          <div>
-            <div className="text-2xl font-bold text-blue-600">
-              {totalMentions.toLocaleString()}
-            </div>
-            <div className="text-sm text-gray-600">Total Mentions</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-green-600">
-              {uniquePlatforms}
-            </div>
-            <div className="text-sm text-gray-600">Unique Platforms</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-purple-600">
-              {processedData.length > 0
-                ? Math.round(totalMentions / uniquePlatforms)
-                : 0}
-            </div>
-            <div className="text-sm text-gray-600">Avg per Platform</div>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 };

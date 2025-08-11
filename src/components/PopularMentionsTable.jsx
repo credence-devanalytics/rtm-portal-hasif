@@ -72,21 +72,10 @@ const PopularMentionsTable = ({ data }) => {
   // Generate mock post URL (replace with actual URL field if available)
   const getPostUrl = (mention) => {
     const platform = mention.platform?.toLowerCase();
-    const postId = mention.id;
+    const postId = mention.postUrl;
 
     // Mock URLs - replace with actual URL logic based on your data
-    switch (platform) {
-      case "facebook":
-        return `https://facebook.com/posts/${postId}`;
-      case "instagram":
-        return `https://instagram.com/p/${postId}`;
-      case "twitter":
-        return `https://twitter.com/status/${postId}`;
-      case "tiktok":
-        return `https://tiktok.com/@user/video/${postId}`;
-      default:
-        return "#";
-    }
+    return mention.postUrl;
   };
 
   return (
@@ -144,7 +133,7 @@ const PopularMentionsTable = ({ data }) => {
                         {truncateText(mention.mentionSnippet)}
                       </p>
                       <a
-                        href={getPostUrl(mention)}
+                        href={mention.postUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
