@@ -43,6 +43,7 @@ import EngagementOverTimeChart from "@/components/EngagementOverTimeChart";
 import PlatformMentionsChart from "@/components/PlatformMentionsChart";
 import ClassificationMentionsChart from "@/components/ClassificationMentionsChart";
 import RTMUnitsPieChart from "@/components/RTMUnitsPieChart";
+import CalendarDatePicker from "@/components/CalendarDatePicker";
 import Header from "@/components/Header";
 
 // RTMTabs Component
@@ -133,17 +134,29 @@ const RTMDashboard = () => {
   const [mentionsOverTime, setMentionsOverTime] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlatform, setSelectedPlatform] = useState("all");
-  const [selectedDateRange, setSelectedDateRange] = useState("30");
+  const [selectedDateRange, setSelectedDateRange] = useState({
+    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Default: last 30 days
+    to: new Date(),
+  });
 
+  const handleDateRangeChange = (newDateRange) => {
+    setSelectedDateRange(newDateRange);
+  };
   // Load data from database
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
 
+        // Calculate days between selected dates
+        const daysDiff = Math.ceil(
+          (selectedDateRange.to - selectedDateRange.from) /
+            (1000 * 60 * 60 * 24)
+        );
+
         // Build query parameters
         const queryParams = new URLSearchParams({
-          days: selectedDateRange,
+          days: daysDiff.toString(),
           platform: selectedPlatform !== "all" ? selectedPlatform : "",
           limit: "1000",
         });
@@ -474,10 +487,12 @@ const RTMDashboard = () => {
     let filtered = data;
 
     // Date range filter
-    const daysAgo = parseInt(selectedDateRange);
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
-    filtered = filtered.filter((item) => new Date(item.date) >= cutoffDate);
+    filtered = filtered.filter((item) => {
+      const itemDate = new Date(item.date);
+      return (
+        itemDate >= selectedDateRange.from && itemDate <= selectedDateRange.to
+      );
+    });
 
     // Platform filter
     if (selectedPlatform !== "all") {
@@ -629,20 +644,10 @@ const RTMDashboard = () => {
 
         {/* Date Range and Platform Selectors (removed unit selector) */}
         <div className="flex gap-2 flex-wrap items-center">
-          <Select
-            value={selectedDateRange}
-            onValueChange={setSelectedDateRange}
-          >
-            <SelectTrigger className="w-32">
-              <Calendar className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-              <SelectItem value="90">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <CalendarDatePicker
+            selectedDateRange={selectedDateRange}
+            onDateRangeChange={handleDateRangeChange}
+          />
 
           <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
             <SelectTrigger className="w-36">
