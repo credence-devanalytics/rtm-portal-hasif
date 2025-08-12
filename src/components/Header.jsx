@@ -39,7 +39,7 @@ export default function Header() {
   ];
 
   const mainNavItems = [
-    { name: "Home", href: "/" },
+    // { name: "c", href: "/" },
     { name: "AI", href: "#ai" },
     { name: "Determ", href: "#determ" },
     { name: "Contact Us", href: "#contact" },
@@ -70,16 +70,13 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
-              {mainNavItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="text-gray-900 font-medium relative transition-colors duration-300 hover:text-orange-500 group"
-                >
-                  {item.name}
-                  <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full group-hover:left-0" />
-                </a>
-              ))}
+              <a
+                href="/"
+                className="text-gray-900 font-medium relative transition-colors duration-300 hover:text-orange-500 group"
+              >
+                Home
+                <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full group-hover:left-0" />
+              </a>
 
               {/* Dashboards Dropdown */}
               <div className="relative" ref={dropdownRef}>
@@ -124,6 +121,15 @@ export default function Header() {
                   </div>
                 )}
               </div>
+              {mainNavItems.map((item) => (
+                <a
+                  href={item.href}
+                  className="text-gray-900 font-medium relative transition-colors duration-300 hover:text-orange-500 group"
+                >
+                  {item.name}
+                  <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full group-hover:left-0" />
+                </a>
+              ))}
             </nav>
 
             {/* Mobile menu button */}

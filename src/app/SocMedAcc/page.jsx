@@ -44,16 +44,96 @@ import PlatformMentionsChart from "@/components/PlatformMentionsChart";
 import ClassificationMentionsChart from "@/components/ClassificationMentionsChart";
 import RTMUnitsPieChart from "@/components/RTMUnitsPieChart";
 import Header from "@/components/Header";
-import RTMTabs from "@/components/RTMTabs";
+
+// RTMTabs Component
+const RTMTabs = ({ data = [], onFilterChange }) => {
+  const [activeTab, setActiveTab] = useState("overall");
+
+  const filterByUnit = (tabId) => {
+    switch (tabId) {
+      case "official":
+        return data.filter(
+          (item) =>
+            item.unit === "Official Account" ||
+            item.isInfluencer === true ||
+            item.followerCount > 50000
+        );
+      case "tv":
+        return data.filter(
+          (item) =>
+            item.unit === "TV" ||
+            item.unit?.toLowerCase().includes("tv") ||
+            item.platform === "YouTube"
+        );
+      case "berita":
+        return data.filter(
+          (item) =>
+            item.unit === "News" ||
+            item.unit === "Berita" ||
+            item.unit?.toLowerCase().includes("news") ||
+            item.unit?.toLowerCase().includes("berita")
+        );
+      case "radio":
+        return data.filter(
+          (item) =>
+            item.unit === "Radio" || item.unit?.toLowerCase().includes("radio")
+        );
+      default:
+        return data;
+    }
+  };
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    onFilterChange?.(filterByUnit(tabId));
+  };
+
+  // Apply initial filter when data changes
+  useEffect(() => {
+    onFilterChange?.(filterByUnit(activeTab));
+  }, [data]);
+
+  const tabs = [
+    { id: "overall", label: "RTM Overall" },
+    { id: "official", label: "RTM Official Account" },
+    { id: "tv", label: "TV" },
+    { id: "berita", label: "Berita" },
+    { id: "radio", label: "Radio" },
+  ];
+
+  return (
+    <div className="w-full flex justify-center">
+      <div className="w-full">
+        <div className="inline-flex h-12 items-center justify-center rounded-xl bg-white p-1.5 text-slate-500 shadow-md border border-slate-200 backdrop-blur-sm grid grid-cols-5 w-full max-w-full">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 lg:px-4 py-2.5 text-xs lg:text-sm font-medium transition-all flex-1 ${
+                activeTab === tab.id
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const RTMDashboard = () => {
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
+  const [filteredByDateAndPlatform, setFilteredByDateAndPlatform] = useState(
+    []
+  );
+  const [finalFilteredData, setFinalFilteredData] = useState([]);
   const [mentionsOverTime, setMentionsOverTime] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState("30");
-  const [selectedUnit, setSelectedUnit] = useState("all");
 
   // Load data from database
   useEffect(() => {
@@ -65,7 +145,6 @@ const RTMDashboard = () => {
         const queryParams = new URLSearchParams({
           days: selectedDateRange,
           platform: selectedPlatform !== "all" ? selectedPlatform : "",
-          unit: selectedUnit !== "all" ? selectedUnit : "",
           limit: "1000",
         });
 
@@ -344,6 +423,7 @@ const RTMDashboard = () => {
               item.mentionSnippet !== "No content available"
             );
           });
+
         const createMentionsOverTime = (data) => {
           const groupedByDate = {};
 
@@ -376,13 +456,11 @@ const RTMDashboard = () => {
         const mentionsOverTimeData = createMentionsOverTime(transformedData);
 
         setData(transformedData);
-        setFilteredData(transformedData);
-        setMentionsOverTime(mentionsOverTimeData); // Make sure you have this state
+        setMentionsOverTime(mentionsOverTimeData);
       } catch (error) {
         console.error("Error loading database data:", error);
         // Fallback to empty data or show error message
         setData([]);
-        setFilteredData([]);
       } finally {
         setLoading(false);
       }
@@ -391,7 +469,7 @@ const RTMDashboard = () => {
     loadData();
   }, []);
 
-  // Filter data based on selected criteria
+  // Filter data by date range and platform (first level filtering)
   useEffect(() => {
     let filtered = data;
 
@@ -406,13 +484,13 @@ const RTMDashboard = () => {
       filtered = filtered.filter((item) => item.platform === selectedPlatform);
     }
 
-    // Unit filter
-    if (selectedUnit !== "all") {
-      filtered = filtered.filter((item) => item.unit === selectedUnit);
-    }
+    setFilteredByDateAndPlatform(filtered);
+  }, [selectedPlatform, selectedDateRange, data]);
 
-    setFilteredData(filtered);
-  }, [selectedPlatform, selectedDateRange, selectedUnit, data]);
+  // Handle final filtering from RTMTabs
+  const handleTabFilterChange = (tabFilteredData) => {
+    setFinalFilteredData(tabFilteredData);
+  };
 
   // Loading state
   if (loading) {
@@ -431,22 +509,25 @@ const RTMDashboard = () => {
     );
   }
 
-  // Calculate key metrics
-  const totalMentions = filteredData.length;
-  const totalEngagements = filteredData.reduce(
+  // Calculate key metrics using final filtered data
+  const totalMentions = finalFilteredData.length;
+  const totalEngagements = finalFilteredData.reduce(
     (sum, item) => sum + item.interactions,
     0
   );
-  const totalReach = filteredData.reduce((sum, item) => sum + item.reach, 0);
+  const totalReach = finalFilteredData.reduce(
+    (sum, item) => sum + item.reach,
+    0
+  );
 
   // Sentiment counts
-  const positiveMentions = filteredData.filter(
+  const positiveMentions = finalFilteredData.filter(
     (d) => d.sentiment === "positive"
   ).length;
-  const negativeMentions = filteredData.filter(
+  const negativeMentions = finalFilteredData.filter(
     (d) => d.sentiment === "negative"
   ).length;
-  const neutralMentions = filteredData.filter(
+  const neutralMentions = finalFilteredData.filter(
     (d) => d.sentiment === "neutral"
   ).length;
 
@@ -500,13 +581,13 @@ const RTMDashboard = () => {
   const SentimentFace = config.face;
 
   // Platform distribution
-  const platformDistribution = filteredData.reduce((acc, item) => {
+  const platformDistribution = finalFilteredData.reduce((acc, item) => {
     acc[item.platform] = (acc[item.platform] || 0) + 1;
     return acc;
   }, {});
 
   // Top performing content
-  const topContent = [...filteredData]
+  const topContent = [...finalFilteredData]
     .sort((a, b) => b.reach - a.reach)
     .slice(0, 10);
 
@@ -546,7 +627,7 @@ const RTMDashboard = () => {
           </p>
         </div>
 
-        {/* Date Range Seletor */}
+        {/* Date Range and Platform Selectors (removed unit selector) */}
         <div className="flex gap-2 flex-wrap items-center">
           <Select
             value={selectedDateRange}
@@ -575,18 +656,6 @@ const RTMDashboard = () => {
               <SelectItem value="twitter">Twitter</SelectItem>
               <SelectItem value="tiktok">TikTok</SelectItem>
               <SelectItem value="youtube">YouTube</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Unit" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Units</SelectItem>
-              <SelectItem value="Radio">Radio</SelectItem>
-              <SelectItem value="TV">TV</SelectItem>
-              <SelectItem value="Berita">Berita</SelectItem>
             </SelectContent>
           </Select>
 
@@ -683,20 +752,24 @@ const RTMDashboard = () => {
         </Card>
       </div>
 
+      {/* RTM Tabs for Unit Filtering */}
       <div className="grid gap-6 lg:grid-cols-1 pb-[-10px]">
-        <RTMTabs />
+        <RTMTabs
+          data={filteredByDateAndPlatform}
+          onFilterChange={handleTabFilterChange}
+        />
       </div>
 
-      {/* MAIN CHARTS */}
+      {/* MAIN CHARTS - Now using finalFilteredData */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Mentions Over Time by Platform */}
         <Card>
-          <PlatformDonutChart data={data} />
+          <PlatformDonutChart data={finalFilteredData} />
         </Card>
 
         {/* Sentiment Trend */}
         <Card>
-          <SentimentBarChart data={data} />
+          <SentimentBarChart data={finalFilteredData} />
         </Card>
       </div>
 
@@ -710,24 +783,24 @@ const RTMDashboard = () => {
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Influencers */}
         <Card>
-          <EngagementOverTimeChart data={data} />
+          <EngagementOverTimeChart data={finalFilteredData} />
         </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Top Platforms */}
         <Card>
-          <PlatformMentionsChart data={data} />
+          <PlatformMentionsChart data={finalFilteredData} />
         </Card>
         <Card>
-          <RTMUnitsPieChart data={data} />
+          <RTMUnitsPieChart data={finalFilteredData} />
         </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Platforms */}
         <Card>
-          <ClassificationMentionsChart data={data} />
+          <ClassificationMentionsChart data={finalFilteredData} />
         </Card>
       </div>
 
@@ -735,7 +808,7 @@ const RTMDashboard = () => {
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Influencers */}
         <Card>
-          <PopularMentionsTable data={data} />
+          <PopularMentionsTable data={finalFilteredData} />
         </Card>
       </div>
     </div>
