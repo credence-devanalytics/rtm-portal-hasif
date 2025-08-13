@@ -105,7 +105,7 @@ const RTMTabs = ({ data = [], onFilterChange }) => {
   return (
     <div className="w-full flex justify-center">
       <div className="w-full">
-        <div className="inline-flex h-12 items-center justify-center rounded-xl bg-white p-1.5 text-slate-500 shadow-md border border-slate-200 backdrop-blur-sm grid grid-cols-5 w-full max-w-full">
+        <div className="inline-flex h-12 items-center justify-center rounded-xl bg-white p-1.5 text-slate-500 shadow-sm border border-slate-200 backdrop-blur-sm grid grid-cols-5 w-full max-w-full">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -673,41 +673,37 @@ const RTMDashboard = () => {
 
       {/* Overview Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+        <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-900">
+            <CardTitle className="text-sm font-medium">
               Total Mentions
             </CardTitle>
-            <MessageSquare className="h-5 w-5 text-blue-600" />
+            <MessageSquare className="h-5 w-5" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-900">
+            <div className="text-3xl font-bold">
               {formatNumber(totalMentions)}
             </div>
-            <p className="text-xs text-blue-700 mt-1">Across all platforms</p>
+            <p className="text-xs mt-1">Across all platforms</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+        <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-900">
+            <CardTitle className="text-sm font-medium text-black">
               Total Engagements
             </CardTitle>
-            <ThumbsUp className="h-5 w-5 text-green-600" />
+            <ThumbsUp className="h-5 w-5 text-black" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-900">
+            <div className="text-3xl font-bold text-black">
               {formatNumber(totalEngagements)}
             </div>
-            <p className="text-xs text-green-700 mt-1">
-              Likes, shares, comments
-            </p>
+            <p className="text-xs text-black mt-1">Likes, shares, comments</p>
           </CardContent>
         </Card>
 
-        <Card
-          className={`bg-gradient-to-r ${config.gradient} ${config.border}`}
-        >
+        <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className={`text-sm font-medium ${config.titleColor}`}>
               Sentiment Score
@@ -715,7 +711,7 @@ const RTMDashboard = () => {
             <SentimentFace className={`h-5 w-5 ${config.faceColor}`} />
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2 text-sm">
+            <div className="flex  gap-2 text-sm">
               <div className="flex items-center gap-1">
                 <Smile className="h-3 w-3 text-green-600" />
                 <span className="text-green-600 font-bold">
@@ -741,18 +737,14 @@ const RTMDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+        <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-900">
-              Total Reach
-            </CardTitle>
-            <Eye className="h-5 w-5 text-orange-600" />
+            <CardTitle className="text-sm font-medium">Total Reach</CardTitle>
+            <Eye className="h-5 w-5" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-900">
-              {formatNumber(totalReach)}
-            </div>
-            <p className="text-xs text-orange-700 mt-1">People reached</p>
+            <div className="text-3xl font-bold">{formatNumber(totalReach)}</div>
+            <p className="text-xs mt-1">People reached</p>
           </CardContent>
         </Card>
       </div>

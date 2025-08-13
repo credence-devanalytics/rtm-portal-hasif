@@ -6,7 +6,7 @@ const Tabs = ({ value, onValueChange, className = "", children }) => (
 
 const TabsList = ({ className = "", children }) => (
   <div
-    className={`inline-flex h-12 items-center justify-center rounded-xl bg-white p-1.5 text-slate-500 shadow-md border border-slate-200 backdrop-blur-sm ${className}`}
+    className={`inline-flex h-12 items-center justify-center rounded-xl bg-white p-1.5 text-slate-500  border-slate-200 backdrop-blur-sm ${className}`}
   >
     {children}
   </div>
@@ -23,7 +23,7 @@ const TabsTrigger = ({
     onClick={() => onValueChange(value)}
     className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
       activeValue === value
-        ? "bg-slate-900 text-white shadow-sm"
+        ? "bg-slate-900 text-white"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
     } ${className}`}
   >
