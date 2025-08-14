@@ -41,7 +41,7 @@ export default function Header() {
   const mainNavItems = [
     // { name: "c", href: "/" },
     { name: "AI", href: "#ai" },
-    { name: "Determ", href: "#determ" },
+    { name: "Determ", href: "https://app.determ.com/174980/feed/q/6746731" },
     { name: "Contact Us", href: "#contact" },
     { name: "Login", href: "#login" },
   ];

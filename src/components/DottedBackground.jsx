@@ -8,16 +8,21 @@ export default function GridBackgroundDemo() {
         <section className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             {/* Title */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 animate-fade-in-up">
+            <h1 className="text-4xl sm:text-2xl md:text-3xl lg:text-5xl font-bold mb-8 animate-fade-in-up">
               <span className="text-black block mb-2">
                 Media Data Insight and Analytics
               </span>
+
               <span
                 className="bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent"
                 style={{ color: "#E58A37" }}
               >
                 (MeDINA)
               </span>
+              <h6 className="text-lg font-semibold mb-4 pt-5 animate-fade-in-up">
+                Platform Analitik Media RTM - menghubungkan data, analisis,{" "}
+                <br /> dan pandangan untuk keputusan lebih pantas dan tepat.
+              </h6>
             </h1>
 
             {/* CTA Button */}

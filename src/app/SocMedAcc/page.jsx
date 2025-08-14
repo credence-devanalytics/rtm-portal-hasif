@@ -142,6 +142,35 @@ const RTMDashboard = () => {
   const handleDateRangeChange = (newDateRange) => {
     setSelectedDateRange(newDateRange);
   };
+
+  const createMentionsOverTime = (data) => {
+    const groupedByDate = {};
+
+    data.forEach((item) => {
+      const date = item.date;
+      if (!groupedByDate[date]) {
+        groupedByDate[date] = {
+          date,
+          facebook: 0,
+          instagram: 0,
+          twitter: 0,
+          tiktok: 0,
+          youtube: 0,
+          reddit: 0,
+          linkedin: 0,
+        };
+      }
+
+      const platformKey = item.platform.toLowerCase();
+      if (groupedByDate[date][platformKey] !== undefined) {
+        groupedByDate[date][platformKey]++;
+      }
+    });
+
+    return Object.values(groupedByDate).sort(
+      (a, b) => new Date(a.date) - new Date(b.date)
+    );
+  };
   // Load data from database
   useEffect(() => {
     const loadData = async () => {
@@ -437,39 +466,8 @@ const RTMDashboard = () => {
             );
           });
 
-        const createMentionsOverTime = (data) => {
-          const groupedByDate = {};
-
-          data.forEach((item) => {
-            const date = item.date;
-            if (!groupedByDate[date]) {
-              groupedByDate[date] = {
-                date,
-                facebook: 0,
-                instagram: 0,
-                twitter: 0,
-                tiktok: 0,
-                youtube: 0,
-                reddit: 0,
-                linkedin: 0,
-              };
-            }
-
-            const platformKey = item.platform.toLowerCase();
-            if (groupedByDate[date][platformKey] !== undefined) {
-              groupedByDate[date][platformKey]++;
-            }
-          });
-
-          return Object.values(groupedByDate).sort(
-            (a, b) => new Date(a.date) - new Date(b.date)
-          );
-        };
-
-        const mentionsOverTimeData = createMentionsOverTime(transformedData);
-
         setData(transformedData);
-        setMentionsOverTime(mentionsOverTimeData);
+        // Remove the setMentionsOverTime line from here
       } catch (error) {
         console.error("Error loading database data:", error);
         // Fallback to empty data or show error message
@@ -483,23 +481,32 @@ const RTMDashboard = () => {
   }, []);
 
   // Filter data by date range and platform (first level filtering)
+  // Filter data by date range and platform (first level filtering)
   useEffect(() => {
     let filtered = data;
 
     // Date range filter
     filtered = filtered.filter((item) => {
       const itemDate = new Date(item.date);
-      return (
-        itemDate >= selectedDateRange.from && itemDate <= selectedDateRange.to
-      );
-    });
+      const fromDate = new Date(selectedDateRange.from);
+      const toDate = new Date(selectedDateRange.to);
 
+      // Normalize to start/end of day for comparison
+      fromDate.setHours(0, 0, 0, 0);
+      toDate.setHours(23, 59, 59, 999);
+
+      return itemDate >= fromDate && itemDate <= toDate;
+    });
     // Platform filter
     if (selectedPlatform !== "all") {
       filtered = filtered.filter((item) => item.platform === selectedPlatform);
     }
 
     setFilteredByDateAndPlatform(filtered);
+
+    // Update mentions over time whenever date/platform filters change
+    const mentionsOverTimeData = createMentionsOverTime(filtered);
+    setMentionsOverTime(mentionsOverTimeData);
   }, [selectedPlatform, selectedDateRange, data]);
 
   // Handle final filtering from RTMTabs
@@ -656,11 +663,11 @@ const RTMDashboard = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Platforms</SelectItem>
-              <SelectItem value="facebook">Facebook</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="twitter">Twitter</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-              <SelectItem value="youtube">YouTube</SelectItem>
+              <SelectItem value="Facebook">Facebook</SelectItem>
+              <SelectItem value="Instagram">Instagram</SelectItem>
+              <SelectItem value="Twitter">Twitter</SelectItem>
+              <SelectItem value="TikTok">TikTok</SelectItem>
+              <SelectItem value="YouTube">YouTube</SelectItem>
             </SelectContent>
           </Select>
 

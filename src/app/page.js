@@ -7,8 +7,11 @@ const MeDINALandingPage = () => {
   return (
     <div className="min-h-screen bg-white relative">
       {/* Grid and Dot Background */}
+      
       <div className="absolute inset-0 opacity-30" />
+      
       <GridBackgroundDemo />
+      
       {/* Content */}
       <Header />
 
