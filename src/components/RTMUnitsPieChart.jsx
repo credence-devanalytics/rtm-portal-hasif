@@ -20,6 +20,7 @@ const RTMUnitsPieChart = ({
   data = [],
   title = "RTM Units Mentions Distribution",
   description = "Distribution of mentions across RTM units",
+  onFilterChange = null, // New prop for cross-filtering
 }) => {
   // Function to transform unit names
   const transformUnitName = (unit) => {
@@ -27,6 +28,24 @@ const RTMUnitsPieChart = ({
       return "Berita";
     }
     return unit;
+  };
+
+  // Handle click on pie slices
+  const handlePieClick = (data, index, event) => {
+    if (onFilterChange && data && data.payload) {
+      // In Recharts, the actual data is in the payload property
+      const unitValue = data.payload.unit;
+      console.log("Pie click - Unit value:", unitValue); // Debug log
+      onFilterChange("unit", unitValue);
+    }
+  };
+
+  // Handle click on summary stat cards
+  const handleStatCardClick = (unit) => {
+    if (onFilterChange) {
+      console.log("Stat card click - Unit value:", unit); // Debug log
+      onFilterChange("unit", unit);
+    }
   };
 
   // Process data to get unit counts and prepare chart data
@@ -172,8 +191,13 @@ const RTMUnitsPieChart = ({
               data={chartData}
               dataKey="mentions"
               nameKey="unit"
-              innerRadius={60}
+              innerRadius={100}
               strokeWidth={5}
+              cursor={onFilterChange ? "pointer" : "default"}
+              onClick={handlePieClick}
+              className={
+                onFilterChange ? "hover:opacity-80 transition-opacity" : ""
+              }
             >
               <Label
                 content={({ viewBox }) => {
@@ -220,7 +244,12 @@ const RTMUnitsPieChart = ({
             return (
               <div
                 key={item.unit}
-                className="bg-muted/50 rounded-lg p-3 text-center hover:bg-muted transition-colors"
+                className={`bg-muted/50 rounded-lg p-3 text-center transition-colors ${
+                  onFilterChange
+                    ? "cursor-pointer hover:bg-muted/80 hover:shadow-sm active:bg-muted"
+                    : ""
+                }`}
+                onClick={() => handleStatCardClick(item.unit)}
               >
                 <div
                   className="w-3 h-3 rounded-full mx-auto mb-2"

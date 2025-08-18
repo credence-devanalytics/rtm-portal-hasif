@@ -63,14 +63,38 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
                     day: "numeric",
                   })
                 }
+                label={{
+                  value: "Date",
+                  position: "insideBottom",
+                  offset: -5,
+                  style: {
+                    textAnchor: "middle",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    fill: "#374151",
+                  },
+                }}
               />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis
+                tick={{ fontSize: 12 }}
+                label={{
+                  value: "Mentions",
+                  angle: -90,
+                  position: "insideLeft",
+                  style: {
+                    textAnchor: "middle",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    fill: "#374151",
+                  },
+                }}
+              />
               <Tooltip
                 labelFormatter={(value) => new Date(value).toLocaleDateString()}
                 formatter={(value) => [value, "Total Mentions"]}
               />
               <Line
-                type="monotone"
+                type="linear"
                 dataKey="total"
                 stroke="#3B82F6"
                 strokeWidth={3}

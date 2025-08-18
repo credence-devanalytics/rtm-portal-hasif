@@ -33,8 +33,9 @@ import {
   Smile,
   Frown,
   Meh,
+  X,
 } from "lucide-react";
-import { Sen } from "next/font/google";
+import { Sen, Zain } from "next/font/google";
 import SentimentBarChart from "@/components/SentimentBarChart";
 import OverallMentionsChart from "@/components/OverallMentionsChart";
 import PlatformDonutChart from "@/components/PlatformDonutChart";
@@ -44,10 +45,11 @@ import PlatformMentionsChart from "@/components/PlatformMentionsChart";
 import ClassificationMentionsChart from "@/components/ClassificationMentionsChart";
 import RTMUnitsPieChart from "@/components/RTMUnitsPieChart";
 import RTMMediaTable from "@/components/RTMMediaTable";
+import SocialMediaWordCloud from "@/components/SocialMediaWordCloud";
 import CalendarDatePicker from "@/components/CalendarDatePicker";
 import Header from "@/components/Header";
 
-// RTMTabs Component
+// RTMTabs Component (unchanged)
 const RTMTabs = ({ data = [], onFilterChange }) => {
   const [activeTab, setActiveTab] = useState("overall");
 
@@ -90,7 +92,6 @@ const RTMTabs = ({ data = [], onFilterChange }) => {
     onFilterChange?.(filterByUnit(tabId));
   };
 
-  // Apply initial filter when data changes
   useEffect(() => {
     onFilterChange?.(filterByUnit(activeTab));
   }, [data]);
@@ -126,6 +127,83 @@ const RTMTabs = ({ data = [], onFilterChange }) => {
   );
 };
 
+// Active Filters Display Component
+const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
+  const filterCount = Object.keys(filters).filter(
+    (key) =>
+      filters[key] !== null && filters[key] !== undefined && filters[key] !== ""
+  ).length;
+
+  if (filterCount === 0) return null;
+
+  return (
+    <Card className="mb-4">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium">Active Filters</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearAll}
+            className="text-xs"
+          >
+            Clear All
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="flex flex-wrap gap-2">
+          {filters.sentiment && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Sentiment: {filters.sentiment}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onRemoveFilter("sentiment")}
+              />
+            </Badge>
+          )}
+          {filters.platform && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Platform: {filters.platform}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onRemoveFilter("platform")}
+              />
+            </Badge>
+          )}
+          {filters.category && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Category: {filters.category}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onRemoveFilter("category")}
+              />
+            </Badge>
+          )}
+          {filters.unit && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Unit: {filters.unit}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onRemoveFilter("unit")}
+              />
+            </Badge>
+          )}
+          {filters.author && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Author: {filters.author}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onRemoveFilter("author")}
+              />
+            </Badge>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const RTMDashboard = () => {
   const [data, setData] = useState([]);
   const [filteredByDateAndPlatform, setFilteredByDateAndPlatform] = useState(
@@ -136,12 +214,81 @@ const RTMDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState({
-    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Default: last 30 days
+    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     to: new Date(),
+  });
+
+  // NEW: Global filter state for cross-filtering
+  const [globalFilters, setGlobalFilters] = useState({
+    sentiment: null,
+    platform: null,
+    category: null,
+    unit: null,
+    author: null,
+    // Add more filter types as needed
   });
 
   const handleDateRangeChange = (newDateRange) => {
     setSelectedDateRange(newDateRange);
+  };
+
+  // NEW: Global filter change handler
+  const handleGlobalFilterChange = (filterType, filterValue) => {
+    setGlobalFilters((prev) => ({
+      ...prev,
+      [filterType]: filterValue === prev[filterType] ? null : filterValue, // Toggle filter
+    }));
+  };
+
+  // NEW: Remove specific filter
+  const handleRemoveFilter = (filterType) => {
+    setGlobalFilters((prev) => ({
+      ...prev,
+      [filterType]: null,
+    }));
+  };
+
+  // NEW: Clear all filters
+  const handleClearAllFilters = () => {
+    setGlobalFilters({
+      sentiment: null,
+      platform: null,
+      category: null,
+      unit: null,
+      author: null,
+    });
+  };
+
+  // NEW: Apply global filters to data
+  const applyGlobalFilters = (data) => {
+    let filtered = [...data];
+
+    // Apply each active filter
+    if (globalFilters.sentiment) {
+      filtered = filtered.filter(
+        (item) => item.sentiment === globalFilters.sentiment
+      );
+    }
+    if (globalFilters.platform) {
+      filtered = filtered.filter(
+        (item) => item.platform === globalFilters.platform
+      );
+    }
+    if (globalFilters.category) {
+      filtered = filtered.filter(
+        (item) => item.category === globalFilters.category
+      );
+    }
+    if (globalFilters.unit) {
+      filtered = filtered.filter((item) => item.unit === globalFilters.unit);
+    }
+    if (globalFilters.author) {
+      filtered = filtered.filter(
+        (item) => item.author === globalFilters.author
+      );
+    }
+
+    return filtered;
   };
 
   const createMentionsOverTime = (data) => {
@@ -172,26 +319,24 @@ const RTMDashboard = () => {
       (a, b) => new Date(a.date) - new Date(b.date)
     );
   };
-  // Load data from database
+
+  // Load data from database (unchanged)
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
 
-        // Calculate days between selected dates
         const daysDiff = Math.ceil(
           (selectedDateRange.to - selectedDateRange.from) /
             (1000 * 60 * 60 * 24)
         );
 
-        // Build query parameters
         const queryParams = new URLSearchParams({
           days: daysDiff.toString(),
           platform: selectedPlatform !== "all" ? selectedPlatform : "",
           limit: "1000",
         });
 
-        // Fetch data from database API endpoint
         const response = await fetch(`/api/mentions?${queryParams}`);
         if (!response.ok) {
           throw new Error("Failed to fetch data from database");
@@ -200,10 +345,9 @@ const RTMDashboard = () => {
         const dashboardData = await response.json();
         const dbData = dashboardData.mentions || [];
 
-        // Transform database data to match component structure
+        // Transform database data (unchanged transformation logic)
         const transformedData = dbData
           .map((row, index) => {
-            // Parse date from inserttime or insertdate
             let date = new Date();
             if (row.inserttime) {
               date = new Date(row.inserttime);
@@ -211,7 +355,6 @@ const RTMDashboard = () => {
               date = new Date(row.insertdate);
             }
 
-            // Determine platform from type field
             let platform = "Other";
             if (row.type) {
               const type = row.type.toLowerCase();
@@ -225,10 +368,8 @@ const RTMDashboard = () => {
               else if (type.includes("linkedin")) platform = "LinkedIn";
             }
 
-            // Determine unit from groupname, from, or author (instead of channel)
             let unit = "Other";
 
-            // First check groupname
             if (row.groupname) {
               const groupName = row.groupname.toLowerCase();
               if (groupName.includes("radio")) unit = "Radio";
@@ -241,8 +382,18 @@ const RTMDashboard = () => {
               else if (groupName.includes("official")) unit = "Official";
             }
 
-            // Parse sentiment - use the new sentiment field first, fallback to autosentiment
-            let sentiment = "neutral"; // Default to neutral
+            if (unit === "Other" && row.from) {
+              const fromField = row.from.toLowerCase();
+              if (fromField.includes("radio")) unit = "Radio";
+              else if (fromField.includes("tv")) unit = "TV";
+              else if (
+                fromField.includes("news") ||
+                fromField.includes("berita")
+              )
+                unit = "News";
+            }
+
+            let sentiment = "neutral";
             const sentimentValue = (
               row.sentiment ||
               row.autosentiment ||
@@ -254,14 +405,6 @@ const RTMDashboard = () => {
               sentiment = "negative";
             else sentiment = "neutral";
 
-            console.log(
-              "Parsed sentiment:",
-              sentiment,
-              "from:",
-              row.sentiment || row.autosentiment
-            );
-
-            // Parse engagement metrics with new field names
             const likeCount = Number(
               row.likecount ||
                 row.favoritecount ||
@@ -276,28 +419,21 @@ const RTMDashboard = () => {
             const viewCount = Number(row.viewcount || row.playcount || 0);
             const totalReactions = Number(row.totalreactionscount || 0);
 
-            // Calculate reach - use sourcereach first, then reach, then viewcount, or default
             const reach = Number(row.reach);
-
-            // Get follower count
             const followerCount = Number(
               row.followerscount || row.authorfollowercount || 0
             );
 
-            // Calculate total interactions
             const interactions =
               likeCount + shareCount + commentCount + totalReactions;
 
-            // Parse influence score and other metrics
             const influenceScore = Number(row.influencescore || row.score || 0);
             const engagementRate = Number(
               row.engagementrate || (interactions / Math.max(reach, 1)) * 100
             );
 
-            // Extract post URL based on platform
             let postUrl = row.url || "#";
 
-            // Get mention content
             const mentionContent =
               row.fullmention ||
               row.mention ||
@@ -330,7 +466,7 @@ const RTMDashboard = () => {
               postUrl,
               isInfluencer: followerCount > 10000 || influenceScore > 80,
 
-              // Additional platform-specific fields
+              // Additional platform-specific fields (unchanged)
               facebookData: {
                 pageId: row.facebookpageid,
                 loveCount: Number(row.lovecount || 0),
@@ -378,36 +514,30 @@ const RTMDashboard = () => {
                 duration: Number(row.duration || 0),
               },
 
-              // Media and content
               mediaType: row.mediatype,
               image: row.image,
               photo: row.photo,
               photos: row.photos ? row.photos.split(",") : [],
               domain: row.domain,
 
-              // AI/ML fields
               confidence: Number(row.confidence || 0),
               virality: Number(row.virality || 0),
               languages: row.languages,
 
-              // Token usage (if using AI processing)
               tokenUsage: {
                 input: Number(row.inputTokens || 0),
                 output: Number(row.outputTokens || 0),
                 total: Number(row.totalTokens || 0),
               },
 
-              // Metadata
               insertDate: row.insertdate,
               downloadDate: row.downloaddate,
               databaseInsertTime: row.databaseinserttime,
 
-              // Keep original data for debugging
               originalData: row,
             };
           })
           .filter((item) => {
-            // Filter out invalid dates and ensure required fields
             return (
               item.date &&
               !isNaN(new Date(item.date)) &&
@@ -417,10 +547,8 @@ const RTMDashboard = () => {
           });
 
         setData(transformedData);
-        // Remove the setMentionsOverTime line from here
       } catch (error) {
         console.error("Error loading database data:", error);
-        // Fallback to empty data or show error message
         setData([]);
       } finally {
         setLoading(false);
@@ -431,40 +559,44 @@ const RTMDashboard = () => {
   }, []);
 
   // Filter data by date range and platform (first level filtering)
-  // Filter data by date range and platform (first level filtering)
   useEffect(() => {
     let filtered = data;
 
-    // Date range filter
     filtered = filtered.filter((item) => {
       const itemDate = new Date(item.date);
       const fromDate = new Date(selectedDateRange.from);
       const toDate = new Date(selectedDateRange.to);
 
-      // Normalize to start/end of day for comparison
       fromDate.setHours(0, 0, 0, 0);
       toDate.setHours(23, 59, 59, 999);
 
       return itemDate >= fromDate && itemDate <= toDate;
     });
-    // Platform filter
+
     if (selectedPlatform !== "all") {
       filtered = filtered.filter((item) => item.platform === selectedPlatform);
     }
 
     setFilteredByDateAndPlatform(filtered);
 
-    // Update mentions over time whenever date/platform filters change
     const mentionsOverTimeData = createMentionsOverTime(filtered);
     setMentionsOverTime(mentionsOverTimeData);
   }, [selectedPlatform, selectedDateRange, data]);
 
-  // Handle final filtering from RTMTabs
+  // NEW: Apply global filters to date/platform filtered data
+  useEffect(() => {
+    const globallyFiltered = applyGlobalFilters(filteredByDateAndPlatform);
+    setFinalFilteredData(globallyFiltered);
+  }, [filteredByDateAndPlatform, globalFilters]);
+
+  // Handle RTM tab filtering (now works with globally filtered data)
   const handleTabFilterChange = (tabFilteredData) => {
-    setFinalFilteredData(tabFilteredData);
+    // Apply global filters to the tab-filtered data
+    const globallyFiltered = applyGlobalFilters(tabFilteredData);
+    setFinalFilteredData(globallyFiltered);
   };
 
-  // Loading state
+  // Loading state (unchanged)
   if (loading) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -481,7 +613,7 @@ const RTMDashboard = () => {
     );
   }
 
-  // Calculate key metrics using final filtered data
+  // Calculate key metrics (unchanged)
   const totalMentions = finalFilteredData.length;
   const totalEngagements = finalFilteredData.reduce(
     (sum, item) => sum + item.interactions,
@@ -492,7 +624,6 @@ const RTMDashboard = () => {
     0
   );
 
-  // Sentiment counts
   const positiveMentions = finalFilteredData.filter(
     (d) => d.sentiment === "positive"
   ).length;
@@ -503,7 +634,6 @@ const RTMDashboard = () => {
     (d) => d.sentiment === "neutral"
   ).length;
 
-  // Calculate overall sentiment for the card styling
   const positiveRatio =
     totalMentions > 0 ? positiveMentions / totalMentions : 0;
   const negativeRatio =
@@ -516,7 +646,6 @@ const RTMDashboard = () => {
     overallSentiment = "negative";
   }
 
-  // Get sentiment config for card styling
   const getSentimentConfig = () => {
     switch (overallSentiment) {
       case "positive":
@@ -552,36 +681,13 @@ const RTMDashboard = () => {
   const config = getSentimentConfig();
   const SentimentFace = config.face;
 
-  // Platform distribution
-  const platformDistribution = finalFilteredData.reduce((acc, item) => {
-    acc[item.platform] = (acc[item.platform] || 0) + 1;
-    return acc;
-  }, {});
-
-  // Top performing content
-  const topContent = [...finalFilteredData]
-    .sort((a, b) => b.reach - a.reach)
-    .slice(0, 10);
-
-  // Utility functions
   const formatNumber = (num) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
     if (num >= 1000) return (num / 1000).toFixed(1) + "K";
     return num.toLocaleString();
   };
 
-  const getPlatformColor = (platform) => {
-    const colors = {
-      facebook: "#1877F2",
-      instagram: "#E4405F",
-      twitter: "#1DA1F2",
-      tiktok: "#000000",
-    };
-    return colors[platform] || "#6B7280";
-  };
-
   const exportData = () => {
-    // Mock export functionality
     alert("Export functionality would be implemented here (CSV/PDF/PNG)");
   };
 
@@ -598,6 +704,12 @@ const RTMDashboard = () => {
             Real-time monitoring across Radio, TV, and Berita social channels
           </p>
         </div>
+
+        <ActiveFilters
+          filters={globalFilters}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAll={handleClearAllFilters}
+        />
 
         {/* Date Range and Platform Selectors (removed unit selector) */}
         <div className="flex gap-2 flex-wrap items-center">
@@ -707,7 +819,10 @@ const RTMDashboard = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
-        <RTMMediaTable data={finalFilteredData} />
+        <RTMMediaTable
+          data={finalFilteredData}
+          onFilterChange={handleGlobalFilterChange}
+        />
       </div>
 
       {/* RTM Tabs for Unit Filtering */}
@@ -722,43 +837,64 @@ const RTMDashboard = () => {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Mentions Over Time by Platform */}
         <Card>
-          <PlatformDonutChart data={finalFilteredData} />
+          <PlatformDonutChart
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
         </Card>
 
         {/* Sentiment Trend */}
         <Card>
-          <SentimentBarChart data={finalFilteredData} />
+          <SentimentBarChart
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
         </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Mentions Over Time by Platform */}
         <Card>
-          <OverallMentionsChart mentionsOverTime={mentionsOverTime} />
+          <OverallMentionsChart
+            mentionsOverTime={mentionsOverTime}
+            onFilterChange={handleGlobalFilterChange}
+          />
         </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Influencers */}
         <Card>
-          <EngagementOverTimeChart data={finalFilteredData} />
+          <EngagementOverTimeChart
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
         </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Top Platforms */}
         <Card>
-          <PlatformMentionsChart data={finalFilteredData} />
+          <PlatformMentionsChart
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
         </Card>
         <Card>
-          <RTMUnitsPieChart data={finalFilteredData} />
+          <RTMUnitsPieChart
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
         </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Platforms */}
         <Card>
-          <ClassificationMentionsChart data={finalFilteredData} />
+          <ClassificationMentionsChart
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
         </Card>
       </div>
 
@@ -766,7 +902,19 @@ const RTMDashboard = () => {
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Influencers */}
         <Card>
-          <PopularMentionsTable data={finalFilteredData} />
+          <SocialMediaWordCloud
+            data={finalFilteredData}
+            title="Social Media Keywords"
+          />
+        </Card>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-1">
+        {/* Top Influencers */}
+        <Card>
+          <PopularMentionsTable
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
         </Card>
       </div>
     </div>

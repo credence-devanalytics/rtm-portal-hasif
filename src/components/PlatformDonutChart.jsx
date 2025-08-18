@@ -8,7 +8,7 @@ import {
   Legend,
 } from "recharts";
 
-const PlatformDonutChart = ({ data }) => {
+const PlatformDonutChart = ({ data, onFilterChange }) => {
   // Count mentions by platform
   const platformCounts = data.reduce((acc, item) => {
     // console.log(item.platform);
@@ -47,6 +47,20 @@ const PlatformDonutChart = ({ data }) => {
     return platformColors[platform] || `hsl(${index * 45}, 70%, 50%)`;
   };
 
+  // Handle pie slice click for cross-filtering
+  const handlePieSliceClick = (data, index) => {
+    if (onFilterChange && data && data.name) {
+      onFilterChange("platform", data.name);
+    }
+  };
+
+  // Handle legend click for cross-filtering
+  const handleLegendClick = (value, entry) => {
+    if (onFilterChange && entry && entry.payload) {
+      onFilterChange("platform", entry.payload.name);
+    }
+  };
+
   // Custom tooltip
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -58,6 +72,11 @@ const PlatformDonutChart = ({ data }) => {
             <span className="font-medium">{data.value}</span> mentions (
             {data.percentage}%)
           </p>
+          {onFilterChange && (
+            <p className="text-xs text-gray-400 mt-1 italic">
+              Click to filter by this platform
+            </p>
+          )}
         </div>
       );
     }
@@ -67,6 +86,35 @@ const PlatformDonutChart = ({ data }) => {
   // Custom label function
   const renderLabel = ({ name, percentage }) => {
     return `${percentage}%`;
+  };
+
+  // Custom legend formatter with click handling
+  const CustomLegend = (props) => {
+    const { payload } = props;
+
+    return (
+      <div className="flex flex-wrap justify-center gap-2 mt-4">
+        {payload.map((entry, index) => (
+          <div
+            key={`legend-${index}`}
+            className={`flex items-center space-x-2 px-3 py-1 rounded-md ${
+              onFilterChange
+                ? "cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                : ""
+            }`}
+            onClick={() => handleLegendClick(entry.value, entry)}
+          >
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-sm text-gray-700">
+              {entry.value} ({entry.payload.value})
+            </span>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -95,27 +143,35 @@ const PlatformDonutChart = ({ data }) => {
               fill="#8884d8"
               dataKey="value"
               paddingAngle={2}
+              cursor={onFilterChange ? "pointer" : "default"}
+              onClick={handlePieSliceClick}
             >
               {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={getColor(entry.name, index)}
+                  className={
+                    onFilterChange
+                      ? "hover:opacity-80 transition-opacity duration-200"
+                      : ""
+                  }
                 />
               ))}
             </Pie>
-            <Legend
-              verticalAlign="bottom"
-              height={100}
-              formatter={(value, entry) => (
-                <span style={{ color: entry.color }}>
-                  {value} ({entry.payload.value})
-                </span>
-              )}
-            />
+            <Legend content={<CustomLegend />} />
             <Tooltip content={<CustomTooltip />} />
           </PieChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Clickable hint */}
+      {onFilterChange && (
+        <div className="mt-4">
+          <p className="text-xs text-gray-400 italic text-center">
+            💡 Click on pie slices or legend items to filter by platform
+          </p>
+        </div>
+      )}
 
       {/* Summary stats */}
       {/* <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
