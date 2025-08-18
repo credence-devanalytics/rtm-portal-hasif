@@ -43,6 +43,7 @@ import EngagementOverTimeChart from "@/components/EngagementOverTimeChart";
 import PlatformMentionsChart from "@/components/PlatformMentionsChart";
 import ClassificationMentionsChart from "@/components/ClassificationMentionsChart";
 import RTMUnitsPieChart from "@/components/RTMUnitsPieChart";
+import RTMMediaTable from "@/components/RTMMediaTable";
 import CalendarDatePicker from "@/components/CalendarDatePicker";
 import Header from "@/components/Header";
 
@@ -237,58 +238,7 @@ const RTMDashboard = () => {
                 groupName.includes("news")
               )
                 unit = "News";
-              else if (groupName.includes("blog")) unit = "Blog";
-              else if (groupName.includes("forum")) unit = "Forum";
-            }
-
-            // If no unit found from groupname, check 'from' field
-            if (unit === "Other" && row.from) {
-              const fromField = row.from.toLowerCase();
-              if (fromField.includes("radio")) unit = "Radio";
-              else if (fromField.includes("tv")) unit = "TV";
-              else if (
-                fromField.includes("news") ||
-                fromField.includes("berita")
-              )
-                unit = "News";
-              else if (fromField.includes("blog")) unit = "Blog";
-              else if (fromField.includes("forum")) unit = "Forum";
-              else if (fromField.includes("youtube")) unit = "YouTube";
-              else if (fromField.includes("facebook")) unit = "Social Media";
-              else if (fromField.includes("instagram")) unit = "Social Media";
-              else if (
-                fromField.includes("twitter") ||
-                fromField.includes("x.com")
-              )
-                unit = "Social Media";
-              else if (fromField.includes("tiktok")) unit = "Social Media";
-              else if (fromField.includes("reddit")) unit = "Forum";
-              else if (fromField.includes("linkedin")) unit = "Professional";
-            }
-
-            // If still no unit found, check 'author' field as final fallback
-            if (unit === "Other" && row.author) {
-              const authorField = row.author.toLowerCase();
-              if (authorField.includes("radio")) unit = "Radio";
-              else if (authorField.includes("tv")) unit = "TV";
-              else if (
-                authorField.includes("news") ||
-                authorField.includes("berita")
-              )
-                unit = "News";
-              else if (authorField.includes("blog")) unit = "Blog";
-              else if (authorField.includes("forum")) unit = "Forum";
-              else if (authorField.includes("youtube")) unit = "YouTube";
-              else if (authorField.includes("facebook")) unit = "Social Media";
-              else if (authorField.includes("instagram")) unit = "Social Media";
-              else if (
-                authorField.includes("twitter") ||
-                authorField.includes("x.com")
-              )
-                unit = "Social Media";
-              else if (authorField.includes("tiktok")) unit = "Social Media";
-              else if (authorField.includes("reddit")) unit = "Forum";
-              else if (authorField.includes("linkedin")) unit = "Professional";
+              else if (groupName.includes("official")) unit = "Official";
             }
 
             // Parse sentiment - use the new sentiment field first, fallback to autosentiment
@@ -754,6 +704,10 @@ const RTMDashboard = () => {
             <p className="text-xs mt-1">People reached</p>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-1">
+        <RTMMediaTable data={finalFilteredData} />
       </div>
 
       {/* RTM Tabs for Unit Filtering */}

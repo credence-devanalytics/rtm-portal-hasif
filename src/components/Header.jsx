@@ -123,6 +123,7 @@ export default function Header() {
               </div>
               {mainNavItems.map((item) => (
                 <a
+                  key={item.name}
                   href={item.href}
                   className="text-gray-900 font-medium relative transition-colors duration-300 hover:text-orange-500 group"
                 >
