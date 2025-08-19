@@ -228,10 +228,9 @@ const RTMMediaTable = ({
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
+      <div className="bg-white rounded-lg p-6">
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-white" />
-          <h2 className="text-xl font-bold text-white">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Overall RTM Social Media
           </h2>
         </div>
