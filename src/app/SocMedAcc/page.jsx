@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, act } from "react";
 import {
   Card,
   CardContent,
@@ -50,12 +50,10 @@ import CalendarDatePicker from "@/components/CalendarDatePicker";
 import Header from "@/components/Header";
 
 // RTMTabs Component (unchanged)
-const RTMTabs = ({ data = [], onFilterChange }) => {
-  const [activeTab, setActiveTab] = useState("overall");
-
+const RTMTabs = ({ data = [], onFilterChange, activeTab, setActiveTab }) => {
   const filterByUnit = (tabId) => {
     switch (tabId) {
-      case "official":
+      case "Official":
         return data.filter(
           (item) =>
             item.unit === "Official Account" ||
@@ -205,6 +203,7 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
 };
 
 const RTMDashboard = () => {
+  const [activeTab, setActiveTab] = useState("overall");
   const [data, setData] = useState([]);
   const [filteredByDateAndPlatform, setFilteredByDateAndPlatform] = useState(
     []
@@ -821,6 +820,7 @@ const RTMDashboard = () => {
       <div className="grid gap-6 lg:grid-cols-1">
         <RTMMediaTable
           data={finalFilteredData}
+          selectedTab={activeTab}
           onFilterChange={handleGlobalFilterChange}
         />
       </div>
@@ -830,6 +830,8 @@ const RTMDashboard = () => {
         <RTMTabs
           data={filteredByDateAndPlatform}
           onFilterChange={handleTabFilterChange}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
       </div>
 
@@ -899,15 +901,15 @@ const RTMDashboard = () => {
       </div>
 
       {/* Bottom Row: Keywords and Influencers */}
-      <div className="grid gap-6 lg:grid-cols-1">
-        {/* Top Influencers */}
-        <Card>
-          <SocialMediaWordCloud
-            data={finalFilteredData}
-            title="Social Media Keywords"
-          />
-        </Card>
-      </div>
+      {/* <div className="grid gap-6 lg:grid-cols-1"> */}
+      {/* Top Influencers */}
+      {/* <Card>
+        <SocialMediaWordCloud
+          data={finalFilteredData}
+          title="Social Media Keywords"
+        />
+      </Card> */}
+      {/* </div> */}
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Influencers */}
         <Card>

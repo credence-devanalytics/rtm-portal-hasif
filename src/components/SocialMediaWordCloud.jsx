@@ -21,6 +21,7 @@ const SocialMediaWordCloud = ({
     // Words to exclude (common stop words)
     const stopWords = new Set([
       "the",
+      "yang",
       "a",
       "an",
       "and",
