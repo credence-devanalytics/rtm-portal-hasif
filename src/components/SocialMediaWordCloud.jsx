@@ -145,7 +145,7 @@ const SocialMediaWordCloud = ({
             (wordSentiments[word][item.sentiment] || 0) + 1;
         });
       }
-    });
+    }); 
 
     // Convert to format required by WordCloud component
     const words = Object.entries(wordFreq)

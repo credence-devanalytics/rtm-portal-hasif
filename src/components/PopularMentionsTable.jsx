@@ -8,11 +8,40 @@ import {
   MessageCircle,
 } from "lucide-react";
 
-const PopularMentionsTable = ({ data }) => {
-  // Sort by reach (highest first) and take top 10
-  const topMentions = [...data]
-    .sort((a, b) => (b.reach || 0) - (a.reach || 0))
-    .slice(0, 10);
+const PopularMentionsTable = ({ data = [] }) => {
+  // Simple deduplication based on id only, with fallback
+  const topMentions = React.useMemo(() => {
+    if (!Array.isArray(data) || data.length === 0) return [];
+
+    // Remove duplicates based on id
+    const uniqueData = data.filter(
+      (item, index, self) =>
+        item && index === self.findIndex((t) => t?.id === item?.id)
+    );
+
+    return uniqueData
+      .sort((a, b) => (b?.reach || 0) - (a?.reach || 0))
+      .slice(0, 10);
+  }, [data]);
+
+  // Early return if no data
+  if (topMentions.length === 0) {
+    return (
+      <div className="w-full p-6 bg-white rounded-lg shadow-lg">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Most Popular Mentions
+          </h2>
+          <p className="text-gray-600">
+            Most impactful mentions ranked by their reach
+          </p>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-gray-500">No mentions data available</p>
+        </div>
+      </div>
+    );
+  }
 
   // Platform colors and icons
   const platformStyles = {
@@ -47,18 +76,25 @@ const PopularMentionsTable = ({ data }) => {
 
   // Format date and time
   const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return {
-      date: date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      time: date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return { date: "N/A", time: "N/A" };
+      }
+      return {
+        date: date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        time: date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+    } catch (error) {
+      return { date: "N/A", time: "N/A" };
+    }
   };
 
   // Truncate text for display
@@ -119,21 +155,23 @@ const PopularMentionsTable = ({ data }) => {
                 color: "#6B7280",
                 bg: "bg-gray-50",
               };
-              const { date, time } = formatDateTime(mention.date);
+              const { date, time } = formatDateTime(
+                mention.datetime || mention.date
+              );
 
               return (
                 <tr
-                  key={mention.id}
+                  key={`mention-${index}-${mention?.id || Math.random()}`}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   {/* Post Column */}
                   <td className="p-4 max-w-xs">
                     <div className="space-y-2">
                       <p className="text-sm text-gray-800 leading-relaxed">
-                        {truncateText(mention.mentionSnippet)}
+                        {truncateText(mention?.mentionSnippet)}
                       </p>
                       <a
-                        href={mention.postUrl}
+                        href={mention?.postUrl || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -149,13 +187,8 @@ const PopularMentionsTable = ({ data }) => {
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-gray-500" />
                         <span className="font-medium text-gray-800">
-                          {mention.author}
+                          {mention?.author || "Unknown"}
                         </span>
-                        {mention.isInfluencer && (
-                          <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full font-medium">
-                            Influencer
-                          </span>
-                        )}
                       </div>
                       <div
                         className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${platformStyle.bg}`}
@@ -165,7 +198,7 @@ const PopularMentionsTable = ({ data }) => {
                           style={{ backgroundColor: platformStyle.color }}
                         ></div>
                         <span style={{ color: platformStyle.color }}>
-                          {mention.platform}
+                          {mention?.platform || "Unknown"}
                         </span>
                       </div>
                     </div>
@@ -187,7 +220,7 @@ const PopularMentionsTable = ({ data }) => {
                     <div className="flex items-center space-x-2">
                       <Eye className="w-4 h-4 text-gray-500" />
                       <span className="font-semibold text-lg text-gray-800">
-                        {formatNumber(mention.reach)}
+                        {formatNumber(mention?.reach)}
                       </span>
                     </div>
                   </td>
@@ -198,15 +231,15 @@ const PopularMentionsTable = ({ data }) => {
                       <div className="flex items-center space-x-2">
                         <Heart className="w-4 h-4 text-gray-500" />
                         <span className="font-semibold text-gray-800">
-                          {formatNumber(mention.interactions)}
+                          {formatNumber(mention?.interactions)}
                         </span>
                       </div>
                       <div className="text-xs text-gray-500 space-y-1">
                         <div>
-                          ❤️ {formatNumber(mention.likeCount)} • 🔄{" "}
-                          {formatNumber(mention.shareCount)}
+                          ❤️ {formatNumber(mention?.likeCount)} • 🔄{" "}
+                          {formatNumber(mention?.shareCount)}
                         </div>
-                        <div>💬 {formatNumber(mention.commentCount)}</div>
+                        <div>💬 {formatNumber(mention?.commentCount)}</div>
                       </div>
                     </div>
                   </td>
@@ -215,10 +248,10 @@ const PopularMentionsTable = ({ data }) => {
                   <td className="p-4">
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium border ${getSentimentStyle(
-                        mention.sentiment
+                        mention?.sentiment
                       )}`}
                     >
-                      {mention.sentiment
+                      {mention?.sentiment
                         ? mention.sentiment.charAt(0).toUpperCase() +
                           mention.sentiment.slice(1)
                         : "Unknown"}

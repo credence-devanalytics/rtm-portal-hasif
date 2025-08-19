@@ -34,6 +34,7 @@ import {
   Frown,
   Meh,
   X,
+  ChartAreaIcon,
 } from "lucide-react";
 import { Sen, Zain } from "next/font/google";
 import SentimentBarChart from "@/components/SentimentBarChart";
@@ -45,7 +46,7 @@ import PlatformMentionsChart from "@/components/PlatformMentionsChart";
 import ClassificationMentionsChart from "@/components/ClassificationMentionsChart";
 import RTMUnitsPieChart from "@/components/RTMUnitsPieChart";
 import RTMMediaTable from "@/components/RTMMediaTable";
-import SocialMediaWordCloud from "@/components/SocialMediaWordCloud";
+import EngagementRateChart from "@/components/EngagementRateChart";
 import CalendarDatePicker from "@/components/CalendarDatePicker";
 import Header from "@/components/Header";
 
@@ -773,46 +774,29 @@ const RTMDashboard = () => {
 
         <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className={`text-sm font-medium ${config.titleColor}`}>
-              Sentiment Score
-            </CardTitle>
-            <SentimentFace className={`h-5 w-5 ${config.faceColor}`} />
-          </CardHeader>
-          <CardContent>
-            <div className="flex  gap-2 text-sm">
-              <div className="flex items-center gap-1">
-                <Smile className="h-3 w-3 text-green-600" />
-                <span className="text-green-600 font-bold">
-                  +{positiveMentions}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Frown className="h-3 w-3 text-red-600" />
-                <span className="text-red-600 font-bold">
-                  -{negativeMentions}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Meh className="h-3 w-3 text-gray-600" />
-                <span className="text-gray-600 font-bold">
-                  ~{neutralMentions}
-                </span>
-              </div>
-            </div>
-            <p className={`text-xs ${config.subtitleColor} mt-1`}>
-              Positive vs Negative vs Neutral
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Reach</CardTitle>
             <Eye className="h-5 w-5" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{formatNumber(totalReach)}</div>
             <p className="text-xs mt-1">People reached</p>
+          </CardContent>
+        </Card>
+
+        <Card className="">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className={`text-sm font-medium ${config.titleColor}`}>
+              Total Overall
+            </CardTitle>
+            <ChartAreaIcon className={`h-5 w-5 ${config.faceColor}`} />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {formatNumber(totalMentions + totalEngagements + totalReach)}
+            </div>
+            <p className={`text-xs ${config.subtitleColor} mt-1`}>
+              Mentions + Engagements + Reach
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -847,7 +831,7 @@ const RTMDashboard = () => {
 
         {/* Sentiment Trend */}
         <Card>
-          <SentimentBarChart
+          <EngagementRateChart
             data={finalFilteredData}
             onFilterChange={handleGlobalFilterChange}
           />
@@ -904,12 +888,13 @@ const RTMDashboard = () => {
       {/* <div className="grid gap-6 lg:grid-cols-1"> */}
       {/* Top Influencers */}
       {/* <Card>
-        <SocialMediaWordCloud
-          data={finalFilteredData}
-          title="Social Media Keywords"
-        />
-      </Card> */}
-      {/* </div> */}
+          <SocialMediaWordCloud
+            data={finalFilteredData}
+            title="Social Media Keywords"
+          />
+        </Card>
+      </div> */}
+
       <div className="grid gap-6 lg:grid-cols-1">
         {/* Top Influencers */}
         <Card>

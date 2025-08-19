@@ -1,7 +1,8 @@
 import React from "react";
 import {
-  AreaChart,
-  Area,
+  ComposedChart,
+  Bar,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -24,24 +25,20 @@ const EngagementOverTimeChart = ({ data }) => {
       if (!groupedByDate[date]) {
         groupedByDate[date] = {
           date,
-          totalInteractions: 0,
           totalReach: 0,
-          count: 0,
+          postsCount: 0,
         };
       }
 
-      groupedByDate[date].totalInteractions += item.interactions || 0;
       groupedByDate[date].totalReach += item.reach || 0;
-      groupedByDate[date].count += 1;
+      groupedByDate[date].postsCount += 1; // Count each mention/post
     });
 
     return Object.values(groupedByDate)
       .map((day) => ({
         date: day.date,
-        interactions: day.totalInteractions,
         reach: day.totalReach,
-        avgInteractions: Math.round(day.totalInteractions / day.count),
-        avgReach: Math.round(day.totalReach / day.count),
+        posts: day.postsCount,
       }))
       .sort((a, b) => new Date(a.date) - new Date(b.date));
   };
@@ -54,9 +51,9 @@ const EngagementOverTimeChart = ({ data }) => {
       <div className="w-full">
         <div className="p-6 bg-white rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Engagement Over Time
+            Reach Over Time
           </h2>
-          <p className="text-gray-600 mb-6">No engagement data available</p>
+          <p className="text-gray-600 mb-6">No reach data available</p>
         </div>
       </div>
     );
@@ -91,9 +88,7 @@ const EngagementOverTimeChart = ({ data }) => {
   };
 
   // Find max values for better scaling
-  const maxInteractions = Math.max(
-    ...engagementData.map((d) => d.interactions)
-  );
+  const maxPosts = Math.max(...engagementData.map((d) => d.posts));
   const maxReach = Math.max(...engagementData.map((d) => d.reach));
 
   return (
@@ -101,48 +96,30 @@ const EngagementOverTimeChart = ({ data }) => {
       <div className="p-6 bg-white ">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Engagement Over Time
+            Reach Over Time
           </h2>
           <p className="text-gray-600">
-            Daily interaction and reach trends across all platforms
+            Daily posts/mentions count and reach trends across all platforms
           </p>
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">
-              {engagementData
-                .reduce((sum, day) => sum + day.interactions, 0)
-                .toLocaleString()}
-            </div>
-            <div className="text-sm text-blue-800">Total Interactions</div>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">
-              {engagementData
-                .reduce((sum, day) => sum + day.reach, 0)
-                .toLocaleString()}
-            </div>
-            <div className="text-sm text-green-800">Total Reach</div>
-          </div>
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-blue-800">
               {Math.round(
-                engagementData.reduce(
-                  (sum, day) => sum + day.avgInteractions,
-                  0
-                ) / engagementData.length
+                engagementData.reduce((sum, day) => sum + day.posts, 0) /
+                  engagementData.length
               ).toLocaleString()}
             </div>
-            <div className="text-sm text-purple-800">
-              Avg Daily Interactions
+            <div className="text-sm text-blue-600">
+              Avg Daily Posts/Mentions
             </div>
           </div>
-          <div className="bg-orange-50 p-4 rounded-lg">
+          <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
             <div className="text-2xl font-bold text-orange-600">
               {Math.round(
-                engagementData.reduce((sum, day) => sum + day.avgReach, 0) /
+                engagementData.reduce((sum, day) => sum + day.reach, 0) /
                   engagementData.length
               ).toLocaleString()}
             </div>
@@ -152,7 +129,7 @@ const EngagementOverTimeChart = ({ data }) => {
 
         <div className="w-full">
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart
+            <ComposedChart
               data={engagementData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
@@ -169,7 +146,14 @@ const EngagementOverTimeChart = ({ data }) => {
                 interval="preserveStartEnd"
               />
               <YAxis
+                yAxisId="left"
                 tick={{ fontSize: 12 }}
+                orientation="left"
+              />
+              <YAxis
+                yAxisId="right"
+                tick={{ fontSize: 12 }}
+                orientation="right"
                 tickFormatter={(value) => {
                   if (value >= 1000000)
                     return `${(value / 1000000).toFixed(1)}M`;
@@ -178,50 +162,29 @@ const EngagementOverTimeChart = ({ data }) => {
                 }}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="line" />
+              <Legend wrapperStyle={{ paddingTop: "20px" }} />
 
-              {/* Reach Area (background) */}
-              <Area
-                type="monotone"
-                dataKey="reach"
-                stackId="1"
-                stroke="#10B981"
-                fill="url(#reachGradient)"
-                strokeWidth={2}
-                name="Total Reach"
-                fillOpacity={0.6}
-              />
-
-              {/* Interactions Area (foreground) */}
-              <Area
-                type="monotone"
-                dataKey="interactions"
-                stackId="2"
-                stroke="#3B82F6"
-                fill="url(#interactionGradient)"
-                strokeWidth={2}
-                name="Total Interactions"
+              {/* Bar Chart for Posts/Mentions */}
+              <Bar
+                yAxisId="left"
+                dataKey="posts"
+                fill="#3B82F6"
+                name="Posts/Mentions"
                 fillOpacity={0.8}
               />
 
-              {/* Gradients */}
-              <defs>
-                <linearGradient
-                  id="interactionGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1} />
-                </linearGradient>
-                <linearGradient id="reachGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.6} />
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.1} />
-                </linearGradient>
-              </defs>
-            </AreaChart>
+              {/* Line Chart for Reach */}
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="reach"
+                stroke="#f54a00"
+                strokeWidth={3}
+                name="Reach"
+                dot={{ fill: "#f54a00", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: "#f54a00", strokeWidth: 2 }}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
 
@@ -232,27 +195,25 @@ const EngagementOverTimeChart = ({ data }) => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
             <div>
-              <strong>Peak Interaction Day:</strong>{" "}
+              <strong>Peak Posts Day:</strong>{" "}
               {engagementData.reduce(
-                (max, day) => (day.interactions > max.interactions ? day : max),
+                (max, day) => (day.posts > max.posts ? day : max),
                 engagementData[0]
               )?.date &&
                 new Date(
                   engagementData.reduce(
-                    (max, day) =>
-                      day.interactions > max.interactions ? day : max,
+                    (max, day) => (day.posts > max.posts ? day : max),
                     engagementData[0]
                   ).date
                 ).toLocaleDateString()}{" "}
               (
               {engagementData
                 .reduce(
-                  (max, day) =>
-                    day.interactions > max.interactions ? day : max,
+                  (max, day) => (day.posts > max.posts ? day : max),
                   engagementData[0]
                 )
-                ?.interactions?.toLocaleString()}{" "}
-              interactions)
+                ?.posts?.toLocaleString()}{" "}
+              posts)
             </div>
             <div>
               <strong>Peak Reach Day:</strong>{" "}

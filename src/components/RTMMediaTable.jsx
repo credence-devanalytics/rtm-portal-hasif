@@ -305,7 +305,7 @@ const RTMMediaTable = ({
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+          {/* <tfoot className="bg-gray-50 border-t-2 border-gray-200">
             <tr>
               <td className="px-6 py-4 font-bold text-gray-900">TOTAL</td>
               <td className="px-6 py-4 text-center font-bold text-gray-900">
@@ -332,12 +332,12 @@ const RTMMediaTable = ({
                 )}
               </td>
             </tr>
-          </tfoot>
+          </tfoot> */}
         </table>
       </div>
 
       {/* Summary Cards */}
-      <div className="bg-gray-50 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* <div className="bg-gray-50 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="text-center">
           <div className="text-2xl font-bold text-blue-600">
             {processedData.length}
@@ -370,7 +370,7 @@ const RTMMediaTable = ({
           </div>
           <div className="text-sm text-gray-600">Total Interactions</div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
