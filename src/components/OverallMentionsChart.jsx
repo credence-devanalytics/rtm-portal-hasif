@@ -54,17 +54,17 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
       <div className="p-6 bg-white rounded-lg">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Mentions Over Time
+            Posts Over Time
           </h2>
           <p className="text-gray-600">
-            Daily total mentions across all social platforms
+            Daily total posts across all social platforms
           </p>
 
           {/* Statistics Cards */}
           <div className="flex gap-4 mt-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex-1">
               <div className="text-sm text-blue-600 font-medium">
-                Peak Mentions
+                Peak Posts
               </div>
               <div className="text-2xl font-bold text-blue-800">
                 {peakMentions.toLocaleString()}
@@ -80,7 +80,7 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
             </div>
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex-1">
               <div className="text-sm text-green-600 font-medium">
-                Average Mentions
+                Average Posts
               </div>
               <div className="text-2xl font-bold text-green-800">
                 {averageMentions.toLocaleString()}
@@ -147,7 +147,7 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
                         </p>
                         <p className="text-blue-600">
                           <span className="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
-                          Total Mentions: {data.value}
+                          Total Posts: {data.value}
                         </p>
                         <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-600">
                           <p>

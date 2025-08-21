@@ -311,15 +311,15 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
 
       {/* Summary stats */}
       <div className="mt-4 pt-4 border-t border-gray-100">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
+          {/* <div>
             <div className="text-2xl font-bold text-gray-900">
               {processedData
                 .reduce((sum, item) => sum + item.mentionCount, 0)
                 .toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Total Mentions</div>
-          </div>
+          </div> */}
           <div>
             <div className="text-2xl font-bold text-gray-900">
               {processedData.length}

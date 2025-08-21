@@ -121,10 +121,10 @@ const PlatformDonutChart = ({ data, onFilterChange }) => {
     <div className="w-full p-6 bg-white">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Sources Distribution - Mentions
+          Sources Distribution - Posts
         </h2>
         <p className="text-gray-600">
-          Share of conversations by channel to gauge where your topic is being
+          Share of conversations by platform to gauge where your topic is being
           discussed most
         </p>
       </div>

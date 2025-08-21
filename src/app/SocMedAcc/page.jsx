@@ -819,9 +819,8 @@ const RTMDashboard = () => {
         />
       </div>
 
-      {/* MAIN CHARTS - Now using finalFilteredData */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Mentions Over Time by Platform */}
+        {/* Sources Distribution - Posts */}
         <Card>
           <PlatformDonutChart
             data={finalFilteredData}
@@ -829,7 +828,26 @@ const RTMDashboard = () => {
           />
         </Card>
 
-        {/* Sentiment Trend */}
+        {/* RTM Units Mentions Distribution */}
+        <Card>
+          <RTMUnitsPieChart
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
+        </Card>
+      </div>
+
+      {/* MAIN CHARTS - Now using finalFilteredData */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Channel Posts */}
+        <Card>
+          <PlatformMentionsChart
+            data={finalFilteredData}
+            onFilterChange={handleGlobalFilterChange}
+          />
+        </Card>
+
+        {/* Engagement Rate by Platform */}
         <Card>
           <EngagementRateChart
             data={finalFilteredData}
@@ -849,7 +867,7 @@ const RTMDashboard = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
-        {/* Top Influencers */}
+        {/* Reach Over Time */}
         <Card>
           <EngagementOverTimeChart
             data={finalFilteredData}
@@ -858,24 +876,8 @@ const RTMDashboard = () => {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Top Platforms */}
-        <Card>
-          <PlatformMentionsChart
-            data={finalFilteredData}
-            onFilterChange={handleGlobalFilterChange}
-          />
-        </Card>
-        <Card>
-          <RTMUnitsPieChart
-            data={finalFilteredData}
-            onFilterChange={handleGlobalFilterChange}
-          />
-        </Card>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-1">
-        {/* Top Platforms */}
+        {/* Classification Posts */}
         <Card>
           <ClassificationMentionsChart
             data={finalFilteredData}

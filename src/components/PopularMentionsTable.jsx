@@ -129,10 +129,10 @@ const PopularMentionsTable = ({ data = [] }) => {
     <div className="w-full p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Most Popular Mentions
+          Most Popular Posts
         </h2>
         <p className="text-gray-600">
-          Most impactful mentions ranked by their reach
+          Most impactful posts ranked by their reach
         </p>
       </div>
 

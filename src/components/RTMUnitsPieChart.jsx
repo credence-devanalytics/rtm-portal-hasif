@@ -18,8 +18,8 @@ import {
 
 const RTMUnitsPieChart = ({
   data = [],
-  title = "RTM Units Mentions Distribution",
-  description = "Distribution of mentions across RTM units",
+  title = "RTM Units Posts Distribution",
+  description = "Distribution of posts across RTM units",
   onFilterChange = null, // New prop for cross-filtering
 }) => {
   // Function to transform unit names

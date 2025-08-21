@@ -148,7 +148,7 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
         <div className="p-3 border-b border-gray-200">
           <h2 className="text-sm font-semibold text-gray-900 flex items-center mb-2">
             <Users className="h-4 w-4 mr-1 text-blue-600" />
-            Channel Mentions
+            Channel Posts
           </h2>
           <div className="relative">
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
@@ -183,7 +183,7 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
         <div className="flex flex-col space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-[24px] font-bold text-gray-900 flex items-center">
-              Channel Mentions
+              Channel Posts
             </h2>
             <span className="text-xs text-gray-500">
               {totalMentions.toLocaleString()}
