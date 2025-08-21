@@ -1,5 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { BarChart3, TrendingUp, Users, MessageSquare } from "lucide-react";
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 const RTMMediaTable = ({
   data = [],
@@ -8,6 +15,8 @@ const RTMMediaTable = ({
 }) => {
   // State to track the current active tab from RTMTabs
   const [currentTab, setCurrentTab] = useState("overall");
+  // State to track whether to show all radio channels or just top 5
+  const [showAllRadioChannels, setShowAllRadioChannels] = useState(false);
   // Channel mapping based on your requirements
   const channelMapping = {
     Berita: ["Berita BES"],
@@ -53,6 +62,10 @@ const RTMMediaTable = ({
   // Update current tab when selectedTab prop changes
   useEffect(() => {
     setCurrentTab(selectedTab);
+    // Reset show all radio channels when tab changes
+    if (selectedTab !== "radio") {
+      setShowAllRadioChannels(false);
+    }
   }, [selectedTab]);
 
   // Process data based on current tab
@@ -124,7 +137,13 @@ const RTMMediaTable = ({
           return [];
       }
 
-      return channels.map((channel) => {
+      // For radio channels, limit to top 5 unless showing all
+      const channelsToProcess =
+        currentTab === "radio" && !showAllRadioChannels
+          ? channels.slice(0, 5)
+          : channels;
+
+      return channelsToProcess.map((channel) => {
         // Filter data by unit and try to match channel name in author or other fields
         const filteredData = data.filter((item) => {
           if (currentTab === "official") {
@@ -159,7 +178,7 @@ const RTMMediaTable = ({
         };
       });
     }
-  }, [data, currentTab]);
+  }, [data, currentTab, showAllRadioChannels]);
 
   // Handle row click for filtering
   const handleRowClick = (rowData) => {
@@ -304,37 +323,90 @@ const RTMMediaTable = ({
                 </td>
               </tr>
             ))}
+            {/* Empty placeholder rows to maintain consistent height */}
+            {Array.from({
+              length: Math.max(
+                0,
+                (currentTab === "overall" ? 4 : 5) - processedData.length
+              ),
+            }).map((_, index) => (
+              <tr key={`empty-${index}`} className="h-16">
+                <td className="px-6 py-4">
+                  <div className="h-6"></div>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="h-6"></div>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="h-6"></div>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="h-6"></div>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="h-6"></div>
+                </td>
+              </tr>
+            ))}
           </tbody>
-          {/* <tfoot className="bg-gray-50 border-t-2 border-gray-200">
-            <tr>
-              <td className="px-6 py-4 font-bold text-gray-900">TOTAL</td>
-              <td className="px-6 py-4 text-center font-bold text-gray-900">
-                {formatNumber(
-                  processedData.reduce((sum, row) => sum + row.totalPosts, 0)
-                )}
-              </td>
-              <td className="px-6 py-4 text-center font-bold text-green-600">
-                {formatNumber(
-                  processedData.reduce((sum, row) => sum + row.totalReach, 0)
-                )}
-              </td>
-              <td className="px-6 py-4 text-center font-bold text-purple-600">
-                {formatNumber(
-                  processedData.reduce(
-                    (sum, row) => sum + row.totalInteractions,
-                    0
-                  )
-                )}
-              </td>
-              <td className="px-6 py-4 text-center font-bold text-orange-600">
-                {formatNumber(
-                  processedData.reduce((sum, row) => sum + row.overallTotal, 0)
-                )}
-              </td>
-            </tr>
-          </tfoot> */}
+          {/* Footer with totals - only show for overall tab */}
+          {currentTab === "overall" && (
+            <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+              <tr>
+                <td className="px-6 py-4 font-bold text-gray-900">TOTAL</td>
+                <td className="px-6 py-4 text-center font-bold text-gray-900">
+                  {formatNumber(
+                    processedData.reduce((sum, row) => sum + row.totalPosts, 0)
+                  )}
+                </td>
+                <td className="px-6 py-4 text-center font-bold text-green-600">
+                  {formatNumber(
+                    processedData.reduce((sum, row) => sum + row.totalReach, 0)
+                  )}
+                </td>
+                <td className="px-6 py-4 text-center font-bold text-purple-600">
+                  {formatNumber(
+                    processedData.reduce(
+                      (sum, row) => sum + row.totalInteractions,
+                      0
+                    )
+                  )}
+                </td>
+                <td className="px-6 py-4 text-center font-bold text-orange-600">
+                  {formatNumber(
+                    processedData.reduce(
+                      (sum, row) => sum + row.overallTotal,
+                      0
+                    )
+                  )}
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
+
+      {/* Show More/Less Button for Radio Channels */}
+      {currentTab === "radio" && channelMapping.Radio.length > 5 && (
+        <div className="px-6 py-4 bg-gray-50 border-t">
+          <button
+            onClick={() => setShowAllRadioChannels(!showAllRadioChannels)}
+            className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-md hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center gap-2"
+          >
+            {showAllRadioChannels ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Show Less ({channelMapping.Radio.length - 5} channels hidden)
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Show More ({channelMapping.Radio.length - 5} more channels)
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Summary Cards */}
       {/* <div className="bg-gray-50 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">

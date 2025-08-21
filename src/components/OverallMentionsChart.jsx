@@ -162,7 +162,7 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
               />
 
               {/* Reference line for average mentions */}
-              <ReferenceLine
+              {/* <ReferenceLine
                 y={averageMentions}
                 stroke="#10B981"
                 strokeDasharray="5 5"
@@ -176,10 +176,10 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
                     fontWeight: "bold",
                   },
                 }}
-              />
+              /> */}
 
               {/* Reference line for peak mentions */}
-              <ReferenceLine
+              {/* <ReferenceLine
                 y={peakMentions}
                 stroke="#EF4444"
                 strokeDasharray="5 5"
@@ -193,7 +193,7 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
                     fontWeight: "bold",
                   },
                 }}
-              />
+              /> */}
 
               <Line
                 type="linear"

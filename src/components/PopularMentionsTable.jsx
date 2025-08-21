@@ -54,18 +54,29 @@ const PopularMentionsTable = ({ data = [] }) => {
     Reddit: { color: "#FF4500", bg: "bg-orange-50" },
   };
 
-  // Sentiment badge styles
-  const getSentimentStyle = (sentiment) => {
-    switch (sentiment?.toLowerCase()) {
-      case "positive":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "negative":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "neutral":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+  // Category badge styles
+  const getCategoryStyle = (category) => {
+    if (!category) return "bg-gray-100 text-gray-800 border-gray-200";
+
+    // Generate consistent colors based on category name
+    const colors = [
+      "bg-blue-100 text-blue-800 border-blue-200",
+      "bg-green-100 text-green-800 border-green-200",
+      "bg-purple-100 text-purple-800 border-purple-200",
+      "bg-orange-100 text-orange-800 border-orange-200",
+      "bg-teal-100 text-teal-800 border-teal-200",
+      "bg-pink-100 text-pink-800 border-pink-200",
+      "bg-indigo-100 text-indigo-800 border-indigo-200",
+      "bg-yellow-100 text-yellow-800 border-yellow-200",
+    ];
+
+    // Simple hash function to consistently assign colors
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+      hash = category.charCodeAt(i) + ((hash << 5) - hash);
     }
+
+    return colors[Math.abs(hash) % colors.length];
   };
 
   // Format numbers with commas
@@ -133,19 +144,19 @@ const PopularMentionsTable = ({ data = [] }) => {
                 Post
               </th>
               <th className="text-left p-4 font-semibold text-gray-700">
-                Author & Platform
+                Account & Platform
               </th>
-              <th className="text-left p-4 font-semibold text-gray-700">
+              <th className="text-center p-4 font-semibold text-gray-700">
                 Date & Time
               </th>
-              <th className="text-left p-4 font-semibold text-gray-700">
+              <th className="text-center p-4 font-semibold text-gray-700">
                 Reach
               </th>
-              <th className="text-left p-4 font-semibold text-gray-700">
+              <th className="text-center p-4 font-semibold text-gray-700">
                 Interactions
               </th>
-              <th className="text-left p-4 font-semibold text-gray-700">
-                Sentiment
+              <th className="text-center p-4 font-semibold text-gray-700">
+                Category
               </th>
             </tr>
           </thead>
@@ -234,27 +245,22 @@ const PopularMentionsTable = ({ data = [] }) => {
                           {formatNumber(mention?.interactions)}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-500 space-y-1">
-                        <div>
-                          ❤️ {formatNumber(mention?.likeCount)} • 🔄{" "}
-                          {formatNumber(mention?.shareCount)}
-                        </div>
-                        <div>💬 {formatNumber(mention?.commentCount)}</div>
+                      <div className="text-xs text-gray-500">
+                        ❤️ {formatNumber(mention?.likeCount)} • 🔄{" "}
+                        {formatNumber(mention?.shareCount)} • 💬{" "}
+                        {formatNumber(mention?.commentCount)}
                       </div>
                     </div>
                   </td>
 
-                  {/* Sentiment Column */}
-                  <td className="p-4">
+                  {/* Category Column */}
+                  <td className="p-4 text-center">
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium border ${getSentimentStyle(
-                        mention?.sentiment
+                      className={`px-3 py-1 rounded-full text-sm font-medium border ${getCategoryStyle(
+                        mention?.category
                       )}`}
                     >
-                      {mention?.sentiment
-                        ? mention.sentiment.charAt(0).toUpperCase() +
-                          mention.sentiment.slice(1)
-                        : "Unknown"}
+                      {mention?.category || "Unknown"}
                     </span>
                   </td>
                 </tr>

@@ -67,7 +67,7 @@ const ClassificationMentionsChart = ({ data = [] }) => {
     return processedData.reduce((sum, item) => sum + item.count, 0);
   }, [processedData]);
 
-  const uniqueClassifications = processedData.length;
+  const   uniqueClassifications = processedData.length;
 
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
