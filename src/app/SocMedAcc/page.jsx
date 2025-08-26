@@ -215,8 +215,8 @@ const RTMDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState({
-    from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // Changed from 30 to 90 days
-    to: new Date(),
+    from: new Date('2025-01-15'), // Start from earliest data available
+    to: new Date('2025-05-20'),   // End at latest data available
   });
 
   // NEW: Global filter state for cross-filtering
@@ -334,6 +334,8 @@ const RTMDashboard = () => {
 
         const queryParams = new URLSearchParams({
           days: daysDiff.toString(),
+          from: selectedDateRange.from.toISOString(),
+          to: selectedDateRange.to.toISOString(),
           platform: selectedPlatform !== "all" ? selectedPlatform : "",
         });
 
