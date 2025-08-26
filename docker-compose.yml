@@ -1,6 +1,21 @@
 version: "3.8"
 
 services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:15
+    container_name: dashboard_postgres
+    environment:
+      POSTGRES_DB: rtmmedina
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: "#M3dinaCredence!25"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   # Next.js application
   app:
     build:
@@ -12,8 +27,13 @@ services:
       - .env
     environment:
       - NODE_ENV=production
+    depends_on:
+      - postgres
     networks:
       - app-network
+
+volumes:
+  postgres_data:
 
 networks:
   app-network:

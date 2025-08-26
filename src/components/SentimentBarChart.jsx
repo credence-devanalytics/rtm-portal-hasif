@@ -8,9 +8,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 
-const SentimentBarChart = ({ data = [] }) => {
+const SentimentBarChart = ({ data = [], onFilterChange }) => {
   const [showNeutral, setShowNeutral] = useState(false);
 
   // Calculate overall sentiment
@@ -30,11 +31,13 @@ const SentimentBarChart = ({ data = [] }) => {
       sentiment: "Positive",
       count: overallSentiment.positive,
       fill: "#10B981",
+      key: "positive",
     },
     {
       sentiment: "Negative",
       count: overallSentiment.negative,
       fill: "#EF4444",
+      key: "negative",
     },
   ];
 
@@ -42,12 +45,41 @@ const SentimentBarChart = ({ data = [] }) => {
     sentiment: "Neutral",
     count: overallSentiment.neutral,
     fill: "#6B7280",
+    key: "neutral",
   };
 
   // Insert neutral data in the middle if showing neutral
   const chartData = showNeutral
     ? [baseChartData[0], neutralData, baseChartData[1]]
     : baseChartData;
+
+  // Handle bar click for cross-filtering
+  const handleBarClick = (data, index) => {
+    if (onFilterChange && data && data.key) {
+      onFilterChange("sentiment", data.key);
+    }
+  };
+
+  // Custom tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-semibold text-gray-800">{label}</p>
+          <p className="text-gray-600">
+            <span className="font-medium">{data.value}</span> mentions
+          </p>
+          {onFilterChange && (
+            <p className="text-xs text-gray-400 mt-1 italic">
+              Click to filter by {label.toLowerCase()} sentiment
+            </p>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="w-full p-6 bg-white">
@@ -83,13 +115,42 @@ const SentimentBarChart = ({ data = [] }) => {
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="sentiment" tick={{ fontSize: 12 }} />
+            <XAxis
+              dataKey="sentiment"
+              tick={{ fontSize: 12 }}
+              className={onFilterChange ? "cursor-pointer" : ""}
+            />
             <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Bar dataKey="count" fill={(entry) => entry.fill} />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar
+              dataKey="count"
+              cursor={onFilterChange ? "pointer" : "default"}
+              onClick={handleBarClick}
+            >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.fill}
+                  className={
+                    onFilterChange
+                      ? "hover:opacity-80 transition-opacity duration-200"
+                      : ""
+                  }
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Clickable hint */}
+      {onFilterChange && (
+        <div className="mt-4">
+          <p className="text-xs text-gray-400 italic text-center">
+            💡 Click on bars to filter by sentiment
+          </p>
+        </div>
+      )}
     </div>
   );
 };

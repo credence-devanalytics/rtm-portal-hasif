@@ -34,7 +34,7 @@ export default function Header() {
 
   const dashboardItems = [
     { name: "SocMed RTM Account", href: "SocMedAcc" },
-    { name: "SocMed Public Sentiment", href: "#public-Sentiment" },
+    { name: "SocMed Public Sentiment", href: "PubSentiment" },
     { name: "Multiplatform", href: "#multiplatform" },
   ];
 
@@ -123,6 +123,7 @@ export default function Header() {
               </div>
               {mainNavItems.map((item) => (
                 <a
+                  key={item.name}
                   href={item.href}
                   className="text-gray-900 font-medium relative transition-colors duration-300 hover:text-orange-500 group"
                 >

@@ -163,12 +163,11 @@ const ClassificationMentionsChart = ({ data = [] }) => {
       <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Tag className="h-5 w-5 mr-2 text-blue-600" />
-              Classification Mentions
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Classification Posts
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              {totalMentions.toLocaleString()} total mentions across{" "}
+              {totalMentions.toLocaleString()} total posts across{" "}
               {uniqueClassifications} classifications
             </p>
           </div>
@@ -246,7 +245,7 @@ const ClassificationMentionsChart = ({ data = [] }) => {
                 stroke="#666"
                 tickFormatter={(value) => value.toLocaleString()}
                 label={{
-                  value: "Mentions",
+                  value: "Posts",
                   angle: -90,
                   position: "insideLeft",
                   style: {

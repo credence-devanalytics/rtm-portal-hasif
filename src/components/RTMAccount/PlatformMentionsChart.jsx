@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { TrendingUp, Users, Filter, Search } from "lucide-react";
 
-const PlatformMentionsChart = ({ data = [] }) => {
+const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("count"); // 'count' or 'alphabetical'
   const [showTop, setShowTop] = useState(10); // Show top N platforms (reduced default)
@@ -68,6 +68,13 @@ const PlatformMentionsChart = ({ data = [] }) => {
 
   const uniquePlatforms = processedData.length;
 
+  // Handle bar click for cross-filtering
+  const handleBarClick = (data, index) => {
+    if (onFilterChange && data && data.author) {
+      onFilterChange("author", data.author);
+    }
+  };
+
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -76,7 +83,7 @@ const PlatformMentionsChart = ({ data = [] }) => {
         processedData.find((item) => item.displayName === label)?.author ||
         label;
       return (
-        <div className="bg-white max-w-xs">
+        <div className="bg-white max-w-xs border border-gray-200 rounded-lg shadow-lg p-3">
           <p className="font-semibold text-gray-800 text-xs mb-1 break-words">
             {fullAuthor}
           </p>
@@ -89,6 +96,11 @@ const PlatformMentionsChart = ({ data = [] }) => {
           {totalMentions > 0 && (
             <p className="text-gray-500 text-xs">
               {((data.value / totalMentions) * 100).toFixed(1)}% of total
+            </p>
+          )}
+          {onFilterChange && (
+            <p className="text-xs text-gray-400 mt-1 italic">
+              Click to filter by this author
             </p>
           )}
         </div>
@@ -136,7 +148,7 @@ const PlatformMentionsChart = ({ data = [] }) => {
         <div className="p-3 border-b border-gray-200">
           <h2 className="text-sm font-semibold text-gray-900 flex items-center mb-2">
             <Users className="h-4 w-4 mr-1 text-blue-600" />
-            Channel Mentions
+            Channel Posts
           </h2>
           <div className="relative">
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
@@ -171,7 +183,7 @@ const PlatformMentionsChart = ({ data = [] }) => {
         <div className="flex flex-col space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-[24px] font-bold text-gray-900 flex items-center">
-              Channel Mentions
+              Channel Posts
             </h2>
             <span className="text-xs text-gray-500">
               {totalMentions.toLocaleString()}
@@ -250,12 +262,34 @@ const PlatformMentionsChart = ({ data = [] }) => {
               stroke="#666"
               width={60}
               interval={0}
+              className={onFilterChange ? "cursor-pointer" : ""}
+              tick={{ cursor: onFilterChange ? "pointer" : "default" }}
             />
             <Tooltip cursor={false} content={<CustomTooltip />} />
-            <Bar dataKey="count" fill="#3b82f6" radius={2} />
+            <Bar
+              dataKey="count"
+              fill="#3b82f6"
+              radius={2}
+              cursor={onFilterChange ? "pointer" : "default"}
+              onClick={handleBarClick}
+              className={
+                onFilterChange
+                  ? "hover:opacity-80 transition-opacity duration-200"
+                  : ""
+              }
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Clickable hint */}
+      {onFilterChange && (
+        <div className="px-3 pb-2 flex-shrink-0">
+          <p className="text-xs text-gray-400 italic text-center">
+            💡 Click on bars to filter by author
+          </p>
+        </div>
+      )}
     </div>
   );
 };

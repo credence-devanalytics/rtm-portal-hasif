@@ -8,11 +8,40 @@ import {
   MessageCircle,
 } from "lucide-react";
 
-const PopularMentionsTable = ({ data }) => {
-  // Sort by reach (highest first) and take top 10
-  const topMentions = [...data]
-    .sort((a, b) => (b.reach || 0) - (a.reach || 0))
-    .slice(0, 10);
+const PopularMentionsTable = ({ data = [] }) => {
+  // Simple deduplication based on id only, with fallback
+  const topMentions = React.useMemo(() => {
+    if (!Array.isArray(data) || data.length === 0) return [];
+
+    // Remove duplicates based on id
+    const uniqueData = data.filter(
+      (item, index, self) =>
+        item && index === self.findIndex((t) => t?.id === item?.id)
+    );
+
+    return uniqueData
+      .sort((a, b) => (b?.reach || 0) - (a?.reach || 0))
+      .slice(0, 10);
+  }, [data]);
+
+  // Early return if no data
+  if (topMentions.length === 0) {
+    return (
+      <div className="w-full p-6 bg-white rounded-lg shadow-lg">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Most Popular Mentions
+          </h2>
+          <p className="text-gray-600">
+            Most impactful mentions ranked by their reach
+          </p>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-gray-500">No mentions data available</p>
+        </div>
+      </div>
+    );
+  }
 
   // Platform colors and icons
   const platformStyles = {
@@ -25,18 +54,29 @@ const PopularMentionsTable = ({ data }) => {
     Reddit: { color: "#FF4500", bg: "bg-orange-50" },
   };
 
-  // Sentiment badge styles
-  const getSentimentStyle = (sentiment) => {
-    switch (sentiment?.toLowerCase()) {
-      case "positive":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "negative":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "neutral":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+  // Category badge styles
+  const getCategoryStyle = (category) => {
+    if (!category) return "bg-gray-100 text-gray-800 border-gray-200";
+
+    // Generate consistent colors based on category name
+    const colors = [
+      "bg-blue-100 text-blue-800 border-blue-200",
+      "bg-green-100 text-green-800 border-green-200",
+      "bg-purple-100 text-purple-800 border-purple-200",
+      "bg-orange-100 text-orange-800 border-orange-200",
+      "bg-teal-100 text-teal-800 border-teal-200",
+      "bg-pink-100 text-pink-800 border-pink-200",
+      "bg-indigo-100 text-indigo-800 border-indigo-200",
+      "bg-yellow-100 text-yellow-800 border-yellow-200",
+    ];
+
+    // Simple hash function to consistently assign colors
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+      hash = category.charCodeAt(i) + ((hash << 5) - hash);
     }
+
+    return colors[Math.abs(hash) % colors.length];
   };
 
   // Format numbers with commas
@@ -47,18 +87,25 @@ const PopularMentionsTable = ({ data }) => {
 
   // Format date and time
   const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return {
-      date: date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      time: date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return { date: "N/A", time: "N/A" };
+      }
+      return {
+        date: date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        time: date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+    } catch (error) {
+      return { date: "N/A", time: "N/A" };
+    }
   };
 
   // Truncate text for display
@@ -82,10 +129,10 @@ const PopularMentionsTable = ({ data }) => {
     <div className="w-full p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Most Popular Mentions
+          Most Popular Posts
         </h2>
         <p className="text-gray-600">
-          Most impactful mentions ranked by their reach
+          Most impactful posts ranked by their reach
         </p>
       </div>
 
@@ -97,19 +144,19 @@ const PopularMentionsTable = ({ data }) => {
                 Post
               </th>
               <th className="text-left p-4 font-semibold text-gray-700">
-                Author & Platform
+                Account & Platform
               </th>
-              <th className="text-left p-4 font-semibold text-gray-700">
+              <th className="text-center p-4 font-semibold text-gray-700">
                 Date & Time
               </th>
-              <th className="text-left p-4 font-semibold text-gray-700">
+              <th className="text-center p-4 font-semibold text-gray-700">
                 Reach
               </th>
-              <th className="text-left p-4 font-semibold text-gray-700">
+              <th className="text-center p-4 font-semibold text-gray-700">
                 Interactions
               </th>
-              <th className="text-left p-4 font-semibold text-gray-700">
-                Sentiment
+              <th className="text-center p-4 font-semibold text-gray-700">
+                Category
               </th>
             </tr>
           </thead>
@@ -119,21 +166,23 @@ const PopularMentionsTable = ({ data }) => {
                 color: "#6B7280",
                 bg: "bg-gray-50",
               };
-              const { date, time } = formatDateTime(mention.date);
+              const { date, time } = formatDateTime(
+                mention.datetime || mention.date
+              );
 
               return (
                 <tr
-                  key={mention.id}
+                  key={`mention-${index}-${mention?.id || Math.random()}`}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   {/* Post Column */}
                   <td className="p-4 max-w-xs">
                     <div className="space-y-2">
                       <p className="text-sm text-gray-800 leading-relaxed">
-                        {truncateText(mention.mentionSnippet)}
+                        {truncateText(mention?.mentionSnippet)}
                       </p>
                       <a
-                        href={mention.postUrl}
+                        href={mention?.postUrl || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -149,13 +198,8 @@ const PopularMentionsTable = ({ data }) => {
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-gray-500" />
                         <span className="font-medium text-gray-800">
-                          {mention.author}
+                          {mention?.author || "Unknown"}
                         </span>
-                        {mention.isInfluencer && (
-                          <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full font-medium">
-                            Influencer
-                          </span>
-                        )}
                       </div>
                       <div
                         className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${platformStyle.bg}`}
@@ -165,7 +209,7 @@ const PopularMentionsTable = ({ data }) => {
                           style={{ backgroundColor: platformStyle.color }}
                         ></div>
                         <span style={{ color: platformStyle.color }}>
-                          {mention.platform}
+                          {mention?.platform || "Unknown"}
                         </span>
                       </div>
                     </div>
@@ -187,7 +231,7 @@ const PopularMentionsTable = ({ data }) => {
                     <div className="flex items-center space-x-2">
                       <Eye className="w-4 h-4 text-gray-500" />
                       <span className="font-semibold text-lg text-gray-800">
-                        {formatNumber(mention.reach)}
+                        {formatNumber(mention?.reach)}
                       </span>
                     </div>
                   </td>
@@ -198,30 +242,25 @@ const PopularMentionsTable = ({ data }) => {
                       <div className="flex items-center space-x-2">
                         <Heart className="w-4 h-4 text-gray-500" />
                         <span className="font-semibold text-gray-800">
-                          {formatNumber(mention.interactions)}
+                          {formatNumber(mention?.interactions)}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-500 space-y-1">
-                        <div>
-                          ❤️ {formatNumber(mention.likeCount)} • 🔄{" "}
-                          {formatNumber(mention.shareCount)}
-                        </div>
-                        <div>💬 {formatNumber(mention.commentCount)}</div>
+                      <div className="text-xs text-gray-500">
+                        ❤️ {formatNumber(mention?.likeCount)} • 🔄{" "}
+                        {formatNumber(mention?.shareCount)} • 💬{" "}
+                        {formatNumber(mention?.commentCount)}
                       </div>
                     </div>
                   </td>
 
-                  {/* Sentiment Column */}
-                  <td className="p-4">
+                  {/* Category Column */}
+                  <td className="p-4 text-center">
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium border ${getSentimentStyle(
-                        mention.sentiment
+                      className={`px-3 py-1 rounded-full text-sm font-medium border ${getCategoryStyle(
+                        mention?.category
                       )}`}
                     >
-                      {mention.sentiment
-                        ? mention.sentiment.charAt(0).toUpperCase() +
-                          mention.sentiment.slice(1)
-                        : "Unknown"}
+                      {mention?.category || "Unknown"}
                     </span>
                   </td>
                 </tr>

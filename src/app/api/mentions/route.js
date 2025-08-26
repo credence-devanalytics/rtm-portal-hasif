@@ -11,15 +11,34 @@ export async function GET(request) {
     const days = parseInt(searchParams.get('days') || '30');
     const platform = searchParams.get('platform');
     const unit = searchParams.get('unit');
+    const fromDate = searchParams.get('from');
+    const toDate = searchParams.get('to');
     
     // Calculate date filter
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
+    let cutoffDate, endDate;
+    
+    if (fromDate && toDate) {
+      // Use explicit date range if provided
+      cutoffDate = new Date(fromDate);
+      endDate = new Date(toDate);
+    } else {
+      // Fallback to days calculation
+      cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      endDate = new Date(); // Current date
+    }
     
     // Base where conditions
     let whereConditions = [
       gte(mentionsClassify.inserttime, cutoffDate.toISOString())
     ];
+    
+    // Add end date condition if we have explicit dates
+    if (fromDate && toDate) {
+      whereConditions.push(
+        sql`${mentionsClassify.inserttime} <= ${endDate.toISOString()}`
+      );
+    }
     
     if (platform && platform !== 'all') {
       whereConditions.push(
@@ -39,7 +58,7 @@ export async function GET(request) {
       .from(mentionsClassify)
       .where(and(...whereConditions))
       .orderBy(desc(mentionsClassify.inserttime))
-      .limit(99999);
+      .limit(10000);
     
     // 2. Get aggregated metrics
     const [metrics] = await db
