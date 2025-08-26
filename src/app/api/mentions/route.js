@@ -58,7 +58,7 @@ export async function GET(request) {
       .from(mentionsClassify)
       .where(and(...whereConditions))
       .orderBy(desc(mentionsClassify.inserttime))
-      .limit(99999);
+      .limit(10000);
     
     // 2. Get aggregated metrics
     const [metrics] = await db
