@@ -560,7 +560,7 @@ const PubSentiment = () => {
                     </div>
                   ) : (
                     `Load More Data (${
-                      data.meta?.pagination?.limit?.toLocaleString() || 5000
+                      data.meta?.pagination?.limit?.toLocaleString() || 10000
                     } more records)`
                   )}
                 </button>
