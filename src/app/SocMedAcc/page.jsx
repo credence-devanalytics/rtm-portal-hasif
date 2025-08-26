@@ -337,6 +337,7 @@ const RTMDashboard = () => {
           from: selectedDateRange.from.toISOString(),
           to: selectedDateRange.to.toISOString(),
           platform: selectedPlatform !== "all" ? selectedPlatform : "",
+          limit: "20000", // Add limit parameter to get more records
         });
 
         const response = await fetch(`/api/mentions?${queryParams}`);

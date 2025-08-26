@@ -50,7 +50,7 @@ export async function GET(request) {
     const sentiment = searchParams.get('sentiment');
     const topic = searchParams.get('topic');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10000');
+    const limit = parseInt(searchParams.get('limit') || '20000');
     const offset = (page - 1) * limit;
     
     // Calculate date filter
