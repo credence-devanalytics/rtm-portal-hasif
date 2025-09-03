@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, timestamp, doublePrecision, bigint, date, serial, integer } from "drizzle-orm/pg-core"
+import { pgTable, varchar, text, timestamp, doublePrecision, bigint, date, serial, integer, time, interval } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -334,4 +334,21 @@ export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
 	totalTokens: doublePrecision("total_tokens"),
 	downloaddate: date().default(sql`CURRENT_DATE`).notNull(),
 	idpk: serial().primaryKey().notNull(),
+});
+
+export const unifiViewership = pgTable("unifi_viewership", {
+	pk: serial().primaryKey().notNull(),
+	viewershipMonthYear: varchar("viewership_month_year", { length: 10 }),
+	channelName: varchar("channel_name", { length: 50 }),
+	programName: text("program_name"),
+	programTime: varchar("program_time", { length: 100 }),
+	programmeDate: date("programme_date"),
+	startTime: time("start_time"),
+	endTime: time("end_time"),
+	mau: integer(),
+	avgAccessDuration: interval("avg_access_duration"),
+	sheetName: varchar("sheet_name", { length: 50 }),
+	downloaddate: date().default(sql`CURRENT_DATE`).notNull(),
+	filename: varchar(),
+	duration: interval(),
 });

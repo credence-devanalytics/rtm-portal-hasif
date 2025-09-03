@@ -72,7 +72,7 @@ export async function GET(request) {
             .groupBy(mentionsClassify.type)
             .orderBy(desc(count()))
             .limit(5),
-          
+           
           // Get recent trending topics (top units/groups)
           db
             .select({

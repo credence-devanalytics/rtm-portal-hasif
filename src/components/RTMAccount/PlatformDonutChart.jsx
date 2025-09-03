@@ -8,7 +8,7 @@ import {
   Legend,
 } from "recharts";
 
-const PlatformDonutChart = ({ data, onFilterChange }) => {
+const PlatformDonutChart = ({ data, onFilterChange, activeFilters = {} }) => {
   // Count mentions by platform
   const platformCounts = data.reduce((acc, item) => {
     // console.log(item.platform);
@@ -61,6 +61,21 @@ const PlatformDonutChart = ({ data, onFilterChange }) => {
     }
   };
 
+  // Check if a platform is currently filtered
+  const isPlatformFiltered = (platform) => {
+    return activeFilters?.platform === platform;
+  };
+
+  // Get visual styling based on filter state
+  const getFilteredOpacity = (platform) => {
+    if (!activeFilters?.platform) return 1; // No filter active
+    if (isPlatformFiltered(platform)) {
+      return 1; // Highlighted
+    } else {
+      return 0.3; // Dimmed
+    }
+  };
+
   // Custom tooltip
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -94,25 +109,41 @@ const PlatformDonutChart = ({ data, onFilterChange }) => {
 
     return (
       <div className="flex flex-wrap justify-center gap-2 mt-4">
-        {payload.map((entry, index) => (
-          <div
-            key={`legend-${index}`}
-            className={`flex items-center space-x-2 px-3 py-1 rounded-md ${
-              onFilterChange
-                ? "cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                : ""
-            }`}
-            onClick={() => handleLegendClick(entry.value, entry)}
-          >
+        {payload.map((entry, index) => {
+          const isFiltered = isPlatformFiltered(entry.value);
+          const hasActiveFilter = activeFilters?.platform;
+
+          return (
             <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-sm text-gray-700">
-              {entry.value} ({entry.payload.value})
-            </span>
-          </div>
-        ))}
+              key={`legend-${index}`}
+              className={`flex items-center space-x-2 px-3 py-1 rounded-md transition-all duration-200 ${
+                onFilterChange ? "cursor-pointer hover:bg-gray-100" : ""
+              } ${
+                isFiltered
+                  ? "bg-blue-100 ring-2 ring-blue-500"
+                  : hasActiveFilter
+                  ? "opacity-50"
+                  : ""
+              }`}
+              onClick={() => handleLegendClick(entry.value, entry)}
+            >
+              <div
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  isFiltered ? "ring-2 ring-blue-400" : ""
+                }`}
+                style={{ backgroundColor: entry.color }}
+              />
+              <span
+                className={`text-sm ${
+                  isFiltered ? "text-blue-900 font-medium" : "text-gray-700"
+                }`}
+              >
+                {entry.value} ({entry.payload.value})
+                {isFiltered && <span className="ml-1 text-blue-600">●</span>}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -150,9 +181,10 @@ const PlatformDonutChart = ({ data, onFilterChange }) => {
                 <Cell
                   key={`cell-${index}`}
                   fill={getColor(entry.name, index)}
+                  fillOpacity={getFilteredOpacity(entry.name)}
                   className={
                     onFilterChange
-                      ? "hover:opacity-80 transition-opacity duration-200"
+                      ? "hover:opacity-80 transition-all duration-200"
                       : ""
                   }
                 />
@@ -169,6 +201,11 @@ const PlatformDonutChart = ({ data, onFilterChange }) => {
         <div className="mt-4">
           <p className="text-xs text-gray-400 italic text-center">
             💡 Click on pie slices or legend items to filter by platform
+            {activeFilters?.platform && (
+              <span className="text-blue-600 font-medium ml-2">
+                (Currently filtering by: {activeFilters.platform})
+              </span>
+            )}
           </p>
         </div>
       )}

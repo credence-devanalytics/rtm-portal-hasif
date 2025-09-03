@@ -20,7 +20,8 @@ const RTMUnitsPieChart = ({
   data = [],
   title = "RTM Units Posts Distribution",
   description = "Distribution of posts across RTM units",
-  onFilterChange = null, // New prop for cross-filtering
+  onFilterChange = null, // Prop for cross-filtering
+  activeFilters = {}, // New prop to receive active filters from parent
 }) => {
   // Function to transform unit names
   const transformUnitName = (unit) => {
@@ -48,6 +49,28 @@ const RTMUnitsPieChart = ({
     }
   };
 
+  // Check if a unit is currently filtered
+  const isUnitFiltered = (unit) => {
+    return activeFilters?.unit === unit;
+  };
+
+  // Get visual styling based on filter state
+  const getFilteredStyle = (unit) => {
+    if (!activeFilters?.unit) return {}; // No filter active
+    if (isUnitFiltered(unit)) {
+      return {
+        opacity: 1,
+        filter: "brightness(1.1) saturate(1.2)",
+        transform: "scale(1.02)",
+      };
+    } else {
+      return {
+        opacity: 0.4,
+        filter: "brightness(0.8) saturate(0.5)",
+      };
+    }
+  };
+
   // Process data to get unit counts and prepare chart data
   const { chartData, chartConfig, totalMentions } = React.useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) {
@@ -67,6 +90,7 @@ const RTMUnitsPieChart = ({
         unit: unit,
         mentions: count,
         fill: `var(--color-${unit.toLowerCase().replace(/[^a-z0-9]/g, "")})`,
+        isFiltered: isUnitFiltered(unit), // Add filter state to data
       }))
       .sort((a, b) => b.mentions - a.mentions);
 
@@ -101,7 +125,7 @@ const RTMUnitsPieChart = ({
       chartConfig: config,
       totalMentions: data.length,
     };
-  }, [data]);
+  }, [data, activeFilters]); // Add activeFilters as dependency
 
   // Loading state
   if (!data) {
@@ -196,7 +220,9 @@ const RTMUnitsPieChart = ({
               cursor={onFilterChange ? "pointer" : "default"}
               onClick={handlePieClick}
               className={
-                onFilterChange ? "hover:opacity-80 transition-opacity" : ""
+                onFilterChange
+                  ? "hover:opacity-80 transition-all duration-200"
+                  : ""
               }
             >
               <Label
@@ -221,7 +247,7 @@ const RTMUnitsPieChart = ({
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          Total Mentions
+                          {activeFilters?.unit ? "Filtered" : "Total"} Mentions
                         </tspan>
                       </text>
                     );
@@ -240,32 +266,72 @@ const RTMUnitsPieChart = ({
             );
             const colorKey = item.unit.toLowerCase().replace(/[^a-z0-9]/g, "");
             const color = chartConfig[colorKey]?.color || "var(--chart-1)";
+            const isFiltered = isUnitFiltered(item.unit);
+            const hasActiveFilter = activeFilters?.unit;
 
             return (
               <div
                 key={item.unit}
-                className={`bg-muted/50 rounded-lg p-3 text-center transition-colors ${
+                className={`bg-muted/50 rounded-lg p-3 text-center transition-all duration-200 ${
                   onFilterChange
                     ? "cursor-pointer hover:bg-muted/80 hover:shadow-sm active:bg-muted"
                     : ""
+                } ${
+                  isFiltered
+                    ? "ring-2 ring-blue-500 bg-blue-50/50 shadow-md"
+                    : hasActiveFilter
+                    ? "opacity-50"
+                    : ""
                 }`}
                 onClick={() => handleStatCardClick(item.unit)}
+                style={getFilteredStyle(item.unit)}
               >
                 <div
-                  className="w-3 h-3 rounded-full mx-auto mb-2"
+                  className={`w-3 h-3 rounded-full mx-auto mb-2 transition-all duration-200 ${
+                    isFiltered ? "ring-2 ring-blue-400" : ""
+                  }`}
                   style={{ backgroundColor: color }}
                 />
-                <p className="text-xs font-medium text-foreground mb-1">
+                <p
+                  className={`text-xs font-medium mb-1 ${
+                    isFiltered ? "text-blue-900" : "text-foreground"
+                  }`}
+                >
                   {item.unit}
+                  {isFiltered && <span className="ml-1 text-blue-600">●</span>}
                 </p>
-                <p className="text-lg font-bold text-foreground">
+                <p
+                  className={`text-lg font-bold ${
+                    isFiltered ? "text-blue-900" : "text-foreground"
+                  }`}
+                >
                   {item.mentions.toLocaleString()}
                 </p>
-                <p className="text-xs text-muted-foreground">{percentage}%</p>
+                <p
+                  className={`text-xs ${
+                    isFiltered ? "text-blue-700" : "text-muted-foreground"
+                  }`}
+                >
+                  {percentage}%
+                </p>
               </div>
             );
           })}
         </div>
+
+        {/* Cross-filtering hint */}
+        {onFilterChange && (
+          <div className="mt-4 text-center">
+            <p className="text-xs text-gray-400 italic">
+              💡 Click on pie slices or unit cards to filter other charts
+              {activeFilters?.unit && (
+                <span className="text-blue-600 font-medium ml-2">
+                  (Currently filtering by: {activeFilters.unit})
+                </span>
+              )}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
