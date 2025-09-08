@@ -352,3 +352,14 @@ export const unifiViewership = pgTable("unifi_viewership", {
 	filename: varchar(),
 	duration: interval(),
 });
+
+export const mytvAnalysis = pgTable("mytv_analysis", {
+	pk: serial().primaryKey().notNull(),
+	channel: varchar(),
+	metric: varchar(),
+	value: doublePrecision(),
+	region: varchar(),
+	year: integer(),
+	page_num: integer(),
+	table_idx: integer(),
+});

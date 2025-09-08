@@ -96,6 +96,9 @@ importers:
       eslint-config-next:
         specifier: 15.4.4
         version: 15.4.4(eslint@9.32.0(jiti@2.5.1))(typescript@5.9.2)
+      mini-css-extract-plugin:
+        specifier: ^2.9.4
+        version: 2.9.4(webpack@5.101.3(esbuild@0.25.8))
       tailwindcss:
         specifier: ^4
         version: 4.1.11
@@ -2788,6 +2791,12 @@ packages:
   mime-types@2.1.35:
     resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
     engines: {node: '>= 0.6'}
+
+  mini-css-extract-plugin@2.9.4:
+    resolution: {integrity: sha512-ZWYT7ln73Hptxqxk2DxPU9MmapXRhxkJD6tkSR04dnQxm8BGu2hzgKLugK5yySD97u/8yy7Ma7E76k9ZdvtjkQ==}
+    engines: {node: '>= 12.13.0'}
+    peerDependencies:
+      webpack: ^5.0.0
 
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
@@ -6226,6 +6235,12 @@ snapshots:
   mime-types@2.1.35:
     dependencies:
       mime-db: 1.52.0
+
+  mini-css-extract-plugin@2.9.4(webpack@5.101.3(esbuild@0.25.8)):
+    dependencies:
+      schema-utils: 4.3.2
+      tapable: 2.2.2
+      webpack: 5.101.3(esbuild@0.25.8)
 
   minimatch@3.1.2:
     dependencies:

@@ -45,6 +45,7 @@
     "drizzle-kit": "^0.31.4",
     "eslint": "^9",
     "eslint-config-next": "15.4.4",
+    "mini-css-extract-plugin": "^2.9.4",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
     "tw-animate-css": "^1.3.6"
