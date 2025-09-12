@@ -363,3 +363,15 @@ export const mytvAnalysis = pgTable("mytv_analysis", {
 	page_num: integer(),
 	table_idx: integer(),
 });
+
+export const marketingChannelByYear = pgTable("marketing_channel_byyear", {
+	id: serial().primaryKey().notNull(),
+	report_type: varchar("report_type"),
+	report_title: text("report_title"),
+	saluran: varchar(),
+	groupby: varchar(),
+	year: integer(),
+	value: varchar(),
+	insertdate: timestamp({ mode: 'string' }),
+	updatedate: timestamp({ mode: 'string' }),
+});

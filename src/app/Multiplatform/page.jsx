@@ -14,6 +14,10 @@ import {
   Radio,
   Monitor,
   Star,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -21,6 +25,7 @@ const MultiplatformPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("202502");
   const [mytvData, setMytvData] = useState(null);
+  const [marketingData, setMarketingData] = useState(null);
 
   // Total audience for MyTV platform
   const totalAudience = 7581399;
@@ -68,6 +73,32 @@ const MultiplatformPage = () => {
     };
 
     fetchMytvData();
+  }, []);
+
+  // Fetch Marketing data
+  useEffect(() => {
+    const fetchMarketingData = async () => {
+      try {
+        console.log("Fetching marketing data...");
+        const response = await fetch("/api/marketing-analysis");
+        console.log("Marketing response status:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Marketing API Response:", data);
+        console.log("Marketing Data Success:", data?.success);
+        console.log("Marketing Saluran Metrics:", data?.data?.saluranMetrics);
+        setMarketingData(data);
+      } catch (error) {
+        console.error("Error fetching Marketing data:", error);
+        console.error("Full error details:", error.message);
+      }
+    };
+
+    fetchMarketingData();
   }, []);
 
   // Calculate MyTV metrics using the mytv-analysis API
@@ -175,6 +206,57 @@ const MultiplatformPage = () => {
     };
   }, [mytvData]);
 
+  // Calculate Marketing metrics
+  const marketingMetrics = useMemo(() => {
+    console.log("Calculating marketing metrics...");
+    console.log("Marketing data:", marketingData);
+    console.log("Marketing data success:", marketingData?.success);
+    console.log(
+      "Marketing data saluranMetrics:",
+      marketingData?.data?.saluranMetrics
+    );
+
+    if (!marketingData?.success || !marketingData?.data?.saluranMetrics) {
+      console.log("Marketing data not available, returning default values");
+      return {
+        hasData: false,
+        totalValue: 0,
+        topSaluran: { name: "No data", value: 0, change: "N/A" },
+        overallChange: "N/A",
+        totalSaluran: 0,
+        top3Saluran: [],
+      };
+    }
+
+    const { saluranMetrics, summary } = marketingData.data;
+    console.log("Marketing summary:", summary);
+
+    const result = {
+      hasData: true,
+      totalValue: summary.totalCurrent,
+      formattedTotalValue: summary.formattedTotalCurrent,
+      totalPreviousValue: summary.totalPrevious,
+      formattedTotalPreviousValue: summary.formattedTotalPrevious,
+      topSaluran: summary.topSaluran
+        ? {
+            name: summary.topSaluran.saluran,
+            value: summary.topSaluran.currentValue,
+            formattedValue: summary.topSaluran.formattedCurrentValue,
+            change: summary.topSaluran.formattedChange,
+            direction: summary.topSaluran.changeDirection,
+          }
+        : { name: "No data", value: 0, change: "N/A" },
+      overallChange: summary.overallChange,
+      overallDirection: summary.overallDirection,
+      totalSaluran: summary.totalSaluran,
+      activeSaluran: summary.activeSaluran,
+      top3Saluran: saluranMetrics.slice(0, 3),
+    };
+
+    console.log("Final marketing metrics:", result);
+    return result;
+  }, [marketingData]);
+
   // Platform data structure
   const platforms = [
     {
@@ -252,13 +334,38 @@ const MultiplatformPage = () => {
     },
     {
       id: "marketing",
-      name: "Marketing",
-      icon: <TrendingUp className="h-8 w-8" />,
+      name: "Marketing Revenue",
+      icon: <DollarSign className="h-8 w-8" />,
       color: "from-rose-500 to-rose-600",
       borderColor: "border-rose-200",
       bgColor: "bg-rose-50",
       textColor: "text-rose-900",
       link: "/Marketing",
+      hasData: marketingMetrics.hasData,
+      metrics: {
+        mau: marketingMetrics.hasData
+          ? marketingMetrics.formattedTotalValue
+          : "No data available yet",
+        totalHours: marketingMetrics.hasData
+          ? `${marketingMetrics.activeSaluran} Active Saluran`
+          : "No data available yet",
+        avgHours: marketingMetrics.hasData
+          ? `${marketingMetrics.overallChange}% YoY`
+          : "No data available yet",
+        topChannel: marketingMetrics.hasData
+          ? `${marketingMetrics.topSaluran.name} (${marketingMetrics.topSaluran.change})`
+          : "No data available yet",
+      },
+    },
+    {
+      id: "wartaberita",
+      name: "Warta Berita",
+      icon: <Monitor className="h-8 w-8" />,
+      color: "from-indigo-500 to-indigo-600",
+      borderColor: "border-indigo-200",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-900",
+      link: "/WartaBerita",
       hasData: false,
       metrics: {
         mau: "No data available yet",
@@ -288,6 +395,37 @@ const MultiplatformPage = () => {
           platform.metrics.avgHours !== "N/A") ||
         (platform.metrics.topChannel !== "No data" &&
           platform.metrics.topChannel !== "N/A"));
+
+    // Helper functions for marketing change indicators
+    const getChangeIcon = (direction) => {
+      switch (direction) {
+        case "increase":
+          return <ArrowUp className="h-3 w-3 text-green-600" />;
+        case "decrease":
+          return <ArrowDown className="h-3 w-3 text-red-600" />;
+        case "new":
+          return <Star className="h-3 w-3 text-blue-600" />;
+        case "discontinued":
+          return <Minus className="h-3 w-3 text-gray-600" />;
+        default:
+          return <Minus className="h-3 w-3 text-gray-600" />;
+      }
+    };
+
+    const getChangeColor = (direction) => {
+      switch (direction) {
+        case "increase":
+          return "text-green-600";
+        case "decrease":
+          return "text-red-600";
+        case "new":
+          return "text-blue-600";
+        case "discontinued":
+          return "text-gray-600";
+        default:
+          return "text-gray-600";
+      }
+    };
 
     // Special layout for MyTV with enhanced analytics
     if (platform.id === "mytv" && hasAnyData && mytvMetrics.hasData) {
@@ -330,7 +468,7 @@ const MultiplatformPage = () => {
                     <div
                       className={`text-l font-bold ${platform.textColor} leading-tight mb-1`}
                     >
-                      {mytvMetrics.topChannel.name} -
+                      {mytvMetrics.topChannel.name}
                     </div>
                     <div
                       className={`text-l font-bold ${platform.textColor} mb-1`}
@@ -461,46 +599,281 @@ const MultiplatformPage = () => {
       );
     }
 
+    // Special layout for Marketing with enhanced analytics
+    if (platform.id === "marketing" && hasAnyData && marketingMetrics.hasData) {
+      // Get individual saluran data from marketingData
+      const saluranData = marketingData?.data?.saluranMetrics || [];
+
+      // Create a map of saluran values for easy access
+      const saluranMap = {};
+      saluranData.forEach((item) => {
+        saluranMap[item.saluran] = item;
+      });
+
+      // Helper function to get saluran data
+      const getSaluranData = (saluranName) => {
+        return (
+          saluranMap[saluranName] || {
+            saluran: saluranName,
+            currentValue: 0,
+            formattedCurrentValue: "N/A",
+            changeDirection: "no change",
+            formattedChange: "0%",
+          }
+        );
+      };
+
+      // Use the correct saluran names from the database
+      const tvData = getSaluranData("TV"); // Changed from 'TV1' to 'TV'
+      const besData = getSaluranData("BES");
+      const radioData = getSaluranData("RADIO"); // Changed from 'Radio' to 'RADIO'
+
+      return (
+        <Link href={platform.link} className="block group">
+          <Card
+            className={`h-full transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer bg-white/80 backdrop-blur-sm border-2 ${platform.borderColor} rounded-2xl`}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div
+                  className={`p-2 rounded-lg bg-gradient-to-r ${platform.color} text-white shadow-lg`}
+                >
+                  {platform.icon}
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+              <CardTitle
+                className={`text-xl font-bold ${platform.textColor} mt-3`}
+              >
+                {platform.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Saluran Cards Grid - TV, BES, Radio, Total */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* TV */}
+                <div
+                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Tv className={`h-3 w-3 ${platform.textColor}`} />
+                    <span
+                      className={`text-xs font-semibold ${platform.textColor}`}
+                    >
+                      TV
+                    </span>
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    title={tvData.formattedCurrentValue}
+                  >
+                    {tvData.currentValue > 0
+                      ? `RM${tvData.currentValue.toLocaleString()}`
+                      : "N/A"}
+                  </div>
+                  {tvData.previousValue > 0 && (
+                    <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
+                      vs RM{tvData.previousValue.toLocaleString()} (2023)
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className={`text-xs font-medium ${getChangeColor(
+                            tvData.changeDirection
+                          )}`}
+                        >
+                          {tvData.formattedChange}
+                        </span>
+                        {getChangeIcon(tvData.changeDirection)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* th */}
+                <div
+                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Radio className={`h-3 w-3 ${platform.textColor}`} />
+                    <span
+                      className={`text-xs font-semibold ${platform.textColor}`}
+                    >
+                      BES
+                    </span>
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    title={besData.formattedCurrentValue}
+                  >
+                    {besData.currentValue > 0
+                      ? `RM${besData.currentValue.toLocaleString()}`
+                      : "N/A"}
+                  </div>
+                  {besData.previousValue > 0 && (
+                    <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
+                      vs RM{besData.previousValue.toLocaleString()} (2023)
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className={`text-xs font-medium ${getChangeColor(
+                            besData.changeDirection
+                          )}`}
+                        >
+                          {besData.formattedChange}
+                        </span>
+                        {getChangeIcon(besData.changeDirection)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Radio */}
+                <div
+                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Radio className={`h-3 w-3 ${platform.textColor}`} />
+                    <span
+                      className={`text-xs font-semibold ${platform.textColor}`}
+                    >
+                      Radio
+                    </span>
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    title={radioData.formattedCurrentValue}
+                  >
+                    {radioData.currentValue > 0
+                      ? `RM${radioData.currentValue.toLocaleString()}`
+                      : "N/A"}
+                  </div>
+                  {radioData.previousValue > 0 && (
+                    <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
+                      vs RM{radioData.previousValue.toLocaleString()} (2023)
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className={`text-xs font-medium ${getChangeColor(
+                            radioData.changeDirection
+                          )}`}
+                        >
+                          {radioData.formattedChange}
+                        </span>
+                        {getChangeIcon(radioData.changeDirection)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Total */}
+                <div
+                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor} bg-gradient-to-br from-rose-100 to-rose-50`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <DollarSign className={`h-3 w-3 ${platform.textColor}`} />
+                    <span
+                      className={`text-xs font-semibold ${platform.textColor}`}
+                    >
+                      Total
+                    </span>
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    title={marketingMetrics.formattedTotalValue}
+                  >
+                    RM{marketingMetrics.totalValue.toLocaleString()}
+                  </div>
+                  {marketingMetrics.totalPreviousValue > 0 && (
+                    <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
+                      vs RM
+                      {marketingMetrics.totalPreviousValue.toLocaleString()}{" "}
+                      (2023)
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className={`text-xs font-medium ${getChangeColor(
+                            marketingMetrics.overallDirection
+                          )}`}
+                        >
+                          {marketingMetrics.overallChange}%
+                        </span>
+                        {getChangeIcon(marketingMetrics.overallDirection)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Click Indicator */}
+              <div className="pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700 transition-colors">
+                  <span className="text-xs font-medium">
+                    Click for detailed analytics
+                  </span>
+                  <ExternalLink className="h-3 w-3" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      );
+    }
+
     // Default layout for other platforms
-    // Create array of available metrics
     const availableMetrics = [
       {
-        key: "mau",
-        icon: <Users className={`h-4 w-4 ${platform.textColor}`} />,
-        label: "MAU",
-        value: platform.metrics.mau,
+        key: "topChannel",
+        icon:
+          platform.id === "marketing" ? (
+            <Trophy className={`h-4 w-4 ${platform.textColor}`} />
+          ) : (
+            <Trophy className={`h-4 w-4 ${platform.textColor}`} />
+          ),
+        label: platform.id === "marketing" ? "Top Saluran" : "Top Channel",
+        value: platform.metrics.topChannel,
         show:
-          platform.metrics.mau !== "No data" && platform.metrics.mau !== "N/A",
+          platform.metrics.topChannel !== "No data" &&
+          platform.metrics.topChannel !== "N/A",
       },
       {
         key: "totalHours",
-        icon: <Clock className={`h-4 w-4 ${platform.textColor}`} />,
-        label: "Hours",
+        icon:
+          platform.id === "marketing" ? (
+            <Radio className={`h-4 w-4 ${platform.textColor}`} />
+          ) : (
+            <Clock className={`h-4 w-4 ${platform.textColor}`} />
+          ),
+        label: platform.id === "marketing" ? "Saluran" : "Hours",
         value: platform.metrics.totalHours,
         show:
           platform.metrics.totalHours !== "No data" &&
           platform.metrics.totalHours !== "N/A",
       },
       {
+        key: "mau",
+        icon:
+          platform.id === "marketing" ? (
+            <DollarSign className={`h-4 w-4 ${platform.textColor}`} />
+          ) : (
+            <Users className={`h-4 w-4 ${platform.textColor}`} />
+          ),
+        label: platform.id === "marketing" ? "Total Revenue" : "MAU",
+        value: platform.metrics.mau,
+        show:
+          platform.metrics.mau !== "No data" && platform.metrics.mau !== "N/A",
+      },
+      {
         key: "avgHours",
-        icon: <Monitor className={`h-4 w-4 ${platform.textColor}`} />,
-        label: "Avg/User",
+        icon: <TrendingUp className={`h-4 w-4 ${platform.textColor}`} />,
+        label:
+          platform.id === "marketing"
+            ? "YoY Change"
+            : "Average Hours User Watched",
         value:
-          platform.metrics.avgHours !== "N/A"
+          platform.id === "marketing"
+            ? platform.metrics.avgHours
+            : platform.metrics.avgHours !== "N/A"
             ? `${platform.metrics.avgHours}h`
             : platform.metrics.avgHours,
         show:
           platform.metrics.avgHours !== "No data" &&
           platform.metrics.avgHours !== "N/A",
-      },
-      {
-        key: "topChannel",
-        icon: <Trophy className={`h-4 w-4 ${platform.textColor}`} />,
-        label: "Top Channel",
-        value: platform.metrics.topChannel,
-        show:
-          platform.metrics.topChannel !== "No data" &&
-          platform.metrics.topChannel !== "N/A",
       },
     ].filter((metric) => metric.show);
 
@@ -621,7 +994,7 @@ const MultiplatformPage = () => {
                 Multi-Platform Performance Overview
               </h1>
               <p className="text-gray-600 mt-2 text-lg">
-                Comprehensive analytics across 5 streaming platforms
+                Comprehensive analytics across 6 streaming platforms
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -643,7 +1016,7 @@ const MultiplatformPage = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card
                 key={i}
                 className="h-64 bg-white/80 backdrop-blur-sm rounded-2xl animate-pulse"
@@ -697,10 +1070,12 @@ const MultiplatformPage = () => {
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-amber-600">
-                    {platforms.filter((p) => !p.hasData).length}
+                  <div className="text-2xl font-bold text-rose-600">
+                    {marketingMetrics.hasData
+                      ? marketingMetrics.formattedTotalValue
+                      : "N/A"}
                   </div>
-                  <div className="text-sm text-gray-600">Platforms Pending</div>
+                  <div className="text-sm text-gray-600">Marketing Revenue</div>
                 </div>
               </div>
             </div>
@@ -719,9 +1094,10 @@ const MultiplatformPage = () => {
                   📊 Data Status
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Currently showing data for <strong>UnifiTV</strong> and{" "}
-                  <strong>MyTV</strong> platforms. Other platforms will be
-                  integrated as data becomes available.
+                  Currently showing data for <strong>UnifiTV</strong>,{" "}
+                  <strong>MyTV</strong>, and <strong>Marketing Revenue</strong>{" "}
+                  platforms. Other platforms will be integrated as data becomes
+                  available.
                 </p>
                 <div className="flex justify-center space-x-4 text-sm">
                   <span className="flex items-center space-x-2">
