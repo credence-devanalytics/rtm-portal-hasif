@@ -375,3 +375,16 @@ export const marketingChannelByYear = pgTable("marketing_channel_byyear", {
 	insertdate: timestamp({ mode: 'string' }),
 	updatedate: timestamp({ mode: 'string' }),
 });
+
+export const marketingChannelByMonth = pgTable("marketing_channel_bymonth", {
+	id: serial().primaryKey().notNull(),
+	report_type: varchar("report_type"),
+	report_title: text("report_title"),
+	saluran: varchar(),
+	groupby: varchar(),
+	year: integer(),
+	month: varchar(),
+	value: varchar(),
+	insertdate: timestamp({ mode: 'string' }),
+	updatedate: timestamp({ mode: 'string' }),
+});

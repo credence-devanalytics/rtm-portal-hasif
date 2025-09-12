@@ -12,17 +12,33 @@ import {
   Zap,
 } from "lucide-react";
 import { useMarketingData } from "@/hooks/useMarketingData";
+import { useTVMonthlyData } from "@/hooks/useTVMonthlyData";
+import { useMarketingTable2Data } from "@/hooks/useMarketingTable2Data";
 import MarketingIncomeComparisonChart from "@/components/Marketing/MarketingIncomeComparisonChart";
 import MarketingPerformanceTable from "@/components/Marketing/MarketingPerformanceTable";
+import MarketingChannelBreakdownTable from "@/components/Marketing/MarketingChannelBreakdownTable";
+import TVMonthlyPerformanceChart from "@/components/Marketing/TVMonthlyPerformanceChart";
 import Header from "@/components/Header";
 
 const MarketingDashboard = () => {
   const { data: marketingData, isLoading, error } = useMarketingData();
+  const {
+    data: tvMonthlyData,
+    isLoading: tvLoading,
+    error: tvError,
+  } = useTVMonthlyData();
+  const {
+    data: table2Data,
+    isLoading: table2Loading,
+    error: table2Error,
+  } = useMarketingTable2Data();
 
   // Debug: Log the marketing data
   console.log("Marketing dashboard received data:", marketingData);
+  console.log("TV monthly data:", tvMonthlyData);
+  console.log("Table 2 data:", table2Data);
 
-  if (isLoading) {
+  if (isLoading || tvLoading || table2Loading) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <Header />
@@ -38,7 +54,14 @@ const MarketingDashboard = () => {
     );
   }
 
-  if (error || !marketingData?.success) {
+  if (
+    error ||
+    !marketingData?.success ||
+    tvError ||
+    !tvMonthlyData?.success ||
+    table2Error ||
+    !table2Data?.success
+  ) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <Header />
@@ -51,6 +74,16 @@ const MarketingDashboard = () => {
               <p className="text-red-600">
                 Failed to load marketing data. Please try again later.
               </p>
+              {tvError && (
+                <p className="text-red-600 mt-2">
+                  TV monthly data failed to load.
+                </p>
+              )}
+              {table2Error && (
+                <p className="text-red-600 mt-2">
+                  Channel breakdown data failed to load.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -59,6 +92,7 @@ const MarketingDashboard = () => {
   }
 
   const { summary, saluranMetrics } = marketingData.data;
+  const { chartData: tvChartData, summary: tvSummary } = tvMonthlyData.data;
 
   // Format number for display
   const formatNumber = (num) => {
@@ -115,167 +149,40 @@ const MarketingDashboard = () => {
           </p>
         </div>
 
-        {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mt-6">
-          {/* Total Current Revenue */}
-          <Card className="">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Revenue 2024
-              </CardTitle>
-              <DollarSign className="h-5 w-5 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-900">
-                {summary.formattedTotalCurrent}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">Current year total</p>
-            </CardContent>
-          </Card>
+        {/* Yearly Performance Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">
+            Yearly Performance
+          </h2>
 
-          {/* Total Previous Revenue */}
-          <Card className="">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Revenue 2023
-              </CardTitle>
-              <BarChart3 className="h-5 w-5 text-gray-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                {summary.formattedTotalPrevious}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">Previous year total</p>
-            </CardContent>
-          </Card>
+          {/* Charts Row */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Income Comparison Chart */}
+            <MarketingIncomeComparisonChart data={saluranMetrics} />
 
-          {/* Total 2022 Revenue */}
-          <Card className="">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Revenue 2022
-              </CardTitle>
-              <Users className="h-5 w-5 text-indigo-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-indigo-900">
-                {summary.formattedTotal2022}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">2022 total</p>
-            </CardContent>
-          </Card>
-
-          {/* Overall Change */}
-          <Card
-            className={`${overallTrend.bgColor} ${overallTrend.borderColor}`}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle
-                className={`text-sm font-medium ${overallTrend.color}`}
-              >
-                Year-over-Year Change
-              </CardTitle>
-              <OverallTrendIcon className={`h-5 w-5 ${overallTrend.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${overallTrend.color}`}>
-                {summary.overallChange > 0 ? "+" : ""}
-                {summary.overallChange}%
-              </div>
-              <p className={`text-xs ${overallTrend.color} mt-1 capitalize`}>
-                {summary.overallDirection.replace("_", " ")}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Active Channels */}
-          <Card className="">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Active Channels
-              </CardTitle>
-              <Target className="h-5 w-5 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-900">
-                {summary.activeSaluran}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">Marketing channels</p>
-            </CardContent>
-          </Card>
+            {/* Performance Table */}
+            <MarketingPerformanceTable data={saluranMetrics} />
+          </div>
         </div>
 
-        {/* Charts Row */}
-        <div className="grid gap-6 lg:grid-cols-2 mt-6">
-          {/* Income Comparison Chart */}
-          <MarketingIncomeComparisonChart data={saluranMetrics} />
+        {/* TV Performance Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">
+            TV Performance Breakdown
+          </h2>
 
-          {/* Performance Table */}
-          <MarketingPerformanceTable data={saluranMetrics} />
+          {/* TV Charts Row */}
+          <div className="grid gap-6 lg:grid-cols-1">
+            <TVMonthlyPerformanceChart data={tvChartData} />
+          </div>
         </div>
 
-        {/* Top Performing Channels Table */}
-        <div className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                Channel Performance Breakdown
-              </CardTitle>
-              <p className="text-sm text-gray-600">
-                Detailed comparison of all marketing channels
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3">Channel</th>
-                      <th className="text-right p-3">2022 Revenue</th>
-                      <th className="text-right p-3">2023 Revenue</th>
-                      <th className="text-right p-3">2024 Revenue</th>
-                      <th className="text-right p-3">Change</th>
-                      <th className="text-center p-3">Trend</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {saluranMetrics.map((channel, index) => {
-                      const trend = getTrendIcon(
-                        channel.changeDirection,
-                        channel.percentageChange
-                      );
-                      const TrendIcon = trend.icon;
-
-                      return (
-                        <tr key={index} className="border-b hover:bg-gray-50">
-                          <td className="p-3 font-medium">{channel.saluran}</td>
-                          <td className="p-3 text-right">
-                            {channel.formatted2022Value}
-                          </td>
-                          <td className="p-3 text-right">
-                            {channel.formattedPreviousValue}
-                          </td>
-                          <td className="p-3 text-right">
-                            {channel.formattedCurrentValue}
-                          </td>
-                          <td
-                            className={`p-3 text-right font-semibold ${trend.color}`}
-                          >
-                            {channel.formattedChange}
-                          </td>
-                          <td className="p-3 text-center">
-                            <TrendIcon
-                              className={`h-4 w-4 mx-auto ${trend.color}`}
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Channel Breakdown Section */}
+        <div className="mt-12">
+          {/* Channel Breakdown Table */}
+          <div className="grid gap-6 lg:grid-cols-1">
+            <MarketingChannelBreakdownTable data={table2Data?.data} />
+          </div>
         </div>
       </div>
     </div>
