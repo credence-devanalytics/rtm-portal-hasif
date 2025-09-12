@@ -35,6 +35,7 @@ import {
   Meh,
   X,
   ChartAreaIcon,
+  Radio,
 } from "lucide-react";
 import { Sen, Zain } from "next/font/google";
 import SentimentBarChart from "@/components/SentimentBarChart";
@@ -809,17 +810,80 @@ const RTMDashboard = () => {
         <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className={`text-sm font-medium ${config.titleColor}`}>
-              Total Overall
+              Total Channels by Unit
             </CardTitle>
-            <ChartAreaIcon className={`h-5 w-5 ${config.faceColor}`} />
+            <Radio className={`h-5 w-5 ${config.faceColor}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {formatNumber(totalMentions + totalEngagements + totalReach)}
-            </div>
-            <p className={`text-xs ${config.subtitleColor} mt-1`}>
-              Mentions + Engagements + Reach
-            </p>
+            {(() => {
+              // Get unique channels (authors) grouped by unit
+              const channelsByUnit = finalFilteredData.reduce((acc, item) => {
+                if (!acc[item.unit]) {
+                  acc[item.unit] = new Set();
+                }
+                acc[item.unit].add(item.author);
+                return acc;
+              }, {});
+
+              // Calculate total unique channels across all units
+              const totalChannels = Object.values(channelsByUnit).reduce(
+                (total, channelSet) => total + channelSet.size,
+                0
+              );
+
+              // Ensure we have all units with default values
+              const allUnits = ["TV", "Radio", "News", "Official"];
+              const unitsData = allUnits.map((unit) => ({
+                unit: unit.toLowerCase(),
+                count: channelsByUnit[unit] ? channelsByUnit[unit].size : 0,
+              }));
+
+              return (
+                <div className="space-y-3">
+                  {/* 2x2 Grid format without separators */}
+                  <div className="grid grid-cols-4 gap-3">
+                    {/* Official */}
+                    <div className="text-center">
+                      <span className={`${config.subtitleColor} text-xs`}>
+                        Official
+                      </span>
+                      <div className="text-lg font-semibold">
+                        {unitsData[3].count}
+                      </div>
+                    </div>
+                    {/* TV */}
+                    <div className="text-center">
+                      <span className={`${config.subtitleColor} text-xs`}>
+                        TV
+                      </span>
+                      <div className="text-lg font-semibold">
+                        {unitsData[0].count}
+                      </div>
+                    </div>
+
+                    {/* News */}
+                    <div className="text-center">
+                      <span className={`${config.subtitleColor} text-xs`}>
+                        News
+                      </span>
+                      <div className="text-lg font-semibold">
+                        {unitsData[2].count}
+                      </div>
+                    </div>
+
+                    {/* Radio */}
+                    <div className="text-center">
+                      <span className={`${config.subtitleColor} text-xs`}>
+                        Radio
+                      </span>
+                      <div className="text-lg font-semibold">
+                        {unitsData[1].count}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
@@ -848,6 +912,7 @@ const RTMDashboard = () => {
           <PlatformDonutChart
             data={finalFilteredData}
             onFilterChange={handleGlobalFilterChange}
+            activeFilters={globalFilters}
           />
         </Card>
 
@@ -856,6 +921,7 @@ const RTMDashboard = () => {
           <RTMUnitsPieChart
             data={finalFilteredData}
             onFilterChange={handleGlobalFilterChange}
+            activeFilters={globalFilters}
           />
         </Card>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -23,15 +23,9 @@ import {
   EyeIcon,
 } from "lucide-react";
 import Header from "@/components/Header";
+import { useInfinitePublicMentions } from "@/hooks/useQueries";
 
 const PubSentiment = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(null);
-  const [allMentions, setAllMentions] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMoreData, setHasMoreData] = useState(true);
   const [filters, setFilters] = useState({
     days: 30,
     platform: "all",
@@ -39,100 +33,53 @@ const PubSentiment = () => {
     topic: "all",
   });
 
-  const fetchData = async (page = 1, resetData = true) => {
-    if (page === 1) {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
+  // Use TanStack Query for data fetching
+  const {
+    data,
+    error,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    status,
+    fetchStatus,
+  } = useInfinitePublicMentions(filters);
 
-    try {
-      const params = new URLSearchParams({
-        days: filters.days.toString(),
-        platform: filters.platform,
-        sentiment: filters.sentiment,
-        topic: filters.topic,
-        page: page.toString(),
-        limit: "10000", // Load 10k records per batch
-      });
+  // Debug logging
+  console.log("🔍 TanStack Query Debug:", {
+    filters,
+    status,
+    fetchStatus,
+    isLoading,
+    hasData: !!data,
+    pagesCount: data?.pages?.length || 0,
+    error: error?.message,
+    queryKey: ["publicMentions", filters],
+  });
 
-      console.log("Fetching data with filters:", { ...filters, page });
-      const response = await fetch(`/api/public-mentions?${params}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch data: ${response.statusText}`);
-      }
+  // Flatten all pages data
+  const allMentions = data?.pages?.flatMap((page) => page.mentions) || [];
+  const firstPageData = data?.pages?.[0];
 
-      const result = await response.json();
-      console.log(
-        `Successfully fetched ${
-          result.mentions?.length || 0
-        } posts/mentions for page ${page}`
-      );
-      console.log("API Response summary:", {
-        totalMentions: result.metrics?.totalMentions,
-        rawDataCount: result.mentions?.length,
-        platforms: result.platforms?.length,
-        topics: result.topics?.uniqueTopics?.length,
-        pagination: result.meta?.pagination,
-        firstFewMentions: result.mentions?.slice(0, 3).map((m) => ({
-          inserttime: m.inserttime,
-          type: m.type,
-          sentiment: m.sentiment,
-        })),
-      });
-
-      if (resetData || page === 1) {
-        // First page or filter change - reset all data
-        setAllMentions(result.mentions || []);
-        setCurrentPage(1);
-      } else {
-        // Subsequent pages - append data
-        setAllMentions((prev) => [...prev, ...(result.mentions || [])]);
-        setCurrentPage(page);
-      }
-
-      // Update the main data with combined mentions
-      const updatedResult = {
-        ...result,
-        mentions: resetData
-          ? result.mentions
-          : [...allMentions, ...(result.mentions || [])],
+  const handleFilterChange = (key, value) => {
+    console.log(`Filter changed: ${key} = ${value}`);
+    setFilters((prev) => {
+      const newFilters = {
+        ...prev,
+        [key]: value,
       };
-
-      setData(updatedResult);
-      setHasMoreData(result.meta?.pagination?.hasNextPage || false);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching public mentions data:", err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
+      console.log("New filters:", newFilters);
+      return newFilters;
+    });
   };
 
   const loadMoreData = () => {
-    if (!loadingMore && hasMoreData) {
-      fetchData(currentPage + 1, false);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
 
-  useEffect(() => {
-    // Reset pagination when filters change
-    setAllMentions([]);
-    setCurrentPage(1);
-    setHasMoreData(true);
-    fetchData(1, true);
-  }, [filters]);
-
-  const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-6">
         <Header />
@@ -150,11 +97,13 @@ const PubSentiment = () => {
         <Card className="border-red-200 bg-red-50">
           <CardHeader>
             <CardTitle className="text-red-800">Error Loading Data</CardTitle>
-            <CardDescription className="text-red-600">{error}</CardDescription>
+            <CardDescription className="text-red-600">
+              {error.message}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <button
-              onClick={fetchData}
+              onClick={() => window.location.reload()}
               className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
             >
               Retry
@@ -165,7 +114,7 @@ const PubSentiment = () => {
     );
   }
 
-  if (!data) {
+  if (!firstPageData) {
     return (
       <div className="container mx-auto p-6">
         <p>No data available</p>
@@ -218,7 +167,7 @@ const PubSentiment = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Platforms</SelectItem>
-                {data.platforms.map((platform) => (
+                {firstPageData?.platforms?.map((platform) => (
                   <SelectItem key={platform.platform} value={platform.platform}>
                     {platform.platform}
                   </SelectItem>
@@ -256,11 +205,13 @@ const PubSentiment = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Topics</SelectItem>
-                {data.topics.uniqueTopics.slice(0, 10).map((topic) => (
-                  <SelectItem key={topic} value={topic}>
-                    {topic}
-                  </SelectItem>
-                ))}
+                {firstPageData?.topics?.uniqueTopics
+                  ?.slice(0, 10)
+                  .map((topic) => (
+                    <SelectItem key={topic} value={topic}>
+                      {topic}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -278,7 +229,7 @@ const PubSentiment = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {data.metrics.totalMentions.toLocaleString()}
+              {firstPageData?.metrics?.totalMentions?.toLocaleString() || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Across all platforms
@@ -293,7 +244,7 @@ const PubSentiment = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {data.metrics.totalReach.toLocaleString()}
+              {firstPageData?.metrics?.totalReach?.toLocaleString() || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Total audience reached
@@ -310,7 +261,7 @@ const PubSentiment = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(data.metrics.avgConfidence * 100).toFixed(1)}%
+              {((firstPageData?.metrics?.avgConfidence || 0) * 100).toFixed(1)}%
             </div>
             <p className="text-xs text-muted-foreground">
               Classification confidence
@@ -327,7 +278,7 @@ const PubSentiment = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {data.metrics.totalInteractions.toLocaleString()}
+              {firstPageData?.metrics?.totalInteractions?.toLocaleString() || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Likes, shares, comments
@@ -357,7 +308,7 @@ const PubSentiment = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {data.sentiment.breakdown.map((item) => (
+                  {firstPageData?.sentiment?.breakdown?.map((item) => (
                     <div
                       key={item.sentiment}
                       className="flex justify-between items-center"
@@ -385,7 +336,7 @@ const PubSentiment = () => {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )) || <p>No sentiment data available</p>}
                 </div>
               </CardContent>
             </Card>
@@ -417,24 +368,26 @@ const PubSentiment = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {data.topics.distribution.slice(0, 10).map((item) => (
-                  <div
-                    key={item.topic}
-                    className="flex justify-between items-center"
-                  >
-                    <span className="font-medium">
-                      {item.topic || "Unknown"}
-                    </span>
-                    <div className="text-right">
-                      <div className="font-semibold">
-                        {item.count.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {(item.avgConfidence * 100).toFixed(1)}% conf.
+                {firstPageData?.topics?.distribution
+                  ?.slice(0, 10)
+                  .map((item) => (
+                    <div
+                      key={item.topic}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="font-medium">
+                        {item.topic || "Unknown"}
+                      </span>
+                      <div className="text-right">
+                        <div className="font-semibold">
+                          {item.count.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {(item.avgConfidence * 100).toFixed(1)}% conf.
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )) || <p>No topic data available</p>}
               </div>
             </CardContent>
           </Card>
@@ -450,7 +403,7 @@ const PubSentiment = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {data.platforms.map((item) => (
+                {firstPageData?.platforms?.map((item) => (
                   <div
                     key={item.platform}
                     className="flex justify-between items-center"
@@ -465,7 +418,7 @@ const PubSentiment = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                )) || <p>No platform data available</p>}
               </div>
             </CardContent>
           </Card>
@@ -481,7 +434,7 @@ const PubSentiment = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {data.confidence.distribution.map((item) => (
+                {firstPageData?.confidence?.distribution?.map((item) => (
                   <div
                     key={item.range}
                     className="flex justify-between items-center"
@@ -491,7 +444,7 @@ const PubSentiment = () => {
                       {item.count.toLocaleString()}
                     </div>
                   </div>
-                ))}
+                )) || <p>No confidence data available</p>}
               </div>
             </CardContent>
           </Card>
@@ -499,7 +452,7 @@ const PubSentiment = () => {
       </Tabs>
 
       {/* Load More Data Section */}
-      {data && (
+      {firstPageData && (
         <Card className="bg-green-50 border-green-200">
           <CardHeader>
             <CardTitle className="text-sm text-green-800">
@@ -512,26 +465,28 @@ const PubSentiment = () => {
                 <span className="text-sm font-medium">Currently Loaded:</span>
                 <span className="text-lg font-bold text-green-900">
                   {allMentions.length.toLocaleString()} /{" "}
-                  {data.meta?.pagination?.total?.toLocaleString() || 0}
+                  {firstPageData?.meta?.pagination?.total?.toLocaleString() ||
+                    0}
                 </span>
               </div>
 
-              {data.meta?.pagination && (
+              {firstPageData?.meta?.pagination && (
                 <div className="text-xs text-gray-600 space-y-1">
                   <p>
-                    Page {data.meta.pagination.page} of{" "}
-                    {data.meta.pagination.totalPages}
+                    Total pages available:{" "}
+                    {firstPageData.meta.pagination.totalPages}
                   </p>
                   <p>
                     Records per page:{" "}
-                    {data.meta.pagination.limit.toLocaleString()}
+                    {firstPageData.meta.pagination.limit.toLocaleString()}
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-green-600 h-2 rounded-full"
                       style={{
                         width: `${
-                          (allMentions.length / data.meta.pagination.total) *
+                          (allMentions.length /
+                            firstPageData.meta.pagination.total) *
                           100
                         }%`,
                       }}
@@ -539,7 +494,8 @@ const PubSentiment = () => {
                   </div>
                   <p className="text-center">
                     {(
-                      (allMentions.length / data.meta.pagination.total) *
+                      (allMentions.length /
+                        firstPageData.meta.pagination.total) *
                       100
                     ).toFixed(1)}
                     % loaded
@@ -547,26 +503,27 @@ const PubSentiment = () => {
                 </div>
               )}
 
-              {hasMoreData && (
+              {hasNextPage && (
                 <button
                   onClick={loadMoreData}
-                  disabled={loadingMore}
+                  disabled={isFetchingNextPage}
                   className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {loadingMore ? (
+                  {isFetchingNextPage ? (
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       Loading more data...
                     </div>
                   ) : (
                     `Load More Data (${
-                      data.meta?.pagination?.limit?.toLocaleString() || 10000
+                      firstPageData?.meta?.pagination?.limit?.toLocaleString() ||
+                      10000
                     } more records)`
                   )}
                 </button>
               )}
 
-              {!hasMoreData && allMentions.length > 0 && (
+              {!hasNextPage && allMentions.length > 0 && (
                 <div className="text-center text-green-700 font-medium">
                   ✅ All data loaded ({allMentions.length.toLocaleString()}{" "}
                   records)
@@ -594,19 +551,37 @@ const PubSentiment = () => {
             </div>
             <div className="text-xs text-gray-600 space-y-1">
               <p>
-                Total records in database: {data.metrics?.totalMentions || 0}
+                Total records in database:{" "}
+                {firstPageData?.metrics?.totalMentions || 0}
               </p>
-              <p>Current page: {currentPage}</p>
-              <p>Has more data: {hasMoreData ? "Yes" : "No"}</p>
+              <p>Has more data: {hasNextPage ? "Yes" : "No"}</p>
               <p>Date range: {filters.days} days</p>
               <p>
-                Last updated: {new Date(data.meta?.queryDate).toLocaleString()}
+                Last updated:{" "}
+                {firstPageData?.meta?.queryDate
+                  ? new Date(firstPageData.meta.queryDate).toLocaleString()
+                  : "N/A"}
               </p>
-              <p>Unique topics: {data.topics?.uniqueTopics?.length || 0}</p>
-              <p>Platforms: {data.platforms?.length || 0}</p>
+              <p>
+                Unique topics:{" "}
+                {firstPageData?.topics?.uniqueTopics?.length || 0}
+              </p>
+              <p>Platforms: {firstPageData?.platforms?.length || 0}</p>
               <p>
                 Applied filters: Platform={filters.platform}, Sentiment=
                 {filters.sentiment}, Topic={filters.topic}
+              </p>
+              <p>TanStack Query Status: {isLoading ? "Loading" : "Loaded"}</p>
+              <p>Query Status: {status}</p>
+              <p>Fetch Status: {fetchStatus}</p>
+              <p>Is Fetching Next Page: {isFetchingNextPage ? "Yes" : "No"}</p>
+              <p>Has Next Page: {hasNextPage ? "Yes" : "No"}</p>
+              <p>Query Key: {JSON.stringify(["publicMentions", filters])}</p>
+              <p>Current Filters: {JSON.stringify(filters)}</p>
+              <p>Data Pages: {data?.pages?.length || 0}</p>
+              <p>Error: {error ? error.message : "None"}</p>
+              <p>
+                Cache Status: {data?._cache?.hit ? "Cache Hit" : "Fresh Data"}
               </p>
             </div>
           </div>
