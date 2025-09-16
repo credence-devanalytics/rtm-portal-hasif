@@ -14,10 +14,14 @@ import {
 import { useMarketingData } from "@/hooks/useMarketingData";
 import { useTVMonthlyData } from "@/hooks/useTVMonthlyData";
 import { useMarketingTable2Data } from "@/hooks/useMarketingTable2Data";
+import { useRadioMonthlyData } from "@/hooks/useRadioMonthlyData";
+import { useRadioChannelsData } from "@/hooks/useRadioChannelsData";
 import MarketingIncomeComparisonChart from "@/components/Marketing/MarketingIncomeComparisonChart";
 import MarketingPerformanceTable from "@/components/Marketing/MarketingPerformanceTable";
 import MarketingChannelBreakdownTable from "@/components/Marketing/MarketingChannelBreakdownTable";
 import TVMonthlyPerformanceChart from "@/components/Marketing/TVMonthlyPerformanceChart";
+import RadioMonthlyPerformanceChart from "@/components/Marketing/RadioMonthlyPerformanceChart";
+import RadioChannelBreakdownTable from "@/components/Marketing/RadioChannelBreakdownTable";
 import Header from "@/components/Header";
 
 const MarketingDashboard = () => {
@@ -32,20 +36,38 @@ const MarketingDashboard = () => {
     isLoading: table2Loading,
     error: table2Error,
   } = useMarketingTable2Data();
+  const {
+    data: radioMonthlyData,
+    isLoading: radioLoading,
+    error: radioError,
+  } = useRadioMonthlyData();
+  const {
+    data: radioChannelsData,
+    isLoading: radioChannelsLoading,
+    error: radioChannelsError,
+  } = useRadioChannelsData();
 
   // Debug: Log the marketing data
   console.log("Marketing dashboard received data:", marketingData);
   console.log("TV monthly data:", tvMonthlyData);
   console.log("Table 2 data:", table2Data);
+  console.log("Radio monthly data:", radioMonthlyData);
+  console.log("Radio channels data:", radioChannelsData);
 
-  if (isLoading || tvLoading || table2Loading) {
+  if (
+    isLoading ||
+    tvLoading ||
+    table2Loading ||
+    radioLoading ||
+    radioChannelsLoading
+  ) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <Header />
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground font-sans">
               Loading Marketing Dashboard...
             </p>
           </div>
@@ -60,7 +82,11 @@ const MarketingDashboard = () => {
     tvError ||
     !tvMonthlyData?.success ||
     table2Error ||
-    !table2Data?.success
+    !table2Data?.success ||
+    radioError ||
+    !radioMonthlyData?.success ||
+    radioChannelsError ||
+    !radioChannelsData?.success
   ) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -68,20 +94,32 @@ const MarketingDashboard = () => {
         <div className="flex items-center justify-center min-h-96">
           <Card className="border-red-200 bg-red-50">
             <CardHeader>
-              <CardTitle className="text-red-800">Error Loading Data</CardTitle>
+              <CardTitle className="text-red-800 font-sans">
+                Error Loading Data
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-red-600">
+              <p className="text-sm text-red-600 font-sans">
                 Failed to load marketing data. Please try again later.
               </p>
               {tvError && (
-                <p className="text-red-600 mt-2">
+                <p className="text-sm text-red-600 mt-2 font-sans">
                   TV monthly data failed to load.
                 </p>
               )}
               {table2Error && (
-                <p className="text-red-600 mt-2">
+                <p className="text-sm text-red-600 mt-2 font-sans">
                   Channel breakdown data failed to load.
+                </p>
+              )}
+              {radioError && (
+                <p className="text-sm text-red-600 mt-2 font-sans">
+                  Radio monthly data failed to load.
+                </p>
+              )}
+              {radioChannelsError && (
+                <p className="text-sm text-red-600 mt-2 font-sans">
+                  Radio channels data failed to load.
                 </p>
               )}
             </CardContent>
@@ -140,10 +178,10 @@ const MarketingDashboard = () => {
 
       <div className="pt-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight font-sans">
             Marketing Dashboard
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground font-sans">
             Comprehensive analysis of marketing channel performance and revenue
             breakdown
           </p>
@@ -151,7 +189,7 @@ const MarketingDashboard = () => {
 
         {/* Yearly Performance Section */}
         <div className="mt-8">
-          <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">
+          <h2 className="text-xl font-bold tracking-tight mb-6 text-center font-sans">
             Yearly Performance
           </h2>
 
@@ -167,7 +205,7 @@ const MarketingDashboard = () => {
 
         {/* TV Performance Section */}
         <div className="mt-12">
-          <h2 className="text-2xl font-bold tracking-tight mb-6 text-center">
+          <h2 className="text-xl font-bold tracking-tight mb-6 text-center font-sans">
             TV Performance Breakdown
           </h2>
 
@@ -175,13 +213,27 @@ const MarketingDashboard = () => {
           <div className="grid gap-6 lg:grid-cols-1">
             <TVMonthlyPerformanceChart data={tvChartData} />
           </div>
+
+          {/* Channel Breakdown Table under TV section */}
+          <div className="mt-8">
+            <MarketingChannelBreakdownTable data={table2Data?.data} />
+          </div>
         </div>
 
-        {/* Channel Breakdown Section */}
+        {/* Radio Performance Section */}
         <div className="mt-12">
-          {/* Channel Breakdown Table */}
+          <h2 className="text-xl font-bold tracking-tight mb-6 text-center font-sans">
+            Radio Performance Breakdown
+          </h2>
+
+          {/* Radio Charts Row */}
           <div className="grid gap-6 lg:grid-cols-1">
-            <MarketingChannelBreakdownTable data={table2Data?.data} />
+            <RadioMonthlyPerformanceChart data={radioMonthlyData?.data} />
+          </div>
+
+          {/* Radio Channel Breakdown Table */}
+          <div className="mt-8">
+            <RadioChannelBreakdownTable data={radioChannelsData?.data} />
           </div>
         </div>
       </div>

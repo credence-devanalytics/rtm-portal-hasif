@@ -98,10 +98,10 @@ const MarketingIncomeComparisonChart = ({ data = [] }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-lg font-bold font-sans">
           Income Comparison: 2022 vs 2023 vs 2024
         </CardTitle>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 font-sans">
           Three-year comparison of income by marketing channel
         </p>
       </CardHeader>

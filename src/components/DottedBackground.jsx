@@ -1,28 +1,10 @@
 import { cn } from "@/lib/utils";
 import React from "react";
-import BalatroBackground from "@/components/ui/shadcn-io/balatro-background";
+import { AuroraBackground } from "@/components/ui/shadcn-io/aurora-background";
 
 export default function GridBackgroundDemo() {
   return (
-    <div className="relative flex h-[50rem] w-full items-center justify-center">
-      {/* BalatroBackground as the actual background */}
-      <BalatroBackground
-        className="absolute inset-0 w-full h-full"
-        spinRotation={-2.5}
-        spinSpeed={6.0}
-        offset={[0.1, -0.05]}
-        color1="#FF6B35"
-        color2="#004E89"
-        color3="#1A2F3A"
-        contrast={4.2}
-        lighting={0.6}
-        spinAmount={0.3}
-        pixelFilter={850.0}
-        spinEase={1.2}
-        isRotate={true}
-        mouseInteraction={true}
-      />
-
+    <AuroraBackground>
       {/* Content overlay */}
       <main className="relative pt-16 z-10">
         <section className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -69,6 +51,6 @@ export default function GridBackgroundDemo() {
 
       {/* Optional overlay for better text readability */}
       <div className="pointer-events-none absolute inset-0 bg-black/20 z-[1]"></div>
-    </div>
+    </AuroraBackground>
   );
 }

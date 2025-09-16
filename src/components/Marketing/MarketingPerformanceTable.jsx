@@ -91,10 +91,10 @@ const MarketingPerformanceTable = ({ data = [] }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-lg font-bold font-sans">
           Marketing Performance Analysis
         </CardTitle>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 font-sans">
           Detailed breakdown with year-over-year growth percentages
         </p>
       </CardHeader>
@@ -103,25 +103,25 @@ const MarketingPerformanceTable = ({ data = [] }) => {
           {/* Table Container with fixed height */}
           <div className="flex-1 overflow-y-auto">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm font-sans">
                 <thead className="sticky top-0 bg-white">
                   <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-4 pr-1 pl-2 font-semibold min-w-[100px]">
+                    <th className="text-left py-4 pr-1 pl-2 font-bold text-sm min-w-[100px] font-sans">
                       Channel
                     </th>
-                    <th className="text-right py-3 px-1 font-semibold min-w-[70px]">
+                    <th className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans">
                       2022
                     </th>
-                    <th className="text-center py-3 px-1 font-semibold min-w-[60px]">
+                    <th className="text-center py-3 px-1 font-bold text-sm min-w-[60px] font-sans">
                       Growth
                     </th>
-                    <th className="text-right py-3 px-1 font-semibold min-w-[70px]">
+                    <th className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans">
                       2023
                     </th>
-                    <th className="text-center py-3 px-1 font-semibold min-w-[60px]">
+                    <th className="text-center py-3 px-1 font-bold text-sm min-w-[60px] font-sans">
                       Growth
                     </th>
-                    <th className="text-right py-3 px-1 font-semibold min-w-[70px]">
+                    <th className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans">
                       2024
                     </th>
                   </tr>
