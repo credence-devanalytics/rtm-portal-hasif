@@ -216,8 +216,8 @@ const RTMDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState({
-    from: new Date("2025-01-15"), // Start from earliest data available
-    to: new Date("2025-05-20"), // End at latest data available
+    from: new Date("2025-08-01"), // Start from recent data
+    to: new Date("2025-09-17"), // End at current date
   });
 
   // NEW: Global filter state for cross-filtering

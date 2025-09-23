@@ -23,8 +23,8 @@ export default function GridBackgroundDemo() {
                 (MeDINA)
               </span>
               <h6 className="text-lg font-semibold mb-4 pt-5 animate-fade-in-up text-white drop-shadow-lg">
-                Platform Analitik Media RTM - menghubungkan data, analisis,{" "}
-                <br /> dan pandangan untuk keputusan lebih pantas dan tepat.
+                Analytical Platform for Media Data Insight and Analytics <br />{" "}
+                for faster and more accurate decisions.
               </h6>
             </h1>
 

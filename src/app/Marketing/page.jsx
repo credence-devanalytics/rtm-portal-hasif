@@ -206,7 +206,8 @@ const MarketingDashboard = () => {
         {/* TV Performance Section */}
         <div className="mt-12">
           <h2 className="text-xl font-bold tracking-tight mb-6 text-center font-sans">
-            TV Performance Breakdown
+            COMPARISON OF TV REVENUE FOR THE CURRENT DATE (1 JANUARY – 31
+            DECEMBER) <br /> YEAR 2022, 2023, 2024
           </h2>
 
           {/* TV Charts Row */}
@@ -223,7 +224,10 @@ const MarketingDashboard = () => {
         {/* Radio Performance Section */}
         <div className="mt-12">
           <h2 className="text-xl font-bold tracking-tight mb-6 text-center font-sans">
-            Radio Performance Breakdown
+
+            COMPARISON OF RADIO REVENUE FOR THE CURRENT DATE (1 JANUARY – 31
+            DECEMBER) <br /> YEAR 2022, 2023, 2024
+
           </h2>
 
           {/* Radio Charts Row */}
