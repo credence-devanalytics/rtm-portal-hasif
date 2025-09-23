@@ -24,20 +24,44 @@ export async function GET() {
       'Julai': 7, 'Ogos': 8, 'September': 9, 'Oktober': 10, 'November': 11, 'Disember': 12
     };
     
-    monthlyData.forEach(item => {
-      const year = item.year;
-      const month = item.month;
-      const value = parseFloat(item.value) || 0;
-      
-      if (!processedData[month]) {
-        processedData[month] = {
-          month: month,
-          monthName: getMonthName(monthOrder[month] || 1),
-          monthOrder: monthOrder[month] || 999,k,mm
-      2022: chartData.reduce((sum, item) => sum + (item['2022'] || 0), 0),
-      2023: chartData.reduce((sum, item) => sum + (item['2023'] || 0), 0),
-      2024: chartData.reduce((sum, item) => sum + (item['2024'] || 0), 0)
-    };
+  monthlyData.forEach(item => {
+    const year = item.year;
+    const month = item.month;
+    const value = parseFloat(item.value) || 0;
+    
+    if (!processedData[month]) {
+      processedData[month] = {
+        month: month,
+        monthName: getMonthName(monthOrder[month] || 1),
+        monthOrder: monthOrder[month] || 999,
+        2022: 0,
+        2023: 0,
+        2024: 0
+      };
+    }
+    if (year === 2022) processedData[month][2022] += value;
+    if (year === 2023) processedData[month][2023] += value;
+    if (year === 2024) processedData[month][2024] += value;
+  });
+
+  // Build chartData array sorted by monthOrder
+  const chartData = Object.values(processedData).sort((a, b) => a.monthOrder - b.monthOrder);
+
+  // Calculate yearly totals
+  const yearlyTotals = {
+    2022: chartData.reduce((sum, item) => sum + (item['2022'] || 0), 0),
+    2023: chartData.reduce((sum, item) => sum + (item['2023'] || 0), 0),
+    2024: chartData.reduce((sum, item) => sum + (item['2024'] || 0), 0)
+  };
+  const chartData = Object.values(processedData)
+    .sort((a, b) => a.monthOrder - b.monthOrder);
+
+  // Calculate yearly totals
+  const yearlyTotals = {
+    2022: chartData.reduce((sum, item) => sum + (item['2022'] || 0), 0),
+    2023: chartData.reduce((sum, item) => sum + (item['2023'] || 0), 0),
+    2024: chartData.reduce((sum, item) => sum + (item['2024'] || 0), 0)
+  };
 
     // Calculate growth rates
     const growth2022to2023 = yearlyTotals[2022] > 0 ? 
@@ -78,8 +102,8 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
-
+  
+};
 // Helper function to get month name
 function getMonthName(monthNumber) {
   const months = [
@@ -87,7 +111,7 @@ function getMonthName(monthNumber) {
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ];
   return months[monthNumber - 1] || monthNumber.toString();
-}
+};
 
 // Helper function to format currency
 function formatCurrency(value) {

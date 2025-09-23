@@ -170,7 +170,6 @@ const MarketingDashboard = () => {
           <h2 className="text-xl font-bold tracking-tight mb-6 text-center font-sans">
             COMPARISON OF TV REVENUE FOR THE CURRENT DATE (1 JANUARY – 31
             DECEMBER) <br /> YEAR 2022, 2023, 2024
-            {/* TV Performance Breakdown */}
           </h2>
 
           {/* TV Charts Row */}
