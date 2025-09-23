@@ -84,7 +84,9 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
             }}
           />
           <Line
+
             type="linear"
+
             dataKey="2022"
             stroke="#8884d8"
             strokeWidth={2}
@@ -92,7 +94,9 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
             name="2022"
           />
           <Line
+
             type="linear"
+
             dataKey="2023"
             stroke="#82ca9d"
             strokeWidth={2}
@@ -101,6 +105,7 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
           />
           <Line
             type="linear"
+
             dataKey="2024"
             stroke="#ffc658"
             strokeWidth={2}

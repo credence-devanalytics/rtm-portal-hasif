@@ -8,13 +8,15 @@ const MarketingChannelBreakdownTable = ({ data }) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className="text-lg font-bold font-sans">
             Channel Revenue Breakdown
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No data available</p>
+            <p className="text-sm text-muted-foreground font-sans">
+              No data available
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -52,34 +54,34 @@ const MarketingChannelBreakdownTable = ({ data }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-lg font-bold font-sans">
           Channel Revenue Breakdown (2022-2024)
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground font-sans">
           Revenue comparison across TV channels with growth percentages
         </p>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm font-sans">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-2 font-semibold text-gray-700">
+                <th className="text-left py-3 px-2 font-bold text-sm text-gray-700 font-sans">
                   Channel
                 </th>
-                <th className="text-right py-3 px-2 font-semibold text-gray-700">
+                <th className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans">
                   2022
                 </th>
-                <th className="text-center py-3 px-2 font-semibold text-gray-700">
+                <th className="text-center py-3 px-2 font-bold text-sm text-gray-700 font-sans">
                   2022-2023
                 </th>
-                <th className="text-right py-3 px-2 font-semibold text-gray-700">
+                <th className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans">
                   2023
                 </th>
-                <th className="text-center py-3 px-2 font-semibold text-gray-700">
+                <th className="text-center py-3 px-2 font-bold text-sm text-gray-700 font-sans">
                   2023-2024
                 </th>
-                <th className="text-right py-3 px-2 font-semibold text-gray-700">
+                <th className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans">
                   2024
                 </th>
               </tr>

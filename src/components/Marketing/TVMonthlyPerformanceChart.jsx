@@ -25,16 +25,18 @@ const TVMonthlyPerformanceChart = ({ data = [] }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-semibold text-gray-800 mb-3 text-base">{label}</p>
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg font-sans">
+          <p className="font-semibold text-sm text-gray-800 mb-3">{label}</p>
           {payload.map((entry, index) => (
             <div key={index} className="flex items-center gap-3 mb-1">
               <div
                 className="w-4 h-4 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="text-gray-600 text-sm">{entry.dataKey}:</span>
-              <span className="font-semibold text-gray-800 text-sm">
+              <span className="text-gray-600 text-xs font-sans">
+                {entry.dataKey}:
+              </span>
+              <span className="font-semibold text-gray-800 text-xs font-sans">
                 {formatCurrency(entry.value)}
               </span>
             </div>
@@ -48,10 +50,10 @@ const TVMonthlyPerformanceChart = ({ data = [] }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-lg font-bold font-sans">
           TV Monthly Income Performance
         </CardTitle>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 font-sans">
           Monthly revenue trends across three years
         </p>
       </CardHeader>
@@ -62,16 +64,25 @@ const TVMonthlyPerformanceChart = ({ data = [] }) => {
             margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="monthName" tick={{ fontSize: 14 }} />
+            <XAxis
+              dataKey="monthName"
+              tick={{ fontSize: 11, fontFamily: "var(--font-geist-sans)" }}
+            />
             <YAxis
-              tick={{ fontSize: 14 }}
+              tick={{ fontSize: 11, fontFamily: "var(--font-geist-sans)" }}
               tickFormatter={formatCurrency}
               domain={["dataMin", "dataMax"]}
               tickCount={8}
               padding={{ top: 20, bottom: 20 }}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ paddingTop: "20px", fontSize: "14px" }} />
+            <Legend
+              wrapperStyle={{
+                paddingTop: "20px",
+                fontSize: "11px",
+                fontFamily: "var(--font-geist-sans)",
+              }}
+            />
             <Line
               type="linear"
               dataKey="2022"
