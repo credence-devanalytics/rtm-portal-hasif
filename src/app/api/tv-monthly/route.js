@@ -18,6 +18,12 @@ export async function GET() {
     // Group data by year and month
     const processedData = {};
     
+    // Month order mapping for proper sorting
+    const monthOrder = {
+      'Januari': 1, 'Februari': 2, 'Mac': 3, 'April': 4, 'Mei': 5, 'Jun': 6,
+      'Julai': 7, 'Ogos': 8, 'September': 9, 'Oktober': 10, 'November': 11, 'Disember': 12
+    };
+    
     monthlyData.forEach(item => {
       const year = item.year;
       const month = item.month;
@@ -26,21 +32,8 @@ export async function GET() {
       if (!processedData[month]) {
         processedData[month] = {
           month: month,
-          monthName: getMonthName(month),
-          '2022': 0,
-          '2023': 0,
-          '2024': 0
-        };
-      }
-      
-      processedData[month][year.toString()] = value;
-    });
-
-    // Convert to array and sort by month
-    const chartData = Object.values(processedData).sort((a, b) => a.month - b.month);
-
-    // Calculate yearly totals for summary
-    const yearlyTotals = {
+          monthName: getMonthName(monthOrder[month] || 1),
+          monthOrder: monthOrder[month] || 999,k,mm
       2022: chartData.reduce((sum, item) => sum + (item['2022'] || 0), 0),
       2023: chartData.reduce((sum, item) => sum + (item['2023'] || 0), 0),
       2024: chartData.reduce((sum, item) => sum + (item['2024'] || 0), 0)
