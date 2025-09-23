@@ -388,3 +388,69 @@ export const marketingChannelByMonth = pgTable("marketing_channel_bymonth", {
 	insertdate: timestamp({ mode: 'string' }),
 	updatedate: timestamp({ mode: 'string' }),
 });
+
+// Portal Berita Tables
+export const pbAudience = pgTable("pb_audience", {
+	id: serial().primaryKey().notNull(),
+	audienceName: varchar("audienceName", { length: 255 }),
+	date: date(),
+	totalUsers: integer("totalUsers"),
+	newUsers: integer("newUsers"),
+});
+
+export const pbAudienceAge = pgTable("pb_audience_age", {
+	id: serial().primaryKey().notNull(),
+	userAgeBracket: varchar("userAgeBracket", { length: 50 }),
+	date: date(),
+	activeUsers: integer("activeUsers"),
+	newUsers: integer("newUsers"),
+});
+
+export const pbAudienceGender = pgTable("pb_audience_gender", {
+	id: serial().primaryKey().notNull(),
+	userGender: varchar("userGender", { length: 20 }),
+	date: date(),
+	activeUsers: integer("activeUsers"),
+	newUsers: integer("newUsers"),
+});
+
+export const pbAudienceRegion = pgTable("pb_audience_region", {
+	id: serial().primaryKey().notNull(),
+	region: varchar("region", { length: 255 }),
+	date: date(),
+	activeUsers: integer("activeUsers"),
+	newUsers: integer("newUsers"),
+});
+
+export const pbAudienceRegionGender = pgTable("pb_audience_region_gender", {
+	id: serial().primaryKey().notNull(),
+	region: varchar("region", { length: 255 }),
+	userGender: varchar("userGender", { length: 20 }),
+	date: date(),
+	activeUsers: integer("activeUsers"),
+	newUsers: integer("newUsers"),
+});
+
+export const pbFirstUser = pgTable("pb_first_user", {
+	id: serial().primaryKey().notNull(),
+	firstUserPrimaryChannelGroup: varchar("firstUserPrimaryChannelGroup", { length: 255 }),
+	date: date(),
+	totalUsers: integer("totalUsers"),
+	newUsers: integer("newUsers"),
+	returningUsers: integer("returningUsers"),
+});
+
+export const pbFirstUserSource = pgTable("pb_first_user_source", {
+	id: serial().primaryKey().notNull(),
+	mainSource: varchar("main_source", { length: 255 }),
+	date: date(),
+	activeUsers: integer("activeUsers"),
+});
+
+export const pbPopularPages = pgTable("pb_popular_pages", {
+	id: serial().primaryKey().notNull(),
+	unifiedScreenClass: text("unifiedScreenClass"),
+	date: date(),
+	screenPageViews: integer("screenPageViews"),
+	activeUsers: integer("activeUsers"),
+});

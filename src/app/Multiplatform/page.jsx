@@ -26,6 +26,7 @@ const MultiplatformPage = () => {
   const [selectedMonth, setSelectedMonth] = useState("202502");
   const [mytvData, setMytvData] = useState(null);
   const [marketingData, setMarketingData] = useState(null);
+  const [portalBeritaData, setPortalBeritaData] = useState(null);
 
   // Total audience for MyTV platform
   const totalAudience = 7581399;
@@ -99,6 +100,30 @@ const MultiplatformPage = () => {
     };
 
     fetchMarketingData();
+  }, []);
+
+  // Fetch Portal Berita data
+  useEffect(() => {
+    const fetchPortalBeritaData = async () => {
+      try {
+        console.log("Fetching Portal Berita data...");
+        const response = await fetch("/api/pb-dashboard-summary");
+        console.log("Portal Berita response status:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Portal Berita API Response:", data);
+        setPortalBeritaData(data);
+      } catch (error) {
+        console.error("Error fetching Portal Berita data:", error);
+        console.error("Full error details:", error.message);
+      }
+    };
+
+    fetchPortalBeritaData();
   }, []);
 
   // Calculate MyTV metrics using the mytv-analysis API
@@ -257,6 +282,36 @@ const MultiplatformPage = () => {
     return result;
   }, [marketingData]);
 
+  // Calculate Portal Berita metrics
+  const portalBeritaMetrics = useMemo(() => {
+    console.log("Calculating Portal Berita metrics...");
+    console.log("Portal Berita data:", portalBeritaData);
+
+    if (!portalBeritaData?.success || !portalBeritaData?.data) {
+      console.log("Portal Berita data not available, returning default values");
+      return {
+        hasData: false,
+        totalAudience: 0,
+        topRegion: { name: "No data", users: 0 },
+        topTrafficSource: { name: "No data", users: 0 },
+        topExternalSource: { name: "No data", users: 0 },
+      };
+    }
+
+    const { data } = portalBeritaData;
+    console.log("Portal Berita summary:", data.summary);
+
+    return {
+      hasData: data.summary.hasData,
+      totalAudience: data.totalAudience,
+      formattedTotalAudience: data.summary.formattedTotalAudience,
+      topRegion: data.topRegion,
+      topTrafficSource: data.topTrafficSource,
+      topExternalSource: data.topExternalSource,
+      metrics: data.summary.metrics,
+    };
+  }, [portalBeritaData]);
+
   // Platform data structure
   const platforms = [
     {
@@ -366,12 +421,22 @@ const MultiplatformPage = () => {
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-900",
       link: "/WartaBerita",
-      hasData: false,
+      hasData: portalBeritaMetrics.hasData,
       metrics: {
-        mau: "No data available yet",
-        totalHours: "No data available yet",
-        avgHours: "No data available yet",
-        topChannel: "No data available yet",
+        mau: portalBeritaMetrics.hasData
+          ? portalBeritaMetrics.formattedTotalAudience
+          : "No data available yet",
+        totalHours: portalBeritaMetrics.hasData
+          ? `${
+              portalBeritaMetrics.topRegion.name
+            } (${portalBeritaMetrics.topRegion.users.toLocaleString()})`
+          : "No data available yet",
+        avgHours: portalBeritaMetrics.hasData
+          ? `${portalBeritaMetrics.topTrafficSource.name}`
+          : "No data available yet",
+        topChannel: portalBeritaMetrics.hasData
+          ? `${portalBeritaMetrics.topExternalSource.name}`
+          : "No data available yet",
       },
     },
   ];
@@ -815,6 +880,145 @@ const MultiplatformPage = () => {
       );
     }
 
+    // Special layout for Portal Berita with enhanced analytics
+    if (
+      platform.id === "wartaberita" &&
+      hasAnyData &&
+      portalBeritaMetrics.hasData
+    ) {
+      return (
+        <Link href={platform.link} className="block group">
+          <Card
+            className={`h-full transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer bg-white/80 backdrop-blur-sm border-2 ${platform.borderColor} rounded-2xl`}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div
+                  className={`p-2 rounded-lg bg-gradient-to-r ${platform.color} text-white shadow-lg`}
+                >
+                  {platform.icon}
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+              <CardTitle
+                className={`text-xl font-bold ${platform.textColor} mt-3`}
+              >
+                {platform.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Portal Berita Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Total Audience */}
+                <div
+                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className={`h-3 w-3 ${platform.textColor}`} />
+                    <span
+                      className={`text-xs font-semibold ${platform.textColor}`}
+                    >
+                      Total Audience
+                    </span>
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    title={portalBeritaMetrics.formattedTotalAudience}
+                  >
+                    {portalBeritaMetrics.formattedTotalAudience}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    All Users Combined
+                  </div>
+                </div>
+
+                {/* Top Region */}
+                <div
+                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Trophy className={`h-3 w-3 ${platform.textColor}`} />
+                    <span
+                      className={`text-xs font-semibold ${platform.textColor}`}
+                    >
+                      Top Region
+                    </span>
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${platform.textColor} mb-1 truncate`}
+                    title={portalBeritaMetrics.topRegion.name}
+                  >
+                    {portalBeritaMetrics.topRegion.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {portalBeritaMetrics.topRegion.users.toLocaleString()} users
+                  </div>
+                </div>
+
+                {/* Top Traffic Source */}
+                <div
+                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <TrendingUp className={`h-3 w-3 ${platform.textColor}`} />
+                    <span
+                      className={`text-xs font-semibold ${platform.textColor}`}
+                    >
+                      Top Traffic Source
+                    </span>
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${platform.textColor} mb-1 truncate`}
+                    title={portalBeritaMetrics.topTrafficSource.name}
+                  >
+                    {portalBeritaMetrics.topTrafficSource.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {portalBeritaMetrics.topTrafficSource.users.toLocaleString()}{" "}
+                    users
+                  </div>
+                </div>
+
+                {/* Top External Source */}
+                <div
+                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <ExternalLink className={`h-3 w-3 ${platform.textColor}`} />
+                    <span
+                      className={`text-xs font-semibold ${platform.textColor}`}
+                    >
+                      Top External Source
+                    </span>
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${platform.textColor} mb-1 truncate`}
+                    title={portalBeritaMetrics.topExternalSource.name}
+                  >
+                    {portalBeritaMetrics.topExternalSource.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {portalBeritaMetrics.topExternalSource.users.toLocaleString()}{" "}
+                    users
+                  </div>
+                </div>
+              </div>
+
+              {/* Click Indicator */}
+              <div className="pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700 transition-colors">
+                  <span className="text-xs font-medium">
+                    Click for detailed analytics
+                  </span>
+                  <ExternalLink className="h-3 w-3" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      );
+    }
+
     // Default layout for other platforms
     const availableMetrics = [
       {
@@ -1054,7 +1258,10 @@ const MultiplatformPage = () => {
                   <div className="text-2xl font-bold text-blue-600">
                     {(
                       unifiMetrics.mau +
-                      (mytvMetrics.hasData ? mytvMetrics.totalViewers : 0)
+                      (mytvMetrics.hasData ? mytvMetrics.totalViewers : 0) +
+                      (portalBeritaMetrics.hasData
+                        ? portalBeritaMetrics.totalAudience
+                        : 0)
                     ).toLocaleString()}
                   </div>
                   <div className="text-sm text-gray-600">
@@ -1095,9 +1302,9 @@ const MultiplatformPage = () => {
                 </h3>
                 <p className="text-gray-600 mb-4">
                   Currently showing data for <strong>UnifiTV</strong>,{" "}
-                  <strong>MyTV</strong>, and <strong>Marketing Revenue</strong>{" "}
-                  platforms. Other platforms will be integrated as data becomes
-                  available.
+                  <strong>MyTV</strong>, <strong>Marketing Revenue</strong>, and{" "}
+                  <strong>Portal Berita</strong> platforms. Other platforms will
+                  be integrated as data becomes available.
                 </p>
                 <div className="flex justify-center space-x-4 text-sm">
                   <span className="flex items-center space-x-2">
