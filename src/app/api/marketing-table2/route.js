@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { db } from '../../../lib/db';
 import { eq } from 'drizzle-orm';
 import { marketingChannelByYear } from '../../../../drizzle/schema';
-
-const sql = postgres(process.env.DATABASE_URL);
-const db = drizzle(sql);
 
 export async function GET() {
   try {

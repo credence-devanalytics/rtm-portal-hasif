@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../../index';
+import { db } from '../../../lib/db';
 import { marketingChannelByMonth } from '../../../../drizzle/schema';
 import { eq } from 'drizzle-orm';
 
@@ -46,15 +46,6 @@ export async function GET() {
 
   // Build chartData array sorted by monthOrder
   const chartData = Object.values(processedData).sort((a, b) => a.monthOrder - b.monthOrder);
-
-  // Calculate yearly totals
-  const yearlyTotals = {
-    2022: chartData.reduce((sum, item) => sum + (item['2022'] || 0), 0),
-    2023: chartData.reduce((sum, item) => sum + (item['2023'] || 0), 0),
-    2024: chartData.reduce((sum, item) => sum + (item['2024'] || 0), 0)
-  };
-  const chartData = Object.values(processedData)
-    .sort((a, b) => a.monthOrder - b.monthOrder);
 
   // Calculate yearly totals
   const yearlyTotals = {
