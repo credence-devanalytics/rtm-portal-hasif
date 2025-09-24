@@ -168,7 +168,9 @@ const PortalBeritaPage = () => {
   useEffect(() => {
     const fetchPopularPagesData = async () => {
       try {
-        const response = await fetch(`/api/pb-popular-pages?limit=${popularPagesLimit}`);
+        const response = await fetch(
+          `/api/pb-popular-pages?limit=${popularPagesLimit}`
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -866,8 +868,8 @@ const PortalBeritaPage = () => {
                     onClick={() => setPopularPagesLimit(5)}
                     className={`px-3 py-1 text-sm rounded-md transition-colors ${
                       popularPagesLimit === 5
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
                     Top 5
@@ -876,8 +878,8 @@ const PortalBeritaPage = () => {
                     onClick={() => setPopularPagesLimit(10)}
                     className={`px-3 py-1 text-sm rounded-md transition-colors ${
                       popularPagesLimit === 10
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
                     Top 10
@@ -890,11 +892,21 @@ const PortalBeritaPage = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">#</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Page Name</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900">Page Views</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900">Active Users</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900">Avg Views/User</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">
+                        #
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">
+                        Page Name
+                      </th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                        Page Views
+                      </th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                        Active Users
+                      </th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                        Avg Views/User
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -902,34 +914,48 @@ const PortalBeritaPage = () => {
                       <tr
                         key={index}
                         className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                          index % 2 === 0 ? 'bg-gray-25' : 'bg-white'
+                          index % 2 === 0 ? "bg-gray-25" : "bg-white"
                         }`}
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center">
-                            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                              page.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
-                              page.rank === 2 ? 'bg-gray-100 text-gray-800' :
-                              page.rank === 3 ? 'bg-orange-100 text-orange-800' :
-                              'bg-indigo-100 text-indigo-800'
-                            }`}>
+                            <span
+                              className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                                page.rank === 1
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : page.rank === 2
+                                  ? "bg-gray-100 text-gray-800"
+                                  : page.rank === 3
+                                  ? "bg-orange-100 text-orange-800"
+                                  : "bg-indigo-100 text-indigo-800"
+                              }`}
+                            >
                               {page.rank}
                             </span>
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium text-gray-900 max-w-xs truncate" title={page.pageName}>
+                          <div
+                            className="font-medium text-gray-900 max-w-xs truncate"
+                            title={page.pageName}
+                          >
                             {page.pageName}
                           </div>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <span className="font-semibold text-gray-900">{page.formattedPageViews}</span>
+                          <span className="font-semibold text-gray-900">
+                            {page.formattedPageViews}
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <span className="text-gray-700">{page.formattedActiveUsers}</span>
+                          <span className="text-gray-700">
+                            {page.formattedActiveUsers}
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <span className="text-gray-600">{page.avgViewsPerUser}</span>
+                          <span className="text-gray-600">
+                            {page.avgViewsPerUser}
+                          </span>
                         </td>
                       </tr>
                     ))}
