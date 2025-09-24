@@ -44,6 +44,10 @@ const PortalBeritaPage = () => {
   const [ageData, setAgeData] = useState(null);
   const [genderData, setGenderData] = useState(null);
   const [regionData, setRegionData] = useState(null);
+  const [audienceDistributionData, setAudienceDistributionData] =
+    useState(null);
+  const [popularPagesData, setPopularPagesData] = useState(null);
+  const [popularPagesLimit, setPopularPagesLimit] = useState(10);
 
   // Fetch dashboard summary data
   useEffect(() => {
@@ -65,11 +69,11 @@ const PortalBeritaPage = () => {
     fetchDashboardData();
   }, []);
 
-  // Fetch audience data for charts
+  // Fetch audience data for charts (monthly view)
   useEffect(() => {
     const fetchAudienceData = async () => {
       try {
-        const response = await fetch("/api/pb-audience");
+        const response = await fetch("/api/pb-audience-monthly");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -141,6 +145,44 @@ const PortalBeritaPage = () => {
     fetchRegionData();
   }, []);
 
+  // Fetch audience distribution data
+  useEffect(() => {
+    const fetchAudienceDistributionData = async () => {
+      try {
+        const response = await fetch("/api/pb-audience-distribution");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Audience Distribution API Response:", data);
+        setAudienceDistributionData(data);
+      } catch (error) {
+        console.error("Error fetching audience distribution data:", error);
+      }
+    };
+
+    fetchAudienceDistributionData();
+  }, []);
+
+  // Fetch popular pages data
+  useEffect(() => {
+    const fetchPopularPagesData = async () => {
+      try {
+        const response = await fetch(`/api/pb-popular-pages?limit=${popularPagesLimit}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Popular Pages API Response:", data);
+        setPopularPagesData(data);
+      } catch (error) {
+        console.error("Error fetching popular pages data:", error);
+      }
+    };
+
+    fetchPopularPagesData();
+  }, [popularPagesLimit]);
+
   // Calculate dashboard metrics
   const dashboardMetrics = useMemo(() => {
     if (!dashboardData?.success || !dashboardData?.data) {
@@ -165,23 +207,22 @@ const PortalBeritaPage = () => {
     };
   }, [dashboardData]);
 
-  // Process audience chart data
+  // Process audience chart data (monthly)
   const audienceChartData = useMemo(() => {
     if (!audienceData?.success || !audienceData?.data?.chartData) {
       return [];
     }
 
-    return audienceData.data.chartData
-      .slice(0, 30) // Show last 30 days
-      .map((item) => ({
-        date: new Date(item.date).toLocaleDateString("en-GB", {
-          month: "short",
-          day: "numeric",
-        }),
-        totalUsers: item.totalUsers,
-        newUsers: item.newUsers,
-        returningUsers: item.returningUsers,
-      }));
+    return audienceData.data.chartData.map((item) => ({
+      date: new Date(item.date).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+      }),
+      totalUsers: item.totalUsers,
+      newUsers: item.newUsers,
+      returningUsers: item.returningUsers || item.totalUsers - item.newUsers,
+      fullDate: item.date,
+    }));
   }, [audienceData]);
 
   // Process age demographics chart data
@@ -272,6 +313,40 @@ const PortalBeritaPage = () => {
         };
       });
   }, [regionData]);
+
+  // Process audience distribution chart data
+  const audienceDistributionChartData = useMemo(() => {
+    if (
+      !audienceDistributionData?.success ||
+      !audienceDistributionData?.data?.chartData
+    ) {
+      return [];
+    }
+
+    return audienceDistributionData.data.chartData.map((item) => ({
+      audienceName: item.audienceName,
+      totalUsers: item.totalUsers,
+      percentage: item.percentage,
+      fill: item.fill,
+    }));
+  }, [audienceDistributionData]);
+
+  // Process popular pages table data
+  const popularPagesTableData = useMemo(() => {
+    if (!popularPagesData?.success || !popularPagesData?.data?.tableData) {
+      return [];
+    }
+
+    return popularPagesData.data.tableData.map((item) => ({
+      rank: item.rank,
+      pageName: item.pageName,
+      screenPageViews: item.screenPageViews,
+      activeUsers: item.activeUsers,
+      avgViewsPerUser: parseFloat(item.avgViewsPerUser),
+      formattedPageViews: item.screenPageViews.toLocaleString(),
+      formattedActiveUsers: item.activeUsers.toLocaleString(),
+    }));
+  }, [popularPagesData]);
 
   useEffect(() => {
     // Simulate loading
@@ -471,7 +546,7 @@ const PortalBeritaPage = () => {
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Daily Audience Trends */}
+          {/* Monthly Audience Trends */}
           <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-3">
@@ -480,10 +555,10 @@ const PortalBeritaPage = () => {
                 </div>
                 <div>
                   <CardTitle className="text-lg font-bold text-gray-900">
-                    Daily Audience Trends
+                    Monthly Audience Trends
                   </CardTitle>
                   <p className="text-sm text-gray-600">
-                    User engagement over time
+                    User engagement over time (Monthly View)
                   </p>
                 </div>
               </div>
@@ -491,12 +566,17 @@ const PortalBeritaPage = () => {
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={audienceChartData}>
+                  <AreaChart
+                    data={audienceChartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 11, angle: -45, textAnchor: "end" }}
                       stroke="#666"
+                      height={60}
+                      interval={0}
                     />
                     <YAxis tick={{ fontSize: 12 }} stroke="#666" />
                     <Tooltip
@@ -580,6 +660,70 @@ const PortalBeritaPage = () => {
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Audience Distribution */}
+          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
+                  <PieChart className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-900">
+                    Audience Distribution
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Users by audience segment
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={audienceDistributionChartData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      dataKey="totalUsers"
+                      label={({ percentage }) => `${percentage}%`}
+                      labelLine={true}
+                    >
+                      {audienceDistributionChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.95)",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                      }}
+                      formatter={(value, name, props) => [
+                        `${value.toLocaleString()} users (${
+                          props.payload.percentage
+                        }%)`,
+                        "Total Users",
+                      ]}
+                      labelFormatter={(label, payload) => {
+                        if (payload && payload.length > 0) {
+                          return `Audience: ${payload[0].payload.audienceName}`;
+                        }
+                        return `Audience: ${label}`;
+                      }}
+                    />
+                    <Legend
+                      formatter={(value, entry) => entry.payload.audienceName}
+                      wrapperStyle={{ fontSize: "12px" }}
+                    />
+                  </RechartsPieChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
@@ -695,6 +839,108 @@ const PortalBeritaPage = () => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Popular Pages Table Section */}
+        <div className="mt-8">
+          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                    <Trophy className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-gray-900">
+                      Popular Pages
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      Most viewed pages by screen page views
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setPopularPagesLimit(5)}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      popularPagesLimit === 5
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Top 5
+                  </button>
+                  <button
+                    onClick={() => setPopularPagesLimit(10)}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      popularPagesLimit === 10
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Top 10
+                  </button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">#</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Page Name</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900">Page Views</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900">Active Users</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900">Avg Views/User</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {popularPagesTableData.map((page, index) => (
+                      <tr
+                        key={index}
+                        className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                          index % 2 === 0 ? 'bg-gray-25' : 'bg-white'
+                        }`}
+                      >
+                        <td className="py-3 px-4">
+                          <div className="flex items-center">
+                            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                              page.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
+                              page.rank === 2 ? 'bg-gray-100 text-gray-800' :
+                              page.rank === 3 ? 'bg-orange-100 text-orange-800' :
+                              'bg-indigo-100 text-indigo-800'
+                            }`}>
+                              {page.rank}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-gray-900 max-w-xs truncate" title={page.pageName}>
+                            {page.pageName}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="font-semibold text-gray-900">{page.formattedPageViews}</span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="text-gray-700">{page.formattedActiveUsers}</span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="text-gray-600">{page.avgViewsPerUser}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {popularPagesTableData.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No popular pages data available
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
