@@ -34,7 +34,7 @@ export default function Header() {
 
   const dashboardItems = [
     { name: "SocMed RTM Account", href: "SocMedAcc" },
-    { name: "SocMed Public Sentiment", href: "PubSentiment" },
+    { name: "SocMed Public Sentiment", href: "dashboard" },
     { name: "Multiplatform", href: "Multiplatform" },
   ];
 

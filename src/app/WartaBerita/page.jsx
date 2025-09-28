@@ -48,6 +48,8 @@ const PortalBeritaPage = () => {
     useState(null);
   const [popularPagesData, setPopularPagesData] = useState(null);
   const [popularPagesLimit, setPopularPagesLimit] = useState(10);
+  const [trafficSourceData, setTrafficSourceData] = useState(null);
+  const [trafficSourceLimit, setTrafficSourceLimit] = useState(5);
 
   // Fetch dashboard summary data
   useEffect(() => {
@@ -184,6 +186,32 @@ const PortalBeritaPage = () => {
 
     fetchPopularPagesData();
   }, [popularPagesLimit]);
+
+  // Fetch traffic source data
+  useEffect(() => {
+    const fetchTrafficSourceData = async () => {
+      try {
+        console.log(
+          "Fetching traffic source data with limit:",
+          trafficSourceLimit
+        );
+        const response = await fetch(
+          `/api/pb-user-source-analysis?limit=${trafficSourceLimit}`
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Traffic Source API Response:", data);
+        console.log("Traffic Source Limit State:", trafficSourceLimit);
+        setTrafficSourceData(data);
+      } catch (error) {
+        console.error("Error fetching traffic source data:", error);
+      }
+    };
+
+    fetchTrafficSourceData();
+  }, [trafficSourceLimit]);
 
   // Calculate dashboard metrics
   const dashboardMetrics = useMemo(() => {
@@ -349,6 +377,45 @@ const PortalBeritaPage = () => {
       formattedActiveUsers: item.activeUsers.toLocaleString(),
     }));
   }, [popularPagesData]);
+
+  // Process traffic source table data
+  const trafficSourceTableData = useMemo(() => {
+    console.log("Processing traffic source table data...");
+    console.log("Traffic source data:", trafficSourceData);
+    console.log("Current limit:", trafficSourceLimit);
+
+    if (!trafficSourceData?.success || !trafficSourceData?.data?.tableData) {
+      console.log("No valid traffic source data available");
+      return [];
+    }
+
+    const processedData = trafficSourceData.data.tableData
+      .map((item) => {
+        const activeUsers = Number(item.activeUsers);
+        const percentage = Number(item.percentage);
+        const avgDailyUsers = Number(item.avgDailyUsers);
+
+        // Validate that all numeric values are valid numbers
+        if (isNaN(activeUsers) || isNaN(percentage) || isNaN(avgDailyUsers)) {
+          console.warn("Invalid numeric data found:", item);
+          return null;
+        }
+
+        return {
+          rank: item.rank,
+          sourceName: item.sourceName || "Unknown Source",
+          activeUsers: activeUsers,
+          percentage: percentage.toFixed(1),
+          avgDailyUsers: avgDailyUsers.toFixed(1),
+          formattedActiveUsers: activeUsers.toLocaleString(),
+        };
+      })
+      .filter((item) => item !== null); // Remove any invalid entries
+
+    console.log("Processed traffic source data:", processedData);
+    console.log("Number of items:", processedData.length);
+    return processedData;
+  }, [trafficSourceData, trafficSourceLimit]);
 
   useEffect(() => {
     // Simulate loading
@@ -843,6 +910,132 @@ const PortalBeritaPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Traffic Source Chart */}
+          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-gray-900">
+                      Top Traffic Sources
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      Leading sources driving user acquisition
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      console.log("Clicked Top 5 button, setting limit to 5");
+                      setTrafficSourceLimit(5);
+                    }}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      trafficSourceLimit === 5
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    Top 5
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log("Clicked Top 10 button, setting limit to 10");
+                      setTrafficSourceLimit(10);
+                    }}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      trafficSourceLimit === 10
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    Top 10
+                  </button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  {trafficSourceTableData &&
+                  trafficSourceTableData.length > 0 ? (
+                    <BarChart
+                      data={trafficSourceTableData}
+                      layout="vertical"
+                      margin={{
+                        left: 5,
+                        right: 20,
+                        top: 5,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis
+                        type="number"
+                        dataKey="activeUsers"
+                        fontSize={10}
+                        stroke="#666"
+                        tickFormatter={(value) =>
+                          value >= 1000000
+                            ? `${(value / 1000000).toFixed(1)}M`
+                            : value >= 1000
+                            ? `${(value / 1000).toFixed(0)}K`
+                            : value.toString()
+                        }
+                        domain={[0, "dataMax"]}
+                        allowDecimals={false}
+                      />
+                      <YAxis
+                        dataKey="sourceName"
+                        type="category"
+                        tickLine={false}
+                        tickMargin={5}
+                        axisLine={false}
+                        fontSize={9}
+                        stroke="#666"
+                        width={120}
+                        interval={0}
+                        tickFormatter={(value) => {
+                          // Truncate long source names for Y-axis display
+                          return value.length > 15
+                            ? value.substring(0, 12) + "..."
+                            : value;
+                        }}
+                      />
+                      <Tooltip
+                        cursor={false}
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        }}
+                        formatter={(value, name) => [
+                          value.toLocaleString(),
+                          "Active Users",
+                        ]}
+                        labelFormatter={(label) => `Source: ${label}`}
+                      />
+                      <Bar
+                        dataKey="activeUsers"
+                        fill="#3b82f6"
+                        radius={2}
+                        name="Active Users"
+                      />
+                    </BarChart>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      Loading chart data...
+                    </div>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Popular Pages Table Section */}
@@ -934,12 +1127,61 @@ const PortalBeritaPage = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 px-4">
-                          <div
-                            className="font-medium text-gray-900 max-w-xs truncate"
-                            title={page.pageName}
-                          >
-                            {page.pageName}
+                        <td className="py-3 px-4 relative">
+                          <div className="relative group">
+                            <div
+                              className="font-medium text-gray-900 max-w-xs truncate cursor-pointer hover:text-orange-600 transition-all duration-300 ease-out"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(
+                                    page.pageName
+                                  );
+                                  // Show copied confirmation
+                                  const element = document.getElementById(
+                                    `copied-${index}`
+                                  );
+                                  if (element) {
+                                    element.classList.remove("opacity-0");
+                                    element.classList.add("opacity-100");
+                                    setTimeout(() => {
+                                      element.classList.remove("opacity-100");
+                                      element.classList.add("opacity-0");
+                                    }, 2000);
+                                  }
+                                } catch (err) {
+                                  console.error("Failed to copy text: ", err);
+                                }
+                              }}
+                            >
+                              {page.pageName}
+                              {page.pageName.length > 40 && (
+                                <span className="ml-1 text-gray-400 text-xs">
+                                  ...
+                                </span>
+                              )}
+                            </div>
+                            {/* Hover Tooltip - Always show full name */}
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-4 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out group-hover:translate-y-0 translate-y-1 pointer-events-none whitespace-nowrap z-[9999]">
+                              {page.pageName}
+                              <div className="text-xs text-gray-300 mt-1">
+                                Click to copy
+                              </div>
+                              {/* Arrow */}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2">
+                                <div className="w-2 h-2 bg-slate-800 transform rotate-45 -mt-1"></div>
+                              </div>
+                            </div>
+                            {/* Copied Confirmation */}
+                            <div
+                              id={`copied-${index}`}
+                              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 transition-all duration-200 ease-out pointer-events-none whitespace-nowrap z-[10000]"
+                            >
+                              Copied!
+                              {/* Arrow */}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2">
+                                <div className="w-2 h-2 bg-green-600 transform rotate-45 -mt-1"></div>
+                              </div>
+                            </div>
                           </div>
                         </td>
                         <td className="py-3 px-4 text-right">

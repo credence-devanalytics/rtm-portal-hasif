@@ -258,11 +258,11 @@ const ClassificationMentionsChart = ({ data = [] }) => {
               />
               <Tooltip
                 content={<CustomTooltip />}
-                cursor={{ fill: "rgba(59, 130, 246, 0.1)" }}
+                cursor={{ fill: "rgba(78, 88, 153, 0.1)" }}
               />
               <Bar
                 dataKey="count"
-                fill="#3b82f6"
+                fill="#4E5899"
                 name="Mentions"
                 radius={[4, 4, 0, 0]}
               />

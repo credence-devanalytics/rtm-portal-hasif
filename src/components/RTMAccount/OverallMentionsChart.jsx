@@ -198,10 +198,10 @@ const OverallMentionsChart = ({ mentionsOverTime }) => {
               <Line
                 type="linear"
                 dataKey="total"
-                stroke="#3B82F6"
+                stroke="#4E5899"
                 strokeWidth={3}
-                dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, fill: "#3B82F6" }}
+                dot={{ fill: "#4E5899", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, fill: "#4E5899" }}
                 name="Total Mentions"
               />
             </LineChart>

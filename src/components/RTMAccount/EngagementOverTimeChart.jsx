@@ -252,7 +252,7 @@ const EngagementOverTimeChart = ({ data }) => {
               <Bar
                 yAxisId="left"
                 dataKey="posts"
-                fill="#3B82F6"
+                fill="#4E5899"
                 name="Posts/Mentions"
                 fillOpacity={0.8}
               />
@@ -262,11 +262,11 @@ const EngagementOverTimeChart = ({ data }) => {
                 yAxisId="right"
                 type="monotone"
                 dataKey="reachNormalized"
-                stroke="#f54a00"
+                stroke="#ff9705"
                 strokeWidth={3}
                 name="Reach Trend"
-                dot={{ fill: "#f54a00", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#f54a00", strokeWidth: 2 }}
+                dot={{ fill: "#ff9705", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: "#ff9705", strokeWidth: 2 }}
               />
 
               {/* Line Chart for Normalized Engagement */}
@@ -274,10 +274,10 @@ const EngagementOverTimeChart = ({ data }) => {
                 yAxisId="right"
                 type="monotone"
                 dataKey="engagementNormalized"
-                stroke="#10B981"
+                stroke="#28a745"
                 strokeWidth={3}
                 name="Engagement Trend"
-                dot={{ fill: "#10B981", strokeWidth: 2, r: 4 }}
+                dot={{ fill: "#28a745", strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6, stroke: "#10B981", strokeWidth: 2 }}
               />
             </ComposedChart>

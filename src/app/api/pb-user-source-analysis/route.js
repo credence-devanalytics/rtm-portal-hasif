@@ -3,9 +3,14 @@ import { db } from '../../../lib/db';
 import { pbFirstUserSource } from '../../../../drizzle/schema';
 import { sql } from 'drizzle-orm';
 
-export async function GET() {
+export async function GET(request) {
   try {
     console.log('PB User Source Analysis API called');
+    
+    // Get query parameters
+    const { searchParams } = new URL(request.url);
+    const limit = searchParams.get('limit') || '5'; // Default to top 5
+    const limitNum = parseInt(limit);
     
     // Fetch user source data and group by main source
     const userSourceData = await db
@@ -16,51 +21,47 @@ export async function GET() {
         avgDailyUsers: sql`AVG(${pbFirstUserSource.activeUsers})`.as('avgDailyUsers')
       })
       .from(pbFirstUserSource)
-      .groupBy(pbFirstUserSource.mainSource);
+      .groupBy(pbFirstUserSource.mainSource)
+      .orderBy(sql`SUM(${pbFirstUserSource.activeUsers}) DESC`)
+      .limit(limitNum);
 
     console.log('PB User Source data:', userSourceData);
 
-    // Process data for charts
-    const chartData = userSourceData.map(item => ({
-      source: item.mainSource,
-      totalActiveUsers: parseInt(item.totalActiveUsers) || 0,
+    // Process data for table format
+    const tableData = userSourceData.map((item, index) => ({
+      rank: index + 1,
+      sourceName: item.mainSource || 'Unknown Source',
+      activeUsers: parseInt(item.totalActiveUsers) || 0,
       recordCount: parseInt(item.recordCount) || 0,
       avgDailyUsers: parseFloat(item.avgDailyUsers) || 0,
-      percentage: 0 // Will calculate after getting totals
+      formattedActiveUsers: (parseInt(item.totalActiveUsers) || 0).toLocaleString(),
+      percentage: 0 // Will calculate below
     }));
 
     // Calculate percentages
-    const totalUsers = chartData.reduce((sum, item) => sum + item.totalActiveUsers, 0);
-    chartData.forEach(item => {
+    const totalUsers = tableData.reduce((sum, item) => sum + item.activeUsers, 0);
+    tableData.forEach(item => {
       item.percentage = totalUsers > 0 ? 
-        parseFloat(((item.totalActiveUsers / totalUsers) * 100).toFixed(1)) : 0;
+        ((item.activeUsers / totalUsers) * 100).toFixed(1) : '0.0';
     });
 
-    // Sort by total active users descending
-    chartData.sort((a, b) => b.totalActiveUsers - a.totalActiveUsers);
-
-    // Find top sources
-    const topSource = chartData[0] || {};
-    const topSources = chartData.slice(0, 5);
+    // Find top source
+    const topSource = tableData[0] || { sourceName: 'No data', activeUsers: 0, percentage: '0.0' };
 
     const response = {
       success: true,
       data: {
-        chartData,
+        tableData,
         summary: {
-          totalUsers,
-          topSource: topSource.source || 'N/A',
-          topSourceUsers: topSource.totalActiveUsers || 0,
-          topSourcePercentage: topSource.percentage || 0,
-          sourceCount: chartData.length,
-          topSources: topSources.map(s => ({ 
-            source: s.source, 
-            users: s.totalActiveUsers, 
-            percentage: s.percentage,
-            avgDaily: parseFloat(s.avgDailyUsers.toFixed(1))
-          })),
-          avgUsersPerSource: chartData.length > 0 ? 
-            Math.round(totalUsers / chartData.length) : 0
+          totalSources: tableData.length,
+          totalActiveUsers: totalUsers,
+          topSource: {
+            name: topSource.sourceName,
+            users: topSource.activeUsers,
+            percentage: topSource.percentage
+          },
+          limit: limitNum,
+          formattedTotalActiveUsers: totalUsers.toLocaleString()
         }
       }
     };

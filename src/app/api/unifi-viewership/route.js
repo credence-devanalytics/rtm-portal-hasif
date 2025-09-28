@@ -192,7 +192,7 @@ export async function GET(request) {
     const programBreakdown = generateProgramBreakdown(filteredData);
     const channelBreakdown = generateChannelBreakdown(filteredData);
     const monthlyTrends = generateMonthlyTrends(filteredData);
-    const topPrograms = generateTopPrograms(filteredData);
+    const topPrograms = generateTopPrograms(filteredData, 50); // Increased limit to ensure we have enough data for channel comparison
 
     // Calculate summary statistics
     const summaryStats = {
