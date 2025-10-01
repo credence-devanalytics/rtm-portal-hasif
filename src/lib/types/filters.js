@@ -7,6 +7,7 @@
 export const FilterParams = {
   sentiments: [], // ['positive', 'negative', 'neutral']
   sources: [],    // ['facebook', 'twitter', 'instagram', 'linkedin'] 
+  topics: [],     // ['technology', 'healthcare', 'education', etc.]
   dateRange: {    // { from: 'YYYY-MM-DD', to: 'YYYY-MM-DD' }
     from: '',
     to: ''
@@ -36,12 +37,14 @@ export const filterUtils = {
   fromUrlParams: (searchParams) => {
     const sentiments = searchParams.get('sentiments');
     const sources = searchParams.get('sources');
+    const topics = searchParams.get('topics');
     const dateFrom = searchParams.get('date_from');
     const dateTo = searchParams.get('date_to');
 
     return {
       sentiments: sentiments ? sentiments.split(',') : [],
       sources: sources ? sources.split(',') : [],
+      topics: topics ? topics.split(',') : [],
       dateRange: {
         from: dateFrom || '',
         to: dateTo || ''
@@ -61,6 +64,10 @@ export const filterUtils = {
       params.set('sources', filters.sources.join(','));
     }
     
+    if (filters.topics && filters.topics.length > 0) {
+      params.set('topics', filters.topics.join(','));
+    }
+    
     if (filters.dateRange.from) {
       params.set('date_from', filters.dateRange.from);
     }
@@ -77,6 +84,7 @@ export const filterUtils = {
     let count = 0;
     if (filters.sentiments && filters.sentiments.length > 0) count += filters.sentiments.length;
     if (filters.sources && filters.sources.length > 0) count += filters.sources.length;
+    if (filters.topics && filters.topics.length > 0) count += filters.topics.length;
     if (filters.dateRange.from || filters.dateRange.to) count += 1;
     return count;
   },
@@ -85,6 +93,7 @@ export const filterUtils = {
   clearAll: () => ({
     sentiments: [],
     sources: [],
+    topics: [],
     dateRange: { from: '', to: '' }
   }),
 
@@ -93,6 +102,7 @@ export const filterUtils = {
     return (
       (!filters.sentiments || filters.sentiments.length === 0) &&
       (!filters.sources || filters.sources.length === 0) &&
+      (!filters.topics || filters.topics.length === 0) &&
       (!filters.dateRange.from && !filters.dateRange.to)
     );
   }
@@ -102,6 +112,7 @@ export const filterUtils = {
 export const DEFAULT_FILTERS = {
   sentiments: [],
   sources: [],
+  topics: [],
   dateRange: {
     from: '',
     to: ''

@@ -9,6 +9,7 @@ export const queryKeys = {
   platformDistribution: (filters) => ['platformDistribution', filters],
   timeSeries: (filters) => ['timeSeries', filters],
   topMentions: (filters) => ['topMentions', filters],
+  sentimentByTopics: (filters) => ['sentimentByTopics', filters],
   cache: ['cache'],
 };
 
@@ -87,6 +88,38 @@ const fetchTopMentions = async (filters) => {
   if (!response.ok) {
     throw new Error(`Failed to fetch top mentions: ${response.statusText}`);
   }
+  return response.json();
+};
+
+const fetchSentimentByTopics = async (filters = {}) => {
+  const params = new URLSearchParams();
+  
+  if (filters.sentiments?.length > 0) {
+    params.append('sentiments', filters.sentiments.join(','));
+  }
+  
+  if (filters.sources?.length > 0) {
+    params.append('sources', filters.sources.join(','));
+  }
+  
+  if (filters.topics?.length > 0) {
+    params.append('topics', filters.topics.join(','));
+  }
+  
+  if (filters.dateRange?.from) {
+    params.append('date_from', filters.dateRange.from);
+  }
+  
+  if (filters.dateRange?.to) {
+    params.append('date_to', filters.dateRange.to);
+  }
+
+  const response = await fetch(`/api/social-media/sentiment-by-topics?${params}`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch sentiment by topics data');
+  }
+  
   return response.json();
 };
 
@@ -186,6 +219,17 @@ export const useTopMentions = (filters, options = {}) => {
   return useQuery({
     queryKey: queryKeys.topMentions(filters),
     queryFn: () => fetchTopMentions(filters),
+    enabled: !!filters,
+    staleTime: 0, // Always refetch when filters change
+    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    ...options,
+  });
+};
+
+export const useSentimentByTopics = (filters, options = {}) => {
+  return useQuery({
+    queryKey: queryKeys.sentimentByTopics(filters),
+    queryFn: () => fetchSentimentByTopics(filters),
     enabled: !!filters,
     staleTime: 0, // Always refetch when filters change
     cacheTime: 2 * 60 * 1000, // 2 minutes cache

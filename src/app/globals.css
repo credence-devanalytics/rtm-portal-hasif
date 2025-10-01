@@ -88,11 +88,11 @@
   --border: oklch(0.9276 0.0058 264.5313);
   --input: oklch(0.9276 0.0058 264.5313);
   --ring: oklch(0.7686 0.1647 70.0804);
-  --chart-1: oklch(0.8731 0.1776 92.1049);
+  --chart-1: oklch(0.4831 0.1047 275.1763);
   --chart-2: oklch(0.7687 0.1740 63.3613);
-  --chart-3: oklch(0.7103 0.1739 42.2695);
-  --chart-4: oklch(0.6503 0.2239 12.0308);
-  --chart-5: oklch(0.4831 0.1047 275.1763);
+  --chart-3: oklch(0.6503 0.2239 12.0308);
+  --chart-4: oklch(0.7103 0.1739 42.2695);
+  --chart-5: oklch(0.8731 0.1776 92.1049);
   --sidebar: oklch(0.9846 0.0017 247.8389);
   --sidebar-foreground: oklch(0.2686 0 0);
   --sidebar-primary: oklch(0.7686 0.1647 70.0804);
@@ -205,8 +205,6 @@
   --platform-unknown: #6B7280;
   --platform-other: #9CA3AF;
 
-
-
   /* Engagement Rate Chart Colors (same as platform colors) */
   --engagement-facebook: #1877F2;
   --engagement-instagram: #E4405F;
@@ -231,8 +229,6 @@
   --platform-reddit: #FF4500;
   --platform-unknown: #9CA3AF;
   --platform-other: #6B7280;
-
-
 
   --engagement-facebook: #1877F2;
   --engagement-instagram: #E4405F;

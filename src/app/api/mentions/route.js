@@ -26,7 +26,8 @@ export async function GET(request) {
           platformDistribution,
           dailyTrends,
           topMentions,
-          influencerMentions
+          influencerMentions,
+          channelGroupBreakdown
         ] = await Promise.all([
           // 1. Get limited raw mentions data (for tables)
           db
@@ -103,7 +104,22 @@ export async function GET(request) {
             .where(and(
               ...whereConditions,
               sql`COALESCE(${mentionsClassify.followerscount}, ${mentionsClassify.authorfollowercount}, 0) > 10000`
-            ))
+            )),
+
+          // 8. Get channel group breakdown (for radio stations and other channels)
+          db
+            .select({
+              groupname: mentionsClassify.groupname,
+              channel: mentionsClassify.channel,
+              channelgroup: mentionsClassify.channelgroup,
+              count: count(),
+              totalReach: sum(mentionsClassify.reach)
+            })
+            .from(mentionsClassify)
+            .where(and(...whereConditions))
+            .groupBy(mentionsClassify.groupname, mentionsClassify.channel, mentionsClassify.channelgroup)
+            .orderBy(desc(count()))
+            .limit(100)
         ]);
         
         const response = {
@@ -146,6 +162,15 @@ export async function GET(request) {
             mentions: parseInt(d.count),
             reach: parseInt(d.totalReach) || 0,
             interactions: parseInt(d.totalInteractions) || 0
+          })),
+          
+          // Channel group breakdown (includes new channelgroup field)
+          channelGroups: channelGroupBreakdown.map(c => ({
+            groupname: c.groupname,
+            channel: c.channel,
+            channelgroup: c.channelgroup,
+            count: parseInt(c.count),
+            totalReach: parseInt(c.totalReach) || 0
           })),
           
           // Top performing content

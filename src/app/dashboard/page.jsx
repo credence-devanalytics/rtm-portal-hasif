@@ -17,6 +17,7 @@ import { SentimentPieChart } from "@/components/dashboard/public-mentions/sentim
 import { SentimentBySourceChart } from "@/components/dashboard/public-mentions/sentiment-by-source-chart";
 import { SentimentAreaChart } from "@/components/dashboard/public-mentions/sentiment-area-chart";
 import { MostPopularPosts } from "@/components/dashboard/public-mentions/most-popular-posts";
+import { SentimentByTopicsChart } from "@/components/dashboard/charts/sentiment-by-topics-chart";
 import Header from "@/components/Header";
 import {
   DEFAULT_FILTERS,
@@ -24,6 +25,7 @@ import {
   SENTIMENT_OPTIONS,
   SOURCE_OPTIONS,
 } from "@/lib/types/filters";
+import { useSentimentByTopics } from "@/hooks/useQueries";
 import {
   RefreshCw,
   Download,
@@ -151,6 +153,15 @@ const SocialMediaDashboard = () => {
     retry: 2,
   });
 
+  // Sentiment by Topics data
+  const {
+    data: sentimentByTopicsData,
+    isLoading: isLoadingByTopics,
+    error: topicsError,
+  } = useSentimentByTopics(filters, {
+    refetchInterval: 30000,
+  });
+
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -158,26 +169,59 @@ const SocialMediaDashboard = () => {
 
   // Handle chart clicks for interactive filtering
   const handleChartClick = useCallback(
-    (type, value) => {
+    (clickData) => {
       let newFilters = { ...filters };
 
-      if (type === "sentiment") {
-        const currentSentiments = newFilters.sentiments || [];
-        if (currentSentiments.includes(value)) {
-          // Remove if already selected
-          newFilters.sentiments = currentSentiments.filter((s) => s !== value);
-        } else {
-          // Add if not selected
-          newFilters.sentiments = [...currentSentiments, value];
+      // Handle different click types
+      if (typeof clickData === "string") {
+        // Legacy string-based clicks (sentiment/source)
+        const type = arguments[0];
+        const value = arguments[1] || clickData;
+
+        if (type === "sentiment") {
+          const currentSentiments = newFilters.sentiments || [];
+          if (currentSentiments.includes(value)) {
+            newFilters.sentiments = currentSentiments.filter(
+              (s) => s !== value
+            );
+          } else {
+            newFilters.sentiments = [...currentSentiments, value];
+          }
+        } else if (type === "source") {
+          const currentSources = newFilters.sources || [];
+          if (currentSources.includes(value)) {
+            newFilters.sources = currentSources.filter((s) => s !== value);
+          } else {
+            newFilters.sources = [...currentSources, value];
+          }
         }
-      } else if (type === "source") {
-        const currentSources = newFilters.sources || [];
-        if (currentSources.includes(value)) {
-          // Remove if already selected
-          newFilters.sources = currentSources.filter((s) => s !== value);
-        } else {
-          // Add if not selected
-          newFilters.sources = [...currentSources, value];
+      } else if (clickData && typeof clickData === "object") {
+        // New object-based clicks
+        if (clickData.type === "topic-sentiment") {
+          // Handle topic clicks
+          const currentTopics = newFilters.topics || [];
+          if (currentTopics.includes(clickData.topic)) {
+            newFilters.topics = currentTopics.filter(
+              (t) => t !== clickData.topic
+            );
+          } else {
+            newFilters.topics = [...currentTopics, clickData.topic];
+          }
+
+          // Also handle sentiment filter if specified
+          if (clickData.sentiment) {
+            const currentSentiments = newFilters.sentiments || [];
+            if (currentSentiments.includes(clickData.sentiment)) {
+              newFilters.sentiments = currentSentiments.filter(
+                (s) => s !== clickData.sentiment
+              );
+            } else {
+              newFilters.sentiments = [
+                ...currentSentiments,
+                clickData.sentiment,
+              ];
+            }
+          }
         }
       }
 
@@ -209,7 +253,8 @@ const SocialMediaDashboard = () => {
     isLoadingMetrics ||
     isLoadingBySource ||
     isLoadingTimeline ||
-    isLoadingPopular;
+    isLoadingPopular ||
+    isLoadingByTopics;
 
   // Get active filter count
   const activeFilterCount = filterUtils.getActiveFilterCount(filters);
@@ -346,6 +391,14 @@ const SocialMediaDashboard = () => {
         onChartClick={handleChartClick}
         activeFilters={filters}
         isLoading={isLoadingTimeline}
+      />
+
+      {/* Sentiment by Topics Chart */}
+      <SentimentByTopicsChart
+        data={sentimentByTopicsData?.data}
+        onChartClick={handleChartClick}
+        activeFilters={filters}
+        isLoading={isLoadingByTopics}
       />
 
       {/* Popular Posts */}

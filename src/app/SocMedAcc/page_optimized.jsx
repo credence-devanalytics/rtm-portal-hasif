@@ -96,7 +96,6 @@ const RTMTabs = ({ onFilterChange, activeTab, setActiveTab }) => {
         <div className="h-12 items-center justify-center rounded-xl bg-white p-1.5 text-slate-500 shadow-sm border border-slate-200 backdrop-blur-sm grid grid-cols-5 w-full max-w-full">
           {tabs.map((tab) => (
             <button
-              type="button"
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 lg:px-4 py-2.5 text-xs lg:text-sm font-medium transition-all flex-1 ${
@@ -187,99 +186,72 @@ const RTMDashboard = () => {
       from: selectedDateRange.from.toISOString(),
       to: selectedDateRange.to.toISOString(),
       platform: selectedPlatform !== "all" ? selectedPlatform : "",
-      // Remove filters that are handled client-side to prevent unnecessary API calls
-      sentiment: "", // Handle client-side for better performance
-      unit: "", // Handle client-side for better performance
-      category: "", // Handle client-side for better performance
-      author: "", // Handle client-side for better performance
+      sentiment: globalFilters.sentiment || "",
+      unit: globalFilters.unit || "",
+      category: globalFilters.category || "",
+      author: globalFilters.author || "",
     };
-  }, [selectedDateRange, selectedPlatform]); // Remove globalFilters dependency
+  }, [selectedDateRange, selectedPlatform, globalFilters]);
 
-  // Single optimized data fetch
+  // Parallel data fetching with optimized hooks
   const {
-    data: dashboardData,
-    isLoading: isLoadingData,
-    error: dataError,
-  } = useRTMMentions(queryFilters); // This now uses the optimized single call
+    data: rawMentionsData,
+    isLoading: isLoadingMentions,
+    error: mentionsError,
+  } = useRTMMentions(queryFilters);
 
-  // Extract data from single response
-  const rawMentionsData = dashboardData;
-  const metricsData = dashboardData?.metrics;
-  const timelineData = dashboardData?.timeSeries;
-  const platformsData = dashboardData?.platforms;
+  const { data: metricsData, isLoading: isLoadingMetrics } =
+    useRTMMetrics(queryFilters);
 
-  // Single loading state
-  const isLoading = isLoadingData;
+  const { data: timelineData, isLoading: isLoadingTimeline } =
+    useRTMTimeline(queryFilters);
 
-  // Transform and filter data efficiently
+  const { data: platformsData, isLoading: isLoadingPlatforms } =
+    useRTMPlatforms(queryFilters);
+
+  // Transform and filter data
   const { transformedData, filteredData } = useMemo(() => {
-    if (!rawMentionsData?.mentions)
-      return { transformedData: [], filteredData: [] };
+    if (!rawMentionsData) return { transformedData: [], filteredData: [] };
 
-    // Transform data only once
     const transformed = transformRTMData(rawMentionsData);
 
-    // Quick return if no filters
-    const hasActiveFilters = Object.values(globalFilters).some(Boolean);
-    if (!hasActiveFilters) {
-      return { transformedData: transformed, filteredData: transformed };
-    }
+    // Apply filters
+    let filtered = [...transformed];
 
-    // Optimized filtering with early returns
-    const filtered = transformed.filter((item) => {
-      // Unit filter (most common)
-      if (globalFilters.unit) {
-        const unit = globalFilters.unit;
-        if (unit === "overall") return true;
-        if (unit === "official") {
-          if (
-            !(
+    Object.entries(globalFilters).forEach(([key, value]) => {
+      if (value) {
+        filtered = filtered.filter((item) => {
+          if (key === "unit" && value === "overall") return true;
+          if (key === "unit" && value === "official") {
+            return (
               item.unit === "Official" ||
-              item.isInfluencer ||
+              item.isInfluencer === true ||
               item.followerCount > 50000
-            )
-          )
-            return false;
-        } else if (unit === "tv") {
-          if (
-            !(
+            );
+          }
+          if (key === "unit" && value === "tv") {
+            return (
               item.unit === "TV" ||
               item.unit?.toLowerCase().includes("tv") ||
               item.platform === "YouTube"
-            )
-          )
-            return false;
-        } else if (unit === "berita") {
-          if (
-            !(
+            );
+          }
+          if (key === "unit" && value === "berita") {
+            return (
               item.unit === "News" ||
               item.unit?.toLowerCase().includes("news") ||
               item.unit?.toLowerCase().includes("berita")
-            )
-          )
-            return false;
-        } else if (unit === "radio") {
-          if (
-            !(
+            );
+          }
+          if (key === "unit" && value === "radio") {
+            return (
               item.unit === "Radio" ||
               item.unit?.toLowerCase().includes("radio")
-            )
-          )
-            return false;
-        }
+            );
+          }
+          return item[key] === value;
+        });
       }
-
-      // Other filters (exact matches for performance)
-      if (globalFilters.sentiment && item.sentiment !== globalFilters.sentiment)
-        return false;
-      if (globalFilters.platform && item.platform !== globalFilters.platform)
-        return false;
-      if (globalFilters.category && item.category !== globalFilters.category)
-        return false;
-      if (globalFilters.author && item.author !== globalFilters.author)
-        return false;
-
-      return true;
     });
 
     return { transformedData: transformed, filteredData: filtered };
@@ -315,7 +287,7 @@ const RTMDashboard = () => {
     );
   }, [filteredData]);
 
-  // Filter handlers with debouncing for better performance
+  // Filter handlers
   const handleGlobalFilterChange = (filterType, filterValue) => {
     setGlobalFilters((prev) => ({
       ...prev,
@@ -408,8 +380,8 @@ const RTMDashboard = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Loading state (using single source)
-  // const isLoading = isLoadingMentions || isLoadingMetrics || isLoadingTimeline; // Removed duplicate
+  // Loading state
+  const isLoading = isLoadingMentions || isLoadingMetrics || isLoadingTimeline;
 
   if (isLoading) {
     return (
@@ -427,7 +399,7 @@ const RTMDashboard = () => {
     );
   }
 
-  if (dataError) {
+  if (mentionsError) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <Header />
@@ -436,7 +408,7 @@ const RTMDashboard = () => {
             <CardTitle className="text-red-600">
               Error Loading Dashboard
             </CardTitle>
-            <CardDescription>{dataError.message}</CardDescription>
+            <CardDescription>{mentionsError.message}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={handleRefresh} variant="outline">
@@ -521,7 +493,7 @@ const RTMDashboard = () => {
 
       {/* Overview Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isLoading ? (
+        {isLoadingMetrics ? (
           <>
             <SkeletonCard />
             <SkeletonCard />
@@ -635,7 +607,7 @@ const RTMDashboard = () => {
 
       {/* RTM Media Table */}
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingMentions ? (
           <SkeletonCard className="h-96" />
         ) : (
           <RTMMediaTable
@@ -657,7 +629,7 @@ const RTMDashboard = () => {
 
       {/* Platform and Units Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {isLoading ? (
+        {isLoadingPlatforms ? (
           <>
             <SkeletonCard className="h-96" />
             <SkeletonCard className="h-96" />
@@ -684,7 +656,7 @@ const RTMDashboard = () => {
 
       {/* Main Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {isLoading ? (
+        {isLoadingMentions ? (
           <>
             <SkeletonCard className="h-96" />
             <SkeletonCard className="h-96" />
@@ -709,7 +681,7 @@ const RTMDashboard = () => {
 
       {/* Timeline Charts */}
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingTimeline ? (
           <SkeletonCard className="h-96" />
         ) : (
           <Card>
@@ -722,7 +694,7 @@ const RTMDashboard = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingMentions ? (
           <SkeletonCard className="h-96" />
         ) : (
           <Card>
@@ -735,7 +707,7 @@ const RTMDashboard = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingMentions ? (
           <SkeletonCard className="h-96" />
         ) : (
           <Card>
@@ -749,7 +721,7 @@ const RTMDashboard = () => {
 
       {/* Popular Mentions Table */}
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingMentions ? (
           <SkeletonCard className="h-96" />
         ) : (
           <Card>

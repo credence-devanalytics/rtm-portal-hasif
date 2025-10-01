@@ -429,7 +429,7 @@ const PortalBeritaPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50">
         {/* Header */}
-        <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-8 sticky top-0 z-50 shadow-sm">
+        <div className="bg-background/90 backdrop-blur-sm border-b border-border px-6 py-8 sticky top-0 z-50 shadow-sm">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
               <div>
@@ -453,9 +453,9 @@ const PortalBeritaPage = () => {
                 className="h-32 bg-white/80 backdrop-blur-sm rounded-2xl animate-pulse"
               >
                 <CardContent className="p-6">
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-muted rounded mb-2"></div>
+                  <div className="h-8 bg-muted rounded mb-2"></div>
+                  <div className="h-3 bg-muted rounded"></div>
                 </CardContent>
               </Card>
             ))}
@@ -467,8 +467,8 @@ const PortalBeritaPage = () => {
                 className="h-96 bg-white/80 backdrop-blur-sm rounded-2xl animate-pulse"
               >
                 <CardContent className="p-6">
-                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                  <div className="h-64 bg-gray-200 rounded"></div>
+                  <div className="h-6 bg-muted rounded mb-4"></div>
+                  <div className="h-64 bg-muted rounded"></div>
                 </CardContent>
               </Card>
             ))}
@@ -488,7 +488,7 @@ const PortalBeritaPage = () => {
               <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Portal Berita Analytics
               </h1>
-              <p className="text-gray-600 mt-2 text-lg">
+              <p className="text-muted-foreground mt-2 text-lg">
                 Comprehensive audience insights and performance metrics
               </p>
             </div>
@@ -507,7 +507,7 @@ const PortalBeritaPage = () => {
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {/* Total Audience */}
-          <Card className="bg-white/80 backdrop-blur-sm border-2 border-indigo-200 rounded-2xl hover:shadow-lg transition-all duration-300">
+          <Card className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 rounded-2xl hover:shadow-lg transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg">
@@ -517,7 +517,9 @@ const PortalBeritaPage = () => {
                   <p className="text-sm font-semibold text-indigo-900">
                     Total Audience
                   </p>
-                  <p className="text-xs text-gray-500">All Users Combined</p>
+                  <p className="text-xs text-muted-foreground">
+                    All Users Combined
+                  </p>
                 </div>
               </div>
               <div className="text-2xl font-bold text-indigo-900">
@@ -529,7 +531,7 @@ const PortalBeritaPage = () => {
           </Card>
 
           {/* Top Region */}
-          <Card className="bg-white/80 backdrop-blur-sm border-2 border-indigo-200 rounded-2xl hover:shadow-lg transition-all duration-300">
+          <Card className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 rounded-2xl hover:shadow-lg transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg">
@@ -539,7 +541,9 @@ const PortalBeritaPage = () => {
                   <p className="text-sm font-semibold text-emerald-900">
                     Top Region
                   </p>
-                  <p className="text-xs text-gray-500">Most Active Users</p>
+                  <p className="text-xs text-muted-foreground">
+                    Most Active Users
+                  </p>
                 </div>
               </div>
               <div
@@ -548,7 +552,7 @@ const PortalBeritaPage = () => {
               >
                 {dashboardMetrics.topRegion.name}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {dashboardMetrics.hasData
                   ? `${dashboardMetrics.topRegion.users.toLocaleString()} users`
                   : "Loading..."}
@@ -557,7 +561,7 @@ const PortalBeritaPage = () => {
           </Card>
 
           {/* Top Traffic Source */}
-          <Card className="bg-white/80 backdrop-blur-sm border-2 border-indigo-200 rounded-2xl hover:shadow-lg transition-all duration-300">
+          <Card className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 rounded-2xl hover:shadow-lg transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg">
@@ -567,7 +571,9 @@ const PortalBeritaPage = () => {
                   <p className="text-sm font-semibold text-blue-900">
                     Top Traffic Source
                   </p>
-                  <p className="text-xs text-gray-500">Primary Channel</p>
+                  <p className="text-xs text-muted-foreground">
+                    Primary Channel
+                  </p>
                 </div>
               </div>
               <div
@@ -585,7 +591,7 @@ const PortalBeritaPage = () => {
           </Card>
 
           {/* Top External Source */}
-          <Card className="bg-white/80 backdrop-blur-sm border-2 border-indigo-200 rounded-2xl hover:shadow-lg transition-all duration-300">
+          <Card className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 rounded-2xl hover:shadow-lg transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg">
@@ -595,7 +601,7 @@ const PortalBeritaPage = () => {
                   <p className="text-sm font-semibold text-purple-900">
                     Top External Source
                   </p>
-                  <p className="text-xs text-gray-500">Main Referrer</p>
+                  <p className="text-xs text-muted-foreground">Main Referrer</p>
                 </div>
               </div>
               <div
@@ -616,17 +622,17 @@ const PortalBeritaPage = () => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Monthly Audience Trends */}
-          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+          <Card className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                   <LineChart className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-bold text-gray-900">
+                  <CardTitle className="text-lg font-bold text-card-foreground">
                     Monthly Audience Trends
                   </CardTitle>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     User engagement over time (Monthly View)
                   </p>
                 </div>
@@ -682,17 +688,17 @@ const PortalBeritaPage = () => {
           </Card>
 
           {/* Age Demographics */}
-          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+          <Card className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
                   <BarChart3 className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-bold text-gray-900">
+                  <CardTitle className="text-lg font-bold text-card-foreground">
                     Age Demographics
                   </CardTitle>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     User distribution by age groups
                   </p>
                 </div>
@@ -735,17 +741,17 @@ const PortalBeritaPage = () => {
           </Card>
 
           {/* Audience Distribution */}
-          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+          <Card className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
                   <PieChart className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-bold text-gray-900">
+                  <CardTitle className="text-lg font-bold text-card-foreground">
                     Audience Distribution
                   </CardTitle>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Users by audience segment
                   </p>
                 </div>
@@ -799,17 +805,17 @@ const PortalBeritaPage = () => {
           </Card>
 
           {/* Gender Distribution */}
-          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+          <Card className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white">
                   <PieChart className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-bold text-gray-900">
+                  <CardTitle className="text-lg font-bold text-card-foreground">
                     Gender Distribution
                   </CardTitle>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Audience breakdown by gender
                   </p>
                 </div>
@@ -853,17 +859,17 @@ const PortalBeritaPage = () => {
           </Card>
 
           {/* Regional Analysis */}
-          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+          <Card className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-rose-500 to-rose-600 text-white">
                   <BarChart3 className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-bold text-gray-900">
+                  <CardTitle className="text-lg font-bold text-card-foreground">
                     Top Regions
                   </CardTitle>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Most active regions by user count
                   </p>
                 </div>
@@ -912,7 +918,7 @@ const PortalBeritaPage = () => {
           </Card>
 
           {/* Traffic Source Chart */}
-          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+          <Card className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -920,10 +926,10 @@ const PortalBeritaPage = () => {
                     <TrendingUp className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-bold text-gray-900">
+                    <CardTitle className="text-lg font-bold text-card-foreground">
                       Top Traffic Sources
                     </CardTitle>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Leading sources driving user acquisition
                     </p>
                   </div>
@@ -1040,7 +1046,7 @@ const PortalBeritaPage = () => {
 
         {/* Popular Pages Table Section */}
         <div className="mt-8">
-          <Card className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg">
+          <Card className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -1048,10 +1054,10 @@ const PortalBeritaPage = () => {
                     <Trophy className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-bold text-gray-900">
+                    <CardTitle className="text-lg font-bold text-card-foreground">
                       Popular Pages
                     </CardTitle>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Most viewed pages by screen page views
                     </p>
                   </div>
@@ -1084,20 +1090,20 @@ const PortalBeritaPage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
                         #
                       </th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
                         Page Name
                       </th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                      <th className="text-right py-3 px-4 font-semibold text-foreground">
                         Page Views
                       </th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                      <th className="text-right py-3 px-4 font-semibold text-foreground">
                         Active Users
                       </th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900">
+                      <th className="text-right py-3 px-4 font-semibold text-foreground">
                         Avg Views/User
                       </th>
                     </tr>
@@ -1106,8 +1112,8 @@ const PortalBeritaPage = () => {
                     {popularPagesTableData.map((page, index) => (
                       <tr
                         key={index}
-                        className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                          index % 2 === 0 ? "bg-gray-25" : "bg-white"
+                        className={`border-b border-border hover:bg-muted/50 transition-colors ${
+                          index % 2 === 0 ? "bg-muted/20" : "bg-background"
                         }`}
                       >
                         <td className="py-3 px-4">
@@ -1130,7 +1136,7 @@ const PortalBeritaPage = () => {
                         <td className="py-3 px-4 relative">
                           <div className="relative group">
                             <div
-                              className="font-medium text-gray-900 max-w-xs truncate cursor-pointer hover:text-orange-600 transition-all duration-300 ease-out"
+                              className="font-medium text-foreground max-w-xs truncate cursor-pointer hover:text-primary transition-all duration-300 ease-out"
                               onClick={async () => {
                                 try {
                                   await navigator.clipboard.writeText(
@@ -1155,47 +1161,47 @@ const PortalBeritaPage = () => {
                             >
                               {page.pageName}
                               {page.pageName.length > 40 && (
-                                <span className="ml-1 text-gray-400 text-xs">
+                                <span className="ml-1 text-muted-foreground text-xs">
                                   ...
                                 </span>
                               )}
                             </div>
                             {/* Hover Tooltip - Always show full name */}
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-4 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out group-hover:translate-y-0 translate-y-1 pointer-events-none whitespace-nowrap z-[9999]">
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-4 py-2.5 bg-popover border border-border text-popover-foreground text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out group-hover:translate-y-0 translate-y-1 pointer-events-none whitespace-nowrap z-[9999]">
                               {page.pageName}
-                              <div className="text-xs text-gray-300 mt-1">
+                              <div className="text-xs text-muted-foreground mt-1">
                                 Click to copy
                               </div>
                               {/* Arrow */}
                               <div className="absolute top-full left-1/2 -translate-x-1/2">
-                                <div className="w-2 h-2 bg-slate-800 transform rotate-45 -mt-1"></div>
+                                <div className="w-2 h-2 bg-popover border-r border-b border-border transform rotate-45 -mt-1"></div>
                               </div>
                             </div>
                             {/* Copied Confirmation */}
                             <div
                               id={`copied-${index}`}
-                              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 transition-all duration-200 ease-out pointer-events-none whitespace-nowrap z-[10000]"
+                              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg shadow-lg opacity-0 transition-all duration-200 ease-out pointer-events-none whitespace-nowrap z-[10000]"
                             >
                               Copied!
                               {/* Arrow */}
                               <div className="absolute top-full left-1/2 -translate-x-1/2">
-                                <div className="w-2 h-2 bg-green-600 transform rotate-45 -mt-1"></div>
+                                <div className="w-2 h-2 bg-primary transform rotate-45 -mt-1"></div>
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-semibold text-foreground">
                             {page.formattedPageViews}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <span className="text-gray-700">
+                          <span className="text-foreground">
                             {page.formattedActiveUsers}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <span className="text-gray-600">
+                          <span className="text-muted-foreground">
                             {page.avgViewsPerUser}
                           </span>
                         </td>
@@ -1205,7 +1211,7 @@ const PortalBeritaPage = () => {
                 </table>
               </div>
               {popularPagesTableData.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   No popular pages data available
                 </div>
               )}
@@ -1214,28 +1220,28 @@ const PortalBeritaPage = () => {
         </div>
 
         {/* Footer Summary */}
-        <div className="mt-12 p-6 bg-indigo-50/80 backdrop-blur-sm rounded-2xl border border-indigo-200">
+        <div className="mt-12 p-6 bg-muted/80 backdrop-blur-sm rounded-2xl border border-border">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-indigo-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               📊 Portal Berita Insights
             </h3>
-            <p className="text-indigo-700 mb-4">
+            <p className="text-muted-foreground mb-4">
               Real-time analytics from Portal Berita platform showing audience
               engagement, demographic breakdowns, and regional performance
               metrics.
             </p>
             <div className="flex justify-center space-x-6 text-sm">
               <span className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
-                <span className="text-indigo-800">Live Data Integration</span>
+                <div className="w-3 h-3 bg-primary rounded-full"></div>
+                <span className="text-foreground">Live Data Integration</span>
               </span>
               <span className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                <span className="text-indigo-800">Real-time Updates</span>
+                <span className="text-foreground">Real-time Updates</span>
               </span>
               <span className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                <span className="text-indigo-800">Interactive Charts</span>
+                <span className="text-foreground">Interactive Charts</span>
               </span>
             </div>
           </div>
