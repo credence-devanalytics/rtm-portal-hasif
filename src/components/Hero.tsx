@@ -20,8 +20,8 @@ export default function Hero() {
 						</div>
 
 						<p className="text-base sm:text-lg font-normal text-center animate-fade-in-up text-gray-800">
-							Platform Analitik Media RTM - menghubungkan data, analisis, dan
-							pandangan untuk keputusan lebih pantas dan tepat.
+							Analytical Platform for Media Data Insight and Analytics for
+							faster and more accurate decisions.
 						</p>
 						<div className="flex justify-center">
 							{/* CTA Button */}
