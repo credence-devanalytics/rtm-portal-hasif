@@ -1,49 +1,19 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import GridBackgroundDemo from "@/components/DottedBackground";
+import Hero from "@/components/Hero";
 import Header from "@/components/Header";
 
 const MeDINALandingPage: React.FC = () => {
+	return (
+		<div className="min-h-screen bg-white relative">
+			{/* Grid and Dot Background */}
 
-  return (
-    <div className="min-h-screen bg-white relative">
-      {/* Grid and Dot Background */}
+			<div className="absolute inset-0 opacity-30" />
+			<Hero />
 
-      <div className="absolute inset-0 opacity-30" />
-
-      <GridBackgroundDemo />
-
-      {/* Content */}
-      <Header />
-
-      <style jsx>{`
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in-up {
-          animation: fade-in-up 1s ease-out forwards;
-        }
-
-        .animation-delay-300 {
-          animation-delay: 0.3s;
-          opacity: 0;
-        }
-
-        .animation-delay-600 {
-          animation-delay: 0.6s;
-          opacity: 0;
-        }
-      `}</style>
-    </div>
-  );
+			{/* Content */}
+			<Header />
+		</div>
+	);
 };
 
 export default MeDINALandingPage;
