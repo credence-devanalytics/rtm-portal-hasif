@@ -29,17 +29,17 @@ const PlatformDonutChart = ({ data, onFilterChange, activeFilters = {} }) => {
     }))
     .sort((a, b) => b.value - a.value); // Sort by value descending
 
-  // Platform colors
+  // Platform colors using CSS variables
   const platformColors = {
-    Facebook: "#1877F2",
-    Instagram: "#E4405F",
-    Twitter: "#1DA1F2",
-    TikTok: "#000000",
-    YouTube: "#FF0000",
-    LinkedIn: "#0A66C2",
-    Reddit: "#FF4500",
-    Unknown: "#6B7280",
-    Other: "#9CA3AF",
+    Facebook: "var(--platform-facebook)",
+    Instagram: "var(--platform-instagram)",
+    Twitter: "var(--platform-twitter)",
+    TikTok: "var(--platform-tiktok)",
+    YouTube: "var(--platform-youtube)",
+    LinkedIn: "var(--platform-linkedin)",
+    Reddit: "var(--platform-reddit)",
+    Unknown: "var(--platform-unknown)",
+    Other: "var(--platform-other)",
   };
 
   // Get color for platform or use a default

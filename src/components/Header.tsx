@@ -34,7 +34,7 @@ export default function Header() {
 
   const dashboardItems = [
     { name: "SocMed RTM Account", href: "SocMedAcc" },
-    { name: "SocMed Public Sentiment", href: "PubSentiment" },
+    { name: "SocMed Public Sentiment", href: "dashboard" },
     { name: "Multiplatform", href: "Multiplatform" },
   ];
 
@@ -47,7 +47,7 @@ export default function Header() {
   ];
 
   return (
-    <div className="relative z-50">
+    <div className="relative z-999999">
       {/* Header */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b transition-all duration-300 ${

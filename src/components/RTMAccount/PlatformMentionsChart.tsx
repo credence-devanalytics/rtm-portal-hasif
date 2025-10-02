@@ -268,7 +268,7 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
             <Tooltip cursor={false} content={<CustomTooltip />} />
             <Bar
               dataKey="count"
-              fill="#3b82f6"
+              fill="#4E5899"
               radius={2}
               cursor={onFilterChange ? "pointer" : "default"}
               onClick={handleBarClick}

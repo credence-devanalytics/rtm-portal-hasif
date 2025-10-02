@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Channel Groups Fetch Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .filter-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .filter-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        background: #e2e8f0;
+        color: #64748b;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .filter-btn:hover {
+        background: #cbd5e0;
+      }
+      .filter-btn.active {
+        background: #3b82f6;
+        color: white;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 6px;
+        border-left: 4px solid #3b82f6;
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #1e293b;
+      }
+      .stat-label {
+        color: #64748b;
+        font-size: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #374151;
+      }
+      tr:hover {
+        background: #f9fafb;
+      }
+      .channel-group {
+        background: #dbeafe;
+        color: #1d4ed8;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #64748b;
+      }
+      .error {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 15px;
+        border-radius: 6px;
+        border-left: 4px solid #dc2626;
+      }
+      .api-info {
+        background: #f0f9ff;
+        padding: 15px;
+        border-radius: 6px;
+        border-left: 4px solid #0ea5e9;
+        margin-top: 20px;
+      }
+      .code {
+        font-family: "Courier New", monospace;
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #475569;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🎯 Channel Groups Fetch Function Test</h1>
+      <p>
+        Interactive demonstration of the new channelgroup column functionality
+        for mentions_classify table
+      </p>
+    </div>
+
+    <div class="container">
+      <h2>📊 Filter Options</h2>
+      <div class="filter-buttons">
+        <button class="filter-btn active" onclick="loadChannelGroups('all')">
+          All Categories
+        </button>
+        <button class="filter-btn" onclick="loadChannelGroups('radio')">
+          📻 Radio Stations
+        </button>
+        <button class="filter-btn" onclick="loadChannelGroups('tv')">
+          📺 TV Channels
+        </button>
+        <button class="filter-btn" onclick="loadChannelGroups('news')">
+          📰 News Channels
+        </button>
+        <button class="filter-btn" onclick="loadChannelGroups('official')">
+          🏢 Official Channels
+        </button>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2>📈 Summary Statistics</h2>
+      <div class="stats" id="stats">
+        <!-- Stats will be populated here -->
+      </div>
+    </div>
+
+    <div class="container">
+      <h2>📋 Channel Groups Data</h2>
+      <p>
+        SQL Query:
+        <span class="code"
+          >SELECT groupname, channel, channelgroup, count(*) FROM
+          mentions_classify GROUP BY groupname, channel, channelgroup ORDER BY
+          channelgroup</span
+        >
+      </p>
+
+      <div id="content">
+        <!-- Table will be populated here -->
+      </div>
+    </div>
+
+    <div class="api-info">
+      <h3>🔗 API Information</h3>
+      <p>
+        <strong>Endpoint:</strong>
+        <span class="code" id="currentEndpoint"
+          >/api/channel-groups?type=all</span
+        >
+      </p>
+      <p><strong>Method:</strong> GET</p>
+      <p>
+        <strong>Description:</strong> Fetches channel group analysis with the
+        new channelgroup column data
+      </p>
+    </div>
+
+    <script>
+      // Mock data that simulates your database
+      const mockData = {
+        all: [
+          {
+            groupname: "Radio Nasional",
+            channel: "NASIONALfm",
+            channelgroup: "FM Stations",
+            count: 156,
+          },
+          {
+            groupname: "Radio Daerah",
+            channel: "JOHORfm",
+            channelgroup: "Regional FM",
+            count: 89,
+          },
+          {
+            groupname: "Radio Daerah",
+            channel: "KEDAHfm",
+            channelgroup: "Regional FM",
+            count: 67,
+          },
+          {
+            groupname: "Radio Musik",
+            channel: "TRAXXfm",
+            channelgroup: "Music Stations",
+            count: 234,
+          },
+          {
+            groupname: "Radio Klasik",
+            channel: "RADIO KLASIK",
+            channelgroup: "Specialty Radio",
+            count: 45,
+          },
+          {
+            groupname: "TV Perdana",
+            channel: "TV1",
+            channelgroup: "Main Channels",
+            count: 445,
+          },
+          {
+            groupname: "TV Perdana",
+            channel: "TV2",
+            channelgroup: "Main Channels",
+            count: 389,
+          },
+          {
+            groupname: "TV Sukan",
+            channel: "Sukan RTM",
+            channelgroup: "Sports Channels",
+            count: 167,
+          },
+          {
+            groupname: "Berita RTM",
+            channel: "Berita RTM",
+            channelgroup: "News Channels",
+            count: 678,
+          },
+          {
+            groupname: "Official RTM",
+            channel: "RTM Official",
+            channelgroup: "Official Channels",
+            count: 345,
+          },
+        ],
+        radio: [
+          {
+            groupname: "Radio Nasional",
+            channel: "NASIONALfm",
+            channelgroup: "FM Stations",
+            count: 156,
+          },
+          {
+            groupname: "Radio Nasional",
+            channel: "AI fm",
+            channelgroup: "FM Stations",
+            count: 187,
+          },
+          {
+            groupname: "Radio Daerah",
+            channel: "JOHORfm",
+            channelgroup: "Regional FM",
+            count: 89,
+          },
+          {
+            groupname: "Radio Daerah",
+            channel: "KEDAHfm",
+            channelgroup: "Regional FM",
+            count: 67,
+          },
+          {
+            groupname: "Radio Daerah",
+            channel: "PERAKfm",
+            channelgroup: "Regional FM",
+            count: 92,
+          },
+          {
+            groupname: "Radio Musik",
+            channel: "TRAXXfm",
+            channelgroup: "Music Stations",
+            count: 234,
+          },
+          {
+            groupname: "Radio Klasik",
+            channel: "RADIO KLASIK",
+            channelgroup: "Specialty Radio",
+            count: 45,
+          },
+        ],
+        tv: [
+          {
+            groupname: "TV Perdana",
+            channel: "TV1",
+            channelgroup: "Main Channels",
+            count: 445,
+          },
+          {
+            groupname: "TV Perdana",
+            channel: "TV2",
+            channelgroup: "Main Channels",
+            count: 389,
+          },
+          {
+            groupname: "TV Sukan",
+            channel: "Sukan RTM",
+            channelgroup: "Sports Channels",
+            count: 167,
+          },
+          {
+            groupname: "TV Digital",
+            channel: "TV Okey",
+            channelgroup: "Digital Channels",
+            count: 123,
+          },
+        ],
+        news: [
+          {
+            groupname: "Berita RTM",
+            channel: "Berita RTM",
+            channelgroup: "News Channels",
+            count: 678,
+          },
+        ],
+        official: [
+          {
+            groupname: "Official RTM",
+            channel: "RTM Official",
+            channelgroup: "Official Channels",
+            count: 345,
+          },
+        ],
+      };
+
+      let currentFilter = "all";
+
+      // Simulate fetch function
+      async function fetchChannelGroups(filterType) {
+        // Simulate network delay
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        const data = mockData[filterType] || [];
+        const totalRecords = data.reduce((sum, item) => sum + item.count, 0);
+        const uniqueGroups = new Set(data.map((item) => item.groupname)).size;
+        const uniqueChannels = new Set(data.map((item) => item.channel)).size;
+        const uniqueChannelGroups = new Set(
+          data.map((item) => item.channelgroup)
+        ).size;
+
+        return {
+          meta: {
+            filterType,
+            timestamp: new Date().toISOString(),
+            summary: {
+              totalRecords,
+              uniqueGroups,
+              uniqueChannels,
+              uniqueChannelGroups,
+            },
+          },
+          data: {
+            sqlFormat: data.sort((a, b) => {
+              if (a.channelgroup !== b.channelgroup) {
+                return a.channelgroup.localeCompare(b.channelgroup);
+              }
+              return b.count - a.count;
+            }),
+          },
+        };
+      }
+
+      async function loadChannelGroups(filterType) {
+        currentFilter = filterType;
+
+        // Update active button
+        document
+          .querySelectorAll(".filter-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        event.target.classList.add("active");
+
+        // Update endpoint display
+        document.getElementById(
+          "currentEndpoint"
+        ).textContent = `/api/channel-groups?type=${filterType}`;
+
+        // Show loading
+        document.getElementById("content").innerHTML =
+          '<div class="loading">🔄 Loading channel groups...</div>';
+        document.getElementById("stats").innerHTML =
+          '<div class="loading">Loading stats...</div>';
+
+        try {
+          console.log(`🔍 Fetching channel groups with filter: ${filterType}`);
+
+          const result = await fetchChannelGroups(filterType);
+
+          console.log("📊 API Response:", result);
+
+          displayStats(result.meta.summary);
+          displayTable(result.data.sqlFormat);
+        } catch (error) {
+          console.error("❌ Fetch error:", error);
+          document.getElementById(
+            "content"
+          ).innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+        }
+      }
+
+      function displayStats(summary) {
+        const statsHtml = `
+                <div class="stat-card">
+                    <div class="stat-value">${summary.totalRecords.toLocaleString()}</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${summary.uniqueChannelGroups}</div>
+                    <div class="stat-label">Channel Groups</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${summary.uniqueChannels}</div>
+                    <div class="stat-label">Unique Channels</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${summary.uniqueGroups}</div>
+                    <div class="stat-label">Group Names</div>
+                </div>
+            `;
+        document.getElementById("stats").innerHTML = statsHtml;
+      }
+
+      function displayTable(data) {
+        if (data.length === 0) {
+          document.getElementById("content").innerHTML =
+            '<div class="loading">No data found for this filter.</div>';
+          return;
+        }
+
+        let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Group Name</th>
+                            <th>Channel</th>
+                            <th>Channel Group</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+        data.forEach((row) => {
+          tableHtml += `
+                    <tr>
+                        <td><strong>${row.groupname}</strong></td>
+                        <td>${row.channel}</td>
+                        <td><span class="channel-group">${
+                          row.channelgroup
+                        }</span></td>
+                        <td><strong>${row.count.toLocaleString()}</strong></td>
+                    </tr>
+                `;
+        });
+
+        tableHtml += "</tbody></table>";
+        document.getElementById("content").innerHTML = tableHtml;
+
+        console.log(`✅ Displayed ${data.length} channel group records`);
+      }
+
+      // Load initial data
+      window.onload = () => {
+        console.log("🚀 Channel Groups Fetch Test Initialized");
+        loadChannelGroups("all");
+      };
+    </script>
+  </body>
+</html>

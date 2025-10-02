@@ -281,12 +281,6 @@ const RTMMediaTable = ({
                   Total Interactions
                 </div>
               </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
-                <div className="flex items-center justify-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-orange-600" />
-                  Overall Total
-                </div>
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -316,11 +310,6 @@ const RTMMediaTable = ({
                     {formatNumber(row.totalInteractions)}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="text-sm font-bold text-orange-600">
-                    {formatNumber(row.overallTotal)}
-                  </div>
-                </td>
               </tr>
             ))}
             {/* Empty placeholder rows to maintain consistent height */}
@@ -332,9 +321,6 @@ const RTMMediaTable = ({
             }).map((_, index) => (
               <tr key={`empty-${index}`} className="h-16">
                 <td className="px-6 py-4">
-                  <div className="h-6"></div>
-                </td>
-                <td className="px-6 py-4 text-center">
                   <div className="h-6"></div>
                 </td>
                 <td className="px-6 py-4 text-center">
@@ -368,14 +354,6 @@ const RTMMediaTable = ({
                   {formatNumber(
                     processedData.reduce(
                       (sum, row) => sum + row.totalInteractions,
-                      0
-                    )
-                  )}
-                </td>
-                <td className="px-6 py-4 text-center font-bold text-orange-600">
-                  {formatNumber(
-                    processedData.reduce(
-                      (sum, row) => sum + row.overallTotal,
                       0
                     )
                   )}

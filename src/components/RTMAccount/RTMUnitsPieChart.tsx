@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { Label, Pie, PieChart } from "recharts";
+import { Label, Pie, PieChart, Cell } from "recharts";
 import { BarChart3, Loader2, AlertCircle } from "lucide-react";
 import {
   Card,
@@ -49,6 +49,34 @@ const RTMUnitsPieChart = ({
     }
   };
 
+  // Define colors array using your custom color palette
+  const colors = [
+    "#4E5899", // Primary: Blue-purple
+    "#ff9705", // Secondary: Orange
+    "#28a745", // Third: Green
+    "#dc3545", // Fourth: Red
+    "#6f42c1", // Fifth: Purple
+    "#20c997", // Sixth: Teal
+    "#fd7e14", // Seventh: Orange variant
+    "#e83e8c", // Eighth: Pink
+  ];
+
+  // Function to generate shades of a color for channels within a unit
+  const generateShades = (baseColor, count) => {
+    const shades = [];
+    for (let i = 0; i < count; i++) {
+      // Create different opacity levels for the same base color
+      const opacity = 0.4 + (0.6 * (i + 1)) / count; // Range from 0.4 to 1.0
+      // Convert hex to rgba for opacity
+      const hex = baseColor.replace("#", "");
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      shades.push(`rgba(${r}, ${g}, ${b}, ${opacity})`);
+    }
+    return shades;
+  };
+
   // Check if a unit is currently filtered
   const isUnitFiltered = (unit) => {
     return activeFilters?.unit === unit;
@@ -71,61 +99,236 @@ const RTMUnitsPieChart = ({
     }
   };
 
-  // Process data to get unit counts and prepare chart data
-  const { chartData, chartConfig, totalMentions } = React.useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return { chartData: [], chartConfig: {}, totalMentions: 0 };
-    }
-
-    const unitCounts = data.reduce((acc, item) => {
-      if (item?.unit) {
-        const transformedUnit = transformUnitName(item.unit);
-        acc[transformedUnit] = (acc[transformedUnit] || 0) + 1;
+  // Process data to create sunburst structure
+  const { innerData, outerData, chartConfig, totalMentions } =
+    React.useMemo(() => {
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        return {
+          innerData: [],
+          outerData: [],
+          chartConfig: {},
+          totalMentions: 0,
+        };
       }
-      return acc;
-    }, {});
 
-    const processedData = Object.entries(unitCounts)
-      .map(([unit, count]) => ({
-        unit: unit,
-        mentions: count,
-        fill: `var(--color-${unit.toLowerCase().replace(/[^a-z0-9]/g, "")})`,
-        isFiltered: isUnitFiltered(unit), // Add filter state to data
-      }))
-      .sort((a, b) => b.mentions - a.mentions);
+      // Debug: Log the first few data items to understand the structure
+      console.log("Data sample:", data.slice(0, 3));
+      console.log("Total data length:", data.length);
 
-    // Create dynamic chart config
-    const config = {
-      mentions: {
-        label: "Mentions",
-      },
-    };
+      // Step 1: Count posts by unit and channel
+      const unitCounts = {};
+      const channelCounts = {};
+      const unitChannelCounts = {};
 
-    const colors = [
-      "var(--chart-1)",
-      "var(--chart-2)",
-      "var(--chart-3)",
-      "var(--chart-4)",
-      "var(--chart-5)",
-      "var(--chart-6)",
-      "var(--chart-7)",
-      "var(--chart-8)",
-    ];
+      data.forEach((item, index) => {
+        // Debug: Log what fields are available
+        if (index < 3) {
+          console.log(`Item ${index}:`, Object.keys(item), item);
+        }
 
-    processedData.forEach((item, index) => {
-      const key = item.unit.toLowerCase().replace(/[^a-z0-9]/g, "");
-      config[key] = {
-        label: item.unit,
-        color: colors[index % colors.length],
+        // More flexible field checking - try different possible field names
+        const unit =
+          item?.unit ||
+          item?.Unit ||
+          item?.category ||
+          item?.type ||
+          item?.source;
+        const channel =
+          item?.author ||
+          item?.channel ||
+          item?.Channel ||
+          item?.name ||
+          item?.title ||
+          item?.source_name;
+
+        if (unit) {
+          const transformedUnit = transformUnitName(unit);
+
+          // Count by unit
+          unitCounts[transformedUnit] = (unitCounts[transformedUnit] || 0) + 1;
+
+          if (channel) {
+            // Count by channel
+            channelCounts[channel] = (channelCounts[channel] || 0) + 1;
+
+            // Count by unit-channel combination
+            if (!unitChannelCounts[transformedUnit]) {
+              unitChannelCounts[transformedUnit] = {};
+            }
+            unitChannelCounts[transformedUnit][channel] =
+              (unitChannelCounts[transformedUnit][channel] || 0) + 1;
+          } else {
+            // If no channel, create a default channel name based on unit
+            const defaultChannel = `${transformedUnit} Default`;
+            channelCounts[defaultChannel] =
+              (channelCounts[defaultChannel] || 0) + 1;
+
+            if (!unitChannelCounts[transformedUnit]) {
+              unitChannelCounts[transformedUnit] = {};
+            }
+            unitChannelCounts[transformedUnit][defaultChannel] =
+              (unitChannelCounts[transformedUnit][defaultChannel] || 0) + 1;
+          }
+        }
+      });
+
+      console.log("Unit counts:", unitCounts);
+      console.log("Channel counts:", channelCounts);
+      console.log("Unit-Channel counts:", unitChannelCounts);
+
+      // Step 2: Create inner layer data (units)
+      const innerChartData = Object.entries(unitCounts)
+        .map(([unit, count], index) => ({
+          name: unit,
+          unit: unit,
+          mentions: count,
+          fill: colors[index % colors.length],
+          isFiltered: isUnitFiltered(unit),
+        }))
+        .sort((a, b) => b.mentions - a.mentions);
+
+      // Step 3: Create outer layer data (channels within units)
+      const outerChartData = [];
+
+      innerChartData.forEach((unitData, unitIndex) => {
+        const unitName = unitData.unit;
+        const unitChannels = unitChannelCounts[unitName] || {};
+        const baseColor = colors[unitIndex % colors.length];
+
+        // Get channels for this unit and sort by count
+        const channelsInUnit = Object.entries(unitChannels).sort(
+          (a, b) => b[1] - a[1]
+        ); // Sort by count descending
+
+        // Generate shades for this unit's channels
+        const channelShades = generateShades(baseColor, channelsInUnit.length);
+
+        channelsInUnit.forEach(([channelName, channelCount], channelIndex) => {
+          outerChartData.push({
+            name: channelName,
+            unit: unitName,
+            mentions: channelCount,
+            fill: channelShades[channelIndex],
+            percentage: ((channelCount / unitData.mentions) * 100).toFixed(1),
+            unitPercentage: ((channelCount / data.length) * 100).toFixed(1),
+          });
+        });
+      });
+
+      console.log("Inner data:", innerChartData);
+      console.log("Outer data:", outerChartData);
+      console.log("Colors being used:", colors);
+      console.log(
+        "Sample inner colors:",
+        innerChartData.map((item) => item.fill)
+      );
+      console.log(
+        "Sample outer colors:",
+        outerChartData.slice(0, 5).map((item) => item.fill)
+      );
+
+      // Step 4: Create chart config
+      const config = {
+        mentions: {
+          label: "Mentions",
+        },
       };
-    });
 
-    return {
-      chartData: processedData,
-      chartConfig: config,
-      totalMentions: data.length,
-    };
-  }, [data, activeFilters]); // Add activeFilters as dependency
+      innerChartData.forEach((item, index) => {
+        const key = item.unit.toLowerCase().replace(/[^a-z0-9]/g, "");
+        config[key] = {
+          label: item.unit,
+          color: colors[index % colors.length],
+        };
+      });
+
+      return {
+        innerData: innerChartData,
+        outerData: outerChartData,
+        chartConfig: config,
+        totalMentions: data.length,
+      };
+    }, [data, activeFilters]);
+
+  // Custom tooltip for inner layer (units)
+  const CustomInnerTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length > 0) {
+      const data = payload[0].payload;
+      const percentage = ((data.mentions / totalMentions) * 100).toFixed(1);
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
+          <div className="flex items-center gap-2 mb-2">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: data.fill }}
+            ></div>
+            <p className="font-semibold text-gray-900">{data.unit}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-blue-600 font-medium">
+              📊 Posts: {data.mentions.toLocaleString()}
+            </p>
+            <p className="text-sm text-gray-600">
+              📈 {percentage}% of total posts
+            </p>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${percentage}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Custom tooltip for outer layer (channels)
+  const CustomOuterTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length > 0) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: data.fill }}
+            ></div>
+            <p className="font-semibold text-gray-900">{data.name}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+              📺 Unit: {data.unit}
+            </p>
+            <p className="text-sm text-blue-600 font-medium">
+              📊 Posts: {data.mentions.toLocaleString()}
+            </p>
+            <p className="text-sm text-green-600">
+              📈 {data.percentage}% of {data.unit} posts
+            </p>
+            <p className="text-xs text-gray-500">
+              🎯 {data.unitPercentage}% of all posts
+            </p>
+            <div className="flex gap-2 mt-2">
+              <div className="flex-1">
+                <div className="text-xs text-gray-500 mb-1">
+                  Within {data.unit}
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${data.percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // Loading state
   if (!data) {
@@ -171,7 +374,7 @@ const RTMUnitsPieChart = ({
   }
 
   // No valid units found
-  if (chartData.length === 0) {
+  if (innerData.length === 0) {
     return (
       <Card className="flex flex-col">
         <CardHeader className="items-center pb-0">
@@ -204,68 +407,124 @@ const RTMUnitsPieChart = ({
       <CardContent className="flex-1">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square h-[400px]"
+          className="mx-auto aspect-square h-[450px]"
         >
           <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
+            {/* Inner layer - Pie chart with unit segments */}
             <Pie
-              data={chartData}
+              data={innerData}
               dataKey="mentions"
               nameKey="unit"
-              innerRadius={100}
-              strokeWidth={5}
+              cx="50%"
+              cy="50%"
+              innerRadius={0}
+              outerRadius={100}
+              strokeWidth={0}
+              stroke="#ffffff"
               cursor={onFilterChange ? "pointer" : "default"}
               onClick={handlePieClick}
-              className={
-                onFilterChange
-                  ? "hover:opacity-80 transition-all duration-200"
-                  : ""
-              }
+              className="hover:opacity-90 transition-all duration-200"
             >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
-                        >
-                          {totalMentions.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          {activeFilters?.unit ? "Filtered" : "Total"} Mentions
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
+              {innerData.map((entry, index) => {
+                console.log(
+                  `Inner Cell ${index}: ${entry.unit} -> ${entry.fill}`
+                );
+                return (
+                  <Cell
+                    key={`inner-cell-${index}`}
+                    fill={entry.fill}
+                    stroke="#ffffff"
+                    strokeWidth={2}
+                  />
+                );
+              })}
+              <ChartTooltip
+                cursor={true}
+                content={<CustomInnerTooltip />}
+                animationDuration={200}
+                offset={10}
+                allowEscapeViewBox={{ x: false, y: false }}
               />
             </Pie>
+
+            {/* Outer layer - Channels within units (Sunburst effect) */}
+            <Pie
+              data={outerData}
+              dataKey="mentions"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={110}
+              outerRadius={150}
+              strokeWidth={1}
+              stroke="#fff"
+              cursor={onFilterChange ? "pointer" : "default"}
+              onClick={handlePieClick}
+              className="hover:opacity-90 transition-all duration-200"
+            >
+              {outerData.map((entry, index) => {
+                if (index < 5)
+                  console.log(
+                    `Outer Cell ${index}: ${entry.name} -> ${entry.fill}`
+                  );
+                return (
+                  <Cell
+                    key={`outer-cell-${index}`}
+                    fill={entry.fill}
+                    stroke="#ffffff"
+                    strokeWidth={1}
+                  />
+                );
+              })}
+              <ChartTooltip
+                cursor={false}
+                content={<CustomOuterTooltip />}
+                animationDuration={200}
+                offset={10}
+                allowEscapeViewBox={{ x: false, y: false }}
+              />
+            </Pie>
+
+            {/* Center label */}
+            <Label
+              content={({ viewBox }) => {
+                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  return (
+                    <text
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        className="fill-foreground text-2xl font-bold"
+                      >
+                        {totalMentions.toLocaleString()}
+                      </tspan>
+                      <tspan
+                        x={viewBox.cx}
+                        y={(viewBox.cy || 0) + 20}
+                        className="fill-muted-foreground text-sm"
+                      >
+                        {activeFilters?.unit ? "Filtered" : "Total"} Posts
+                      </tspan>
+                    </text>
+                  );
+                }
+              }}
+            />
           </PieChart>
         </ChartContainer>
 
         {/* Summary stats */}
         <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {chartData.map((item, index) => {
+          {innerData.map((item, index) => {
             const percentage = ((item.mentions / totalMentions) * 100).toFixed(
               1
             );
-            const colorKey = item.unit.toLowerCase().replace(/[^a-z0-9]/g, "");
-            const color = chartConfig[colorKey]?.color || "var(--chart-1)";
+            const color = item.fill;
             const isFiltered = isUnitFiltered(item.unit);
             const hasActiveFilter = activeFilters?.unit;
 
@@ -329,6 +588,10 @@ const RTMUnitsPieChart = ({
                   (Currently filtering by: {activeFilters.unit})
                 </span>
               )}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Inner ring: Units by total posts • Outer ring: Channels
+              proportional within each unit
             </p>
           </div>
         )}

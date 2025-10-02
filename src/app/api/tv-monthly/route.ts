@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../../index';
+import { db } from '../../../lib/db';
 import { marketingChannelByMonth } from '../../../../drizzle/schema';
 import { eq } from 'drizzle-orm';
 
