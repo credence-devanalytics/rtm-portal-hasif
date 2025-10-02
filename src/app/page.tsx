@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import GridBackgroundDemo from "@/components/DottedBackground";
 import Header from "@/components/Header";
+import MedinaLogo from "@/components/MedinaLogo";
 
 const MeDINALandingPage: React.FC = () => {
 	return (
@@ -13,6 +14,7 @@ const MeDINALandingPage: React.FC = () => {
 
 			{/* Content */}
 			<Header />
+			{/* <MedinaLogo size="x-lg" /> */}
 		</div>
 	);
 };
