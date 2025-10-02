@@ -1,8 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import GridBackgroundDemo from "@/components/DottedBackground";
+import Hero from "@/components/Hero";
 import Header from "@/components/Header";
-import MedinaLogo from "@/components/MedinaLogo";
 
 const MeDINALandingPage: React.FC = () => {
 	return (
@@ -10,11 +8,10 @@ const MeDINALandingPage: React.FC = () => {
 			{/* Grid and Dot Background */}
 
 			<div className="absolute inset-0 opacity-30" />
-			<GridBackgroundDemo />
+			<Hero />
 
 			{/* Content */}
 			<Header />
-			{/* <MedinaLogo size="x-lg" /> */}
 		</div>
 	);
 };

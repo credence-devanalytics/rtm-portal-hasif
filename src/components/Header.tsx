@@ -12,6 +12,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
+import MedinaLogo from "./MedinaLogo";
 
 export default function Header() {
 	const [scrolled, setScrolled] = useState(false);
@@ -51,13 +52,7 @@ export default function Header() {
 				<div className="flex justify-between items-center h-16">
 					{/* Logo */}
 					<div className="flex-shrink-0">
-						<Image
-							src="/MedinaRemoved.png"
-							alt="Logo"
-							width={120}
-							height={40}
-							className="drop-shadow-sm"
-						/>
+						<MedinaLogo size="sm" />
 					</div>
 
 					{/* Desktop Navigation */}

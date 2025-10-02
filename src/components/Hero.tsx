@@ -1,36 +1,29 @@
-import { cn } from "@/lib/utils";
 import React from "react";
 import { AuroraBackground } from "@/components/ui/shadcn-io/aurora-background";
 import { Button } from "@/components/ui/button";
+import MedinaLogo from "@/components/MedinaLogo";
 
-export default function GridBackgroundDemo() {
+export default function Hero() {
 	return (
 		<AuroraBackground>
 			{/* Content overlay */}
 			<main className="relative z-10">
 				<section className="min-h-screen grid place-items-center px-4 sm:px-6 lg:px-8">
-					<div className="text-left max-w-5xl justify-center flex flex-col gap-4">
+					<div className="text-left max-w-xl justify-center items-center flex flex-col gap-4">
 						{/* Title */}
 						<div>
-							<h1 className="text-4xl sm:text-2xl md:text-3xl lg:text-7xl font-bold animate-fade-in-up">
-								<span
-									className="bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent block"
-									// style={{ color: "#E58A37" }}
-								>
-									MeDINA
-								</span>
-							</h1>
+							<MedinaLogo size="lg" />
 
 							<h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold animate-fade-in-up text-black">
 								Media Data Insight and Analytics
 							</h2>
 						</div>
 
-						<p className="text-base sm:text-lg font-normal animate-fade-in-up text-gray-800">
-							Analytical Platform for Media Data Insight and Analytics <br />{" "}
-							for faster and more accurate decisions.
+						<p className="text-base sm:text-lg font-normal text-center animate-fade-in-up text-gray-800">
+							Platform Analitik Media RTM - menghubungkan data, analisis, dan
+							pandangan untuk keputusan lebih pantas dan tepat.
 						</p>
-						<div className="flex justify-start">
+						<div className="flex justify-center">
 							{/* CTA Button */}
 							<Button
 								variant="default"
