@@ -9,10 +9,10 @@ export default function Hero() {
 			{/* Content overlay */}
 			<main className="relative z-10">
 				<section className="min-h-screen grid place-items-center px-4 sm:px-6 lg:px-8">
-					<div className="text-left max-w-xl justify-center items-center flex flex-col gap-4">
+					<div className="max-w-xl justify-center items-center flex flex-col gap-4">
 						{/* Title */}
-						<div>
-							<MedinaLogo size="lg" />
+						<div className="">
+							<MedinaLogo size="lg" className="transform translate-x-6" />
 
 							<h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold animate-fade-in-up text-black">
 								Media Data Insight and Analytics
