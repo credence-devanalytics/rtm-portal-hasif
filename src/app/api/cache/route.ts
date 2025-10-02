@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 import cacheManager from '@/lib/cache';
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');

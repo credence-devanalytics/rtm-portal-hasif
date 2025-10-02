@@ -6,7 +6,7 @@ import { desc, gte, and, sql, count, sum, avg } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import cacheManager, { createFiltersFromParams, buildWhereConditions } from '@/lib/cache';
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const filters = createFiltersFromParams(searchParams);

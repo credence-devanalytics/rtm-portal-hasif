@@ -7,7 +7,7 @@ import { db } from '../../../index';
 import { sql, desc, asc, count, sum, avg } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
     // TEMPORARY: Return the exact data from your database query until server issues are resolved
     // Based on your actual SQL query output

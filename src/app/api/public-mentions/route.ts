@@ -37,7 +37,7 @@ async function getLocalData() {
   }
 }
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
     console.log('🔗 Database URL check:', process.env.DATABASE_URL ? 'Connected' : 'Not connected');
     console.log('🔗 Database URL prefix:', process.env.DATABASE_URL?.substring(0, 20) + '...');

@@ -53,15 +53,6 @@ export async function GET() {
     2023: chartData.reduce((sum, item) => sum + (item['2023'] || 0), 0),
     2024: chartData.reduce((sum, item) => sum + (item['2024'] || 0), 0)
   };
-  const chartData = Object.values(processedData)
-    .sort((a, b) => a.monthOrder - b.monthOrder);
-
-  // Calculate yearly totals
-  const yearlyTotals = {
-    2022: chartData.reduce((sum, item) => sum + (item['2022'] || 0), 0),
-    2023: chartData.reduce((sum, item) => sum + (item['2023'] || 0), 0),
-    2024: chartData.reduce((sum, item) => sum + (item['2024'] || 0), 0)
-  };
 
     // Calculate growth rates
     const growth2022to2023 = yearlyTotals[2022] > 0 ? 

@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { db } from '../../../index.js';
+import { db } from '../../../index';
 import { unifiViewership } from '../../../../drizzle/schema';
 import { eq, and, gte, lte, like, inArray } from 'drizzle-orm';
 
@@ -131,7 +131,7 @@ function generateTopPrograms(data, limit = 10) {
     .slice(0, limit);
 }
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     

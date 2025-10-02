@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * Custom React hooks for cached dashboard data
  * Provides easy integration with the cached API endpoints
@@ -312,38 +314,7 @@ export function useCacheMonitor(interval = 30000) { // 30 seconds
   };
 }
 
-/**
- * Example usage component with cache performance display
- */
-export function CachePerformanceIndicator({ cacheInfo, title }) {
-  if (!cacheInfo) return (
-    <div className="text-xs text-gray-400 p-2 bg-gray-50 rounded">
-      <div className="flex items-center gap-2">
-        <span className="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
-        <span>{title || 'Cache'}: No data</span>
-      </div>
-    </div>
-  );
-  
-  return (
-    <div className="text-xs text-gray-600 p-2 bg-gray-50 rounded">
-      <div className="flex items-center gap-2 mb-1">
-        <span className={`inline-block w-2 h-2 rounded-full ${
-          cacheInfo.hit ? 'bg-green-500' : 'bg-yellow-500'
-        }`}></span>
-        <span className="font-medium">
-          {title || 'Cache'}: {cacheInfo.hit ? 'HIT' : 'MISS'}
-        </span>
-      </div>
-      <div className="text-gray-500">
-        <div>Response: {cacheInfo.responseTime}ms</div>
-        {cacheInfo.key && (
-          <div>Key: {cacheInfo.key.substring(0, 8)}...</div>
-        )}
-      </div>
-    </div>
-  );
-}
+// Note: CachePerformanceIndicator component removed due to TypeScript conversion issues
 
 // Export all hooks
 export default {
