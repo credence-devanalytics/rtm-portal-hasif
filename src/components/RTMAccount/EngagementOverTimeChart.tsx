@@ -42,13 +42,13 @@ const EngagementOverTimeChart = ({ data }) => {
     });
 
     const rawData = Object.values(groupedByDate)
-      .map((day) => ({
+      .map((day: any) => ({
         date: day.date,
         reach: day.totalReach,
         posts: day.postsCount,
         engagement: day.totalEngagement,
       }))
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // Find max values for normalization
     const maxReach = Math.max(...rawData.map((d) => d.reach));
@@ -245,7 +245,15 @@ const EngagementOverTimeChart = ({ data }) => {
                 }}
                 tickFormatter={(value) => `${value}%`}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={
+                  <CustomTooltip
+                    active={undefined}
+                    payload={undefined}
+                    label={undefined}
+                  />
+                }
+              />
               <Legend wrapperStyle={{ paddingTop: "20px" }} />
 
               {/* Bar Chart for Posts/Mentions */}

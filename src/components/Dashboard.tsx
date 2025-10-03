@@ -1,10 +1,7 @@
 // src/components/dashboard.js
 "use client";
 
-import {
-  ChartContainer,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 import {
   BarChart,
@@ -28,7 +25,14 @@ export default function Dashboard({ data }) {
 
   return (
     <div className="w-full h-[400px]">
-      <ChartContainer>
+      <ChartContainer
+        id="dashboard-chart"
+        className="w-full h-full"
+        config={{
+          value: { label: "Mentions", color: "#6366f1" },
+          name: { label: "Sentiment" },
+        }}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>
             <XAxis dataKey="name" />
@@ -36,10 +40,16 @@ export default function Dashboard({ data }) {
             <Tooltip
               content={
                 <ChartTooltipContent
-                  config={{
-                    value: { label: "Mentions", color: "#6366f1" },
-                    name: { label: "Category" },
-                  }}
+                  active={undefined}
+                  payload={undefined}
+                  className=""
+                  label={undefined}
+                  labelFormatter={undefined}
+                  labelClassName=""
+                  formatter={undefined}
+                  color={undefined}
+                  nameKey=""
+                  labelKey=""
                 />
               }
             />

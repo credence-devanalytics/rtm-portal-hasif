@@ -6,13 +6,13 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 const MarketingChannelBreakdownTable = ({ data }) => {
   if (!data || !data.channels) {
     return (
-      <Card>
-        <CardHeader>
+      <Card className="">
+        <CardHeader className="">
           <CardTitle className="text-lg font-bold font-sans">
             Channel Revenue Breakdown
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="text-center py-8">
             <p className="text-sm text-muted-foreground font-sans">
               No data available
@@ -52,8 +52,8 @@ const MarketingChannelBreakdownTable = ({ data }) => {
   const sortedChannels = [...channels].sort((a, b) => b.year2024 - a.year2024);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="">
+      <CardHeader className="">
         <CardTitle className="text-lg font-bold font-sans">
           Channel Revenue Breakdown (2022-2024)
         </CardTitle>
@@ -61,7 +61,7 @@ const MarketingChannelBreakdownTable = ({ data }) => {
           Revenue comparison across TV channels with growth percentages
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-sans">
             <thead>

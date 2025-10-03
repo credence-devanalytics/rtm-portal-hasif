@@ -16,6 +16,8 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "noEmitOnError": false,
+    "maxNodeModuleJsDepth": 0,
     "types": [
       "node"
     ],

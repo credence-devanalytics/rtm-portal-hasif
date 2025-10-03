@@ -120,7 +120,9 @@ const DurationVsMauChart = ({ filters = {} }) => {
               tickFormatter={(value) => value.toLocaleString()}
               fontSize={12}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={<CustomTooltip active={undefined} payload={undefined} />}
+            />
             <Scatter
               name="Programs"
               data={data}

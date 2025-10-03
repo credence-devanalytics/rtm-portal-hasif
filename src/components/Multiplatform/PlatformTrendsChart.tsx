@@ -66,12 +66,12 @@ const PlatformTrendsChart = ({ mytvData, unifiData, loading }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Platform Trends</CardTitle>
-          <CardDescription>MYTV vs Unifi growth comparison</CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Platform Trends</CardTitle>
+          <CardDescription className="">MYTV vs Unifi growth comparison</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading chart data...</div>
           </div>
@@ -82,12 +82,12 @@ const PlatformTrendsChart = ({ mytvData, unifiData, loading }) => {
 
   if (!combinedData || combinedData.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Platform Trends</CardTitle>
-          <CardDescription>MYTV vs Unifi growth comparison</CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Platform Trends</CardTitle>
+          <CardDescription className="">MYTV vs Unifi growth comparison</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">No trend data available</div>
           </div>
@@ -97,17 +97,17 @@ const PlatformTrendsChart = ({ mytvData, unifiData, loading }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Platform Trends</CardTitle>
-        <CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">Platform Trends</CardTitle>
+        <CardDescription className="">
           MYTV viewers vs Unifi MAU comparison
           {(!mytvData?.monthlyTrends || !unifiData?.summary) && (
             <span className="text-orange-600 ml-2">(Using sample data)</span>
           )}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={combinedData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -117,8 +117,8 @@ const PlatformTrendsChart = ({ mytvData, unifiData, loading }) => {
             <Tooltip
               formatter={(value, name) => [
                 name === "mytvViewers"
-                  ? `${(value / 1000000).toFixed(1)}M`
-                  : `${(value / 1000).toFixed(0)}K`,
+                  ? `${(Number(value) / 1000000).toFixed(1)}M`
+                  : `${(Number(value) / 1000).toFixed(0)}K`,
                 name === "mytvViewers" ? "MYTV Viewers" : "Unifi MAU",
               ]}
             />

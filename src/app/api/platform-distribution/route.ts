@@ -45,12 +45,12 @@ export async function GET(request: Request) {
           .orderBy(desc(count()));
         
         // Calculate totals and percentages
-        const totalMentions = platformData.reduce((sum, item) => sum + parseInt(item.count), 0);
-        const totalReach = platformData.reduce((sum, item) => sum + (parseInt(item.totalReach) || 0), 0);
+        const totalMentions = platformData.reduce((sum, item) => sum + Number(), 0);
+        const totalReach = platformData.reduce((sum, item) => sum + (Number() || 0), 0);
         
         const formattedData = platformData.map(item => {
-          const count = parseInt(item.count);
-          const reach = parseInt(item.totalReach) || 0;
+          const count = Number();
+          const reach = Number() || 0;
           
           return {
             platform: item.platform || 'unknown',
@@ -58,16 +58,16 @@ export async function GET(request: Request) {
             percentage: totalMentions > 0 ? ((count / totalMentions) * 100).toFixed(1) : 0,
             totalReach: reach,
             reachPercentage: totalReach > 0 ? ((reach / totalReach) * 100).toFixed(1) : 0,
-            totalInteractions: parseInt(item.totalInteractions) || 0,
-            avgEngagement: parseFloat(item.avgEngagement) || 0,
-            totalFollowers: parseInt(item.totalFollowers) || 0,
+            totalInteractions: Number(item.totalInteractions) || 0,
+            avgEngagement: Number(item.avgEngagement) || 0,
+            totalFollowers: Number(item.totalFollowers) || 0,
             sentiment: {
-              positive: parseInt(item.positiveCount) || 0,
-              negative: parseInt(item.negativeCount) || 0,
-              neutral: parseInt(item.neutralCount) || 0
+              positive: Number(item.positiveCount) || 0,
+              negative: Number(item.negativeCount) || 0,
+              neutral: Number(item.neutralCount) || 0
             },
             // Calculate engagement rate
-            engagementRate: reach > 0 ? (((parseInt(item.totalInteractions) || 0) / reach) * 100).toFixed(2) : 0
+            engagementRate: reach > 0 ? (((Number(item.totalInteractions) || 0) / reach) * 100).toFixed(2) : 0
           };
         });
         
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
             totalReach,
             totalPlatforms: formattedData.length,
             topPlatform: formattedData[0]?.platform || 'unknown',
-            avgEngagementAcrossPlatforms: formattedData.reduce((sum, p) => sum + parseFloat(p.avgEngagement), 0) / formattedData.length
+            avgEngagementAcrossPlatforms: formattedData.reduce((sum, p) => sum + Number(p.avgEngagement), 0) / formattedData.length
           },
           meta: {
             queryType: 'platform_distribution',

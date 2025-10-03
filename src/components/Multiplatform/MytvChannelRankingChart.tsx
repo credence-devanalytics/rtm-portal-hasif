@@ -44,14 +44,14 @@ const MytvChannelRankingChart = ({ mytvData, loading, selectedMonth }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Channel Ranking</CardTitle>
-          <CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Channel Ranking</CardTitle>
+          <CardDescription className="">
             Performance for {selectedMonth || "selected month"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-80 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading chart data...</div>
           </div>
@@ -61,12 +61,14 @@ const MytvChannelRankingChart = ({ mytvData, loading, selectedMonth }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Channel Ranking</CardTitle>
-        <CardDescription>Top performing channels by viewers</CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">Channel Ranking</CardTitle>
+        <CardDescription className="">
+          Top performing channels by viewers
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={350}>
           <BarChart
             data={chartData}
@@ -76,12 +78,14 @@ const MytvChannelRankingChart = ({ mytvData, loading, selectedMonth }) => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               type="number"
-              tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+              tickFormatter={(value) =>
+                `${(Number(value) / 1000000).toFixed(1)}M`
+              }
             />
             <YAxis type="category" dataKey="channel" width={50} fontSize={12} />
             <Tooltip
               formatter={(value, name) => [
-                `${(value / 1000000).toFixed(2)}M viewers`,
+                `${(Number(value) / 1000000).toFixed(2)}M viewers`,
                 "Total Viewers",
               ]}
               labelFormatter={(label) => `Channel: ${label}`}

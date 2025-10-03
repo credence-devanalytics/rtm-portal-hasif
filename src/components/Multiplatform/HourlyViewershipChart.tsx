@@ -24,8 +24,8 @@ const HourlyViewershipChart = ({ filters = {} }) => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
-        limit: 500, // Get more data to aggregate by hour
-        ...filters,
+        limit: "500", // Get more data to aggregate by hour
+        ...(filters as any),
       });
 
       const response = await fetch(`/api/multiplatform?${queryParams}`);
@@ -56,7 +56,8 @@ const HourlyViewershipChart = ({ filters = {} }) => {
       // Convert to array and sort by hour
       const chartData = Object.values(hourlyData).sort(
         (a, b) =>
-          parseInt(a.hour.split(":")[0]) - parseInt(b.hour.split(":")[0])
+          parseInt((a as any).hour.split(":")[0]) -
+          parseInt((b as any).hour.split(":")[0])
       );
 
       setData(chartData);
@@ -130,7 +131,15 @@ const HourlyViewershipChart = ({ filters = {} }) => {
               tickFormatter={(value) => value.toLocaleString()}
               fontSize={12}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={
+                <CustomTooltip
+                  active={undefined}
+                  payload={undefined}
+                  label={undefined}
+                />
+              }
+            />
             <Bar dataKey="totalMau" fill="#10B981" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

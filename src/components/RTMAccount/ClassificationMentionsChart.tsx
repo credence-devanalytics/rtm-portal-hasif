@@ -50,7 +50,7 @@ const ClassificationMentionsChart = ({ data = [] }) => {
 
       // Sort data
       if (sortBy === "count") {
-        chartData.sort((a, b) => b.count - a.count);
+        chartData.sort((a, b) => Number(b.count) - Number(a.count));
       } else {
         chartData.sort((a, b) => a.category.localeCompare(b.category));
       }
@@ -64,7 +64,10 @@ const ClassificationMentionsChart = ({ data = [] }) => {
   }, [data, searchTerm, sortBy, showTop]);
 
   const totalMentions = useMemo(() => {
-    return processedData.reduce((sum, item) => sum + item.count, 0);
+    return processedData.reduce(
+      (sum, item) => sum + Number((item as any).count),
+      0
+    );
   }, [processedData]);
 
   const uniqueClassifications = processedData.length;
@@ -257,7 +260,13 @@ const ClassificationMentionsChart = ({ data = [] }) => {
                 }}
               />
               <Tooltip
-                content={<CustomTooltip />}
+                content={
+                  <CustomTooltip
+                    active={undefined}
+                    payload={undefined}
+                    label={undefined}
+                  />
+                }
                 cursor={{ fill: "rgba(78, 88, 153, 0.1)" }}
               />
               <Bar

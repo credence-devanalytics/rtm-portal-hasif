@@ -24,7 +24,7 @@ const TopProgramsChart = ({ filters = {} }) => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
-        limit: 10,
+        limit: "10",
         ...filters,
       });
 
@@ -107,7 +107,15 @@ const TopProgramsChart = ({ filters = {} }) => {
               tickFormatter={(value) => value.toLocaleString()}
               fontSize={12}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={
+                <CustomTooltip
+                  active={undefined}
+                  payload={undefined}
+                  label={undefined}
+                />
+              }
+            />
             <Bar dataKey="mau" fill="#3B82F6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

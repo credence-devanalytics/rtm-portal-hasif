@@ -89,8 +89,8 @@ const MarketingPerformanceTable = ({ data = [] }) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="">
+      <CardHeader className="">
         <CardTitle className="text-lg font-bold font-sans">
           Marketing Performance Analysis
         </CardTitle>
@@ -98,7 +98,7 @@ const MarketingPerformanceTable = ({ data = [] }) => {
           Detailed breakdown with year-over-year growth percentages
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <div className="h-[400px] flex flex-col">
           {/* Table Container with fixed height */}
           <div className="flex-1 overflow-y-auto">

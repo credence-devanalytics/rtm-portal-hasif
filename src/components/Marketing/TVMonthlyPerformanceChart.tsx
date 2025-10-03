@@ -48,8 +48,8 @@ const TVMonthlyPerformanceChart = ({ data = [] }) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="">
+      <CardHeader className="">
         <CardTitle className="text-lg font-bold font-sans">
           TV Monthly Income Performance
         </CardTitle>
@@ -57,7 +57,7 @@ const TVMonthlyPerformanceChart = ({ data = [] }) => {
           Monthly revenue trends across three years
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={400}>
           <LineChart
             data={data}
@@ -75,7 +75,7 @@ const TVMonthlyPerformanceChart = ({ data = [] }) => {
               tickCount={8}
               padding={{ top: 20, bottom: 20 }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
             <Legend
               wrapperStyle={{
                 paddingTop: "20px",

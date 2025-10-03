@@ -109,7 +109,7 @@ const DashboardExample = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Sentiment Query</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div
               className={`text-xs ${
                 sentimentQuery.isLoading ? "text-yellow-600" : "text-green-600"
@@ -128,7 +128,7 @@ const DashboardExample = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Platform Query</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div
               className={`text-xs ${
                 platformQuery.isLoading ? "text-yellow-600" : "text-green-600"
@@ -147,7 +147,7 @@ const DashboardExample = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Time Series Query</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div
               className={`text-xs ${
                 timeSeriesQuery.isLoading ? "text-yellow-600" : "text-green-600"
@@ -168,7 +168,7 @@ const DashboardExample = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Top Mentions Query</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div
               className={`text-xs ${
                 topMentionsQuery.isLoading
@@ -189,7 +189,7 @@ const DashboardExample = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Cache Query</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div
               className={`text-xs ${
                 cacheQuery.isLoading ? "text-yellow-600" : "text-green-600"
@@ -205,11 +205,11 @@ const DashboardExample = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Mentions Summary */}
         {mentionsQuery.data && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Mentions Overview</CardTitle>
+          <Card className="">
+            <CardHeader className="">
+              <CardTitle className="">Mentions Overview</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="text-2xl font-bold">
                 {mentionsQuery.data.metrics?.totalMentions?.toLocaleString() ||
                   0}
@@ -221,11 +221,11 @@ const DashboardExample = () => {
 
         {/* Sentiment Summary */}
         {sentimentQuery.data && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Sentiment Distribution</CardTitle>
+          <Card className="">
+            <CardHeader className="">
+              <CardTitle className="">Sentiment Distribution</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="space-y-2">
                 {sentimentQuery.data.sentiments?.map((item) => (
                   <div key={item.sentiment} className="flex justify-between">
@@ -240,11 +240,11 @@ const DashboardExample = () => {
 
         {/* Platform Summary */}
         {platformQuery.data && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Distribution</CardTitle>
+          <Card className="">
+            <CardHeader className="">
+              <CardTitle className="">Platform Distribution</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="space-y-2">
                 {platformQuery.data.platforms?.map((item) => (
                   <div key={item.platform} className="flex justify-between">
@@ -259,11 +259,11 @@ const DashboardExample = () => {
 
         {/* Cache Status */}
         {cacheQuery.data && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Cache Status</CardTitle>
+          <Card className="">
+            <CardHeader className="">
+              <CardTitle className="">Cache Status</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Redis Status</span>
@@ -285,12 +285,12 @@ const DashboardExample = () => {
 
       {/* Debug Information */}
       <Card className="bg-blue-50">
-        <CardHeader>
+        <CardHeader className="">
           <CardTitle className="text-blue-800">
             TanStack Query Debug Info
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="text-sm space-y-2">
             <h4 className="font-semibold">Query Status:</h4>
             <ul className="space-y-1 text-xs">

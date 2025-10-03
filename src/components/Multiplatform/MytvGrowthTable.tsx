@@ -89,14 +89,14 @@ const MytvGrowthTable = ({ mytvData, loading }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Month-over-Month Growth</CardTitle>
-          <CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Month-over-Month Growth</CardTitle>
+          <CardDescription className="">
             Viewer growth percentage with color coding
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading growth data...</div>
           </div>
@@ -106,12 +106,14 @@ const MytvGrowthTable = ({ mytvData, loading }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Month-over-Month Growth</CardTitle>
-        <CardDescription>Channel performance and growth trends</CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">Month-over-Month Growth</CardTitle>
+        <CardDescription className="">
+          Channel performance and growth trends
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

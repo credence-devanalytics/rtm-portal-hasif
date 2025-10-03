@@ -27,7 +27,6 @@ import {
   usePlatformDistribution,
   useTimeSeries,
   useDashboardFilters,
-  CachePerformanceIndicator,
   useCacheManager,
 } from "@/hooks/useCachedData";
 
@@ -217,22 +216,22 @@ export default function CachedDashboard() {
           <div className="bg-white rounded-lg shadow p-4 mb-6">
             <h3 className="text-lg font-semibold mb-4">Cache Performance</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <CachePerformanceIndicator
-                cacheInfo={summaryCacheInfo}
-                title="Summary"
-              />
-              <CachePerformanceIndicator
-                cacheInfo={sentimentCacheInfo}
-                title="Sentiment"
-              />
-              <CachePerformanceIndicator
-                cacheInfo={platformsCacheInfo}
-                title="Platforms"
-              />
-              <CachePerformanceIndicator
-                cacheInfo={timeSeriesCacheInfo}
-                title="Time Series"
-              />
+              <div className="text-sm">
+                <div className="font-medium">Summary</div>
+                <div>{summaryCacheInfo ? "Cached" : "Fresh"}</div>
+              </div>
+              <div className="text-sm">
+                <div className="font-medium">Sentiment</div>
+                <div>{sentimentCacheInfo ? "Cached" : "Fresh"}</div>
+              </div>
+              <div className="text-sm">
+                <div className="font-medium">Platforms</div>
+                <div>{platformsCacheInfo ? "Cached" : "Fresh"}</div>
+              </div>
+              <div className="text-sm">
+                <div className="font-medium">Time Series</div>
+                <div>{timeSeriesCacheInfo ? "Cached" : "Fresh"}</div>
+              </div>
             </div>
 
             {health && (

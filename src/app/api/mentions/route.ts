@@ -35,7 +35,7 @@ export async function GET(request: Request) {
             .from(mentionsClassify)
             .where(and(...whereConditions))
             .orderBy(desc(mentionsClassify.inserttime))
-            .limit(parseInt(filters.limit) || 20000),
+            .limit(parseInt(String(filters.limit)) || 20000),
            
           // 2. Get aggregated metrics
           db
@@ -160,7 +160,7 @@ export async function GET(request: Request) {
           timeSeries: dailyTrends.map(d => ({
             date: d.date,
             mentions: Number(),
-            reach: parseInt(d.totalReach) || 0,
+            reach: parseInt(String(d.totalReach)) || 0,
             interactions: Number() || 0
           })),
           

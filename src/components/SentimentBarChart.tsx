@@ -23,7 +23,10 @@ const SentimentBarChart = ({ data = [], onFilterChange }) => {
     { positive: 0, neutral: 0, negative: 0 }
   );
 
-  console.log("overallSentiment from component", data.sentiment);
+  console.log(
+    "overallSentiment from component",
+    Array.isArray(data) ? "data is array" : (data as any)?.sentiment
+  );
 
   // Create chart data based on toggle state
   const baseChartData = [
@@ -121,7 +124,15 @@ const SentimentBarChart = ({ data = [], onFilterChange }) => {
               className={onFilterChange ? "cursor-pointer" : ""}
             />
             <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={
+                <CustomTooltip
+                  active={undefined}
+                  payload={undefined}
+                  label={undefined}
+                />
+              }
+            />
             <Bar
               dataKey="count"
               cursor={onFilterChange ? "pointer" : "default"}

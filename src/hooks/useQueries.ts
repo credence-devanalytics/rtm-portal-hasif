@@ -94,24 +94,24 @@ const fetchTopMentions = async (filters) => {
 const fetchSentimentByTopics = async (filters = {}) => {
   const params = new URLSearchParams();
   
-  if (filters.sentiments?.length > 0) {
-    params.append('sentiments', filters.sentiments.join(','));
+  if ((filters as any)?.sentiments?.length > 0) {
+    params.append('sentiments', (filters as any).sentiments.join(','));
   }
   
-  if (filters.sources?.length > 0) {
-    params.append('sources', filters.sources.join(','));
+  if ((filters as any)?.sources?.length > 0) {
+    params.append('sources', (filters as any).sources.join(','));
   }
   
-  if (filters.topics?.length > 0) {
-    params.append('topics', filters.topics.join(','));
+  if ((filters as any)?.topics?.length > 0) {
+    params.append('topics', (filters as any).topics.join(','));
   }
   
-  if (filters.dateRange?.from) {
-    params.append('date_from', filters.dateRange.from);
+  if ((filters as any)?.dateRange?.from) {
+    params.append('date_from', (filters as any).dateRange.from);
   }
   
-  if (filters.dateRange?.to) {
-    params.append('date_to', filters.dateRange.to);
+  if ((filters as any)?.dateRange?.to) {
+    params.append('date_to', (filters as any).dateRange.to);
   }
 
   const response = await fetch(`/api/social-media/sentiment-by-topics?${params}`);
@@ -146,8 +146,9 @@ export const usePublicMentions = (filters, options = {}) => {
 export const useInfinitePublicMentions = (filters, options = {}) => {
   return useInfiniteQuery({
     queryKey: queryKeys.publicMentions(filters),
-    queryFn: ({ pageParam = 1 }) => fetchPublicMentions(filters, pageParam),
+    queryFn: ({ pageParam = 1 }) => fetchPublicMentions(filters, pageParam as number),
     enabled: !!filters,
+    initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       if (lastPage?.meta?.pagination?.hasNextPage) {
         return lastPage.meta.pagination.page + 1;
@@ -155,7 +156,7 @@ export const useInfinitePublicMentions = (filters, options = {}) => {
       return undefined;
     },
     staleTime: 0, // Always refetch when filters change
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
     ...options,
   });
 };
@@ -166,7 +167,7 @@ export const useMentions = (filters, options = {}) => {
     queryFn: () => fetchMentions(filters),
     enabled: !!filters,
     staleTime: 0, // Always refetch when filters change
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
     ...options,
   });
 };
@@ -177,7 +178,7 @@ export const useDashboardSummary = (filters, options = {}) => {
     queryFn: () => fetchDashboardSummary(filters),
     enabled: !!filters,
     staleTime: 0, // Always refetch when filters change
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
     ...options,
   });
 };
@@ -188,7 +189,7 @@ export const useSentimentDistribution = (filters, options = {}) => {
     queryFn: () => fetchSentimentDistribution(filters),
     enabled: !!filters,
     staleTime: 0, // Always refetch when filters change
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
     ...options,
   });
 };
@@ -199,7 +200,7 @@ export const usePlatformDistribution = (filters, options = {}) => {
     queryFn: () => fetchPlatformDistribution(filters),
     enabled: !!filters,
     staleTime: 0, // Always refetch when filters change
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
     ...options,
   });
 };
@@ -210,7 +211,7 @@ export const useTimeSeries = (filters, options = {}) => {
     queryFn: () => fetchTimeSeries(filters),
     enabled: !!filters,
     staleTime: 0, // Always refetch when filters change
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
     ...options,
   });
 };
@@ -221,7 +222,7 @@ export const useTopMentions = (filters, options = {}) => {
     queryFn: () => fetchTopMentions(filters),
     enabled: !!filters,
     staleTime: 0, // Always refetch when filters change
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
     ...options,
   });
 };
@@ -232,7 +233,7 @@ export const useSentimentByTopics = (filters, options = {}) => {
     queryFn: () => fetchSentimentByTopics(filters),
     enabled: !!filters,
     staleTime: 0, // Always refetch when filters change
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache
     ...options,
   });
 };

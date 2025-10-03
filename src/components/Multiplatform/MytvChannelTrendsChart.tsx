@@ -58,14 +58,14 @@ const MytvChannelTrendsChart = ({ mytvData, loading }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>MYTV Monthly Trends by Channel</CardTitle>
-          <CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">MYTV Monthly Trends by Channel</CardTitle>
+          <CardDescription className="">
             Track performance across all channels
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-80 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading chart data...</div>
           </div>
@@ -75,14 +75,14 @@ const MytvChannelTrendsChart = ({ mytvData, loading }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>MYTV Monthly Trends by Channel</CardTitle>
-        <CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">MYTV Monthly Trends by Channel</CardTitle>
+        <CardDescription className="">
           Track performance across all channels over time
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={350}>
           <LineChart
             data={chartData}
@@ -91,11 +91,13 @@ const MytvChannelTrendsChart = ({ mytvData, loading }) => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis
-              tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+              tickFormatter={(value) =>
+                `${(Number(value) / 1000000).toFixed(1)}M`
+              }
             />
             <Tooltip
               formatter={(value, name) => [
-                `${(value / 1000000).toFixed(2)}M viewers`,
+                `${(Number(value) / 1000000).toFixed(2)}M viewers`,
                 name,
               ]}
               labelFormatter={(label) => `Month: ${label}`}

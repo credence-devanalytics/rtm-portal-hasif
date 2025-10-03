@@ -62,14 +62,14 @@ const UnifiTopProgramsChart = ({ unifiData, loading }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Programs by MAU</CardTitle>
-          <CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Top Programs by MAU</CardTitle>
+          <CardDescription className="">
             Most popular content ranked by engagement
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading chart data...</div>
           </div>
@@ -79,14 +79,14 @@ const UnifiTopProgramsChart = ({ unifiData, loading }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Top Programs by MAU</CardTitle>
-        <CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">Top Programs by MAU</CardTitle>
+        <CardDescription className="">
           Most engaging programs by monthly active users
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={400}>
           <BarChart
             data={chartData}
@@ -96,7 +96,7 @@ const UnifiTopProgramsChart = ({ unifiData, loading }) => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               type="number"
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+              tickFormatter={(value) => `${(Number(value) / 1000).toFixed(0)}K`}
             />
             <YAxis
               type="category"

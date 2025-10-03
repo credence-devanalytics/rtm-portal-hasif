@@ -49,7 +49,7 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
 
       // Sort data
       if (sortBy === "count") {
-        chartData.sort((a, b) => b.count - a.count);
+        chartData.sort((a, b) => Number(b.count) - Number(a.count));
       } else {
         chartData.sort((a, b) => a.author.localeCompare(b.author));
       }
@@ -63,7 +63,10 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
   }, [data, searchTerm, sortBy, showTop]);
 
   const totalMentions = useMemo(() => {
-    return processedData.reduce((sum, item) => sum + item.count, 0);
+    return processedData.reduce(
+      (sum, item) => sum + Number((item as any).count),
+      0
+    );
   }, [processedData]);
 
   const uniquePlatforms = processedData.length;
@@ -246,7 +249,7 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
               stroke="#666"
               tickFormatter={(value) =>
                 value >= 1000
-                  ? `${(value / 1000).toFixed(0)}k`
+                  ? `${(Number(value) / 1000).toFixed(0)}k`
                   : value.toString()
               }
               domain={[0, "dataMax"]}
@@ -265,7 +268,16 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
               className={onFilterChange ? "cursor-pointer" : ""}
               tick={{ cursor: onFilterChange ? "pointer" : "default" }}
             />
-            <Tooltip cursor={false} content={<CustomTooltip />} />
+            <Tooltip
+              cursor={false}
+              content={
+                <CustomTooltip
+                  active={undefined}
+                  payload={undefined}
+                  label={undefined}
+                />
+              }
+            />
             <Bar
               dataKey="count"
               fill="#4E5899"

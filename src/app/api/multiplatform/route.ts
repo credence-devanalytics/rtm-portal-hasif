@@ -3,8 +3,8 @@
  * Provides Unifi TV viewership data with filtering and aggregation
  */
 
-// import { db } from '../../../index';
-// import { sql, desc, asc, count, sum, avg } from 'drizzle-orm';
+import { db } from '../../../index';
+import { sql, desc, asc, count, sum, avg } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 // Define the unifi_viewership table schema (adjust according to your actual schema file)
@@ -68,8 +68,12 @@ function generateMockData() {
   return mockData;
 }
 
-function generateChannelBreakdown(data) {
-  const channelData = {};
+function generateChannelBreakdown(data: any[]) {
+  const channelData: Record<string, {
+    channel: string;
+    programCount: number;
+    totalMau: number;
+  }> = {};
   
   data.forEach(item => {
     if (!channelData[item.channel_name]) {
@@ -80,7 +84,7 @@ function generateChannelBreakdown(data) {
       };
     }
     channelData[item.channel_name].programCount++;
-    channelData[item.channel_name].totalMau += item.mau;
+    channelData[item.channel_name].totalMau += Number(item.mau);
   });
   
   return Object.values(channelData).map(channel => ({
@@ -89,9 +93,9 @@ function generateChannelBreakdown(data) {
   }));
 }
 
-function generateTopPrograms(data) {
+function generateTopPrograms(data: any[]) {
   return data
-    .sort((a, b) => b.mau - a.mau)
+    .sort((a, b) => Number(b.mau) - Number(a.mau))
     .slice(0, 10)
     .map(item => ({
       programName: item.program_name,
@@ -107,8 +111,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     
     // Extract query parameters
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 50;
+    const page = Number(searchParams.get('page') ?? 0) || 1;
+    const limit = Number(searchParams.get('limit') ?? 0) || 50;
     const sortBy = searchParams.get('sortBy') || 'programme_date';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const channel = searchParams.get('channel');

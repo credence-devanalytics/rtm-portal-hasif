@@ -8,7 +8,11 @@ import {
   Legend,
 } from "recharts";
 
-const PlatformDonutChart = ({ data, onFilterChange, activeFilters = {} }) => {
+const PlatformDonutChart = ({
+  data,
+  onFilterChange,
+  activeFilters = {},
+}: any) => {
   // Count mentions by platform
   const platformCounts = data.reduce((acc, item) => {
     // console.log(item.platform);
@@ -25,9 +29,9 @@ const PlatformDonutChart = ({ data, onFilterChange, activeFilters = {} }) => {
     .map(([platform, count]) => ({
       name: platform,
       value: count,
-      percentage: ((count / data.length) * 100).toFixed(1),
+      percentage: (((count as number) / data.length) * 100).toFixed(1),
     }))
-    .sort((a, b) => b.value - a.value); // Sort by value descending
+    .sort((a, b) => Number(b.value) - Number(a.value)); // Sort by value descending
 
   // Platform colors using CSS variables
   const platformColors = {
@@ -191,7 +195,9 @@ const PlatformDonutChart = ({ data, onFilterChange, activeFilters = {} }) => {
               ))}
             </Pie>
             <Legend content={<CustomLegend />} />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={<CustomTooltip active={undefined} payload={undefined} />}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>

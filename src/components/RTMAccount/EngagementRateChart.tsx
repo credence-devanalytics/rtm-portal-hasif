@@ -61,7 +61,7 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
 
     // Convert to array and calculate averages
     const result = Object.values(platformGroups)
-      .map((group) => ({
+      .map((group: any) => ({
         platform: group.platform,
         avgEngagementRate: Number(
           (group.totalEngagement / group.count).toFixed(2)
@@ -252,7 +252,15 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
                 },
               }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={
+                <CustomTooltip
+                  active={undefined}
+                  payload={undefined}
+                  label={undefined}
+                />
+              }
+            />
             <Bar
               dataKey="avgEngagementRate"
               radius={[4, 4, 0, 0]}

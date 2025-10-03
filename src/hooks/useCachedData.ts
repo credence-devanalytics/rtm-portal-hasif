@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback } from 'react';
  * @param {Object} params - Query parameters
  * @param {Object} options - Hook options
  */
-function useApiData(endpoint, params = {}, options = {}) {
+function useApiData(endpoint: string, params: any = {}, options: any = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,7 +24,7 @@ function useApiData(endpoint, params = {}, options = {}) {
     refreshInterval = null,
     onSuccess = null,
     onError = null
-  } = options;
+  } = options || {};
   
   const fetchData = useCallback(async () => {
     if (!endpoint) return;
@@ -34,7 +34,7 @@ function useApiData(endpoint, params = {}, options = {}) {
     
     try {
       const queryString = new URLSearchParams(
-        Object.entries(params).filter(([_, value]) => value !== null && value !== undefined)
+        Object.entries(params || {}).filter(([_, value]) => value !== null && value !== undefined).map(([key, value]) => [key, String(value)])
       ).toString();
       
       const url = queryString ? `${endpoint}?${queryString}` : endpoint;
@@ -135,10 +135,10 @@ export function useTimeSeries(filters = {}, granularity = 'daily', options = {})
 export function useTopMentions(filters = {}, sorting = {}, pagination = {}, options = {}) {
   const params = {
     ...filters,
-    sortBy: sorting.sortBy || 'reach',
-    sortOrder: sorting.sortOrder || 'desc',
-    page: pagination.page || 1,
-    pageSize: pagination.pageSize || 50
+    sortBy: (sorting as any)?.sortBy || 'reach',
+    sortOrder: (sorting as any)?.sortOrder || 'desc',
+    page: (pagination as any)?.page || 1,
+    pageSize: (pagination as any)?.pageSize || 50
   };
   
   return useApiData('/api/top-mentions', params, {

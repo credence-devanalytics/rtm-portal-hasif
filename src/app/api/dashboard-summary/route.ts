@@ -90,7 +90,7 @@ export async function GET(request: Request) {
         ]);
         
         // Get daily comparison (current period vs previous period)
-        const currentPeriodDays = parseInt(filters.days) || 30;
+        const currentPeriodDays = parseInt(String(filters.days)) || 30;
         const previousPeriodStart = new Date();
         previousPeriodStart.setDate(previousPeriodStart.getDate() - (currentPeriodDays * 2));
         const previousPeriodEnd = new Date();

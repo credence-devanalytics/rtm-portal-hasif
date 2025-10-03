@@ -149,13 +149,15 @@ const ChannelBreakdownChart = ({ filters = {} }) => {
                 />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={<CustomTooltip active={undefined} payload={undefined} />}
+            />
             <Legend
               verticalAlign="bottom"
               height={36}
               formatter={(value, entry) => (
                 <span style={{ color: entry.color }}>
-                  {entry.payload.channel}
+                  {(entry as any).payload.channel}
                 </span>
               )}
             />

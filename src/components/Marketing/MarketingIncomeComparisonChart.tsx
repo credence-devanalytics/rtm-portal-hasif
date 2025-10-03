@@ -96,8 +96,8 @@ const MarketingIncomeComparisonChart = ({ data = [] }) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="">
+      <CardHeader className="">
         <CardTitle className="text-lg font-bold font-sans">
           Income Comparison: 2022 vs 2023 vs 2024
         </CardTitle>
@@ -105,7 +105,7 @@ const MarketingIncomeComparisonChart = ({ data = [] }) => {
           Three-year comparison of income by marketing channel
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={400}>
           <LineChart
             data={chartData}
@@ -120,7 +120,7 @@ const MarketingIncomeComparisonChart = ({ data = [] }) => {
               tickCount={8}
               padding={{ top: 20, bottom: 20 }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
             <Legend wrapperStyle={{ paddingTop: "20px", fontSize: "14px" }} />
             {channels.map((channel, index) => (
               <Line

@@ -66,7 +66,7 @@ import Header from "@/components/Header";
 // Skeleton Loading Component
 const SkeletonCard = ({ className = "" }) => (
   <Card className={className}>
-    <CardHeader>
+    <CardHeader className="">
       <div className="animate-pulse">
         <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
         <div className="h-8 bg-gray-200 rounded w-3/4"></div>
@@ -179,7 +179,8 @@ const RTMDashboard = () => {
   // Compute filter object for queries
   const queryFilters = useMemo(() => {
     const daysDiff = Math.ceil(
-      (selectedDateRange.to - selectedDateRange.from) / (1000 * 60 * 60 * 24)
+      (Number(selectedDateRange.to) - Number(selectedDateRange.from)) /
+        (1000 * 60 * 60 * 24)
     );
 
     return {
@@ -311,7 +312,9 @@ const RTMDashboard = () => {
     });
 
     return Object.values(groupedByDate).sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
+      (a, b) =>
+        new Date((a as any).date).getTime() -
+        new Date((b as any).date).getTime()
     );
   }, [filteredData]);
 
@@ -432,14 +435,19 @@ const RTMDashboard = () => {
       <div className="p-6 max-w-7xl mx-auto">
         <Header />
         <Card className="text-center p-8">
-          <CardHeader>
+          <CardHeader className="">
             <CardTitle className="text-red-600">
               Error Loading Dashboard
             </CardTitle>
-            <CardDescription>{dataError.message}</CardDescription>
+            <CardDescription className="">{dataError.message}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button onClick={handleRefresh} variant="outline">
+          <CardContent className="">
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              className=""
+              size="default"
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
             </Button>
@@ -465,7 +473,7 @@ const RTMDashboard = () => {
             Showing {formatNumber(totalMentions)} mentions from selected date
             range (
             {Math.ceil(
-              (selectedDateRange.to - selectedDateRange.from) /
+              (Number(selectedDateRange.to) - Number(selectedDateRange.from)) /
                 (1000 * 60 * 60 * 24)
             )}{" "}
             days)
@@ -490,13 +498,25 @@ const RTMDashboard = () => {
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Platform" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Platforms</SelectItem>
-              <SelectItem value="Facebook">Facebook</SelectItem>
-              <SelectItem value="Instagram">Instagram</SelectItem>
-              <SelectItem value="Twitter">Twitter</SelectItem>
-              <SelectItem value="TikTok">TikTok</SelectItem>
-              <SelectItem value="YouTube">YouTube</SelectItem>
+            <SelectContent className="">
+              <SelectItem className="" value="all">
+                All Platforms
+              </SelectItem>
+              <SelectItem className="" value="Facebook">
+                Facebook
+              </SelectItem>
+              <SelectItem className="" value="Instagram">
+                Instagram
+              </SelectItem>
+              <SelectItem className="" value="Twitter">
+                Twitter
+              </SelectItem>
+              <SelectItem className="" value="TikTok">
+                TikTok
+              </SelectItem>
+              <SelectItem className="" value="YouTube">
+                YouTube
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -504,6 +524,7 @@ const RTMDashboard = () => {
             onClick={handleRefresh}
             variant="outline"
             size="sm"
+            className=""
             disabled={isLoading}
           >
             <RefreshCw
@@ -512,7 +533,7 @@ const RTMDashboard = () => {
             Refresh
           </Button>
 
-          <Button onClick={exportData} variant="outline" size="sm">
+          <Button onClick={exportData} variant="outline" size="sm" className="">
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -530,14 +551,14 @@ const RTMDashboard = () => {
           </>
         ) : (
           <>
-            <Card>
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Mentions
                 </CardTitle>
                 <MessageSquare className="h-5 w-5" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="text-3xl font-bold">
                   {formatNumber(totalMentions)}
                 </div>
@@ -545,14 +566,14 @@ const RTMDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Engagements
                 </CardTitle>
                 <ThumbsUp className="h-5 w-5" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="text-3xl font-bold">
                   {formatNumber(totalEngagements)}
                 </div>
@@ -560,14 +581,14 @@ const RTMDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Reach
                 </CardTitle>
                 <Eye className="h-5 w-5" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="text-3xl font-bold">
                   {formatNumber(totalReach)}
                 </div>
@@ -575,14 +596,14 @@ const RTMDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Channels by Unit
                 </CardTitle>
                 <Radio className="h-5 w-5" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 {(() => {
                   const channelsByUnit = filteredData.reduce((acc, item) => {
                     if (!acc[item.unit]) {
@@ -664,14 +685,14 @@ const RTMDashboard = () => {
           </>
         ) : (
           <>
-            <Card>
+            <Card className="">
               <PlatformDonutChart
                 data={filteredData}
                 onFilterChange={handleGlobalFilterChange}
                 activeFilters={globalFilters}
               />
             </Card>
-            <Card>
+            <Card className="">
               <RTMUnitsPieChart
                 data={filteredData}
                 onFilterChange={handleGlobalFilterChange}
@@ -691,13 +712,13 @@ const RTMDashboard = () => {
           </>
         ) : (
           <>
-            <Card>
+            <Card className="">
               <PlatformMentionsChart
                 data={filteredData}
                 onFilterChange={handleGlobalFilterChange}
               />
             </Card>
-            <Card>
+            <Card className="">
               <EngagementRateChart
                 data={filteredData}
                 onFilterChange={handleGlobalFilterChange}
@@ -712,11 +733,8 @@ const RTMDashboard = () => {
         {isLoading ? (
           <SkeletonCard className="h-96" />
         ) : (
-          <Card>
-            <OverallMentionsChart
-              mentionsOverTime={mentionsOverTime}
-              onFilterChange={handleGlobalFilterChange}
-            />
+          <Card className="">
+            <OverallMentionsChart mentionsOverTime={mentionsOverTime} />
           </Card>
         )}
       </div>
@@ -725,11 +743,8 @@ const RTMDashboard = () => {
         {isLoading ? (
           <SkeletonCard className="h-96" />
         ) : (
-          <Card>
-            <EngagementOverTimeChart
-              data={filteredData}
-              onFilterChange={handleGlobalFilterChange}
-            />
+          <Card className="">
+            <EngagementOverTimeChart data={filteredData} />
           </Card>
         )}
       </div>
@@ -738,11 +753,8 @@ const RTMDashboard = () => {
         {isLoading ? (
           <SkeletonCard className="h-96" />
         ) : (
-          <Card>
-            <ClassificationMentionsChart
-              data={filteredData}
-              onFilterChange={handleGlobalFilterChange}
-            />
+          <Card className="">
+            <ClassificationMentionsChart data={filteredData} />
           </Card>
         )}
       </div>
@@ -752,11 +764,8 @@ const RTMDashboard = () => {
         {isLoading ? (
           <SkeletonCard className="h-96" />
         ) : (
-          <Card>
-            <PopularMentionsTable
-              data={filteredData}
-              onFilterChange={handleGlobalFilterChange}
-            />
+          <Card className="">
+            <PopularMentionsTable data={filteredData} />
           </Card>
         )}
       </div>

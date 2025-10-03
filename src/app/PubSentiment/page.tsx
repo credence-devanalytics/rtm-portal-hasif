@@ -95,13 +95,13 @@ const PubSentiment = () => {
     return (
       <div className="container mx-auto p-6">
         <Card className="border-red-200 bg-red-50">
-          <CardHeader>
+          <CardHeader className="">
             <CardTitle className="text-red-800">Error Loading Data</CardTitle>
             <CardDescription className="text-red-600">
               {error.message}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <button
               onClick={() => window.location.reload()}
               className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
@@ -147,11 +147,19 @@ const PubSentiment = () => {
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Time range" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
-                <SelectItem value="365">Last year</SelectItem>
+              <SelectContent className="">
+                <SelectItem className="" value="7">
+                  Last 7 days
+                </SelectItem>
+                <SelectItem className="" value="30">
+                  Last 30 days
+                </SelectItem>
+                <SelectItem className="" value="90">
+                  Last 90 days
+                </SelectItem>
+                <SelectItem className="" value="365">
+                  Last year
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -165,10 +173,16 @@ const PubSentiment = () => {
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="All platforms" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Platforms</SelectItem>
+              <SelectContent className="">
+                <SelectItem className="" value="all">
+                  All Platforms
+                </SelectItem>
                 {firstPageData?.platforms?.map((platform) => (
-                  <SelectItem key={platform.platform} value={platform.platform}>
+                  <SelectItem
+                    className=""
+                    key={platform.platform}
+                    value={platform.platform}
+                  >
                     {platform.platform}
                   </SelectItem>
                 ))}
@@ -185,11 +199,19 @@ const PubSentiment = () => {
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="All sentiment" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sentiment</SelectItem>
-                <SelectItem value="positive">Positive</SelectItem>
-                <SelectItem value="negative">Negative</SelectItem>
-                <SelectItem value="neutral">Neutral</SelectItem>
+              <SelectContent className="">
+                <SelectItem className="" value="all">
+                  All Sentiment
+                </SelectItem>
+                <SelectItem className="" value="positive">
+                  Positive
+                </SelectItem>
+                <SelectItem className="" value="negative">
+                  Negative
+                </SelectItem>
+                <SelectItem className="" value="neutral">
+                  Neutral
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -203,12 +225,14 @@ const PubSentiment = () => {
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="All topics" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Topics</SelectItem>
+              <SelectContent className="">
+                <SelectItem className="" value="all">
+                  All Topics
+                </SelectItem>
                 {firstPageData?.topics?.uniqueTopics
                   ?.slice(0, 10)
                   .map((topic) => (
-                    <SelectItem key={topic} value={topic}>
+                    <SelectItem className="" key={topic} value={topic}>
                       {topic}
                     </SelectItem>
                   ))}
@@ -220,14 +244,14 @@ const PubSentiment = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Mentions
             </CardTitle>
             <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div className="text-2xl font-bold">
               {firstPageData?.metrics?.totalMentions?.toLocaleString() || 0}
             </div>
@@ -237,12 +261,12 @@ const PubSentiment = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Reach</CardTitle>
             <EyeIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div className="text-2xl font-bold">
               {firstPageData?.metrics?.totalReach?.toLocaleString() || 0}
             </div>
@@ -252,14 +276,14 @@ const PubSentiment = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Avg Confidence
             </CardTitle>
             <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div className="text-2xl font-bold">
               {((firstPageData?.metrics?.avgConfidence || 0) * 100).toFixed(1)}%
             </div>
@@ -269,14 +293,14 @@ const PubSentiment = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Interactions
             </CardTitle>
             <MessageSquareIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div className="text-2xl font-bold">
               {firstPageData?.metrics?.totalInteractions?.toLocaleString() || 0}
             </div>
@@ -289,24 +313,32 @@ const PubSentiment = () => {
 
       {/* Tabs for different views */}
       <Tabs defaultValue="sentiment" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="sentiment">Sentiment Analysis</TabsTrigger>
-          <TabsTrigger value="topics">Topic Distribution</TabsTrigger>
-          <TabsTrigger value="platforms">Platform Analysis</TabsTrigger>
-          <TabsTrigger value="confidence">Confidence Analysis</TabsTrigger>
+        <TabsList className="">
+          <TabsTrigger className="" value="sentiment">
+            Sentiment Analysis
+          </TabsTrigger>
+          <TabsTrigger className="" value="topics">
+            Topic Distribution
+          </TabsTrigger>
+          <TabsTrigger className="" value="platforms">
+            Platform Analysis
+          </TabsTrigger>
+          <TabsTrigger className="" value="confidence">
+            Confidence Analysis
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sentiment" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Sentiment Breakdown */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Sentiment Breakdown</CardTitle>
-                <CardDescription>
+            <Card className="">
+              <CardHeader className="">
+                <CardTitle className="">Sentiment Breakdown</CardTitle>
+                <CardDescription className="">
                   Distribution of sentiment across mentions
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="space-y-3">
                   {firstPageData?.sentiment?.breakdown?.map((item) => (
                     <div
@@ -342,14 +374,14 @@ const PubSentiment = () => {
             </Card>
 
             {/* Sentiment Trend - Placeholder for chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Sentiment Trend</CardTitle>
-                <CardDescription>
+            <Card className="">
+              <CardHeader className="">
+                <CardTitle className="">Sentiment Trend</CardTitle>
+                <CardDescription className="">
                   Daily sentiment distribution over time
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="h-64 flex items-center justify-center bg-gray-50 rounded">
                   <p className="text-gray-500">
                     Chart component will be added here
@@ -361,12 +393,14 @@ const PubSentiment = () => {
         </TabsContent>
 
         <TabsContent value="topics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Topic Distribution</CardTitle>
-              <CardDescription>Most discussed topics</CardDescription>
+          <Card className="">
+            <CardHeader className="">
+              <CardTitle className="">Topic Distribution</CardTitle>
+              <CardDescription className="">
+                Most discussed topics
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="space-y-3">
                 {firstPageData?.topics?.distribution
                   ?.slice(0, 10)
@@ -394,14 +428,14 @@ const PubSentiment = () => {
         </TabsContent>
 
         <TabsContent value="platforms" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Distribution</CardTitle>
-              <CardDescription>
+          <Card className="">
+            <CardHeader className="">
+              <CardTitle className="">Platform Distribution</CardTitle>
+              <CardDescription className="">
                 Mentions across different platforms
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="space-y-3">
                 {firstPageData?.platforms?.map((item) => (
                   <div
@@ -425,14 +459,14 @@ const PubSentiment = () => {
         </TabsContent>
 
         <TabsContent value="confidence" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Confidence Distribution</CardTitle>
-              <CardDescription>
+          <Card className="">
+            <CardHeader className="">
+              <CardTitle className="">Confidence Distribution</CardTitle>
+              <CardDescription className="">
                 Classification confidence levels
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="space-y-3">
                 {firstPageData?.confidence?.distribution?.map((item) => (
                   <div
@@ -454,12 +488,12 @@ const PubSentiment = () => {
       {/* Load More Data Section */}
       {firstPageData && (
         <Card className="bg-green-50 border-green-200">
-          <CardHeader>
+          <CardHeader className="">
             <CardTitle className="text-sm text-green-800">
               Data Loading Status
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Currently Loaded:</span>
@@ -536,10 +570,10 @@ const PubSentiment = () => {
 
       {/* Debug info (remove in production) */}
       <Card className="bg-blue-50 border-blue-200">
-        <CardHeader>
+        <CardHeader className="">
           <CardTitle className="text-sm text-blue-800">Fetch Summary</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="text-sm space-y-2">
             <div className="flex justify-between items-center p-2 bg-blue-100 rounded">
               <span className="font-semibold text-blue-900">
@@ -581,7 +615,8 @@ const PubSentiment = () => {
               <p>Data Pages: {data?.pages?.length || 0}</p>
               <p>Error: {error ? error.message : "None"}</p>
               <p>
-                Cache Status: {data?._cache?.hit ? "Cache Hit" : "Fresh Data"}
+                Cache Status:{" "}
+                {(data as any)?._cache?.hit ? "Cache Hit" : "Fresh Data"}
               </p>
             </div>
           </div>

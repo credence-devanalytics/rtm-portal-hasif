@@ -53,7 +53,7 @@ export async function GET() {
         const growth2023to2024 = value2023 > 0 ? ((value2024 - value2023) / value2023 * 100).toFixed(1) : 'N/A';
         
         return {
-          ...channel,
+          ...(channel as any),
           2022: value2022,
           2023: value2023,
           2024: value2024,

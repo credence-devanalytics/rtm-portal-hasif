@@ -40,9 +40,9 @@ export async function GET() {
 
     // Convert to array and sort by month order
     const chartData = Object.values(processedData)
-      .sort((a, b) => a.monthOrder - b.monthOrder)
+      .sort((a, b) => (a as any).monthOrder - (b as any).monthOrder)
       .map(item => {
-        const { monthOrder, ...rest } = item;
+        const { monthOrder, ...rest } = item as any;
         return rest;
       });
 

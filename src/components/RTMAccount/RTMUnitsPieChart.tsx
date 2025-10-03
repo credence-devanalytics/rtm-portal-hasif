@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -23,7 +22,7 @@ const RTMUnitsPieChart = ({
   description = "Distribution of posts across RTM units",
   onFilterChange = null, // Prop for cross-filtering
   activeFilters = {}, // New prop to receive active filters from parent
-}) => {
+}: any) => {
   // Function to transform unit names
   const transformUnitName = (unit) => {
     if (unit === "News") {
@@ -50,8 +49,6 @@ const RTMUnitsPieChart = ({
     }
   };
 
-
-
   // Function to generate shades of a color for channels within a unit
   const generateShades = (baseColor, count) => {
     const shades = [];
@@ -69,9 +66,12 @@ const RTMUnitsPieChart = ({
   };
 
   // Check if a unit is currently filtered
-  const isUnitFiltered = useCallback((unit) => {
-    return activeFilters?.unit === unit;
-  }, [activeFilters?.unit]);
+  const isUnitFiltered = useCallback(
+    (unit) => {
+      return activeFilters?.unit === unit;
+    },
+    [activeFilters?.unit]
+  );
 
   // Get visual styling based on filter state
   const getFilteredStyle = (unit) => {
@@ -188,7 +188,7 @@ const RTMUnitsPieChart = ({
           fill: colors[index % colors.length],
           isFiltered: isUnitFiltered(unit),
         }))
-        .sort((a, b) => b.mentions - a.mentions);
+        .sort((a, b) => (b as any).mentions - (a as any).mentions);
 
       // Step 3: Create outer layer data (channels within units)
       const outerChartData = [];
@@ -200,7 +200,7 @@ const RTMUnitsPieChart = ({
 
         // Get channels for this unit and sort by count
         const channelsInUnit = Object.entries(unitChannels).sort(
-          (a, b) => b[1] - a[1]
+          (a, b) => (b as any)[1] - (a as any)[1]
         ); // Sort by count descending
 
         // Generate shades for this unit's channels
@@ -212,8 +212,14 @@ const RTMUnitsPieChart = ({
             unit: unitName,
             mentions: channelCount,
             fill: channelShades[channelIndex],
-            percentage: ((channelCount / unitData.mentions) * 100).toFixed(1),
-            unitPercentage: ((channelCount / data.length) * 100).toFixed(1),
+            percentage: (
+              ((channelCount as number) / (unitData as any).mentions) *
+              100
+            ).toFixed(1),
+            unitPercentage: (
+              ((channelCount as number) / data.length) *
+              100
+            ).toFixed(1),
           });
         });
       });
@@ -337,7 +343,7 @@ const RTMUnitsPieChart = ({
   if (!data) {
     return (
       <Card className="flex flex-col">
-        <CardContent>
+        <CardContent className="">
           <div className="flex items-center justify-center h-64">
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -354,12 +360,12 @@ const RTMUnitsPieChart = ({
     return (
       <Card className="flex flex-col">
         <CardHeader className="items-center pb-0">
-          <CardTitle>
+          <CardTitle className="">
             <div className="text-[24px] font-bold">{title}</div>
           </CardTitle>
-          <CardDescription>{description}</CardDescription>
+          <CardDescription className="">{description}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="flex items-center justify-center h-64">
             <div className="flex flex-col items-center gap-3 text-center">
               <AlertCircle className="h-12 w-12 text-gray-400" />
@@ -381,10 +387,10 @@ const RTMUnitsPieChart = ({
     return (
       <Card className="flex flex-col">
         <CardHeader className="items-center pb-0">
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+          <CardTitle className="">{title}</CardTitle>
+          <CardDescription className="">{description}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="flex items-center justify-center h-64">
             <div className="flex flex-col items-center gap-3 text-center">
               <BarChart3 className="h-12 w-12 text-gray-400" />
@@ -405,10 +411,11 @@ const RTMUnitsPieChart = ({
     <Card className="flex flex-col shadow-none" style={{ border: "none" }}>
       <CardHeader className="items-center ">
         <CardTitle className="text-[24px] font-bold">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="">{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
         <ChartContainer
+          id="rtm-units-chart"
           config={chartConfig}
           className="mx-auto aspect-square h-[450px]"
         >
@@ -443,7 +450,9 @@ const RTMUnitsPieChart = ({
               })}
               <ChartTooltip
                 cursor={true}
-                content={<CustomInnerTooltip />}
+                content={
+                  <CustomInnerTooltip active={undefined} payload={undefined} />
+                }
                 animationDuration={200}
                 offset={10}
                 allowEscapeViewBox={{ x: false, y: false }}
@@ -481,7 +490,9 @@ const RTMUnitsPieChart = ({
               })}
               <ChartTooltip
                 cursor={false}
-                content={<CustomOuterTooltip />}
+                content={
+                  <CustomOuterTooltip active={undefined} payload={undefined} />
+                }
                 animationDuration={200}
                 offset={10}
                 allowEscapeViewBox={{ x: false, y: false }}

@@ -92,12 +92,12 @@ const ViewingSplitChart = ({ unifiData, loading }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Unifi Viewing Split</CardTitle>
-          <CardDescription>Live vs On-Demand distribution</CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Unifi Viewing Split</CardTitle>
+          <CardDescription className="">Live vs On-Demand distribution</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading chart data...</div>
           </div>
@@ -107,12 +107,12 @@ const ViewingSplitChart = ({ unifiData, loading }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Unifi Viewing Split</CardTitle>
-        <CardDescription>Live vs On-Demand distribution</CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">Unifi Viewing Split</CardTitle>
+        <CardDescription className="">Live vs On-Demand distribution</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie

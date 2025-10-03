@@ -365,10 +365,10 @@ const MultiplatformPage = () => {
       hasData: marketingMetrics.hasData,
       metrics: {
         mau: marketingMetrics.hasData
-          ? marketingMetrics.formattedTotalValue
+          ? (marketingMetrics as any).formattedTotalValue
           : "No data available yet",
         totalHours: marketingMetrics.hasData
-          ? `${marketingMetrics.activeSaluran} Active Saluran`
+          ? `${(marketingMetrics as any).activeSaluran} Active Saluran`
           : "No data available yet",
         avgHours: marketingMetrics.hasData
           ? `${marketingMetrics.overallChange}% YoY`
@@ -841,24 +841,28 @@ const MultiplatformPage = () => {
                   </div>
                   <div
                     className={`text-sm font-bold ${platform.textColor} mb-1`}
-                    title={marketingMetrics.formattedTotalValue}
+                    title={(marketingMetrics as any).formattedTotalValue}
                   >
                     RM{marketingMetrics.totalValue.toLocaleString()}
                   </div>
-                  {marketingMetrics.totalPreviousValue > 0 && (
+                  {(marketingMetrics as any).totalPreviousValue > 0 && (
                     <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
                       vs RM
-                      {marketingMetrics.totalPreviousValue.toLocaleString()}{" "}
+                      {(
+                        marketingMetrics as any
+                      ).totalPreviousValue.toLocaleString()}{" "}
                       (2023)
                       <div className="flex items-center space-x-1">
                         <span
                           className={`text-xs font-medium ${getChangeColor(
-                            marketingMetrics.overallDirection
+                            (marketingMetrics as any).overallDirection
                           )}`}
                         >
                           {marketingMetrics.overallChange}%
                         </span>
-                        {getChangeIcon(marketingMetrics.overallDirection)}
+                        {getChangeIcon(
+                          (marketingMetrics as any).overallDirection
+                        )}
                       </div>
                     </div>
                   )}
@@ -1279,7 +1283,7 @@ const MultiplatformPage = () => {
                 <div className="text-center">
                   <div className="text-2xl font-bold text-rose-600">
                     {marketingMetrics.hasData
-                      ? marketingMetrics.formattedTotalValue
+                      ? (marketingMetrics as any).formattedTotalValue
                       : "N/A"}
                   </div>
                   <div className="text-sm text-gray-600">Marketing Revenue</div>

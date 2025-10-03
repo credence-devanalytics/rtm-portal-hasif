@@ -115,30 +115,30 @@ export async function GET(request: Request) {
           url: mention.url,
           
           // Metrics
-          reach: parseInt(mention.reach) || 0,
-          engagement: parseFloat(mention.engagementrate) || 0,
+          reach: parseInt(String(mention.reach)) || 0,
+          engagement: parseFloat(String(mention.engagementrate)) || 0,
           sentiment: mention.sentiment,
           
           // Interactions
           interactions: {
-            total: parseInt(mention.totalInteractions) || 0,
-            likes: parseInt(mention.likecount) || 0,
-            shares: parseInt(mention.sharecount) || 0,
-            comments: parseInt(mention.commentcount) || 0,
-            views: parseInt(mention.viewcount) || 0
+            total: parseInt(String(mention.totalInteractions)) || 0,
+            likes: parseInt(String(mention.likecount)) || 0,
+            shares: parseInt(String(mention.sharecount)) || 0,
+            comments: parseInt(String(mention.commentcount)) || 0,
+            views: parseInt(String(mention.viewcount)) || 0
           },
           
           // Author info
           author_info: {
             name: mention.author,
-            followers: parseInt(mention.followerCount) || 0,
+            followers: parseInt(String(mention.followerCount)) || 0,
             isInfluencer: mention.isInfluencer,
             handle: mention.twitterhandle || mention.instagramprofilename || null
           },
           
           // Additional metrics
-          influence_score: parseFloat(mention.influencescore) || 0,
-          virality: parseFloat(mention.virality) || 0,
+          influence_score: parseFloat(String(mention.influencescore)) || 0,
+          virality: parseFloat(String(mention.virality)) || 0,
           unit: mention.groupname,
           
           // Platform specific identifiers
@@ -150,23 +150,23 @@ export async function GET(request: Request) {
           
           // Calculated engagement rate
           calculated_engagement: mention.reach > 0 ? 
-            (((parseInt(mention.totalInteractions) || 0) / parseInt(mention.reach)) * 100).toFixed(2) : 0
+            (((parseInt(String(mention.totalInteractions)) || 0) / parseInt(String(mention.reach))) * 100).toFixed(2) : 0
         }));
         
         // Calculate aggregated statistics for this page
         const pageStats = {
-          totalMentions: parseInt(totalCount[0].count),
+          totalMentions: parseInt(String(totalCount[0].count)),
           currentPage: page,
           pageSize,
-          totalPages: Math.ceil(parseInt(totalCount[0].count) / pageSize),
-          hasNextPage: page < Math.ceil(parseInt(totalCount[0].count) / pageSize),
+          totalPages: Math.ceil(parseInt(String(totalCount[0].count)) / pageSize),
+          hasNextPage: page < Math.ceil(parseInt(String(totalCount[0].count)) / pageSize),
           hasPreviousPage: page > 1,
           
           // Page aggregations
           avgReach: formattedMentions.length > 0 ? 
             Math.round(formattedMentions.reduce((sum, m) => sum + m.reach, 0) / formattedMentions.length) : 0,
           avgEngagement: formattedMentions.length > 0 ?
-            (formattedMentions.reduce((sum, m) => sum + parseFloat(m.engagement), 0) / formattedMentions.length).toFixed(2) : 0,
+            (formattedMentions.reduce((sum, m) => sum + parseFloat(String(m.engagement)), 0) / formattedMentions.length).toFixed(2) : 0,
           totalInteractions: formattedMentions.reduce((sum, m) => sum + m.interactions.total, 0),
           influencerCount: formattedMentions.filter(m => m.author_info.isInfluencer).length,
           

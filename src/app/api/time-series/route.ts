@@ -82,9 +82,9 @@ export async function GET(request: Request) {
         
         // Format and enrich the data
         const formattedData = timeSeriesData.map(item => {
-          const count = parseInt(item.count);
-          const reach = parseInt(item.totalReach) || 0;
-          const interactions = parseInt(item.totalInteractions) || 0;
+          const count = parseInt(String(item.count));
+          const reach = parseInt(String(item.totalReach)) || 0;
+          const interactions = parseInt(String(item.totalInteractions)) || 0;
           
           return {
             date: item.date,
@@ -94,38 +94,38 @@ export async function GET(request: Request) {
             mentions: count,
             reach: reach,
             interactions: interactions,
-            avgEngagement: parseFloat(item.avgEngagement) || 0,
+            avgEngagement: parseFloat(String(item.avgEngagement)) || 0,
             
             // Sentiment distribution
             sentiment: {
-              positive: parseInt(item.positiveCount) || 0,
-              negative: parseInt(item.negativeCount) || 0,
-              neutral: parseInt(item.neutralCount) || 0,
-              positivePercent: count > 0 ? ((parseInt(item.positiveCount) || 0) / count * 100).toFixed(1) : 0,
-              negativePercent: count > 0 ? ((parseInt(item.negativeCount) || 0) / count * 100).toFixed(1) : 0
+              positive: parseInt(String(item.positiveCount)) || 0,
+              negative: parseInt(String(item.negativeCount)) || 0,
+              neutral: parseInt(String(item.neutralCount)) || 0,
+              positivePercent: count > 0 ? ((parseInt(String(item.positiveCount)) || 0) / count * 100).toFixed(1) : 0,
+              negativePercent: count > 0 ? ((parseInt(String(item.negativeCount)) || 0) / count * 100).toFixed(1) : 0
             },
             
             // Platform distribution
             platforms: {
-              facebook: parseInt(item.facebookCount) || 0,
-              twitter: parseInt(item.twitterCount) || 0,
-              instagram: parseInt(item.instagramCount) || 0,
-              tiktok: parseInt(item.tiktokCount) || 0,
-              youtube: parseInt(item.youtubeCount) || 0
+              facebook: parseInt(String(item.facebookCount)) || 0,
+              twitter: parseInt(String(item.twitterCount)) || 0,
+              instagram: parseInt(String(item.instagramCount)) || 0,
+              tiktok: parseInt(String(item.tiktokCount)) || 0,
+              youtube: parseInt(String(item.youtubeCount)) || 0
             },
             
             // Engagement details
             engagement: {
-              avgViews: parseFloat(item.avgViews) || 0,
-              avgLikes: parseFloat(item.avgLikes) || 0,
-              avgShares: parseFloat(item.avgShares) || 0,
-              avgComments: parseFloat(item.avgComments) || 0,
+              avgViews: parseFloat(String(item.avgViews)) || 0,
+              avgLikes: parseFloat(String(item.avgLikes)) || 0,
+              avgShares: parseFloat(String(item.avgShares)) || 0,
+              avgComments: parseFloat(String(item.avgComments)) || 0,
               engagementRate: reach > 0 ? ((interactions / reach) * 100).toFixed(2) : 0
             },
             
             // Influence metrics
             influence: {
-              influencerMentions: parseInt(item.influencerMentions) || 0,
+              influencerMentions: parseInt(String(item.influencerMentions)) || 0,
               totalFollowers: parseInt(item.totalFollowers) || 0,
               avgFollowersPerMention: count > 0 ? Math.round((parseInt(item.totalFollowers) || 0) / count) : 0
             }
@@ -142,7 +142,7 @@ export async function GET(request: Request) {
           avgMentionsPerPeriod: formattedData.length > 0 ? 
             Math.round(formattedData.reduce((sum, d) => sum + d.mentions, 0) / formattedData.length) : 0,
           peakDay: formattedData.reduce((max, current) => 
-            current.mentions > max.mentions ? current : max, formattedData[0] || {}),
+            current.mentions > (max as any).mentions ? current : max, formattedData[0] || { mentions: 0 }),
           trend: calculateTrend(formattedData)
         };
         

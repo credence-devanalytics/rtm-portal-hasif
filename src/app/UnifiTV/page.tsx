@@ -261,8 +261,8 @@ const UnifiTVPage = () => {
 
     // Format large numbers
     const formatValue = (value) => {
-      if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-      if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+      if (value >= 1000000) return `${(Number(value) / 1000000).toFixed(1)}M`;
+      if (value >= 1000) return `${(Number(value) / 1000).toFixed(0)}K`;
       return value.toFixed(0);
     };
 
@@ -777,9 +777,9 @@ const UnifiTVPage = () => {
               <SelectTrigger className="w-36 bg-white/80">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="">
                 {availableMonths.map((month) => (
-                  <SelectItem key={month} value={month}>
+                  <SelectItem className="" key={month} value={month}>
                     {month.slice(0, 4)}-{month.slice(4)}
                   </SelectItem>
                 ))}
@@ -802,10 +802,12 @@ const UnifiTVPage = () => {
               <SelectTrigger className="w-40 bg-white/80">
                 <SelectValue placeholder="All Channels" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Channels</SelectItem>
+              <SelectContent className="">
+                <SelectItem className="" value="all">
+                  All Channels
+                </SelectItem>
                 {availableChannels.map((channel) => (
-                  <SelectItem key={channel} value={channel}>
+                  <SelectItem className="" key={channel} value={channel}>
                     {channel}
                   </SelectItem>
                 ))}
@@ -834,6 +836,7 @@ const UnifiTVPage = () => {
           <div className="flex items-center space-x-2">
             <Button
               onClick={applyFilters}
+              variant="default"
               size="sm"
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
@@ -864,7 +867,7 @@ const UnifiTVPage = () => {
                 </CardTitle>
                 <UsersIcon className="h-5 w-5" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="text-2xl font-bold">
                   {data.summary.totalMau.toLocaleString()}
                 </div>
@@ -882,7 +885,7 @@ const UnifiTVPage = () => {
                 </CardTitle>
                 <PlayCircleIcon className="h-5 w-5" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="text-2xl font-bold">
                   {data.summary.totalPrograms}
                 </div>
@@ -900,7 +903,7 @@ const UnifiTVPage = () => {
                 </CardTitle>
                 <BarChart3Icon className="h-5 w-5" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="text-2xl font-bold">
                   {data.summary.avgMau.toLocaleString()}
                 </div>
@@ -918,7 +921,7 @@ const UnifiTVPage = () => {
                 </CardTitle>
                 <TvIcon className="h-5 w-5" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <div className="text-2xl font-bold">
                   {data.summary.totalChannels}
                 </div>
@@ -936,7 +939,7 @@ const UnifiTVPage = () => {
           <div className="space-y-6">
             {/* Top Programs by MAU - Full Width Row (2 columns) */}
             <Card className="bg-white/70 backdrop-blur-sm col-span-2">
-              <CardHeader>
+              <CardHeader className="">
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <StarIcon className="h-5 w-5 text-emerald-600" />
@@ -955,13 +958,13 @@ const UnifiTVPage = () => {
                     Compare Channels
                   </Button>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="">
                   {showCompareChannels
                     ? "Comparing top programs between TV1 and TV2 channels"
                     : "Most engaging programs in the selected period"}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 {/* Programs by MAU Chart */}
                 {data?.analytics?.topPrograms &&
                 data.analytics.topPrograms.length > 0 ? (
@@ -994,9 +997,11 @@ const UnifiTVPage = () => {
                               tickFormatter={(value) => {
                                 if (value === 0) return "0";
                                 if (value >= 1000000)
-                                  return `${(value / 1000000).toFixed(1)}M`;
+                                  return `${(Number(value) / 1000000).toFixed(
+                                    1
+                                  )}M`;
                                 if (value >= 1000)
-                                  return `${Math.round(value / 1000)}K`;
+                                  return `${Math.round(Number(value) / 1000)}K`;
                                 return value.toString();
                               }}
                             />
@@ -1080,9 +1085,11 @@ const UnifiTVPage = () => {
                               tickFormatter={(value) => {
                                 if (value === 0) return "0";
                                 if (value >= 1000000)
-                                  return `${(value / 1000000).toFixed(1)}M`;
+                                  return `${(Number(value) / 1000000).toFixed(
+                                    1
+                                  )}M`;
                                 if (value >= 1000)
-                                  return `${Math.round(value / 1000)}K`;
+                                  return `${Math.round(Number(value) / 1000)}K`;
                                 return value.toString();
                               }}
                             />
@@ -1137,9 +1144,9 @@ const UnifiTVPage = () => {
                           tickFormatter={(value) => {
                             if (value === 0) return "0";
                             if (value >= 1000000)
-                              return `${(value / 1000000).toFixed(1)}M`;
+                              return `${(Number(value) / 1000000).toFixed(1)}M`;
                             if (value >= 1000)
-                              return `${Math.round(value / 1000)}K`;
+                              return `${Math.round(Number(value) / 1000)}K`;
                             return value.toString();
                           }}
                         />
@@ -1192,16 +1199,16 @@ const UnifiTVPage = () => {
 
             {/* MAU Trends Over Time - Full Width Row (2 columns) */}
             <Card className="bg-white/70 backdrop-blur-sm col-span-2">
-              <CardHeader>
+              <CardHeader className="">
                 <CardTitle className="flex items-center space-x-2">
                   <TrendingUpIcon className="h-5 w-5 text-teal-600" />
                   <span>MAU Trends Over Time</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="">
                   Monthly active users progression across all periods
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <ResponsiveContainer width="100%" height={400}>
                   <AreaChart data={data.analytics.monthlyTrends}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0f2fe" />
@@ -1209,9 +1216,9 @@ const UnifiTVPage = () => {
                     <YAxis
                       tickFormatter={(value) => {
                         if (value >= 1000000)
-                          return `${(value / 1000000).toFixed(1)}M`;
+                          return `${(Number(value) / 1000000).toFixed(1)}M`;
                         if (value >= 1000)
-                          return `${Math.round(value / 1000)}K`;
+                          return `${Math.round(Number(value) / 1000)}K`;
                         return value.toString();
                       }}
                       tick={{ fontSize: 12 }}
@@ -1242,14 +1249,16 @@ const UnifiTVPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Channel Performance */}
               <Card className="bg-white/70 backdrop-blur-sm">
-                <CardHeader>
+                <CardHeader className="">
                   <CardTitle className="flex items-center space-x-2">
                     <TvIcon className="h-5 w-5 text-cyan-600" />
                     <span>Channel Performance</span>
                   </CardTitle>
-                  <CardDescription>MAU distribution by channel</CardDescription>
+                  <CardDescription className="">
+                    MAU distribution by channel
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="">
                   <ResponsiveContainer width="100%" height={350}>
                     <PieChart>
                       <Pie
@@ -1290,17 +1299,17 @@ const UnifiTVPage = () => {
 
               {/* Box Plot MAU Distribution */}
               <Card className="bg-white/70 backdrop-blur-sm">
-                <CardHeader>
+                <CardHeader className="">
                   <CardTitle className="flex items-center space-x-2">
                     <BarChart3Icon className="h-5 w-5 text-blue-600" />
                     <span>MAU Statistical Distribution</span>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="">
                     Box and Whiskers Chart: Min, Max, Median, Average of MAU by
                     Channel
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="">
                   <div
                     style={{
                       width: "100%",
@@ -1355,16 +1364,16 @@ const UnifiTVPage = () => {
         {/* Program Details Table */}
         {data && (
           <Card className="bg-white/70 backdrop-blur-sm">
-            <CardHeader>
+            <CardHeader className="">
               <CardTitle className="flex items-center space-x-2">
                 <PlayCircleIcon className="h-5 w-5 text-emerald-600" />
                 <span>Program Details</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="">
                 Detailed breakdown of programs with MAU performance
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -1446,6 +1455,7 @@ const UnifiTVPage = () => {
                             </td>
                             <td className="p-3 text-center">
                               <Badge
+                                className=""
                                 variant={
                                   (program.avgMau || 0) > 5000
                                     ? "default"
@@ -1466,7 +1476,7 @@ const UnifiTVPage = () => {
                     ) : (
                       <tr>
                         <td
-                          colSpan="7"
+                          colSpan={7}
                           className="p-3 text-center text-gray-500"
                         >
                           No program data available
@@ -1483,13 +1493,13 @@ const UnifiTVPage = () => {
         {/* Quick Insights */}
         {data && (
           <Card className="bg-white/70 backdrop-blur-sm">
-            <CardHeader>
+            <CardHeader className="">
               <CardTitle className="flex items-center space-x-2">
                 <StarIcon className="h-5 w-5 text-amber-600" />
                 <span>Key Insights</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-emerald-900 mb-2">

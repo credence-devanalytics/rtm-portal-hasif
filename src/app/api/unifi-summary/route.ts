@@ -12,8 +12,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     
     // Extract query parameters
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 50;
+    const page = parseInt(String(searchParams.get('page'))) || 1;
+    const limit = parseInt(String(searchParams.get('limit'))) || 50;
     const sortBy = searchParams.get('sortBy') || 'mau_total';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const tier = searchParams.get('tier');
@@ -62,13 +62,14 @@ export async function GET(request: Request) {
       ? sql`${countQuery} WHERE ${sql.join(whereConditions, sql` AND `)}`
       : countQuery;
     
-    const [totalResult] = await db.execute(countWithWhere);
-    const total = parseInt(totalResult.total);
+    const totalResultArray = await db.execute(countWithWhere);
+    const totalResult = (totalResultArray as any)[0];
+    const total = parseInt(String(totalResult.total));
 
     // Get paginated data
     const sortColumn = sql.identifier(sortBy);
     const dataQuery = sql`${baseQuery} ORDER BY ${sortColumn} ${sql.raw(sortOrder.toUpperCase())} LIMIT ${limit} OFFSET ${offset}`;
-    const summaryData = await db.execute(dataQuery);
+    const summaryData = (await db.execute(dataQuery)) as unknown as any[];
 
     // Get summary statistics
     const summaryStatsQuery = whereConditions.length > 0
@@ -100,7 +101,8 @@ export async function GET(request: Request) {
           FROM unifi_summary
         `;
 
-    const [summaryStats] = await db.execute(summaryStatsQuery);
+    const summaryStatsArray = await db.execute(summaryStatsQuery);
+    const summaryStats = (summaryStatsArray as any)[0];
 
     // Get tier breakdown
     const tierBreakdownQuery = whereConditions.length > 0
@@ -128,7 +130,7 @@ export async function GET(request: Request) {
           ORDER BY total_mau DESC
         `;
 
-    const tierBreakdown = await db.execute(tierBreakdownQuery);
+    const tierBreakdown = (await db.execute(tierBreakdownQuery)) as unknown as any[];
 
     // Get genre breakdown
     const genreBreakdownQuery = whereConditions.length > 0
@@ -158,7 +160,7 @@ export async function GET(request: Request) {
           LIMIT 10
         `;
 
-    const genreBreakdown = await db.execute(genreBreakdownQuery);
+    const genreBreakdown = (await db.execute(genreBreakdownQuery)) as unknown as any[];
 
     // Get top programs by MAU
     const topProgramsQuery = whereConditions.length > 0
@@ -192,17 +194,17 @@ export async function GET(request: Request) {
           LIMIT 10
         `;
 
-    const topPrograms = await db.execute(topProgramsQuery);
+    const topPrograms = (await db.execute(topProgramsQuery)) as unknown as any[];
 
     // Format the response
     const response = {
       data: summaryData.map(item => ({
         ...item,
-        mau_total: parseInt(item.mau_total) || 0,
-        duration_total_hour: parseInt(item.duration_total_hour) || 0,
-        duration_live: parseInt(item.duration_live) || 0,
-        frequency_total_access_time: parseInt(item.frequency_total_access_time) || 0,
-        frequency_live: parseInt(item.frequency_live) || 0
+        mau_total: parseInt(String(item.mau_total)) || 0,
+        duration_total_hour: parseInt(String(item.duration_total_hour)) || 0,
+        duration_live: parseInt(String(item.duration_live)) || 0,
+        frequency_total_access_time: parseInt(String(item.frequency_total_access_time)) || 0,
+        frequency_live: parseInt(String(item.frequency_live)) || 0
       })),
       pagination: {
         page,
@@ -213,9 +215,9 @@ export async function GET(request: Request) {
         hasPrev: page > 1
       },
       summary: {
-        totalRecords: parseInt(summaryStats.total_records) || 0,
-        totalMau: parseInt(summaryStats.total_mau) || 0,
-        avgMau: Math.round(parseFloat(summaryStats.avg_mau)) || 0,
+        totalRecords: parseInt(String(summaryStats.total_records)) || 0,
+        totalMau: parseInt(String(summaryStats.total_mau)) || 0,
+        avgMau: Math.round(parseFloat(String(summaryStats.avg_mau))) || 0,
         totalDurationHours: parseInt(summaryStats.total_duration_hours) || 0,
         avgDurationHours: Math.round(parseFloat(summaryStats.avg_duration_hours)) || 0,
         totalTiers: parseInt(summaryStats.total_tiers) || 0,

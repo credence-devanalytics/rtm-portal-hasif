@@ -93,12 +93,12 @@ const MarketingDashboard = () => {
         <Header />
         <div className="flex items-center justify-center min-h-96">
           <Card className="border-red-200 bg-red-50">
-            <CardHeader>
+            <CardHeader className="">
               <CardTitle className="text-red-800 font-sans">
                 Error Loading Data
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               <p className="text-sm text-red-600 font-sans">
                 Failed to load marketing data. Please try again later.
               </p>

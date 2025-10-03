@@ -26,7 +26,7 @@ const ProgramTrendChart = ({ filters = {} }) => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
-        limit: 1000, // Get more data for trend analysis
+        limit: "1000", // Get more data for trend analysis
         ...filters,
       });
 
@@ -63,11 +63,11 @@ const ProgramTrendChart = ({ filters = {} }) => {
         .map((program) => ({
           program,
           totalMau: Object.values(programData[program]).reduce(
-            (sum, month) => sum + month.totalMau,
+            (sum, month) => sum + (month as any).totalMau,
             0
           ),
         }))
-        .sort((a, b) => b.totalMau - a.totalMau)
+        .sort((a, b) => (b as any).totalMau - (a as any).totalMau)
         .slice(0, 5);
 
       setSelectedPrograms(programTotals.map((p) => p.program));
@@ -162,7 +162,15 @@ const ProgramTrendChart = ({ filters = {} }) => {
               tickFormatter={(value) => value.toLocaleString()}
               fontSize={12}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={
+                <CustomTooltip
+                  active={undefined}
+                  payload={undefined}
+                  label={undefined}
+                />
+              }
+            />
             <Legend />
             {selectedPrograms.map((program, index) => (
               <Line

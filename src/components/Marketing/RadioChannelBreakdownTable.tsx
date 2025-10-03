@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const RadioChannelBreakdownTable = ({ data }) => {
   if (!data) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Radio Channel Breakdown</CardTitle>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Radio Channel Breakdown</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="flex items-center justify-center py-8">
             <p className="text-base text-gray-500 font-sans">
               No radio channel data available
@@ -112,8 +112,8 @@ const RadioChannelBreakdownTable = ({ data }) => {
   );
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="">
+      <CardHeader className="">
         <CardTitle className="text-lg font-bold font-sans">
           Radio Channel Performance Breakdown
         </CardTitle>
@@ -121,7 +121,7 @@ const RadioChannelBreakdownTable = ({ data }) => {
           Revenue breakdown by channel groups, sorted by total value
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <div className="space-y-6">
           {Object.entries(data).map(([groupName, groupData]) =>
             renderChannelGroup(groupName, groupData)

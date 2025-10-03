@@ -77,12 +77,12 @@ const HourlyViewershipHeatmap = ({ unifiData, loading }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Hourly Viewership Heatmap</CardTitle>
-          <CardDescription>Peak viewing times visualization</CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Hourly Viewership Heatmap</CardTitle>
+          <CardDescription className="">Peak viewing times visualization</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading heatmap data...</div>
           </div>
@@ -92,12 +92,12 @@ const HourlyViewershipHeatmap = ({ unifiData, loading }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Hourly Viewership Heatmap</CardTitle>
-        <CardDescription>Peak viewing patterns by day and hour</CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">Hourly Viewership Heatmap</CardTitle>
+        <CardDescription className="">Peak viewing patterns by day and hour</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <div className="space-y-2">
           {/* Hour labels */}
           <div className="flex">

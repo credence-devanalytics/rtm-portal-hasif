@@ -145,7 +145,7 @@ const SocialMediaWordCloud = ({
             (wordSentiments[word][item.sentiment] || 0) + 1;
         });
       }
-    }); 
+    });
 
     // Convert to format required by WordCloud component
     const words = Object.entries(wordFreq)
@@ -167,7 +167,7 @@ const SocialMediaWordCloud = ({
           sentiments: sentiments,
         };
       })
-      .sort((a, b) => b.value - a.value)
+      .sort((a, b) => Number(b.value) - Number(a.value))
       .slice(0, 80); // Show top 80 words for better visualization
 
     return words;
@@ -322,7 +322,7 @@ const SocialMediaWordCloud = ({
               className="px-2 py-1 bg-white rounded text-sm border"
               style={{ color: word.color }}
             >
-              {word.text} ({word.value})
+              {word.text} ({String(word.value)})
             </span>
           ))}
         </div>

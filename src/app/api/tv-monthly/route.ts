@@ -45,21 +45,21 @@ export async function GET() {
   });
 
   // Build chartData array sorted by monthOrder
-  const chartData = Object.values(processedData).sort((a, b) => a.monthOrder - b.monthOrder);
+  const chartData = Object.values(processedData).sort((a, b) => (a as any).monthOrder - (b as any).monthOrder);
 
   // Calculate yearly totals
   const yearlyTotals = {
-    2022: chartData.reduce((sum, item) => sum + (item['2022'] || 0), 0),
-    2023: chartData.reduce((sum, item) => sum + (item['2023'] || 0), 0),
-    2024: chartData.reduce((sum, item) => sum + (item['2024'] || 0), 0)
+    2022: chartData.reduce((sum, item) => Number(sum) + (Number((item as any)['2022']) || 0), 0),
+    2023: chartData.reduce((sum, item) => Number(sum) + (Number((item as any)['2023']) || 0), 0),
+    2024: chartData.reduce((sum, item) => Number(sum) + (Number((item as any)['2024']) || 0), 0)
   };
 
     // Calculate growth rates
-    const growth2022to2023 = yearlyTotals[2022] > 0 ? 
-      ((yearlyTotals[2023] - yearlyTotals[2022]) / yearlyTotals[2022]) * 100 : 0;
+    const growth2022to2023 = Number(yearlyTotals[2022]) > 0 ? 
+      ((Number(yearlyTotals[2023]) - Number(yearlyTotals[2022])) / Number(yearlyTotals[2022])) * 100 : 0;
     
-    const growth2023to2024 = yearlyTotals[2023] > 0 ? 
-      ((yearlyTotals[2024] - yearlyTotals[2023]) / yearlyTotals[2023]) * 100 : 0;
+    const growth2023to2024 = Number(yearlyTotals[2023]) > 0 ? 
+      ((Number(yearlyTotals[2024]) - Number(yearlyTotals[2023])) / Number(yearlyTotals[2023])) * 100 : 0;
 
     const response = {
       success: true,

@@ -21,7 +21,7 @@ export async function GET() {
       if (!channelData[channel]) {
         channelData[channel] = {};
       }
-      channelData[channel][item.year] = parseFloat(item.value) || 0;
+      channelData[channel][item.year] = parseFloat(String(item.value)) || 0;
     });
 
     // Calculate growth percentages and format data
@@ -39,8 +39,8 @@ export async function GET() {
         year2022: data2022,
         year2023: data2023,
         year2024: data2024,
-        growth2022to2023: parseFloat(growth2022to2023.toFixed(1)),
-        growth2023to2024: parseFloat(growth2023to2024.toFixed(1)),
+        growth2022to2023: parseFloat(String(growth2022to2023.toFixed(1))),
+        growth2023to2024: parseFloat(String(growth2023to2024.toFixed(1))),
         formatted2022: `RM ${data2022.toLocaleString()}`,
         formatted2023: `RM ${data2023.toLocaleString()}`,
         formatted2024: `RM ${data2024.toLocaleString()}`
@@ -62,8 +62,8 @@ export async function GET() {
       year2022: totals.year2022,
       year2023: totals.year2023,
       year2024: totals.year2024,
-      growth2022to2023: parseFloat(totalGrowth2022to2023.toFixed(1)),
-      growth2023to2024: parseFloat(totalGrowth2023to2024.toFixed(1)),
+      growth2022to2023: parseFloat(String(totalGrowth2022to2023.toFixed(1))),
+      growth2023to2024: parseFloat(String(totalGrowth2023to2024.toFixed(1))),
       formatted2022: `RM ${totals.year2022.toLocaleString()}`,
       formatted2023: `RM ${totals.year2023.toLocaleString()}`,
       formatted2024: `RM ${totals.year2024.toLocaleString()}`

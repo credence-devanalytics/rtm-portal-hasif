@@ -28,7 +28,7 @@ function generateProgramBreakdown(data) {
     // Convert duration to minutes for averaging
     if (item.duration) {
       const durationParts = item.duration.toString().split(':');
-      const durationMinutes = parseInt(durationParts[0]) * 60 + parseInt(durationParts[1] || 0);
+      const durationMinutes = parseInt(String(durationParts[0])) * 60 + parseInt(String(durationParts[1] || 0));
       programData[item.programName].avgDuration.push(durationMinutes);
     }
     
@@ -38,13 +38,13 @@ function generateProgramBreakdown(data) {
   });
   
   return Object.values(programData).map(program => ({
-    ...program,
-    avgMau: Math.round(program.totalMau / program.episodeCount),
-    totalMau: parseInt(program.totalMau) || 0,
-    avgDurationMinutes: program.avgDuration.length > 0 ? Math.round(
-      program.avgDuration.reduce((sum, dur) => sum + dur, 0) / program.avgDuration.length
+    ...(program as any),
+    avgMau: Math.round((program as any).totalMau / (program as any).episodeCount),
+    totalMau: parseInt(String((program as any).totalMau)) || 0,
+    avgDurationMinutes: (program as any).avgDuration.length > 0 ? Math.round(
+      (program as any).avgDuration.reduce((sum: number, dur: number) => sum + dur, 0) / (program as any).avgDuration.length
     ) : 0
-  })).sort((a, b) => b.totalMau - a.totalMau);
+  })).sort((a, b) => (b as any).totalMau - (a as any).totalMau);
 }
 
 function generateChannelBreakdown(data) {
@@ -65,11 +65,11 @@ function generateChannelBreakdown(data) {
   });
   
   return Object.values(channelData).map(channel => ({
-    channelName: channel.channelName,
-    totalMau: parseInt(channel.totalMau) || 0,
-    programCount: channel.programCount,
-    uniqueProgramCount: channel.uniquePrograms.size,
-    avgMau: Math.round(channel.totalMau / channel.programCount)
+    channelName: (channel as any).channelName,
+    totalMau: parseInt(String((channel as any).totalMau)) || 0,
+    programCount: (channel as any).programCount,
+    uniqueProgramCount: (channel as any).uniquePrograms.size,
+    avgMau: Math.round((channel as any).totalMau / (channel as any).programCount)
   })).sort((a, b) => b.totalMau - a.totalMau);
 }
 
@@ -91,11 +91,11 @@ function generateMonthlyTrends(data) {
   });
   
   return Object.values(monthData).map(month => ({
-    ...month,
-    totalMau: parseInt(month.totalMau) || 0,
-    avgMau: Math.round(month.totalMau / month.programCount),
-    displayMonth: `${month.month.slice(0, 4)}-${month.month.slice(4)}`
-  })).sort((a, b) => a.month.localeCompare(b.month));
+    ...(month as any),
+    totalMau: parseInt(String((month as any).totalMau)) || 0,
+    avgMau: Math.round((month as any).totalMau / (month as any).programCount),
+    displayMonth: `${(month as any).month.slice(0, 4)}-${(month as any).month.slice(4)}`
+  })).sort((a, b) => (a as any).month.localeCompare((b as any).month));
 }
 
 function generateTopPrograms(data, limit = 10) {
@@ -121,11 +121,11 @@ function generateTopPrograms(data, limit = 10) {
   
   return Object.values(programData)
     .map(program => ({
-      programName: program.programName,
-      channelName: program.channelName,
-      mau: parseInt(program.totalMau) || 0,
-      episodeCount: program.episodeCount,
-      date: program.latestDate
+      programName: (program as any).programName,
+      channelName: (program as any).channelName,
+      mau: parseInt(String((program as any).totalMau)) || 0,
+      episodeCount: (program as any).episodeCount,
+      date: (program as any).latestDate
     }))
     .sort((a, b) => b.mau - a.mau)
     .slice(0, limit);
@@ -136,8 +136,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     
     // Extract query parameters
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 50;
+    const page = parseInt(String(searchParams.get('page'))) || 1;
+    const limit = parseInt(String(searchParams.get('limit'))) || 50;
     const sortBy = searchParams.get('sortBy') || 'mau';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const channel = searchParams.get('channel');
@@ -169,7 +169,7 @@ export async function GET(request: Request) {
     // Fetch data from the database
     let query = db.select().from(unifiViewership);
     if (whereConditions.length > 0) {
-      query = query.where(and(...whereConditions));
+      query = (query as any).where(and(...whereConditions));
     }
     const allData = await query;
 
@@ -209,8 +209,8 @@ export async function GET(request: Request) {
     const response = {
       data: paginatedData.map(item => ({
         ...item,
-        mau: parseInt(item.mau) || 0,
-        pk: parseInt(item.pk) || 0
+        mau: parseInt(String(item.mau)) || 0,
+        pk: parseInt(String(item.pk)) || 0
       })),
       pagination: {
         page,

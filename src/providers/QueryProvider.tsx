@@ -11,7 +11,7 @@ export default function QueryProvider({ children }) {
         defaultOptions: {
           queries: {
             staleTime: 0, // Always consider data stale (will refetch on filter change)
-            cacheTime: 5 * 60 * 1000, // 5 minutes cache time (reduced)
+            gcTime: 5 * 60 * 1000, // 5 minutes cache time (reduced)
             retry: 3,
             retryDelay: (attemptIndex) =>
               Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -28,17 +28,7 @@ export default function QueryProvider({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools
-        initialIsOpen={false}
-        position="bottom-right"
-        toggleButtonProps={{
-          style: {
-            marginLeft: "5px",
-            transform: "scale(1)",
-            transformOrigin: "bottom right",
-          },
-        }}
-      />
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }

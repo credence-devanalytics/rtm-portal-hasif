@@ -44,9 +44,9 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
   // Format tick labels for currency
   const formatYAxisTick = (value) => {
     if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M`;
+      return `${(Number(value) / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
-      return `${(value / 1000).toFixed(0)}K`;
+      return `${(Number(value) / 1000).toFixed(0)}K`;
     }
     return value.toString();
   };
@@ -75,7 +75,7 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
             tick={{ fontSize: 11, fontFamily: "var(--font-geist-sans)" }}
             tickFormatter={formatYAxisTick}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
           <Legend
             wrapperStyle={{
               paddingTop: "20px",

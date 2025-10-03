@@ -56,12 +56,12 @@ const DurationMauScatterChart = ({ unifiData, loading }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Duration vs MAU Analysis</CardTitle>
-          <CardDescription>Program length impact on engagement</CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Duration vs MAU Analysis</CardTitle>
+          <CardDescription className="">Program length impact on engagement</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading chart data...</div>
           </div>
@@ -71,15 +71,15 @@ const DurationMauScatterChart = ({ unifiData, loading }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Duration vs MAU Analysis</CardTitle>
-        <CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">Duration vs MAU Analysis</CardTitle>
+        <CardDescription className="">
           Relationship between program length and engagement (bubble size = avg
           access time)
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={400}>
           <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -94,7 +94,7 @@ const DurationMauScatterChart = ({ unifiData, loading }) => {
               type="number"
               dataKey="mau"
               name="MAU"
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+              tickFormatter={(value) => `${(Number(value) / 1000).toFixed(0)}K`}
             />
             <Tooltip
               cursor={{ strokeDasharray: "3 3" }}

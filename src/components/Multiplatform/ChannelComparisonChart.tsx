@@ -87,14 +87,14 @@ const ChannelComparisonChart = ({ mytvData, unifiData, loading }) => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Channel Performance Comparison</CardTitle>
-          <CardDescription>
+      <Card className="">
+        <CardHeader className="">
+          <CardTitle className="">Channel Performance Comparison</CardTitle>
+          <CardDescription className="">
             MYTV Viewers vs Unifi MAU by Channel
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-gray-500">Loading chart data...</div>
           </div>
@@ -104,12 +104,12 @@ const ChannelComparisonChart = ({ mytvData, unifiData, loading }) => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Channel Performance Comparison</CardTitle>
-        <CardDescription>MYTV Viewers vs Unifi MAU by Channel</CardDescription>
+    <Card className="">
+      <CardHeader className="">
+        <CardTitle className="">Channel Performance Comparison</CardTitle>
+        <CardDescription className="">MYTV Viewers vs Unifi MAU by Channel</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart
             data={chartData}
@@ -128,8 +128,8 @@ const ChannelComparisonChart = ({ mytvData, unifiData, loading }) => {
             <Tooltip
               formatter={(value, name) => [
                 name === "mytvViewers"
-                  ? `${(value / 1000000).toFixed(1)}M`
-                  : `${(value / 1000).toFixed(0)}K`,
+                  ? `${(Number(value) / 1000000).toFixed(1)}M`
+                  : `${(Number(value) / 1000).toFixed(0)}K`,
                 name === "mytvViewers" ? "MYTV Viewers" : "Unifi MAU",
               ]}
             />

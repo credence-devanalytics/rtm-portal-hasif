@@ -39,8 +39,13 @@ function generateMockMytvData() {
   return mockData;
 }
 
-function generateChannelBreakdown(data) {
-  const channelData = {};
+function generateChannelBreakdown(data: any[]) {
+  const channelData: Record<string, {
+    channel: string;
+    recordCount: number;
+    totalViewers: number;
+    regionCount: Set<string>;
+  }> = {};
   
   data.forEach(item => {
     if (!channelData[item.channel]) {
@@ -52,7 +57,7 @@ function generateChannelBreakdown(data) {
       };
     }
     channelData[item.channel].recordCount++;
-    channelData[item.channel].totalViewers += item.viewers;
+    channelData[item.channel].totalViewers += Number(item.viewers);
     channelData[item.channel].regionCount.add(item.region);
   });
   
@@ -65,8 +70,13 @@ function generateChannelBreakdown(data) {
   }));
 }
 
-function generateRegionalBreakdown(data) {
-  const regionData = {};
+function generateRegionalBreakdown(data: any[]) {
+  const regionData: Record<string, {
+    region: string;
+    recordCount: number;
+    totalViewers: number;
+    channelCount: Set<string>;
+  }> = {};
   
   data.forEach(item => {
     if (!regionData[item.region]) {
@@ -78,7 +88,7 @@ function generateRegionalBreakdown(data) {
       };
     }
     regionData[item.region].recordCount++;
-    regionData[item.region].totalViewers += item.viewers;
+    regionData[item.region].totalViewers += Number(item.viewers);
     regionData[item.region].channelCount.add(item.channel);
   });
   
@@ -91,20 +101,25 @@ function generateRegionalBreakdown(data) {
   }));
 }
 
-function generateMonthlyTrends(data) {
-  const monthData = {};
+function generateMonthlyTrends(data: any[]) {
+  const monthData: Record<string, {
+    year: number;
+    month: number;
+    totalViewers: number;
+    channelCount: Set<string>;
+  }> = {};
   
   data.forEach(item => {
     const key = `${item.year}-${item.month}`;
     if (!monthData[key]) {
       monthData[key] = {
-        year: item.year,
-        month: item.month,
+        year: Number(item.year),
+        month: Number(item.month),
         totalViewers: 0,
         channelCount: new Set()
       };
     }
-    monthData[key].totalViewers += item.viewers;
+    monthData[key].totalViewers += Number(item.viewers);
     monthData[key].channelCount.add(item.channel);
   });
   
@@ -122,8 +137,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     
     // Extract query parameters
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 50;
+    const page = Number(searchParams.get('page') ?? 0) || 1;
+    const limit = Number(searchParams.get('limit') ?? 0) || 50;
     const sortBy = searchParams.get('sortBy') || 'viewers';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const region = searchParams.get('region');
@@ -160,7 +175,7 @@ export async function GET(request: Request) {
     
     if (year) {
       filteredData = filteredData.filter(item => 
-        item.year === parseInt(year)
+        item.year === Number()
       );
     }
 
@@ -187,10 +202,10 @@ export async function GET(request: Request) {
     const response = {
       data: paginatedData.map(item => ({
         ...item,
-        viewers: parseInt(item.viewers) || 0,
-        year: parseInt(item.year) || 0,
-        page_num: parseInt(item.page_num) || 0,
-        table_idx: parseInt(item.table_idx) || 0
+        viewers: Number() || 0,
+        year: Number() || 0,
+        page_num: Number() || 0,
+        table_idx: Number() || 0
       })),
       pagination: {
         page,
@@ -201,13 +216,13 @@ export async function GET(request: Request) {
         hasPrev: page > 1
       },
       summary: {
-        totalRecords: parseInt(summaryStats.total_records) || 0,
-        totalViewers: parseInt(summaryStats.total_viewers) || 0,
-        avgViewers: Math.round(parseFloat(summaryStats.avg_viewers)) || 0,
-        totalRegions: parseInt(summaryStats.total_regions) || 0,
-        totalChannels: parseInt(summaryStats.total_channels) || 0,
-        totalYears: parseInt(summaryStats.total_years) || 0,
-        totalMonths: parseInt(summaryStats.total_months) || 0
+        totalRecords: Number() || 0,
+        totalViewers: Number() || 0,
+        avgViewers: Math.round(Number()) || 0,
+        totalRegions: Number() || 0,
+        totalChannels: Number() || 0,
+        totalYears: Number() || 0,
+        totalMonths: Number() || 0
       },
       regionalBreakdown: generateRegionalBreakdown(filteredData),
       channelBreakdown: generateChannelBreakdown(filteredData),

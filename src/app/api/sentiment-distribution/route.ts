@@ -39,15 +39,15 @@ export async function GET(request: Request) {
           .groupBy(mentionsClassify.sentiment);
         
         // Calculate percentages and format data
-        const totalMentions = sentimentData.reduce((sum, item) => sum + parseInt(item.count), 0);
+        const totalMentions = sentimentData.reduce((sum, item) => sum + parseInt(String(item.count)), 0);
         
         const formattedData = sentimentData.map(item => ({
           sentiment: item.sentiment || 'unknown',
-          count: parseInt(item.count),
-          percentage: totalMentions > 0 ? ((parseInt(item.count) / totalMentions) * 100).toFixed(1) : 0,
-          totalReach: parseInt(item.totalReach) || 0,
-          totalInteractions: parseInt(item.totalInteractions) || 0,
-          avgEngagement: parseFloat(item.avgEngagement) || 0
+          count: parseInt(String(item.count)),
+          percentage: totalMentions > 0 ? ((parseInt(String(item.count)) / totalMentions) * 100).toFixed(1) : 0,
+          totalReach: parseInt(String(item.totalReach)) || 0,
+          totalInteractions: parseInt(String(item.totalInteractions)) || 0,
+          avgEngagement: parseFloat(String(item.avgEngagement)) || 0
         }));
         
         // Sort by count descending
