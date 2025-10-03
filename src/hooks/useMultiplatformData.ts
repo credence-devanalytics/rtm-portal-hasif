@@ -47,7 +47,7 @@ export const useMultiplatformData = (filters) => {
 
   useEffect(() => {
     fetchData();
-  }, [filters.monthYear, filters.channels, filters.region, filters.platforms]);
+  }, [filters.monthYear, filters.channels, filters.region, filters.platforms, fetchData]);
 
   return { data, loading, error, refetch: fetchData };
 };

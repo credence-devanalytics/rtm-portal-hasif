@@ -248,7 +248,7 @@ const RTMUnitsPieChart = ({
         chartConfig: config,
         totalMentions: data.length,
       };
-    }, [data, activeFilters]);
+    }, [data, activeFilters, colors, isUnitFiltered]);
 
   // Custom tooltip for inner layer (units)
   const CustomInnerTooltip = ({ active, payload }) => {
@@ -388,7 +388,7 @@ const RTMUnitsPieChart = ({
               <div>
                 <p className="text-gray-900 font-medium">No unit data found</p>
                 <p className="text-gray-500 text-sm">
-                  The data doesn't contain any valid unit information.
+                  The data doesn&apos;t contain any valid unit information.
                 </p>
               </div>
             </div>

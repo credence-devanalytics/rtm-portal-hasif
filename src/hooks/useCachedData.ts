@@ -317,7 +317,7 @@ export function useCacheMonitor(interval = 30000) { // 30 seconds
 // Note: CachePerformanceIndicator component removed due to TypeScript conversion issues
 
 // Export all hooks
-export default {
+const cachedDataHooks = {
   useDashboardSummary,
   useSentimentDistribution,
   usePlatformDistribution,
@@ -325,6 +325,7 @@ export default {
   useTopMentions,
   useCacheManager,
   useDashboardFilters,
-  useCacheMonitor,
-  CachePerformanceIndicator
+  useCacheMonitor
 };
+
+export default cachedDataHooks;
