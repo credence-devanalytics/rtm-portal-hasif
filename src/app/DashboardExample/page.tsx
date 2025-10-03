@@ -63,12 +63,12 @@ const DashboardExample = () => {
     return (
       <div className="container mx-auto p-6">
         <Card className="border-red-200 bg-red-50">
-          <CardHeader>
+          <CardHeader className="">
             <CardTitle className="text-red-800">
               Error Loading Dashboard
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <p className="text-red-600">Some components failed to load data.</p>
           </CardContent>
         </Card>
@@ -90,7 +90,7 @@ const DashboardExample = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Mentions Query</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div
               className={`text-xs ${
                 mentionsQuery.isLoading ? "text-yellow-600" : "text-green-600"

@@ -128,14 +128,14 @@ export async function GET(request: Request) {
           return ((current - previous) / previous * 100).toFixed(1);
         };
         
-        const currentTotal = parseInt(overallMetrics.totalMentions) || 0;
-        const previousTotal = parseInt(previousMetrics.totalMentions) || 0;
-        const currentReach = parseInt(overallMetrics.totalReach) || 0;
-        const previousReach = parseInt(previousMetrics.totalReach) || 0;
-        const currentInteractions = parseInt(overallMetrics.totalInteractions) || 0;
-        const previousInteractions = parseInt(previousMetrics.totalInteractions) || 0;
-        const currentEngagement = parseFloat(overallMetrics.avgEngagement) || 0;
-        const previousEngagement = parseFloat(previousMetrics.avgEngagement) || 0;
+        const currentTotal = Number(overallMetrics.totalMentions) || 0;
+        const previousTotal = Number(previousMetrics.totalMentions) || 0;
+        const currentReach = Number(overallMetrics.totalReach) || 0;
+        const previousReach = Number(previousMetrics.totalReach) || 0;
+        const currentInteractions = Number(overallMetrics.totalInteractions) || 0;
+        const previousInteractions = Number(previousMetrics.totalInteractions) || 0;
+        const currentEngagement = Number(overallMetrics.avgEngagement) || 0;
+        const previousEngagement = Number(previousMetrics.avgEngagement) || 0;
         
         // Format sentiment data
         const formattedSentiment = sentimentData.map(item => ({

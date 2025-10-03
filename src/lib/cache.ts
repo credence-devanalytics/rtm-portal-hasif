@@ -9,6 +9,10 @@ import NodeCache from 'node-cache';
 import crypto from 'crypto';
 
 class CacheManager {
+  redis: any;
+  nodeCache: NodeCache;
+  isRedisConnected: boolean;
+
   constructor() {
     this.redis = null;
     this.nodeCache = new NodeCache({ 
@@ -29,8 +33,7 @@ class CacheManager {
       this.redis = createClient({
         url: process.env.REDIS_URL || 'redis://localhost:6379',
         socket: {
-          connectTimeout: 5000,
-          lazyConnect: true
+          connectTimeout: 5000
         }
       });
 
@@ -149,7 +152,7 @@ class CacheManager {
    * @returns {Object} Cache statistics
    */
   async getStats() {
-    const stats = {
+    const stats: any = {
       redisConnected: this.isRedisConnected,
       nodeCacheStats: this.nodeCache.getStats()
     };
@@ -159,7 +162,7 @@ class CacheManager {
         const info = await this.redis.info('memory');
         stats.redisMemory = info;
       } catch (error) {
-        stats.redisError = error.message;
+        stats.redisError = (error as Error).message;
       }
     }
 
