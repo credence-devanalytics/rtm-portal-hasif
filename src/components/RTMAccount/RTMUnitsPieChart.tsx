@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { useCallback } from "react";
 import { Label, Pie, PieChart, Cell } from "recharts";
 import { BarChart3, Loader2, AlertCircle } from "lucide-react";
 import {
@@ -49,17 +50,7 @@ const RTMUnitsPieChart = ({
     }
   };
 
-  // Define colors array using your custom color palette
-  const colors = [
-    "#4E5899", // Primary: Blue-purple
-    "#ff9705", // Secondary: Orange
-    "#28a745", // Third: Green
-    "#dc3545", // Fourth: Red
-    "#6f42c1", // Fifth: Purple
-    "#20c997", // Sixth: Teal
-    "#fd7e14", // Seventh: Orange variant
-    "#e83e8c", // Eighth: Pink
-  ];
+
 
   // Function to generate shades of a color for channels within a unit
   const generateShades = (baseColor, count) => {
@@ -78,9 +69,9 @@ const RTMUnitsPieChart = ({
   };
 
   // Check if a unit is currently filtered
-  const isUnitFiltered = (unit) => {
+  const isUnitFiltered = useCallback((unit) => {
     return activeFilters?.unit === unit;
-  };
+  }, [activeFilters?.unit]);
 
   // Get visual styling based on filter state
   const getFilteredStyle = (unit) => {
@@ -102,6 +93,18 @@ const RTMUnitsPieChart = ({
   // Process data to create sunburst structure
   const { innerData, outerData, chartConfig, totalMentions } =
     React.useMemo(() => {
+      // Define colors array inside useMemo to avoid re-creation
+      const colors = [
+        "#4E5899", // Primary: Blue-purple
+        "#ff9705", // Secondary: Orange
+        "#28a745", // Third: Green
+        "#dc3545", // Fourth: Red
+        "#6f42c1", // Fifth: Purple
+        "#20c997", // Sixth: Teal
+        "#fd7e14", // Seventh: Orange variant
+        "#e83e8c", // Eighth: Pink
+      ];
+
       if (!data || !Array.isArray(data) || data.length === 0) {
         return {
           innerData: [],
@@ -248,7 +251,7 @@ const RTMUnitsPieChart = ({
         chartConfig: config,
         totalMentions: data.length,
       };
-    }, [data, activeFilters, colors, isUnitFiltered]);
+    }, [data, isUnitFiltered]);
 
   // Custom tooltip for inner layer (units)
   const CustomInnerTooltip = ({ active, payload }) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export const useMultiplatformData = (filters) => {
   const [data, setData] = useState({
@@ -10,7 +10,7 @@ export const useMultiplatformData = (filters) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -43,11 +43,11 @@ export const useMultiplatformData = (filters) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.monthYear, filters.channels, filters.region]);
 
   useEffect(() => {
     fetchData();
-  }, [filters.monthYear, filters.channels, filters.region, filters.platforms, fetchData]);
+  }, [fetchData]);
 
   return { data, loading, error, refetch: fetchData };
 };
