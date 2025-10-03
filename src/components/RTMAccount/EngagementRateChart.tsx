@@ -74,7 +74,7 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
       .sort((a, b) => b.avgEngagementRate - a.avgEngagementRate); // Sort by engagement rate descending
 
     return result;
-  }, [data]);
+  }, [data, platformColors]);
 
   // Handle platform click for filtering
   const handlePlatformClick = (platformData) => {

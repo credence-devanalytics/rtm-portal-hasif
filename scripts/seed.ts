@@ -1,5 +1,5 @@
-import { db } from '../src/lib/db/index.js';
-import { mentions, users } from '../src/lib/schema.js';
+import { db } from '../src/lib/db.js';
+import { mentions } from '../src/lib/schema.js';
 import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
 import path from 'path';
@@ -11,17 +11,6 @@ const __dirname = path.dirname(__filename);
 async function seedDatabase() {
   try {
     console.log('Starting database seeding...');
-
-    // Seed sample users
-    const sampleUsers = [
-      { name: 'Admin User', email: 'admin@example.com' },
-      { name: 'Analytics User', email: 'analytics@example.com' },
-    ];
-
-    console.log('Seeding users...');
-    for (const user of sampleUsers) {
-      await db.insert(users).values(user).onConflictDoNothing();
-    }
 
     // Check if CSV file exists and seed mentions
     const csvPath = path.join(__dirname, '../public/data/combined_classify_mentions.csv');
@@ -39,7 +28,7 @@ async function seedDatabase() {
       const batchSize = 100;
       for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
-        const mentionsData = batch.map(record => ({
+        const mentionsData = batch.map((record: any) => ({
           platform: record.platform || record.Platform,
           sentiment: record.sentiment || record.Sentiment,
           content: record.content || record.Content || record.text,
