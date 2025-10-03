@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -88,7 +88,7 @@ const MyTVViewershipPage = () => {
   ];
 
   // Fetch data function
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -111,12 +111,12 @@ const MyTVViewershipPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Initial data fetch
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // Handle filter changes
   const handleFilterChange = (filterType, value) => {

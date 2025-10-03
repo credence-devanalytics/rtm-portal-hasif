@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -126,7 +126,7 @@ const UnifiTVPage = () => {
   const availableMonths = ["202501", "202502", "202503", "202504", "202505"];
 
   // Fetch data function
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -169,12 +169,12 @@ const UnifiTVPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Initial data fetch
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // Refetch when filters change
   const handleFilterChange = (filterType, value) => {

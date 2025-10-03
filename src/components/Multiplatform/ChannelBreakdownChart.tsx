@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   PieChart,
   Pie,
@@ -28,11 +28,7 @@ const ChannelBreakdownChart = ({ filters = {} }) => {
     "#84CC16",
   ];
 
-  useEffect(() => {
-    fetchChannelData();
-  }, [filters]);
-
-  const fetchChannelData = async () => {
+  const fetchChannelData = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams(filters);
@@ -47,7 +43,11 @@ const ChannelBreakdownChart = ({ filters = {} }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchChannelData();
+  }, [fetchChannelData]);
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {

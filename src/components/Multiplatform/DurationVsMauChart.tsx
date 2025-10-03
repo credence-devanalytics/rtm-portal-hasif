@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   ScatterChart,
   Scatter,
@@ -16,15 +16,11 @@ const DurationVsMauChart = ({ filters = {} }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchScatterData();
-  }, [filters]);
-
-  const fetchScatterData = async () => {
+  const fetchScatterData = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
-        limit: 100, // Get more data for scatter plot
+        limit: "100", // Get more data for scatter plot
         ...filters,
       });
 
@@ -50,7 +46,11 @@ const DurationVsMauChart = ({ filters = {} }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchScatterData();
+  }, [fetchScatterData]);
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
