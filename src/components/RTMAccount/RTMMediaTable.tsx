@@ -178,7 +178,15 @@ const RTMMediaTable = ({
         };
       });
     }
-  }, [data, currentTab, showAllRadioChannels, channelMapping.Official, channelMapping.TV, channelMapping.Berita, channelMapping.Radio]);
+  }, [
+    data,
+    currentTab,
+    showAllRadioChannels,
+    channelMapping.Official,
+    channelMapping.TV,
+    channelMapping.Berita,
+    channelMapping.Radio,
+  ]);
 
   // Handle row click for filtering
   const handleRowClick = (rowData) => {

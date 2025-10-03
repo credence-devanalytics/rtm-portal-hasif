@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
 	NavigationMenu,
 	NavigationMenuContent,
@@ -122,13 +123,13 @@ export default function Header() {
 						>
 							<nav className="flex flex-col gap-4 mt-8">
 								{/* Home */}
-								<a
+								<Link
 									href="/"
 									className="flex items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-900 hover:bg-white/20 hover:text-gray-900 transition-colors"
 									onClick={() => setMobileMenuOpen(false)}
 								>
 									Home
-								</a>
+								</Link>
 
 								{/* Mobile Dashboards Section */}
 								<div className="space-y-2">
