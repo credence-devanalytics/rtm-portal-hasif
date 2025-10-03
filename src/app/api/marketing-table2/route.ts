@@ -49,13 +49,13 @@ export async function GET() {
 
     // Calculate totals
     const totals = {
-      year2022: Object.values(channelData).reduce((sum, channel) => sum + (channel[2022] || 0), 0),
-      year2023: Object.values(channelData).reduce((sum, channel) => sum + (channel[2023] || 0), 0),
-      year2024: Object.values(channelData).reduce((sum, channel) => sum + (channel[2024] || 0), 0)
+      year2022: Object.values(channelData).reduce((sum, channel) => Number(sum) + (Number((channel as any)[2022]) || 0), 0),
+      year2023: Object.values(channelData).reduce((sum, channel) => Number(sum) + (Number((channel as any)[2023]) || 0), 0),
+      year2024: Object.values(channelData).reduce((sum, channel) => Number(sum) + (Number((channel as any)[2024]) || 0), 0)
     };
 
-    const totalGrowth2022to2023 = totals.year2022 !== 0 ? (((totals.year2023 - totals.year2022) / totals.year2022) * 100) : 0;
-    const totalGrowth2023to2024 = totals.year2023 !== 0 ? (((totals.year2024 - totals.year2023) / totals.year2023) * 100) : 0;
+    const totalGrowth2022to2023 = totals.year2022 !== 0 ? (((Number(totals.year2023) - Number(totals.year2022)) / Number(totals.year2022)) * 100) : 0;
+    const totalGrowth2023to2024 = totals.year2023 !== 0 ? (((Number(totals.year2024) - Number(totals.year2023)) / Number(totals.year2023)) * 100) : 0;
 
     const totalsRow = {
       channel: 'Total',

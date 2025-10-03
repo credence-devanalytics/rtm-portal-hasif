@@ -128,40 +128,40 @@ export async function GET(request: Request) {
           
           // Aggregated metrics
           metrics: {
-            totalMentions: parseInt(metrics.totalMentions) || 0,
-            totalReach: parseInt(metrics.totalReach) || 0,
-            totalInteractions: parseInt(metrics.totalInteractions) || 0,
-            avgEngagement: parseFloat(metrics.avgEngagement) || 0,
-            influencerMentions: parseInt(influencerMentions[0]?.count) || 0
+            totalMentions: Number(metrics.totalMentions) || 0,
+            totalReach: Number(metrics.totalReach) || 0,
+            totalInteractions: Number(metrics.totalInteractions) || 0,
+            avgEngagement: Number(metrics.avgEngagement) || 0,
+            influencerMentions: Number(influencerMentions[0]?.count) || 0
           },
           
           // Sentiment data
           sentiment: {
             breakdown: sentimentBreakdown.map(s => ({
               sentiment: s.sentiment || 'unknown',
-              count: parseInt(s.count)
+              count: Number()
             })),
             trend: dailyTrends.map(d => ({
               date: d.date,
-              positive: parseInt(d.positive),
-              negative: parseInt(d.negative),
-              neutral: parseInt(d.neutral)
+              positive: Number(),
+              negative: Number(),
+              neutral: Number()
             }))
           },
           
           // Platform data
           platforms: platformDistribution.map(p => ({
             platform: p.platform,
-            count: parseInt(p.count),
-            totalReach: parseInt(p.totalReach) || 0
+            count: Number(),
+            totalReach: Number() || 0
           })),
           
           // Time series data
           timeSeries: dailyTrends.map(d => ({
             date: d.date,
-            mentions: parseInt(d.count),
+            mentions: Number(),
             reach: parseInt(d.totalReach) || 0,
-            interactions: parseInt(d.totalInteractions) || 0
+            interactions: Number() || 0
           })),
           
           // Channel group breakdown (includes new channelgroup field)
@@ -169,8 +169,8 @@ export async function GET(request: Request) {
             groupname: c.groupname,
             channel: c.channel,
             channelgroup: c.channelgroup,
-            count: parseInt(c.count),
-            totalReach: parseInt(c.totalReach) || 0
+            count: Number(),
+            totalReach: Number() || 0
           })),
           
           // Top performing content

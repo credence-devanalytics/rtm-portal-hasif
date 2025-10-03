@@ -140,31 +140,31 @@ export async function GET(request: Request) {
         // Format sentiment data
         const formattedSentiment = sentimentData.map(item => ({
           sentiment: item.sentiment || 'unknown',
-          count: parseInt(item.count),
-          percentage: currentTotal > 0 ? ((parseInt(item.count) / currentTotal) * 100).toFixed(1) : 0,
-          avgEngagement: parseFloat(item.avgEngagement) || 0,
-          totalReach: parseInt(item.totalReach) || 0
+          count: Number(item.count),
+          percentage: currentTotal > 0 ? ((Number(item.count) / currentTotal) * 100).toFixed(1) : 0,
+          avgEngagement: Number(item.avgEngagement) || 0,
+          totalReach: Number(item.totalReach) || 0
         }));
         
         // Format platform data
         const formattedPlatforms = topPlatforms.map(item => ({
           platform: item.platform || 'unknown',
-          count: parseInt(item.count),
-          percentage: currentTotal > 0 ? ((parseInt(item.count) / currentTotal) * 100).toFixed(1) : 0,
-          totalReach: parseInt(item.totalReach) || 0,
-          avgEngagement: parseFloat(item.avgEngagement) || 0
+          count: Number(item.count),
+          percentage: currentTotal > 0 ? ((Number(item.count) / currentTotal) * 100).toFixed(1) : 0,
+          totalReach: Number(item.totalReach) || 0,
+          avgEngagement: Number(item.avgEngagement) || 0
         }));
         
         // Format trending topics
         const formattedTopics = trendingTopics.map(item => {
-          const count = parseInt(item.count);
-          const positive = parseInt(item.positiveCount) || 0;
-          const negative = parseInt(item.negativeCount) || 0;
+          const count = Number(item.count);
+          const positive = Number(item.positiveCount) || 0;
+          const negative = Number(item.negativeCount) || 0;
           
           return {
             topic: item.topic || 'unknown',
             count,
-            totalReach: parseInt(item.totalReach) || 0,
+            totalReach: Number(item.totalReach) || 0,
             sentimentScore: count > 0 ? ((positive - negative) / count * 100).toFixed(1) : 0,
             positiveCount: positive,
             negativeCount: negative
@@ -177,17 +177,17 @@ export async function GET(request: Request) {
             totalReach: currentReach,
             totalInteractions: currentInteractions,
             avgEngagement: currentEngagement,
-            totalViews: parseInt(overallMetrics.totalViews) || 0,
-            avgInfluenceScore: parseFloat(overallMetrics.avgInfluenceScore) || 0,
-            influencerMentions: parseInt(overallMetrics.influencerMentions) || 0,
-            totalFollowers: parseInt(overallMetrics.totalFollowers) || 0,
+            totalViews: Number(overallMetrics.totalViews) || 0,
+            avgInfluenceScore: Number(overallMetrics.avgInfluenceScore) || 0,
+            influencerMentions: Number(overallMetrics.influencerMentions) || 0,
+            totalFollowers: Number(overallMetrics.totalFollowers) || 0,
             
             // Calculated metrics
             engagementRate: currentReach > 0 ? ((currentInteractions / currentReach) * 100).toFixed(2) : 0,
             influencerPercentage: currentTotal > 0 ? 
-              ((parseInt(overallMetrics.influencerMentions) || 0) / currentTotal * 100).toFixed(1) : 0,
+              ((Number(overallMetrics.influencerMentions) || 0) / currentTotal * 100).toFixed(1) : 0,
             avgFollowersPerMention: currentTotal > 0 ? 
-              Math.round((parseInt(overallMetrics.totalFollowers) || 0) / currentTotal) : 0
+              Math.round((Number(overallMetrics.totalFollowers) || 0) / currentTotal) : 0
           },
           
           periodComparison: {
