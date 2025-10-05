@@ -54,7 +54,8 @@ export default function AIPage() {
 			onSubmit={handleSubmit}
 			input={input}
 			onInputChange={setInput}
-			header={
+			sidebar={true}
+						header={
 				<Header
 					title="Ask me anything about RTM"
 					description="Get insights about social media trends and conversations"

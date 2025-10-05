@@ -24,12 +24,15 @@ import {
 	getSourceUrlParts,
 	hasSourceUrls,
 } from "@/components/ai/message-parts";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/ai/app-sidebar";
+import { Button } from "@/components/ui/button";
 
 // Type for tool message components
 export type ToolMessageComponents<T extends UIMessage<any, any>> = {
-	[K in Extract<T['parts'][number]['type'], `data-${string}`>]?: (
+	[K in Extract<T["parts"][number]["type"], `data-${string}`>]?: (
 		message: T,
-		part: Extract<T['parts'][number], { type: K }>
+		part: Extract<T["parts"][number], { type: K }>
 	) => React.ReactNode;
 };
 
@@ -46,9 +49,11 @@ interface ChatBotProps<T extends UIMessage<any, any>> {
 	header?: React.ReactNode;
 	starters?: React.ReactNode;
 	toolMessageComponents?: ToolMessageComponents<T>;
+	sidebar?: boolean;
 }
 
-const ChatBot = <T extends UIMessage<any, any>>({
+// Inner component that contains the actual chatbot content
+const ChatBotContent = <T extends UIMessage<any, any>>({
 	chatHook,
 	onSubmit,
 	input,
@@ -56,8 +61,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 	header,
 	starters,
 	toolMessageComponents,
-}: ChatBotProps<T>) => {
-
+}: Omit<ChatBotProps<T>, "sidebar">) => {
 	return (
 		<div className="max-w-9xl mx-auto relative size-full">
 			<div className="flex flex-col h-full">
@@ -72,19 +76,20 @@ const ChatBot = <T extends UIMessage<any, any>>({
 							chatHook.messages.map((message, messageIndex) => (
 								<div key={message.id}>
 									{/* Render sources if this is an assistant message with source URLs */}
-									{message.role === "assistant" && hasSourceUrls(message) &&
+									{message.role === "assistant" &&
+										hasSourceUrls(message) &&
 										getSourceUrlParts(message).map((part, i) => (
 											<SourceMessagePart
 												key={`${message.id}-source-${i}`}
 												message={message}
 												part={part}
 											/>
-										))
-									}
+										))}
 
 									{/* Render message parts using generic type-safe mapping */}
 									{message.parts.map((part, partIndex) => {
-										const isLastMessage = messageIndex === chatHook.messages.length - 1;
+										const isLastMessage =
+											messageIndex === chatHook.messages.length - 1;
 
 										// Handle text parts internally
 										if (part.type === "text") {
@@ -92,7 +97,12 @@ const ChatBot = <T extends UIMessage<any, any>>({
 												<TextMessagePart
 													key={`${message.id}-${partIndex}`}
 													message={message}
-													part={part as Extract<T['parts'][number], { type: 'text' }>}
+													part={
+														part as Extract<
+															T["parts"][number],
+															{ type: "text" }
+														>
+													}
 													isLastMessage={isLastMessage}
 													onRegenerate={chatHook.regenerate}
 												/>
@@ -100,8 +110,14 @@ const ChatBot = <T extends UIMessage<any, any>>({
 										}
 
 										// Handle tool message components from parent
-										if (toolMessageComponents && part.type in toolMessageComponents) {
-											const ToolComponent = toolMessageComponents[part.type as keyof typeof toolMessageComponents];
+										if (
+											toolMessageComponents &&
+											part.type in toolMessageComponents
+										) {
+											const ToolComponent =
+												toolMessageComponents[
+													part.type as keyof typeof toolMessageComponents
+												];
 											if (ToolComponent) {
 												return (
 													<Fragment key={`${message.id}-${partIndex}`}>
@@ -121,12 +137,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 					<ConversationScrollButton />
 				</Conversation>
 
-				<PromptInput
-					onSubmit={onSubmit}
-					className="mt-4"
-					globalDrop
-					multiple
-				>
+				<PromptInput onSubmit={onSubmit} className="mt-4" globalDrop multiple>
 					<PromptInputBody>
 						<PromptInputTextarea
 							onChange={(e) => onInputChange(e.target.value)}
@@ -135,7 +146,10 @@ const ChatBot = <T extends UIMessage<any, any>>({
 					</PromptInputBody>
 					<PromptInputToolbar>
 						<PromptInputTools />
-						<PromptInputSubmit disabled={!input && !chatHook.status} status={chatHook.status} />
+						<PromptInputSubmit
+							disabled={!input && !chatHook.status}
+							status={chatHook.status}
+						/>
 					</PromptInputToolbar>
 				</PromptInput>
 			</div>
@@ -143,4 +157,53 @@ const ChatBot = <T extends UIMessage<any, any>>({
 	);
 };
 
-export default ChatBot as <T extends UIMessage<any, any>>(props: ChatBotProps<T>) => React.ReactElement;
+const ChatBot = <T extends UIMessage<any, any>>({
+	chatHook,
+	onSubmit,
+	input,
+	onInputChange,
+	header,
+	starters,
+	toolMessageComponents,
+	sidebar,
+}: ChatBotProps<T>) => {
+	if (sidebar) {
+		return (
+			<SidebarProvider>
+				<div className="flex size-full">
+					<AppSidebar />
+					<main className="pt-20 px-6 w-full h-[calc(100vh-4rem)]">
+						<Button asChild size="icon" variant="outline">
+							<SidebarTrigger />
+						</Button>
+						<ChatBotContent
+							chatHook={chatHook}
+							onSubmit={onSubmit}
+							input={input}
+							onInputChange={onInputChange}
+							header={header}
+							starters={starters}
+							toolMessageComponents={toolMessageComponents}
+						/>
+					</main>
+				</div>
+			</SidebarProvider>
+		);
+	}
+
+	return (
+		<ChatBotContent
+			chatHook={chatHook}
+			onSubmit={onSubmit}
+			input={input}
+			onInputChange={onInputChange}
+			header={header}
+			starters={starters}
+			toolMessageComponents={toolMessageComponents}
+		/>
+	);
+};
+
+export default ChatBot as <T extends UIMessage<any, any>>(
+	props: ChatBotProps<T>
+) => React.ReactElement;
