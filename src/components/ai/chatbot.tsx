@@ -1,12 +1,11 @@
 "use client";
 
+import { UIMessage } from "ai";
 import {
 	Conversation,
 	ConversationContent,
-	ConversationEmptyState,
 	ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
 	PromptInput,
 	PromptInputBody,
@@ -16,75 +15,48 @@ import {
 	PromptInputToolbar,
 	PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { Actions, Action } from "@/components/ai-elements/actions";
-import { Fragment, useEffect, useState } from "react";
-import { useChat } from "@ai-sdk/react";
-import { Response } from "@/components/ai-elements/response";
-import { CopyIcon, MessageSquare, RefreshCcwIcon } from "lucide-react";
-import {
-	Source,
-	Sources,
-	SourcesContent,
-	SourcesTrigger,
-} from "@/components/ai-elements/sources";
+import { Fragment } from "react";
 import { Loader } from "@/components/ai-elements/loader";
+import { EmptyState } from "@/components/ai/empty-state";
 import {
-	EmptyState,
-	Header,
-	Starters,
-	Starter,
-} from "@/components/ai/empty-state";
-import { DefaultChatTransport } from "ai";
-import { ExampleMessage } from "@/app/(ai)/api/chat/route";
-import { toast } from "sonner";
-import { conversationStarters } from "@/data/conversation-starters";
+	TextMessagePart,
+	SourceMessagePart,
+	getSourceUrlParts,
+	hasSourceUrls,
+} from "@/components/ai/message-parts";
 
-const models = [
-	{
-		name: "GPT 4o",
-		value: "openai/gpt-4o",
-	},
-	{
-		name: "Deepseek R1",
-		value: "deepseek/deepseek-r1",
-	},
-];
+// Type for tool message components
+export type ToolMessageComponents<T extends UIMessage<any, any>> = {
+	[K in Extract<T['parts'][number]['type'], `data-${string}`>]?: (
+		message: T,
+		part: Extract<T['parts'][number], { type: K }>
+	) => React.ReactNode;
+};
 
-const ChatBot = () => {
-	const [input, setInput] = useState("");
-	const { messages, sendMessage, status, regenerate } = useChat<ExampleMessage>(
-		{
-			transport: new DefaultChatTransport({
-				api: "/api/chat",
-			}),
-			onData: (dataPart) => {
-				if (dataPart.type === "data-notification") {
-					console.log({ message: dataPart.data.message });
-					toast(dataPart.data.message);
-				}
-			},
-		}
-	);
+interface ChatBotProps<T extends UIMessage<any, any>> {
+	messages: T[];
+	sendMessage: any;
+	status: any;
+	regenerate: () => void;
+	onSubmit: (message: PromptInputMessage) => void;
+	input: string;
+	onInputChange: (value: string) => void;
+	header?: React.ReactNode;
+	starters?: React.ReactNode;
+	toolMessageComponents?: ToolMessageComponents<T>;
+}
 
-	const handleSubmit = (message: PromptInputMessage) => {
-		const hasText = Boolean(message.text);
-		const hasAttachments = Boolean(message.files?.length);
-
-		if (!(hasText || hasAttachments)) {
-			return;
-		}
-
-		sendMessage(
-			{
-				text: message.text || "Sent with attachments",
-				files: message.files,
-			},
-			{
-				body: {},
-			}
-		);
-		setInput("");
-	};
+const ChatBot = <T extends UIMessage<any, any>>({
+	messages,
+	status,
+	regenerate,
+	onSubmit,
+	input,
+	onInputChange,
+	header,
+	starters,
+	toolMessageComponents,
+}: ChatBotProps<T>) => {
 
 	return (
 		<div className="max-w-9xl mx-auto relative size-full">
@@ -92,92 +64,54 @@ const ChatBot = () => {
 				<Conversation className="h-full">
 					<ConversationContent>
 						{messages.length === 0 ? (
-							<EmptyState onSubmit={handleSubmit}>
-								<Header
-									title="Ask me anything about RTM"
-									description="Get insights about social media trends and conversations"
-								/>
-								<Starters starters={conversationStarters} />
+							<EmptyState onSubmit={onSubmit}>
+								{header}
+								{starters}
 							</EmptyState>
 						) : (
-							messages.map((message) => (
+							messages.map((message, messageIndex) => (
 								<div key={message.id}>
-									{message.role === "assistant" &&
-										message.parts.filter((part) => part.type === "source-url")
-											.length > 0 && (
-											<Sources>
-												<SourcesTrigger
-													count={
-														message.parts.filter(
-															(part) => part.type === "source-url"
-														).length
-													}
+									{/* Render sources if this is an assistant message with source URLs */}
+									{message.role === "assistant" && hasSourceUrls(message) &&
+										getSourceUrlParts(message).map((part, i) => (
+											<SourceMessagePart
+												key={`${message.id}-source-${i}`}
+												message={message}
+												part={part}
+											/>
+										))
+									}
+
+									{/* Render message parts using generic type-safe mapping */}
+									{message.parts.map((part, partIndex) => {
+										const isLastMessage = messageIndex === messages.length - 1;
+
+										// Handle text parts internally
+										if (part.type === "text") {
+											return (
+												<TextMessagePart
+													key={`${message.id}-${partIndex}`}
+													message={message}
+													part={part as Extract<T['parts'][number], { type: 'text' }>}
+													isLastMessage={isLastMessage}
+													onRegenerate={regenerate}
 												/>
-												{message.parts
-													.filter((part) => part.type === "source-url")
-													.map((part, i) => (
-														<SourcesContent key={`${message.id}-${i}`}>
-															<Source
-																key={`${message.id}-${i}`}
-																href={part.url}
-																title={part.url}
-															/>
-														</SourcesContent>
-													))}
-											</Sources>
-										)}
-									{message.parts.map((part, i) => {
-										switch (part.type) {
-											case "data-weather":
-												return (
-													<Fragment key={`${message.id}-${i}`}>
-														<Message from={message.role}>
-															<MessageContent>
-																{part.data.status === "loading" ? (
-																	<Response
-																		key={i}
-																	>{`Getting weather for ${part.data.city}...`}</Response>
-																) : (
-																	<Response
-																		key={i}
-																	>{`Weather in ${part.data.city}: ${part.data.weather}`}</Response>
-																)}
-															</MessageContent>
-														</Message>
-													</Fragment>
-												);
-											case "text":
-												return (
-													<Fragment key={`${message.id}-${i}`}>
-														<Message from={message.role}>
-															<MessageContent>
-																<Response>{part.text}</Response>
-															</MessageContent>
-														</Message>
-														{message.role === "assistant" &&
-															i === messages.length - 1 && (
-																<Actions className="mt-2">
-																	<Action
-																		onClick={() => regenerate()}
-																		label="Retry"
-																	>
-																		<RefreshCcwIcon className="size-3" />
-																	</Action>
-																	<Action
-																		onClick={() =>
-																			navigator.clipboard.writeText(part.text)
-																		}
-																		label="Copy"
-																	>
-																		<CopyIcon className="size-3" />
-																	</Action>
-																</Actions>
-															)}
-													</Fragment>
-												);
-											default:
-												return null;
+											);
 										}
+
+										// Handle tool message components from parent
+										if (toolMessageComponents && part.type in toolMessageComponents) {
+											const ToolComponent = toolMessageComponents[part.type as keyof typeof toolMessageComponents];
+											if (ToolComponent) {
+												return (
+													<Fragment key={`${message.id}-${partIndex}`}>
+														{ToolComponent(message, part as any)}
+													</Fragment>
+												);
+											}
+										}
+
+										return null;
 									})}
 								</div>
 							))
@@ -188,14 +122,14 @@ const ChatBot = () => {
 				</Conversation>
 
 				<PromptInput
-					onSubmit={handleSubmit}
+					onSubmit={onSubmit}
 					className="mt-4"
 					globalDrop
 					multiple
 				>
 					<PromptInputBody>
 						<PromptInputTextarea
-							onChange={(e) => setInput(e.target.value)}
+							onChange={(e) => onInputChange(e.target.value)}
 							value={input}
 						/>
 					</PromptInputBody>
@@ -209,4 +143,4 @@ const ChatBot = () => {
 	);
 };
 
-export default ChatBot;
+export default ChatBot as <T extends UIMessage<any, any>>(props: ChatBotProps<T>) => React.ReactElement;
