@@ -8,14 +8,7 @@ import {
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
 	PromptInput,
-	PromptInputActionAddAttachments,
-	PromptInputActionMenu,
-	PromptInputActionMenuContent,
-	PromptInputActionMenuTrigger,
-	PromptInputAttachment,
-	PromptInputAttachments,
 	PromptInputBody,
-	PromptInputButton,
 	type PromptInputMessage,
 	PromptInputSubmit,
 	PromptInputTextarea,
@@ -23,10 +16,10 @@ import {
 	PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import { Actions, Action } from "@/components/ai-elements/actions";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { Response } from "@/components/ai-elements/response";
-import { CopyIcon, GlobeIcon, RefreshCcwIcon } from "lucide-react";
+import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import {
 	Source,
 	Sources,
@@ -34,6 +27,9 @@ import {
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import { Loader } from "@/components/ai-elements/loader";
+import { DefaultChatTransport } from "ai";
+import { ExampleMessage } from "@/app/(ai)/api/chat/route";
+import { toast } from "sonner";
 
 const models = [
 	{
@@ -48,8 +44,19 @@ const models = [
 
 const ChatBot = () => {
 	const [input, setInput] = useState("");
-	const [webSearch, setWebSearch] = useState(false);
-	const { messages, sendMessage, status, regenerate } = useChat();
+	const { messages, sendMessage, status, regenerate } = useChat<ExampleMessage>(
+		{
+			transport: new DefaultChatTransport({
+				api: "/api/chat",
+			}),
+			onData: (dataPart) => {
+				if (dataPart.type === "data-notification") {
+					console.log({ message: dataPart.data.message });
+					toast(dataPart.data.message);
+				}
+			},
+		}
+	);
 
 	const handleSubmit = (message: PromptInputMessage) => {
 		const hasText = Boolean(message.text);
@@ -65,9 +72,7 @@ const ChatBot = () => {
 				files: message.files,
 			},
 			{
-				body: {
-					webSearch: webSearch,
-				},
+				body: {},
 			}
 		);
 		setInput("");
@@ -106,6 +111,24 @@ const ChatBot = () => {
 									)}
 								{message.parts.map((part, i) => {
 									switch (part.type) {
+										case "data-weather":
+											return (
+												<Fragment key={`${message.id}-${i}`}>
+													<Message from={message.role}>
+														<MessageContent>
+															{part.data.status === "loading" ? (
+																<Response
+																	key={i}
+																>{`Getting weather for ${part.data.city}...`}</Response>
+															) : (
+																<Response
+																	key={i}
+																>{`Weather in ${part.data.city}: ${part.data.weather}`}</Response>
+															)}
+														</MessageContent>
+													</Message>
+												</Fragment>
+											);
 										case "text":
 											return (
 												<Fragment key={`${message.id}-${i}`}>
@@ -153,30 +176,13 @@ const ChatBot = () => {
 					multiple
 				>
 					<PromptInputBody>
-						<PromptInputAttachments>
-							{(attachment) => <PromptInputAttachment data={attachment} />}
-						</PromptInputAttachments>
 						<PromptInputTextarea
 							onChange={(e) => setInput(e.target.value)}
 							value={input}
 						/>
 					</PromptInputBody>
 					<PromptInputToolbar>
-						<PromptInputTools>
-							<PromptInputActionMenu>
-								<PromptInputActionMenuTrigger />
-								<PromptInputActionMenuContent>
-									<PromptInputActionAddAttachments />
-								</PromptInputActionMenuContent>
-							</PromptInputActionMenu>
-							<PromptInputButton
-								variant={webSearch ? "default" : "ghost"}
-								onClick={() => setWebSearch(!webSearch)}
-							>
-								<GlobeIcon size={16} />
-								<span>Search</span>
-							</PromptInputButton>
-						</PromptInputTools>
+						<PromptInputTools />
 						<PromptInputSubmit disabled={!input && !status} status={status} />
 					</PromptInputToolbar>
 				</PromptInput>

@@ -3,6 +3,7 @@ import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import Header from "@/components/Header";
 import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
 			>
 				<QueryProvider>
 					<Header />
+					<Toaster />
 					<div>{children}</div>
 				</QueryProvider>
 			</body>
