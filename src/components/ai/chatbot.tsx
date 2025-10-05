@@ -34,10 +34,12 @@ export type ToolMessageComponents<T extends UIMessage<any, any>> = {
 };
 
 interface ChatBotProps<T extends UIMessage<any, any>> {
-	messages: T[];
-	sendMessage: any;
-	status: any;
-	regenerate: () => void;
+	chatHook: {
+		messages: T[];
+		sendMessage: any;
+		status: any;
+		regenerate: () => void;
+	};
 	onSubmit: (message: PromptInputMessage) => void;
 	input: string;
 	onInputChange: (value: string) => void;
@@ -47,9 +49,7 @@ interface ChatBotProps<T extends UIMessage<any, any>> {
 }
 
 const ChatBot = <T extends UIMessage<any, any>>({
-	messages,
-	status,
-	regenerate,
+	chatHook,
 	onSubmit,
 	input,
 	onInputChange,
@@ -63,13 +63,13 @@ const ChatBot = <T extends UIMessage<any, any>>({
 			<div className="flex flex-col h-full">
 				<Conversation className="h-full">
 					<ConversationContent>
-						{messages.length === 0 ? (
+						{chatHook.messages.length === 0 ? (
 							<EmptyState onSubmit={onSubmit}>
 								{header}
 								{starters}
 							</EmptyState>
 						) : (
-							messages.map((message, messageIndex) => (
+							chatHook.messages.map((message, messageIndex) => (
 								<div key={message.id}>
 									{/* Render sources if this is an assistant message with source URLs */}
 									{message.role === "assistant" && hasSourceUrls(message) &&
@@ -84,7 +84,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 
 									{/* Render message parts using generic type-safe mapping */}
 									{message.parts.map((part, partIndex) => {
-										const isLastMessage = messageIndex === messages.length - 1;
+										const isLastMessage = messageIndex === chatHook.messages.length - 1;
 
 										// Handle text parts internally
 										if (part.type === "text") {
@@ -94,7 +94,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 													message={message}
 													part={part as Extract<T['parts'][number], { type: 'text' }>}
 													isLastMessage={isLastMessage}
-													onRegenerate={regenerate}
+													onRegenerate={chatHook.regenerate}
 												/>
 											);
 										}
@@ -116,7 +116,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 								</div>
 							))
 						)}
-						{status === "submitted" && <Loader />}
+						{chatHook.status === "submitted" && <Loader />}
 					</ConversationContent>
 					<ConversationScrollButton />
 				</Conversation>
@@ -135,7 +135,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 					</PromptInputBody>
 					<PromptInputToolbar>
 						<PromptInputTools />
-						<PromptInputSubmit disabled={!input && !status} status={status} />
+						<PromptInputSubmit disabled={!input && !chatHook.status} status={chatHook.status} />
 					</PromptInputToolbar>
 				</PromptInput>
 			</div>

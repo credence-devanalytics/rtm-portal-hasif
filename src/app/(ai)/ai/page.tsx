@@ -13,41 +13,19 @@ import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 
-// Weather Message Component
-const WeatherMessageComponent = (
-	message: ExampleMessage,
-	part: Extract<ExampleMessage["parts"][number], { type: "data-weather" }>
-) => {
-	return (
-		<Fragment>
-			<Message from={message.role}>
-				<MessageContent>
-					{part.data.status === "loading" ? (
-						<Response>{`Getting weather for ${part.data.city}...`}</Response>
-					) : (
-						<Response>{`Weather in ${part.data.city}: ${part.data.weather}`}</Response>
-					)}
-				</MessageContent>
-			</Message>
-		</Fragment>
-	);
-};
-
 export default function AIPage() {
 	const [input, setInput] = useState("");
-	const { messages, sendMessage, status, regenerate } = useChat<ExampleMessage>(
-		{
-			transport: new DefaultChatTransport({
-				api: "/api/chat",
-			}),
-			onData: (dataPart) => {
-				if (dataPart.type === "data-notification") {
-					console.log({ message: dataPart.data.message });
-					toast(dataPart.data.message);
-				}
-			},
-		}
-	);
+	const chatHook = useChat<ExampleMessage>({
+		transport: new DefaultChatTransport({
+			api: "/api/chat",
+		}),
+		onData: (dataPart) => {
+			if (dataPart.type === "data-notification") {
+				console.log({ message: dataPart.data.message });
+				toast(dataPart.data.message);
+			}
+		},
+	});
 
 	const handleSubmit = (message: PromptInputMessage) => {
 		const hasText = Boolean(message.text);
@@ -57,7 +35,7 @@ export default function AIPage() {
 			return;
 		}
 
-		sendMessage(
+		chatHook.sendMessage(
 			{
 				text: message.text || "Sent with attachments",
 				files: message.files,
@@ -70,11 +48,9 @@ export default function AIPage() {
 	};
 
 	return (
-		<ChatBot<ExampleMessage>
-			messages={messages}
-			sendMessage={sendMessage}
-			status={status}
-			regenerate={regenerate}
+		// <ChatBot<ExampleMessage> this also can
+		<ChatBot
+			chatHook={chatHook}
 			onSubmit={handleSubmit}
 			input={input}
 			onInputChange={setInput}
