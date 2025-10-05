@@ -6,7 +6,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<SidebarProvider>
 			<AppSidebar />
-			<main className="mt-2 ml-2">
+			<main className="pt-20 px-6 w-full h-[calc(100vh-4rem)]">
 				<Button asChild size="icon" variant="outline">
 					<SidebarTrigger />
 				</Button>

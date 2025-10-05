@@ -1,3 +1,5 @@
+import ChatBot from "@/components/ai/chatbot";
+
 export default function AIPage() {
-	return <h1>Hello</h1>;
+	return <ChatBot />;
 }

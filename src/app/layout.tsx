@@ -37,7 +37,7 @@ export default function RootLayout({
 			>
 				<QueryProvider>
 					<Header />
-					<div className="pt-16">{children}</div>
+					<div>{children}</div>
 				</QueryProvider>
 			</body>
 		</html>

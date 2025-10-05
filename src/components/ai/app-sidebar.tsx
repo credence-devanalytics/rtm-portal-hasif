@@ -140,7 +140,7 @@ export function AppSidebar() {
 	);
 
 	return (
-		<Sidebar className="mt-16">
+		<Sidebar className="top-16 bottom-0 h-[calc(100vh-4rem)]">
 			<SidebarContent>
 				{favouriteChats.length > 0 && (
 					<SidebarGroup>
