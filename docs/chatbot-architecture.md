@@ -12,6 +12,8 @@ The main reusable chatbot component that provides:
 - Extensible tool message component system
 - Message rendering with text, sources, and custom data parts
 - Integration with input handling and conversation display
+- Optional sidebar support for chat history management
+- Self-contained architecture supporting multiple independent instances
 
 ### 2. AI Page (`src/app/(ai)/ai/page.tsx`)
 Page-level implementation that:
@@ -20,7 +22,14 @@ Page-level implementation that:
 - Handles message submission and file uploads
 - Provides custom tool component implementations
 
-### 3. Chat API Route (`src/app/(ai)/api/chat/route.ts`)
+### 3. AppSidebar Component (`src/components/ai/app-sidebar.tsx`)
+Optional sidebar component that provides:
+- Chat history management with favorites support
+- Independent state for each chatbot instance
+- Interactive chat list with rename, delete, and organize features
+- Context-aware navigation and conversation switching
+
+### 4. Chat API Route (`src/app/(ai)/api/chat/route.ts`)
 Server-side API that:
 - Handles streaming responses using AI SDK
 - Implements tool execution with data streaming
@@ -42,6 +51,11 @@ graph TB
             Prompt[PromptInput<br/>prompt-input.tsx]
             MsgParts[Message Parts<br/>message-parts.tsx]
             Empty[Empty State<br/>empty-state.tsx]
+        end
+
+        subgraph "Sidebar Components"
+            Sidebar[AppSidebar<br/>src/components/ai/app-sidebar.tsx]
+            SidebarProvider[SidebarProvider Context]
         end
 
         subgraph "Tool Components"
@@ -66,6 +80,8 @@ graph TB
     ChatBot --> Empty
     ChatBot --> WeatherTool
     ChatBot --> CustomTools
+    ChatBot -.->|sidebar=true| SidebarProvider
+    SidebarProvider --> Sidebar
 
     AIPage -.->|HTTP Request| API
     API -.->|Streaming Response| AIPage
@@ -139,6 +155,7 @@ classDiagram
         +input: string
         +onInputChange: Function
         +toolMessageComponents: ToolMessageComponents~T~
+        +sidebar?: boolean
     }
 
     class ExampleMessage {
@@ -153,6 +170,140 @@ classDiagram
 
     note for ToolMessageComponents "Generic mapping for extensible tool rendering"
     note for ExampleMessage "Specific message type with custom data parts"
+```
+
+### Sidebar Architecture and Multi-Instance Support
+
+The ChatBot component supports optional sidebar functionality for chat history management, enabling multiple independent chatbot instances.
+
+#### Sidebar Integration Pattern
+
+```mermaid
+flowchart TD
+    Start([ChatBot Component]) --> CheckSidebar{sidebar prop?}
+
+    CheckSidebar -->|true| CreateSidebar[Create SidebarProvider Context]
+    CheckSidebar -->|false/undefined| DirectRender[Render ChatBotContent Directly]
+
+    CreateSidebar --> RenderLayout[Render Layout with Sidebar]
+    RenderLayout --> RenderContent[Render ChatBotContent]
+
+    DirectRender --> End([Complete])
+    RenderContent --> End
+
+    style CreateSidebar fill:#e1f5fe
+    style RenderLayout fill:#f3e5f5
+    style DirectRender fill:#e8f5e8
+```
+
+#### Multi-Instance Architecture
+
+```mermaid
+graph TB
+    subgraph "Page Layout"
+        PageContainer[Page Container]
+    end
+
+    subgraph "ChatBot Instance 1"
+        ChatBot1[ChatBot sidebar={true}]
+        Sidebar1[SidebarProvider 1]
+        AppSidebar1[AppSidebar with Chat History 1]
+        ChatContent1[ChatBotContent 1]
+    end
+
+    subgraph "ChatBot Instance 2"
+        ChatBot2[ChatBot sidebar={true}]
+        Sidebar2[SidebarProvider 2]
+        AppSidebar2[AppSidebar with Chat History 2]
+        ChatContent2[ChatBotContent 2]
+    end
+
+    subgraph "ChatBot Instance 3"
+        ChatBot3[ChatBot sidebar={false}]
+        ChatContent3[ChatBotContent 3]
+    end
+
+    PageContainer --> ChatBot1
+    PageContainer --> ChatBot2
+    PageContainer --> ChatBot3
+
+    ChatBot1 --> Sidebar1
+    Sidebar1 --> AppSidebar1
+    Sidebar1 --> ChatContent1
+
+    ChatBot2 --> Sidebar2
+    Sidebar2 --> AppSidebar2
+    Sidebar2 --> ChatContent2
+
+    ChatBot3 --> ChatContent3
+
+    style Sidebar1 fill:#e1f5fe
+    style Sidebar2 fill:#f3e5f5
+    style ChatContent3 fill:#e8f5e8
+```
+
+#### Sidebar Implementation
+
+```typescript
+interface ChatBotProps<T extends UIMessage<any, any>> {
+  // ... existing props
+  sidebar?: boolean; // Optional sidebar support
+}
+
+const ChatBot = <T extends UIMessage<any, any>>({
+  sidebar,
+  ...otherProps
+}: ChatBotProps<T>) => {
+  if (sidebar) {
+    return (
+      <SidebarProvider>
+        <div className="flex size-full">
+          <AppSidebar />
+          <main className="pt-20 px-6 w-full h-[calc(100vh-4rem)]">
+            <Button asChild size="icon" variant="outline">
+              <SidebarTrigger />
+            </Button>
+            <ChatBotContent {...otherProps} />
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  return <ChatBotContent {...otherProps} />;
+};
+```
+
+**Key Benefits:**
+- **State Isolation**: Each chatbot instance manages its own sidebar state
+- **Independent Chat History**: Separate chat lists for each chatbot
+- **Flexible Layout**: Mix sidebar and non-sidebar chatbots on the same page
+- **Backward Compatibility**: Existing code continues to work without changes
+- **Scalable Architecture**: Add unlimited chatbot instances without conflicts
+
+#### Usage Patterns
+
+```typescript
+// Multiple chatbots with independent sidebars
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <ChatBot
+    sidebar={true}
+    chatHook={customerServiceHook}
+    onSubmit={handleCustomerService}
+  />
+
+  <ChatBot
+    sidebar={true}
+    chatHook={technicalSupportHook}
+    onSubmit={handleTechnicalSupport}
+  />
+
+  <ChatBot
+    sidebar={false}
+    chatHook={generalChatHook}
+    onSubmit={handleGeneralChat}
+  />
+</div>
 ```
 
 ### Message Part Processing Flow
@@ -405,6 +556,7 @@ const CustomToolComponent = (message, part) => (
 4. **Register Component**:
 ```typescript
 <ChatBot
+  sidebar={true} // Optional sidebar for chat history
   toolMessageComponents={{
     "data-customTool": CustomToolComponent,
   }}
