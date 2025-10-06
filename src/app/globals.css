@@ -67,6 +67,17 @@
   --shadow-xl: 0px 4px 8px -1px hsl(0 0% 0% / 0.10), 0px 8px 10px -2px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0px 4px 8px -1px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
+  
+  /* Platform Colors */
+  --platform-facebook: #1877F2;
+  --platform-instagram: #E4405F;
+  --platform-twitter: #1DA1F2;
+  --platform-tiktok: #000000;
+  --platform-youtube: #FF0000;
+  --platform-linkedin: #0A66C2;
+  --platform-reddit: #FF4500;
+  --platform-unknown: #6B7280;
+  --platform-other: #9CA3AF;
 }
 
 .dark {

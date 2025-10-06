@@ -93,7 +93,7 @@ const RTMTabs = ({ onFilterChange, activeTab, setActiveTab }) => {
   return (
     <div className="w-full flex justify-center">
       <div className="w-full">
-        <div className="h-12 items-center justify-center rounded-xl bg-white p-1.5 text-slate-500 shadow-sm border border-slate-200 backdrop-blur-sm grid grid-cols-5 w-full max-w-full">
+        <div className="h-12 items-center justify-center rounded-xl bg-white p-1 text-slate-500 shadow-sm border border-black  backdrop-blur-sm grid grid-cols-5 w-full max-w-full">
           {tabs.map((tab) => (
             <button
               type="button"

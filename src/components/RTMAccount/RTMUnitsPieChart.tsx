@@ -1,7 +1,14 @@
 "use client";
 import * as React from "react";
 import { useCallback } from "react";
-import { Label, Pie, PieChart, Cell } from "recharts";
+import {
+  Label,
+  Pie,
+  PieChart,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { BarChart3, Loader2, AlertCircle } from "lucide-react";
 import {
   Card,
@@ -10,11 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+// Removed ChartTooltip imports - using native Recharts Tooltip instead
 
 const RTMUnitsPieChart = ({
   data = [],
@@ -260,7 +263,28 @@ const RTMUnitsPieChart = ({
     }, [data, isUnitFiltered]);
 
   // Custom tooltip for inner layer (units)
-  const CustomInnerTooltip = ({ active, payload }) => {
+  const CustomInnerTooltip = ({ active, payload }: any) => {
+    console.log("🔍 Inner Tooltip Debug:", { active, payload });
+
+    // Always render something to test if component is being called
+    console.log("Inner tooltip rendering - active:", active);
+
+    // Test render to verify tooltip is being called
+    if (!active) {
+      return (
+        <div
+          style={{
+            background: "red",
+            padding: "10px",
+            color: "white",
+            display: "none", // Hidden when not active
+          }}
+        >
+          Tooltip Inactive
+        </div>
+      );
+    }
+
     if (active && payload && payload.length > 0) {
       const data = payload[0].payload;
       const percentage = ((data.mentions / totalMentions) * 100).toFixed(1);
@@ -294,7 +318,12 @@ const RTMUnitsPieChart = ({
   };
 
   // Custom tooltip for outer layer (channels)
-  const CustomOuterTooltip = ({ active, payload }) => {
+  const CustomOuterTooltip = ({ active, payload }: any) => {
+    console.log("🔍 Outer Tooltip Debug:", { active, payload });
+
+    // Always render something to test if component is being called
+    console.log("Outer tooltip rendering - active:", active);
+
     if (active && payload && payload.length > 0) {
       const data = payload[0].payload;
       return (
@@ -414,123 +443,106 @@ const RTMUnitsPieChart = ({
         <CardDescription className="">{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
-        <ChartContainer
-          id="rtm-units-chart"
-          config={chartConfig}
-          className="mx-auto aspect-square h-[450px]"
-        >
-          <PieChart>
-            {/* Inner layer - Pie chart with unit segments */}
-            <Pie
-              data={innerData}
-              dataKey="mentions"
-              nameKey="unit"
-              cx="50%"
-              cy="50%"
-              innerRadius={0}
-              outerRadius={100}
-              strokeWidth={0}
-              stroke="#ffffff"
-              cursor={onFilterChange ? "pointer" : "default"}
-              onClick={handlePieClick}
-              className="hover:opacity-90 transition-all duration-200"
-            >
-              {innerData.map((entry, index) => {
-                console.log(
-                  `Inner Cell ${index}: ${entry.unit} -> ${entry.fill}`
-                );
-                return (
-                  <Cell
-                    key={`inner-cell-${index}`}
-                    fill={entry.fill}
-                    stroke="#ffffff"
-                    strokeWidth={2}
-                  />
-                );
-              })}
-              <ChartTooltip
-                cursor={true}
-                content={
-                  <CustomInnerTooltip active={undefined} payload={undefined} />
-                }
-                animationDuration={200}
-                offset={10}
-                allowEscapeViewBox={{ x: false, y: false }}
-              />
-            </Pie>
-
-            {/* Outer layer - Channels within units (Sunburst effect) */}
-            <Pie
-              data={outerData}
-              dataKey="mentions"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              innerRadius={110}
-              outerRadius={150}
-              strokeWidth={1}
-              stroke="#fff"
-              cursor={onFilterChange ? "pointer" : "default"}
-              onClick={handlePieClick}
-              className="hover:opacity-90 transition-all duration-200"
-            >
-              {outerData.map((entry, index) => {
-                if (index < 5)
+        <div className="mx-auto aspect-square h-[450px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              {/* Inner layer - Pie chart with unit segments */}
+              <Pie
+                data={innerData}
+                dataKey="mentions"
+                nameKey="unit"
+                cx="50%"
+                cy="50%"
+                innerRadius={0}
+                outerRadius={100}
+                strokeWidth={0}
+                stroke="#ffffff"
+                cursor={onFilterChange ? "pointer" : "default"}
+                onClick={handlePieClick}
+                className="hover:opacity-90 transition-all duration-200"
+              >
+                {innerData.map((entry, index) => {
                   console.log(
-                    `Outer Cell ${index}: ${entry.name} -> ${entry.fill}`
+                    `Inner Cell ${index}: ${entry.unit} -> ${entry.fill}`
                   );
-                return (
-                  <Cell
-                    key={`outer-cell-${index}`}
-                    fill={entry.fill}
-                    stroke="#ffffff"
-                    strokeWidth={1}
-                  />
-                );
-              })}
-              <ChartTooltip
-                cursor={false}
-                content={
-                  <CustomOuterTooltip active={undefined} payload={undefined} />
-                }
-                animationDuration={200}
-                offset={10}
-                allowEscapeViewBox={{ x: false, y: false }}
-              />
-            </Pie>
-
-            {/* Center label */}
-            <Label
-              content={({ viewBox }) => {
-                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
                   return (
-                    <text
-                      x={viewBox.cx}
-                      y={viewBox.cy}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      <tspan
+                    <Cell
+                      key={`inner-cell-${index}`}
+                      fill={entry.fill}
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                    />
+                  );
+                })}
+              </Pie>
+
+              {/* Outer layer - Channels within units (Sunburst effect) */}
+              <Pie
+                data={outerData}
+                dataKey="mentions"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={110}
+                outerRadius={150}
+                strokeWidth={1}
+                stroke="#fff"
+                cursor={onFilterChange ? "pointer" : "default"}
+                onClick={handlePieClick}
+                className="hover:opacity-90 transition-all duration-200"
+              >
+                {outerData.map((entry, index) => {
+                  if (index < 5)
+                    console.log(
+                      `Outer Cell ${index}: ${entry.name} -> ${entry.fill}`
+                    );
+                  return (
+                    <Cell
+                      key={`outer-cell-${index}`}
+                      fill={entry.fill}
+                      stroke="#ffffff"
+                      strokeWidth={1}
+                    />
+                  );
+                })}
+              </Pie>
+
+              {/* Single Tooltip for both layers */}
+              <Tooltip content={<CustomInnerTooltip />} />
+
+              {/* Center label */}
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        className="fill-foreground text-2xl font-bold"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
                       >
-                        {totalMentions.toLocaleString()}
-                      </tspan>
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy || 0) + 20}
-                        className="fill-muted-foreground text-sm"
-                      >
-                        {activeFilters?.unit ? "Filtered" : "Total"} Posts
-                      </tspan>
-                    </text>
-                  );
-                }
-              }}
-            />
-          </PieChart>
-        </ChartContainer>
+                        <tspan
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          className="fill-foreground text-2xl font-bold"
+                        >
+                          {totalMentions.toLocaleString()}
+                        </tspan>
+                        <tspan
+                          x={viewBox.cx}
+                          y={(viewBox.cy || 0) + 20}
+                          className="fill-muted-foreground text-sm"
+                        >
+                          {activeFilters?.unit ? "Filtered" : "Total"} Posts
+                        </tspan>
+                      </text>
+                    );
+                  }
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
         {/* Summary stats */}
         <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">

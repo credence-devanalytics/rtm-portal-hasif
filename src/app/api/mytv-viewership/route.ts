@@ -154,13 +154,13 @@ export async function GET(request: Request) {
     // Apply filters to mock data
     let filteredData = mockData;
     
-    if (region) {
+    if (region && region !== 'all') {
       filteredData = filteredData.filter(item => 
         item.region.toLowerCase().includes(region.toLowerCase())
       );
     }
     
-    if (channel) {
+    if (channel && channel !== 'all') {
       const channels = channel.split(',');
       filteredData = filteredData.filter(item => 
         channels.some(ch => item.channel.toLowerCase().includes(ch.toLowerCase()))
@@ -175,7 +175,7 @@ export async function GET(request: Request) {
     
     if (year) {
       filteredData = filteredData.filter(item => 
-        item.year === Number()
+        item.year === Number(year)
       );
     }
 
@@ -202,10 +202,10 @@ export async function GET(request: Request) {
     const response = {
       data: paginatedData.map(item => ({
         ...item,
-        viewers: Number() || 0,
-        year: Number() || 0,
-        page_num: Number() || 0,
-        table_idx: Number() || 0
+        viewers: Number(item.viewers) || 0,
+        year: Number(item.year) || 0,
+        page_num: Number(item.page_num) || 0,
+        table_idx: Number(item.table_idx) || 0
       })),
       pagination: {
         page,
@@ -216,13 +216,13 @@ export async function GET(request: Request) {
         hasPrev: page > 1
       },
       summary: {
-        totalRecords: Number() || 0,
-        totalViewers: Number() || 0,
-        avgViewers: Math.round(Number()) || 0,
-        totalRegions: Number() || 0,
-        totalChannels: Number() || 0,
-        totalYears: Number() || 0,
-        totalMonths: Number() || 0
+        totalRecords: Number(summaryStats.total_records) || 0,
+        totalViewers: Number(summaryStats.total_viewers) || 0,
+        avgViewers: Math.round(Number(summaryStats.avg_viewers)) || 0,
+        totalRegions: Number(summaryStats.total_regions) || 0,
+        totalChannels: Number(summaryStats.total_channels) || 0,
+        totalYears: Number(summaryStats.total_years) || 0,
+        totalMonths: Number(summaryStats.total_months) || 0
       },
       regionalBreakdown: generateRegionalBreakdown(filteredData),
       channelBreakdown: generateChannelBreakdown(filteredData),
