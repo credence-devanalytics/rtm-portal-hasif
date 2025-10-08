@@ -15,18 +15,18 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
   const [activeFilters, setActiveFilters] = useState([]);
   const [hoveredPlatform, setHoveredPlatform] = useState(null);
 
-  // Platform colors mapping using CSS variables
+  // Platform colors mapping with actual color values
   const platformColors = {
-    Facebook: "var(--engagement-facebook)",
-    Instagram: "var(--engagement-instagram)",
-    Twitter: "var(--engagement-twitter)",
-    TikTok: "var(--engagement-tiktok)",
-    YouTube: "var(--engagement-youtube)",
-    LinkedIn: "var(--engagement-linkedin)",
-    Reddit: "var(--engagement-reddit)",
-    Web: "var(--engagement-web)",
-    Unknown: "var(--engagement-unknown)",
-    Other: "var(--engagement-other)",
+    Facebook: "#1877F2",
+    Instagram: "#E4405F",
+    Twitter: "#1DA1F2",
+    TikTok: "#000000",
+    YouTube: "#FF0000",
+    LinkedIn: "#0A66C2",
+    Reddit: "#FF4500",
+    Web: "#10B981",
+    Unknown: "#6B7280",
+    Other: "#9CA3AF",
   };
 
   // Memoized data processing for performance

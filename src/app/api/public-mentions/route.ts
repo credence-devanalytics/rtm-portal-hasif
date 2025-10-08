@@ -1,11 +1,29 @@
 // app/api/public-mentions/route.js - API for public mentions data
 
-import { db } from '../../../index';
-import { mentionsClassifyPublic } from '@/lib/schema';
-import { desc, gte, and, sql, count, sum, avg } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+
+// Lazy load database modules to prevent initialization errors
+let db: any = null;
+let mentionsClassifyPublic: any = null;
+let drizzleORM: any = null;
+
+async function initDB() {
+  if (!db) {
+    try {
+      const indexModule = await import('../../../index');
+      db = indexModule.db;
+      const schemaModule = await import('@/lib/schema');
+      mentionsClassifyPublic = schemaModule.mentionsClassifyPublic;
+      drizzleORM = await import('drizzle-orm');
+    } catch (error) {
+      console.warn('Database initialization failed:', error);
+      return false;
+    }
+  }
+  return !!db;
+}
 
 // Fallback function to use local JSON data when database is unavailable
 async function getLocalData() {
@@ -76,9 +94,17 @@ export async function GET(request: Request) {
     let uniqueTopics = [];
     let totalCount = { count: 0 };
     
+    // Try to initialize database
+    const dbReady = await initDB();
+    
     try {
+      if (!dbReady) {
+        throw new Error('Database not initialized');
+      }
+      
       // Try to connect to database first
       console.log('🧪 Testing database connection...');
+      const { count, desc, gte, and, sql, sum, avg } = drizzleORM;
       const [totalInDB] = await db.select({ count: count() }).from(mentionsClassifyPublic);
       console.log('   Total records in database:', totalInDB.count);
       

@@ -569,42 +569,115 @@ const MyTVViewershipPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="">
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={data.regionalBreakdown} layout="horizontal">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e0f2fe" />
-                    <XAxis
-                      type="number"
-                      tickFormatter={(value) => {
-                        if (value >= 1000000)
-                          return `${(Number(value) / 1000000).toFixed(1)}M`;
-                        if (value >= 1000)
-                          return `${Math.round(Number(value) / 1000)}K`;
-                        return value.toString();
-                      }}
-                    />
-                    <YAxis
-                      dataKey="region"
-                      type="category"
-                      width={100}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <Tooltip
-                      formatter={(value) => [value.toLocaleString(), "Viewers"]}
-                      labelFormatter={(label) => `Region: ${label}`}
-                      contentStyle={{
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                        border: "none",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                      }}
-                    />
-                    <Bar
-                      dataKey="totalViewers"
-                      fill="#8b5cf6"
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                {(() => {
+                  const regions = data.regionalBreakdown || [];
+                  const midPoint = Math.ceil(regions.length / 2);
+                  const shouldSplit = regions.length > 3;
+                  const leftRegions = shouldSplit
+                    ? regions.slice(0, midPoint)
+                    : regions;
+                  const rightRegions = shouldSplit
+                    ? regions.slice(midPoint)
+                    : [];
+
+                  return (
+                    <div
+                      className={`grid ${
+                        shouldSplit ? "grid-cols-2" : "grid-cols-1"
+                      } gap-4`}
+                    >
+                      {/* Left/Main Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b bg-purple-50">
+                              <th className="text-left p-3 font-semibold text-purple-900">
+                                Region
+                              </th>
+                              <th className="text-right p-3 font-semibold text-purple-900">
+                                Total Viewers
+                              </th>
+                              <th className="text-right p-3 font-semibold text-purple-900">
+                                Formatted
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {leftRegions.map((item, index) => (
+                              <tr
+                                key={index}
+                                className="border-b hover:bg-gray-50"
+                              >
+                                <td className="p-3 font-medium text-gray-700">
+                                  {item.region}
+                                </td>
+                                <td className="p-3 text-right font-semibold text-purple-700">
+                                  {item.totalViewers.toLocaleString()}
+                                </td>
+                                <td className="p-3 text-right text-gray-600">
+                                  {item.totalViewers >= 1000000
+                                    ? `${(item.totalViewers / 1000000).toFixed(
+                                        1
+                                      )}M`
+                                    : item.totalViewers >= 1000
+                                    ? `${Math.round(item.totalViewers / 1000)}K`
+                                    : item.totalViewers.toString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Right Table (only if split) */}
+                      {shouldSplit && rightRegions.length > 0 && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b bg-purple-50">
+                                <th className="text-left p-3 font-semibold text-purple-900">
+                                  Region
+                                </th>
+                                <th className="text-right p-3 font-semibold text-purple-900">
+                                  Total Viewers
+                                </th>
+                                <th className="text-right p-3 font-semibold text-purple-900">
+                                  Formatted
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rightRegions.map((item, index) => (
+                                <tr
+                                  key={index}
+                                  className="border-b hover:bg-gray-50"
+                                >
+                                  <td className="p-3 font-medium text-gray-700">
+                                    {item.region}
+                                  </td>
+                                  <td className="p-3 text-right font-semibold text-purple-700">
+                                    {item.totalViewers.toLocaleString()}
+                                  </td>
+                                  <td className="p-3 text-right text-gray-600">
+                                    {item.totalViewers >= 1000000
+                                      ? `${(
+                                          item.totalViewers / 1000000
+                                        ).toFixed(1)}M`
+                                      : item.totalViewers >= 1000
+                                      ? `${Math.round(
+                                          item.totalViewers / 1000
+                                        )}K`
+                                      : item.totalViewers.toString()}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>

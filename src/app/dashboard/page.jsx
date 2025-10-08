@@ -11,13 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FilterControls } from "@/components/FilterControls";
-import { SentimentCard } from "@/components/dashboard/public-mentions/sentiment-card";
 import { MetricsCards } from "@/components/dashboard/public-mentions/metrics-cards";
-import { SentimentPieChart } from "@/components/dashboard/public-mentions/sentiment-pie-chart";
 import { SentimentBySourceChart } from "@/components/dashboard/public-mentions/sentiment-by-source-chart";
 import { SentimentAreaChart } from "@/components/dashboard/public-mentions/sentiment-area-chart";
 import { MostPopularPosts } from "@/components/dashboard/public-mentions/most-popular-posts";
 import { SentimentByTopicsChart } from "@/components/dashboard/charts/sentiment-by-topics-chart";
+import EngagementRateChart from "@/components/dashboard/public-mentions/engagement-rate-chart";
+import TopAuthorsTable from "@/components/dashboard/public-mentions/top-authors-table";
 import Header from "@/components/Header";
 import {
   DEFAULT_FILTERS,
@@ -49,6 +49,8 @@ const QUERY_KEYS = {
     filters,
   ],
   popularPosts: (filters) => ["social-media", "popular-posts", filters],
+  topAuthors: (filters) => ["social-media", "top-authors", filters],
+  engagementRate: (filters) => ["social-media", "engagement-rate", filters],
 };
 
 // API fetch functions
@@ -107,6 +109,24 @@ const fetchPopularPosts = async (filters) => {
   return response.json();
 };
 
+const fetchTopAuthors = async (filters) => {
+  const params = filterUtils.toUrlParams(filters);
+  const response = await fetch(`/api/social-media/top-authors?${params}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch top authors: ${response.statusText}`);
+  }
+  return response.json();
+};
+
+const fetchEngagementRate = async (filters) => {
+  const params = filterUtils.toUrlParams(filters);
+  const response = await fetch(`/api/social-media/engagement-rate?${params}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch engagement rate: ${response.statusText}`);
+  }
+  return response.json();
+};
+
 const SocialMediaDashboard = () => {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const queryClient = useQueryClient();
@@ -153,6 +173,34 @@ const SocialMediaDashboard = () => {
     retry: 2,
   });
 
+  const { data: topAuthorsData, isLoading: isLoadingTopAuthors } = useQuery({
+    queryKey: QUERY_KEYS.topAuthors(filters),
+    queryFn: () => fetchTopAuthors(filters),
+    staleTime: 30 * 1000,
+    retry: 2,
+  });
+
+  const {
+    data: engagementRateData,
+    isLoading: isLoadingEngagement,
+    error: engagementError,
+  } = useQuery({
+    queryKey: QUERY_KEYS.engagementRate(filters),
+    queryFn: () => fetchEngagementRate(filters),
+    staleTime: 30 * 1000,
+    retry: 2,
+  });
+
+  // Log engagement data for debugging
+  React.useEffect(() => {
+    if (engagementRateData) {
+      console.log("📊 Engagement Rate Data:", engagementRateData);
+    }
+    if (engagementError) {
+      console.error("❌ Engagement Rate Error:", engagementError);
+    }
+  }, [engagementRateData, engagementError]);
+
   // Sentiment by Topics data
   const {
     data: sentimentByTopicsData,
@@ -169,14 +217,13 @@ const SocialMediaDashboard = () => {
 
   // Handle chart clicks for interactive filtering
   const handleChartClick = useCallback(
-    (clickData) => {
+    (clickDataOrType, value) => {
       let newFilters = { ...filters };
 
       // Handle different click types
-      if (typeof clickData === "string") {
-        // Legacy string-based clicks (sentiment/source)
-        const type = arguments[0];
-        const value = arguments[1] || clickData;
+      if (typeof clickDataOrType === "string") {
+        // Two-parameter calls: type and value
+        const type = clickDataOrType;
 
         if (type === "sentiment") {
           const currentSentiments = newFilters.sentiments || [];
@@ -195,8 +242,10 @@ const SocialMediaDashboard = () => {
             newFilters.sources = [...currentSources, value];
           }
         }
-      } else if (clickData && typeof clickData === "object") {
+      } else if (clickDataOrType && typeof clickDataOrType === "object") {
         // New object-based clicks
+        const clickData = clickDataOrType;
+
         if (clickData.type === "topic-sentiment") {
           // Handle topic clicks
           const currentTopics = newFilters.topics || [];
@@ -254,7 +303,9 @@ const SocialMediaDashboard = () => {
     isLoadingBySource ||
     isLoadingTimeline ||
     isLoadingPopular ||
-    isLoadingByTopics;
+    isLoadingTopAuthors ||
+    isLoadingByTopics ||
+    isLoadingEngagement;
 
   // Get active filter count
   const activeFilterCount = filterUtils.getActiveFilterCount(filters);
@@ -349,33 +400,12 @@ const SocialMediaDashboard = () => {
 
       {/* Metrics Cards */}
       <MetricsCards
-        data={metricsData?.data}
+        data={mentionsData?.data}
+        metricsData={metricsData?.data}
         activeFilters={filters}
-        isLoading={isLoadingMetrics}
+        isLoading={isLoadingMentions || isLoadingMetrics}
+        onFilterClick={handleChartClick}
       />
-
-      {/* Main Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sentiment Analysis (Left Column) */}
-        <div className="lg:col-span-1">
-          <SentimentCard
-            data={mentionsData?.data}
-            onFilterClick={handleChartClick}
-            activeFilters={filters}
-            isLoading={isLoadingMentions}
-          />
-        </div>
-
-        {/* Sentiment Distribution Chart (Right Column) */}
-        <div className="lg:col-span-2">
-          <SentimentPieChart
-            data={mentionsData?.data}
-            onChartClick={handleChartClick}
-            activeFilters={filters}
-            isLoading={isLoadingMentions}
-          />
-        </div>
-      </div>
 
       {/* Sentiment by Platform Chart */}
       <SentimentBySourceChart
@@ -399,6 +429,21 @@ const SocialMediaDashboard = () => {
         onChartClick={handleChartClick}
         activeFilters={filters}
         isLoading={isLoadingByTopics}
+      />
+
+      {/* Engagement Rate by Platform Chart */}
+      <EngagementRateChart
+        data={engagementRateData?.data}
+        onChartClick={handleChartClick}
+        activeFilters={filters}
+        isLoading={isLoadingEngagement}
+      />
+
+      {/* Top Authors Table */}
+      <TopAuthorsTable
+        data={topAuthorsData?.data}
+        activeFilters={filters}
+        isLoading={isLoadingTopAuthors}
       />
 
       {/* Popular Posts */}

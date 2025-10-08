@@ -82,17 +82,28 @@ function generateMonthlyTrends(data) {
       monthData[monthYear] = {
         month: monthYear,
         totalMau: 0,
+        tv1Mau: 0,
+        tv2Mau: 0,
         programCount: 0,
         avgMau: 0
       };
     }
     monthData[monthYear].totalMau += item.mau || 0;
     monthData[monthYear].programCount++;
+    
+    // Separate MAU by channel
+    if (item.channelName === 'TV1') {
+      monthData[monthYear].tv1Mau += item.mau || 0;
+    } else if (item.channelName === 'TV2') {
+      monthData[monthYear].tv2Mau += item.mau || 0;
+    }
   });
   
   return Object.values(monthData).map(month => ({
     ...(month as any),
     totalMau: parseInt(String((month as any).totalMau)) || 0,
+    tv1Mau: parseInt(String((month as any).tv1Mau)) || 0,
+    tv2Mau: parseInt(String((month as any).tv2Mau)) || 0,
     avgMau: Math.round((month as any).totalMau / (month as any).programCount),
     displayMonth: `${(month as any).month.slice(0, 4)}-${(month as any).month.slice(4)}`
   })).sort((a, b) => (a as any).month.localeCompare((b as any).month));
@@ -133,6 +144,12 @@ function generateTopPrograms(data, limit = 10) {
 
 export async function GET(request: Request) {
   try {
+    // Check if database connection exists
+    if (!db) {
+      console.error('Database connection not initialized');
+      throw new Error('Database connection not available');
+    }
+
     const { searchParams } = new URL(request.url);
     
     // Extract query parameters
@@ -146,10 +163,14 @@ export async function GET(request: Request) {
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
 
+    console.log('Unifi Viewership API - Request params:', {
+      page, limit, sortBy, sortOrder, channel, monthYear, programName, dateFrom, dateTo
+    });
+
     // Build where conditions for filters
     const whereConditions = [];
     
-    if (channel) {
+    if (channel && channel !== 'all') {
       const channels = channel.split(',');
       whereConditions.push(inArray(unifiViewership.channelName, channels));
     }
@@ -166,18 +187,35 @@ export async function GET(request: Request) {
       whereConditions.push(lte(unifiViewership.programmeDate, dateTo));
     }
 
+    console.log('Fetching data from database with', whereConditions.length, 'conditions');
+
     // Fetch data from the database
     let query = db.select().from(unifiViewership);
     if (whereConditions.length > 0) {
       query = (query as any).where(and(...whereConditions));
     }
     const allData = await query;
+    
+    console.log('Fetched', allData.length, 'records from database');
+
+    // Check if we have data
+    if (!allData || allData.length === 0) {
+      console.warn('No data found in database with current filters');
+      return NextResponse.json({
+        data: [],
+        pagination: { page, limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false },
+        summary: { totalRecords: 0, totalMau: 0, avgMau: 0, totalPrograms: 0, totalChannels: 0, totalMonths: 0 },
+        analytics: { programBreakdown: [], channelBreakdown: [], monthlyTrends: [], topPrograms: [] },
+        filters: { channel, monthYear, programName, dateFrom, dateTo, sortBy, sortOrder },
+        meta: { queryType: 'unifi_viewership_db', timestamp: new Date().toISOString(), totalRecords: 0 }
+      });
+    }
 
     // Sort and paginate in-memory if needed (or use DB query if supported)
-    let filteredData = allData;
+    let filteredData = [...allData];
     filteredData.sort((a, b) => {
-      const aVal = a[sortBy];
-      const bVal = b[sortBy];
+      const aVal = a[sortBy] ?? 0;
+      const bVal = b[sortBy] ?? 0;
       if (sortOrder === 'desc') {
         return bVal > aVal ? 1 : -1;
       } else {
@@ -188,11 +226,24 @@ export async function GET(request: Request) {
     const total = filteredData.length;
     const paginatedData = filteredData.slice(offset, offset + limit);
 
-    // Generate analytics
-    const programBreakdown = generateProgramBreakdown(filteredData);
-    const channelBreakdown = generateChannelBreakdown(filteredData);
-    const monthlyTrends = generateMonthlyTrends(filteredData);
-    const topPrograms = generateTopPrograms(filteredData, 50); // Increased limit to ensure we have enough data for channel comparison
+    console.log('Generating analytics for', total, 'records');
+
+    // Generate analytics with error handling
+    let programBreakdown = [];
+    let channelBreakdown = [];
+    let monthlyTrends = [];
+    let topPrograms = [];
+
+    try {
+      programBreakdown = generateProgramBreakdown(filteredData);
+      channelBreakdown = generateChannelBreakdown(filteredData);
+      monthlyTrends = generateMonthlyTrends(filteredData);
+      topPrograms = generateTopPrograms(filteredData, 50);
+      console.log('Analytics generated successfully');
+    } catch (analyticsError) {
+      console.error('Error generating analytics:', analyticsError);
+      // Continue with empty analytics rather than failing completely
+    }
 
     // Calculate summary statistics
     const summaryStats = {
@@ -210,7 +261,7 @@ export async function GET(request: Request) {
       data: paginatedData.map(item => ({
         ...item,
         mau: parseInt(String(item.mau)) || 0,
-        pk: parseInt(String(item.pk)) || 0
+        id: parseInt(String(item.id)) || 0
       })),
       pagination: {
         page,
@@ -254,11 +305,20 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('Unifi Viewership API error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      cause: error.cause
+    });
+    
     return NextResponse.json(
       { 
         error: 'Failed to fetch Unifi viewership data', 
         details: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        errorType: error.name,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );

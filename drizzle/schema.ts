@@ -339,19 +339,18 @@ export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
 });
 
 export const unifiViewership = pgTable("unifi_viewership", {
-	pk: serial().primaryKey().notNull(),
-	viewershipMonthYear: varchar("viewership_month_year", { length: 10 }),
-	channelName: varchar("channel_name", { length: 50 }),
+	id: serial().primaryKey().notNull(),
+	viewershipMonthYear: text("viewership_month_year"),
+	channelName: text("channel_name"),
 	programName: text("program_name"),
-	programTime: varchar("program_time", { length: 100 }),
+	programTime: text("program_time"),
 	programmeDate: date("programme_date"),
 	startTime: time("start_time"),
 	endTime: time("end_time"),
 	mau: integer(),
 	avgAccessDuration: interval("avg_access_duration"),
-	sheetName: varchar("sheet_name", { length: 50 }),
-	downloaddate: date().default(sql`CURRENT_DATE`).notNull(),
-	filename: varchar(),
+	sheetName: text("sheet_name"),
+	filename: text(),
 	duration: interval(),
 });
 

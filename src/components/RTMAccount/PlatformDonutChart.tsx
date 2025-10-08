@@ -139,7 +139,9 @@ const PlatformDonutChart = ({
               />
               <span
                 className={`text-sm ${
-                  isFiltered ? "text-blue-900 font-medium" : "text-gray-700"
+                  isFiltered
+                    ? "text-blue-900 font-bold"
+                    : "text-gray-700 font-bold"
                 }`}
               >
                 {entry.value} ({entry.payload.value})
@@ -165,7 +167,7 @@ const PlatformDonutChart = ({
       </div>
 
       <div className="w-full">
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={450}>
           <PieChart>
             <Pie
               data={chartData}
@@ -173,8 +175,8 @@ const PlatformDonutChart = ({
               cy="50%"
               labelLine={false}
               label={renderLabel}
-              outerRadius={120}
-              innerRadius={60}
+              outerRadius={140}
+              innerRadius={0}
               fill="#8884d8"
               dataKey="value"
               paddingAngle={2}

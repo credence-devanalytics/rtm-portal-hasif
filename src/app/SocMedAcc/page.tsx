@@ -219,20 +219,26 @@ const RTMDashboard = () => {
 
     // Transform data only once
     const transformed = transformRTMData(rawMentionsData);
+    console.log("📊 Transformed data count:", transformed.length);
 
     // Quick return if no filters
     const hasActiveFilters = Object.values(globalFilters).some(Boolean);
     if (!hasActiveFilters) {
+      console.log("✅ No active filters, showing all data");
       return { transformedData: transformed, filteredData: transformed };
     }
+
+    console.log("🔎 Active filters:", globalFilters);
 
     // Optimized filtering with early returns
     const filtered = transformed.filter((item) => {
       // Unit filter (most common)
       if (globalFilters.unit) {
         const unit = globalFilters.unit;
-        if (unit === "overall") return true;
-        if (unit === "official") {
+        if (unit === "overall") {
+          // Show all data
+          return true;
+        } else if (unit === "official") {
           if (
             !(
               item.unit === "Official" ||
@@ -267,6 +273,11 @@ const RTMDashboard = () => {
             )
           )
             return false;
+        } else {
+          // Handle any other unit values with exact match (case-insensitive)
+          if (item.unit?.toLowerCase() !== unit.toLowerCase()) {
+            return false;
+          }
         }
       }
 
@@ -282,6 +293,13 @@ const RTMDashboard = () => {
 
       return true;
     });
+
+    console.log(
+      "✨ Filtered data count:",
+      filtered.length,
+      "from",
+      transformed.length
+    );
 
     return { transformedData: transformed, filteredData: filtered };
   }, [rawMentionsData, globalFilters]);
@@ -320,6 +338,11 @@ const RTMDashboard = () => {
 
   // Filter handlers with debouncing for better performance
   const handleGlobalFilterChange = (filterType, filterValue) => {
+    console.log("🔍 Filter change:", {
+      filterType,
+      filterValue,
+      currentFilters: globalFilters,
+    });
     setGlobalFilters((prev) => ({
       ...prev,
       [filterType]: filterValue === prev[filterType] ? null : filterValue,

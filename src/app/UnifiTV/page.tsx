@@ -59,12 +59,14 @@ import {
   ZAxis,
 } from "recharts";
 
+// Import custom components
+import UnifiCompareChannelsChart from "@/components/Multiplatform/UnifiCompareChannelsChart";
+
 const UnifiTVPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
-  const [showCompareChannels, setShowCompareChannels] = useState(false);
 
   // Box Plot Hook for Channel MAU Distribution
   const useChannelBoxPlot = useMemo(() => {
@@ -148,24 +150,35 @@ const UnifiTVPage = () => {
       ]);
 
       if (!response.ok || !trendsResponse.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API Error Response:", errorData);
+        throw new Error(
+          `HTTP error! status: ${response.status}${
+            errorData.details ? ` - ${errorData.details}` : ""
+          }`
+        );
       }
 
       const result = await response.json();
       const trendsResult = await trendsResponse.json();
+
+      // Check if we have valid data
+      if (!result || !result.analytics) {
+        throw new Error("Invalid data format received from API");
+      }
 
       // Combine the results - use filtered data for most charts, but all-time data for trends
       setData({
         ...result,
         analytics: {
           ...result.analytics,
-          monthlyTrends: trendsResult.analytics.monthlyTrends, // Use unfiltered trends
+          monthlyTrends: trendsResult.analytics?.monthlyTrends || [], // Use unfiltered trends
         },
       });
       setError(null);
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError(err.message);
+      setError(err.message || "An unknown error occurred");
     } finally {
       setLoading(false);
     }
@@ -218,7 +231,7 @@ const UnifiTVPage = () => {
 
     if (!data || data.length === 0) return null;
 
-    const width = 700;
+    const width = 600;
     const height = 300;
     const margin = { top: 50, right: 90, bottom: 50, left: 80 };
     const plotWidth = width - margin.left - margin.right;
@@ -314,12 +327,15 @@ const UnifiTVPage = () => {
           width: "100%",
           height: "400px",
           overflow: "visible",
+          display: "flex",
+          justifyContent: "start",
+          marginRight: "0.5rem",
         }}
       >
         <svg
           width={width}
           height={height}
-          style={{ width: "100%", height: "100%", overflow: "visible" }}
+          style={{ maxWidth: "500px", height: "100%", overflow: "visible" }}
         >
           {/* Background */}
           <rect width="100%" height="100%" fill="none" />
@@ -433,9 +449,9 @@ const UnifiTVPage = () => {
 
           {/* Box plots for each channel (horizontal) */}
           {data.map((channelData, index) => {
-            const color = channelData.channel === "TV1" ? "#3b82f6" : "#10b981";
+            const color = channelData.channel === "TV1" ? "#102D84" : "#FE5400";
             const lightColor =
-              channelData.channel === "TV1" ? "#3b82f640" : "#10b98140";
+              channelData.channel === "TV1" ? "#102D8440" : "#FE540040";
             const centerY =
               margin.top + (plotHeight / (data.length + 1)) * (index + 1);
             const boxHeight = 60;
@@ -711,26 +727,26 @@ const UnifiTVPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <RefreshCwIcon className="h-8 w-8 animate-spin mx-auto mb-4 text-emerald-600" />
-          <p className="text-gray-600">Loading Unifi TV data...</p>
+          <RefreshCwIcon className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading Unifi TV data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+    <div className="container mx-auto p-6 space-y-6 pt-10">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-6 py-6 sticky top-0 z-50">
+      <div className="bg-card border-b border-border px-6 py-6 rounded-lg shadow-sm">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent flex items-center space-x-3">
-              <WifiIcon className="h-8 w-8 text-emerald-600" />
+            <h1 className="text-3xl font-bold text-foreground flex items-center space-x-3">
+              <WifiIcon className="h-8 w-8 text-primary" />
               <span>Unifi TV Analytics</span>
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-muted-foreground mt-2">
               Program viewership and MAU analytics for Unifi TV platform
             </p>
           </div>
@@ -740,12 +756,12 @@ const UnifiTVPage = () => {
               className={
                 loading
                   ? "bg-amber-50 text-amber-700 border-amber-200"
-                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-primary/10 text-primary border-primary/20"
               }
             >
               {loading ? "Syncing..." : "Live Data"}
             </Badge>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               Updated: {new Date().toLocaleTimeString()}
             </span>
           </div>
@@ -762,12 +778,12 @@ const UnifiTVPage = () => {
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
+      <div className="bg-card border border-border px-6 py-4 rounded-lg shadow-sm">
         <div className="flex flex-wrap items-center gap-6">
           {/* Time Period */}
           <div className="flex items-center space-x-3">
-            <CalendarIcon className="h-5 w-5 text-emerald-600" />
-            <label className="text-sm font-semibold text-gray-700">
+            <CalendarIcon className="h-5 w-5 text-primary" />
+            <label className="text-sm font-semibold text-foreground">
               Period:
             </label>
             <Select
@@ -789,8 +805,8 @@ const UnifiTVPage = () => {
 
           {/* Channel Filter */}
           <div className="flex items-center space-x-3">
-            <TvIcon className="h-5 w-5 text-emerald-600" />
-            <label className="text-sm font-semibold text-gray-700">
+            <TvIcon className="h-5 w-5 text-primary" />
+            <label className="text-sm font-semibold text-foreground">
               Channel:
             </label>
             <Select
@@ -817,8 +833,8 @@ const UnifiTVPage = () => {
 
           {/* Program Name Filter */}
           <div className="flex items-center space-x-3">
-            <PlayCircleIcon className="h-5 w-5 text-emerald-600" />
-            <label className="text-sm font-semibold text-gray-700">
+            <PlayCircleIcon className="h-5 w-5 text-primary" />
+            <label className="text-sm font-semibold text-foreground">
               Program:
             </label>
             <input
@@ -828,7 +844,7 @@ const UnifiTVPage = () => {
               onChange={(e) =>
                 handleFilterChange("programName", e.target.value)
               }
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white/80 text-sm w-40"
+              className="px-3 py-2 border border-input rounded-lg bg-background text-sm w-40"
             />
           </div>
 
@@ -838,7 +854,7 @@ const UnifiTVPage = () => {
               onClick={applyFilters}
               variant="default"
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <FilterIcon className="h-4 w-4 mr-1" />
               Apply
@@ -847,7 +863,7 @@ const UnifiTVPage = () => {
               variant="ghost"
               size="sm"
               onClick={resetFilters}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-muted-foreground hover:text-foreground"
             >
               Reset
             </Button>
@@ -860,72 +876,72 @@ const UnifiTVPage = () => {
         {/* Hero Stats */}
         {data && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
+            <Card className="bg-card shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium opacity-90">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total MAU
                 </CardTitle>
-                <UsersIcon className="h-5 w-5" />
+                <UsersIcon className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="">
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-foreground">
                   {data.summary.totalMau.toLocaleString()}
                 </div>
-                <div className="flex items-center mt-2 text-sm opacity-90">
+                <div className="flex items-center mt-2 text-sm text-muted-foreground">
                   <ArrowUpIcon className="h-4 w-4 mr-1" />
                   Active users this period
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+            <Card className="bg-card shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium opacity-90">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Programs
                 </CardTitle>
-                <PlayCircleIcon className="h-5 w-5" />
+                <PlayCircleIcon className="h-5 w-5 text-accent" />
               </CardHeader>
               <CardContent className="">
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-foreground">
                   {data.summary.totalPrograms}
                 </div>
-                <div className="flex items-center mt-2 text-sm opacity-90">
+                <div className="flex items-center mt-2 text-sm text-muted-foreground">
                   <EyeIcon className="h-4 w-4 mr-1" />
                   Unique programs aired
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white">
+            <Card className="bg-white shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium opacity-90">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Avg MAU per Program
                 </CardTitle>
-                <BarChart3Icon className="h-5 w-5" />
+                <BarChart3Icon className="h-5 w-5 text-cyan-600" />
               </CardHeader>
               <CardContent className="">
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-gray-900">
                   {data.summary.avgMau.toLocaleString()}
                 </div>
-                <div className="flex items-center mt-2 text-sm opacity-90">
+                <div className="flex items-center mt-2 text-sm text-gray-600">
                   <TrendingUpIcon className="h-4 w-4 mr-1" />
                   Average engagement
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <Card className="bg-white shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium opacity-90">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Active Channels
                 </CardTitle>
-                <TvIcon className="h-5 w-5" />
+                <TvIcon className="h-5 w-5 text-blue-600" />
               </CardHeader>
               <CardContent className="">
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-gray-900">
                   {data.summary.totalChannels}
                 </div>
-                <div className="flex items-center mt-2 text-sm opacity-90">
+                <div className="flex items-center mt-2 text-sm text-gray-600">
                   <ActivityIcon className="h-4 w-4 mr-1" />
                   Broadcasting channels
                 </div>
@@ -937,258 +953,73 @@ const UnifiTVPage = () => {
         {/* Charts Section */}
         {data && (
           <div className="space-y-6">
-            {/* Top Programs by MAU - Full Width Row (2 columns) */}
-            <Card className="bg-white/70 backdrop-blur-sm col-span-2">
+            {/* Top Programs by MAU - Single Chart View */}
+            <Card className="bg-card shadow-sm col-span-2">
               <CardHeader className="">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <StarIcon className="h-5 w-5 text-emerald-600" />
-                    <span>Top Programs by MAU</span>
-                  </div>
-                  <Button
-                    onClick={() => setShowCompareChannels(!showCompareChannels)}
-                    variant={showCompareChannels ? "default" : "outline"}
-                    size="sm"
-                    className={
-                      showCompareChannels
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                        : "text-emerald-600 border-emerald-300 hover:bg-emerald-50"
-                    }
-                  >
-                    Compare Channels
-                  </Button>
+                <CardTitle className="flex items-center space-x-2">
+                  <StarIcon className="h-5 w-5 text-primary" />
+                  <span>Top Programs by MAU</span>
                 </CardTitle>
                 <CardDescription className="">
-                  {showCompareChannels
-                    ? "Comparing top programs between TV1 and TV2 channels"
-                    : "Most engaging programs in the selected period"}
+                  Most engaging programs in the selected period
                 </CardDescription>
               </CardHeader>
               <CardContent className="">
-                {/* Programs by MAU Chart */}
                 {data?.analytics?.topPrograms &&
                 data.analytics.topPrograms.length > 0 ? (
-                  showCompareChannels ? (
-                    // Compare Channels View - Split Chart
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* TV1 Programs */}
-                      <div>
-                        <h4 className="text-lg font-semibold text-center mb-4 text-blue-700 border-b border-blue-200 pb-2">
-                          TV1 Top Programs
-                        </h4>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <BarChart
-                            data={data.analytics.topPrograms
-                              .filter(
-                                (program) => program.channelName === "TV1"
-                              )
-                              .slice(0, 10)}
-                            margin={{
-                              top: 5,
-                              right: 15,
-                              left: 20,
-                              bottom: 5,
-                            }}
-                            layout="vertical"
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                              type="number"
-                              tickFormatter={(value) => {
-                                if (value === 0) return "0";
-                                if (value >= 1000000)
-                                  return `${(Number(value) / 1000000).toFixed(
-                                    1
-                                  )}M`;
-                                if (value >= 1000)
-                                  return `${Math.round(Number(value) / 1000)}K`;
-                                return value.toString();
-                              }}
-                            />
-                            <YAxis
-                              dataKey="programName"
-                              type="category"
-                              width={150}
-                              tick={{ fontSize: 11 }}
-                              tickFormatter={(value) => {
-                                // Find max character length from TV2 programs as reference
-                                const tv2Programs = data.analytics.topPrograms
-                                  .filter(
-                                    (program) => program.channelName === "TV2"
-                                  )
-                                  .slice(0, 10);
-                                const maxTV2Length =
-                                  tv2Programs.length > 0
-                                    ? Math.max(
-                                        ...tv2Programs.map(
-                                          (p) => p.programName.length
-                                        )
-                                      )
-                                    : 25;
-
-                                // Truncate TV1 program names based on TV2 max length
-                                if (value.length > maxTV2Length) {
-                                  return (
-                                    value.substring(0, maxTV2Length) + "..."
-                                  );
-                                }
-                                return value;
-                              }}
-                            />
-                            <Tooltip
-                              formatter={(value) => [
-                                value.toLocaleString(),
-                                "MAU",
-                              ]}
-                              labelFormatter={(label) => `Program: ${label}`}
-                              contentStyle={{
-                                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                                border: "none",
-                                borderRadius: "8px",
-                                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                              }}
-                            />
-                            <Bar
-                              dataKey="mau"
-                              fill="#3b82f6"
-                              radius={[0, 4, 4, 0]}
-                              stroke="#2563eb"
-                              strokeWidth={1}
-                            />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-
-                      {/* TV2 Programs */}
-                      <div>
-                        <h4 className="text-lg font-semibold text-center mb-4 text-red-700 border-b border-red-200 pb-2">
-                          TV2 Top Programs
-                        </h4>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <BarChart
-                            data={data.analytics.topPrograms
-                              .filter(
-                                (program) => program.channelName === "TV2"
-                              )
-                              .slice(0, 10)}
-                            margin={{
-                              top: 5,
-                              right: 15,
-                              left: 20,
-                              bottom: 5,
-                            }}
-                            layout="vertical"
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                              type="number"
-                              tickFormatter={(value) => {
-                                if (value === 0) return "0";
-                                if (value >= 1000000)
-                                  return `${(Number(value) / 1000000).toFixed(
-                                    1
-                                  )}M`;
-                                if (value >= 1000)
-                                  return `${Math.round(Number(value) / 1000)}K`;
-                                return value.toString();
-                              }}
-                            />
-                            <YAxis
-                              dataKey="programName"
-                              type="category"
-                              width={150}
-                              tick={{ fontSize: 11 }}
-                            />
-                            <Tooltip
-                              formatter={(value) => [
-                                value.toLocaleString(),
-                                "MAU",
-                              ]}
-                              labelFormatter={(label) => `Program: ${label}`}
-                              contentStyle={{
-                                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                                border: "none",
-                                borderRadius: "8px",
-                                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                              }}
-                            />
-                            <Bar
-                              dataKey="mau"
-                              fill="#ef4444"
-                              radius={[0, 4, 4, 0]}
-                              stroke="#dc2626"
-                              strokeWidth={1}
-                            />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  ) : (
-                    // Regular View - Single Chart
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart
-                        width={500}
-                        height={500}
-                        data={data.analytics.topPrograms.slice(0, 10)}
-                        margin={{
-                          top: 5,
-                          right: 30,
-                          left: 20,
-                          bottom: 5,
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart
+                      width={500}
+                      height={500}
+                      data={data.analytics.topPrograms.slice(0, 10)}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                      layout="vertical"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        type="number"
+                        tickFormatter={(value) => {
+                          if (value === 0) return "0";
+                          if (value >= 1000000)
+                            return `${(Number(value) / 1000000).toFixed(1)}M`;
+                          if (value >= 1000)
+                            return `${Math.round(Number(value) / 1000)}K`;
+                          return value.toString();
                         }}
-                        layout="vertical"
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          type="number"
-                          tickFormatter={(value) => {
-                            if (value === 0) return "0";
-                            if (value >= 1000000)
-                              return `${(Number(value) / 1000000).toFixed(1)}M`;
-                            if (value >= 1000)
-                              return `${Math.round(Number(value) / 1000)}K`;
-                            return value.toString();
-                          }}
-                        />
-                        <YAxis
-                          dataKey="programName"
-                          type="category"
-                          width={200}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <Tooltip
-                          formatter={(value) => [value.toLocaleString(), "MAU"]}
-                          labelFormatter={(label) => `Program: ${label}`}
-                          contentStyle={{
-                            backgroundColor: "rgba(255, 255, 255, 0.95)",
-                            border: "none",
-                            borderRadius: "8px",
-                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                          }}
-                        />
-                        <Bar
-                          dataKey="mau"
-                          fill="#10b981"
-                          radius={[0, 4, 4, 0]}
-                          stroke="#059669"
-                          strokeWidth={1}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )
+                      />
+                      <YAxis
+                        dataKey="programName"
+                        type="category"
+                        width={200}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip
+                        formatter={(value) => [value.toLocaleString(), "MAU"]}
+                        labelFormatter={(label) => `Program: ${label}`}
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "none",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        }}
+                      />
+                      <Bar
+                        dataKey="mau"
+                        fill="#10b981"
+                        radius={[0, 4, 4, 0]}
+                        stroke="#059669"
+                        strokeWidth={1}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-64 bg-gray-50 rounded">
-                    <div className="text-center text-gray-500">
-                      <BarChart3Icon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No program data available</p>
-                    </div>
-                  </div>
-                )}
-
-                {(!data?.analytics?.topPrograms ||
-                  data.analytics.topPrograms.length === 0) && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded">
-                    <div className="text-center text-gray-500">
+                  <div className="flex items-center justify-center h-64 bg-muted rounded">
+                    <div className="text-center text-muted-foreground">
                       <BarChart3Icon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No program data available</p>
                     </div>
@@ -1197,15 +1028,21 @@ const UnifiTVPage = () => {
               </CardContent>
             </Card>
 
+            {/* TV1 & TV2 Comparison Chart - Separate Component */}
+            <UnifiCompareChannelsChart
+              topPrograms={data.analytics.topPrograms || []}
+              loading={false}
+            />
+
             {/* MAU Trends Over Time - Full Width Row (2 columns) */}
-            <Card className="bg-white/70 backdrop-blur-sm col-span-2">
+            <Card className="bg-card shadow-sm col-span-2">
               <CardHeader className="">
                 <CardTitle className="flex items-center space-x-2">
-                  <TrendingUpIcon className="h-5 w-5 text-teal-600" />
+                  <TrendingUpIcon className="h-5 w-5 text-accent" />
                   <span>MAU Trends Over Time</span>
                 </CardTitle>
                 <CardDescription className="">
-                  Monthly active users progression across all periods
+                  Monthly active users progression for TV1 and TV2 channels
                 </CardDescription>
               </CardHeader>
               <CardContent className="">
@@ -1224,7 +1061,15 @@ const UnifiTVPage = () => {
                       tick={{ fontSize: 12 }}
                     />
                     <Tooltip
-                      formatter={(value) => [value.toLocaleString(), "MAU"]}
+                      formatter={(value, name) => {
+                        const label =
+                          name === "tv1Mau"
+                            ? "TV1 MAU"
+                            : name === "tv2Mau"
+                            ? "TV2 MAU"
+                            : "Total MAU";
+                        return [value.toLocaleString(), label];
+                      }}
                       contentStyle={{
                         backgroundColor: "rgba(255, 255, 255, 0.95)",
                         border: "none",
@@ -1232,13 +1077,31 @@ const UnifiTVPage = () => {
                         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                       }}
                     />
+                    <Legend
+                      wrapperStyle={{ paddingTop: "20px" }}
+                      formatter={(value) => {
+                        if (value === "tv1Mau") return "TV1 MAU";
+                        if (value === "tv2Mau") return "TV2 MAU";
+                        return value;
+                      }}
+                    />
                     <Area
-                      type="monotone"
-                      dataKey="totalMau"
-                      stroke="#0d9488"
-                      fill="#14b8a6"
-                      fillOpacity={0.6}
+                      type="linear"
+                      dataKey="tv1Mau"
+                      stroke="#102D84"
+                      fill="#102D84"
+                      fillOpacity={0.5}
                       strokeWidth={3}
+                      name="tv1Mau"
+                    />
+                    <Area
+                      type="linear"
+                      dataKey="tv2Mau"
+                      stroke="#FE5400"
+                      fill="#FE5400"
+                      fillOpacity={0.5}
+                      strokeWidth={3}
+                      name="tv2Mau"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -1248,10 +1111,10 @@ const UnifiTVPage = () => {
             {/* Other Charts - 2 columns */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Channel Performance */}
-              <Card className="bg-white/70 backdrop-blur-sm">
+              <Card className="bg-card shadow-sm">
                 <CardHeader className="">
                   <CardTitle className="flex items-center space-x-2">
-                    <TvIcon className="h-5 w-5 text-cyan-600" />
+                    <TvIcon className="h-5 w-5 text-chart-1" />
                     <span>Channel Performance</span>
                   </CardTitle>
                   <CardDescription className="">
@@ -1298,10 +1161,10 @@ const UnifiTVPage = () => {
               </Card>
 
               {/* Box Plot MAU Distribution */}
-              <Card className="bg-white/70 backdrop-blur-sm">
+              <Card className="bg-card shadow-sm">
                 <CardHeader className="">
                   <CardTitle className="flex items-center space-x-2">
-                    <BarChart3Icon className="h-5 w-5 text-blue-600" />
+                    <BarChart3Icon className="h-5 w-5 text-chart-2" />
                     <span>MAU Statistical Distribution</span>
                   </CardTitle>
                   <CardDescription className="">
@@ -1315,6 +1178,8 @@ const UnifiTVPage = () => {
                       width: "100%",
                       height: "350px",
                       position: "relative",
+                      display: "flex",
+                      justifyContent: "center",
                     }}
                   >
                     {useChannelBoxPlot &&
@@ -1350,7 +1215,7 @@ const UnifiTVPage = () => {
                         ]}
                       />
                     ) : (
-                      <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
                         <p>No data available for box plot analysis</p>
                       </div>
                     )}
@@ -1363,7 +1228,7 @@ const UnifiTVPage = () => {
 
         {/* Program Details Table */}
         {data && (
-          <Card className="bg-white/70 backdrop-blur-sm">
+          <Card className="bg-white shadow-sm">
             <CardHeader className="">
               <CardTitle className="flex items-center space-x-2">
                 <PlayCircleIcon className="h-5 w-5 text-emerald-600" />
@@ -1477,7 +1342,7 @@ const UnifiTVPage = () => {
                       <tr>
                         <td
                           colSpan={7}
-                          className="p-3 text-center text-gray-500"
+                          className="p-3 text-center text-muted-foreground"
                         >
                           No program data available
                         </td>
@@ -1492,10 +1357,10 @@ const UnifiTVPage = () => {
 
         {/* Quick Insights */}
         {data && (
-          <Card className="bg-white/70 backdrop-blur-sm">
+          <Card className="bg-card shadow-sm">
             <CardHeader className="">
               <CardTitle className="flex items-center space-x-2">
-                <StarIcon className="h-5 w-5 text-amber-600" />
+                <StarIcon className="h-5 w-5 text-accent" />
                 <span>Key Insights</span>
               </CardTitle>
             </CardHeader>

@@ -34,21 +34,48 @@ const RTMUnitsPieChart = ({
     return unit;
   };
 
+  // Convert unit name to filter value that parent expects
+  const unitToFilterValue = (unit) => {
+    if (!unit) return null;
+    const unitLower = unit.toLowerCase();
+
+    // Map display names to filter values expected by parent
+    if (unitLower === "berita" || unitLower === "news") return "berita";
+    if (unitLower === "tv") return "tv";
+    if (unitLower === "radio") return "radio";
+    if (unitLower === "official") return "official";
+
+    // Default: return lowercase version
+    return unitLower;
+  };
+
   // Handle click on pie slices
   const handlePieClick = (data, index, event) => {
     if (onFilterChange && data && data.payload) {
       // In Recharts, the actual data is in the payload property
       const unitValue = data.payload.unit;
-      console.log("Pie click - Unit value:", unitValue); // Debug log
-      onFilterChange("unit", unitValue);
+      const filterValue = unitToFilterValue(unitValue);
+      console.log(
+        "Pie click - Unit value:",
+        unitValue,
+        "-> Filter:",
+        filterValue
+      ); // Debug log
+      onFilterChange("unit", filterValue);
     }
   };
 
   // Handle click on summary stat cards
   const handleStatCardClick = (unit) => {
     if (onFilterChange) {
-      console.log("Stat card click - Unit value:", unit); // Debug log
-      onFilterChange("unit", unit);
+      const filterValue = unitToFilterValue(unit);
+      console.log(
+        "Stat card click - Unit value:",
+        unit,
+        "-> Filter:",
+        filterValue
+      ); // Debug log
+      onFilterChange("unit", filterValue);
     }
   };
 
@@ -71,7 +98,18 @@ const RTMUnitsPieChart = ({
   // Check if a unit is currently filtered
   const isUnitFiltered = useCallback(
     (unit) => {
-      return activeFilters?.unit === unit;
+      if (!unit) return false;
+      const unitLower = unit.toLowerCase();
+
+      // Map display names to filter values expected by parent
+      let filterValue = unitLower;
+      if (unitLower === "berita" || unitLower === "news")
+        filterValue = "berita";
+      else if (unitLower === "tv") filterValue = "tv";
+      else if (unitLower === "radio") filterValue = "radio";
+      else if (unitLower === "official") filterValue = "official";
+
+      return activeFilters?.unit === filterValue;
     },
     [activeFilters?.unit]
   );
@@ -96,17 +134,45 @@ const RTMUnitsPieChart = ({
   // Process data to create sunburst structure
   const { innerData, outerData, chartConfig, totalMentions } =
     React.useMemo(() => {
-      // Define colors array inside useMemo to avoid re-creation
-      const colors = [
-        "#4E5899", // Primary: Blue-purple
-        "#ff9705", // Secondary: Orange
-        "#28a745", // Third: Green
-        "#dc3545", // Fourth: Red
-        "#6f42c1", // Fifth: Purple
-        "#20c997", // Sixth: Teal
-        "#fd7e14", // Seventh: Orange variant
-        "#e83e8c", // Eighth: Pink
+      /**
+       * Predefined color mapping for each unit - ensures consistent colors across filters
+       *
+       * Color Scheme:
+       * 🔵 TV        → Blue-purple (#4E5899)
+       * 🟢 Berita    → Green (#28a745)
+       * 🟠 Radio     → Orange (#ff9705)
+       * 🟣 Official  → Purple (#6f42c1)
+       * 🟧 Other     → Orange variant (#fd7e14)
+       * 🔷 Default   → Teal (#20c997)
+       */
+      const unitColorMap = {
+        TV: "#28a745", // Blue-purple for TV
+        Berita: "#4E5899", // Green for Berita/News
+        News: "#28a745", // Green for News (alias)
+        Radio: "#ff9705", // Orange for Radio
+        Official: "#dc3545", // Purple for Official
+        Other: "#fd7e14", // Orange variant for Other
+        Default: "#20c997", // Teal for Default
+      };
+
+      // Fallback colors for any unexpected units
+      const fallbackColors = [
+        "#dc3545", // Red
+        "#e83e8c", // Pink
+        "#17a2b8", // Cyan
+        "#ffc107", // Yellow
+        "#6c757d", // Gray
       ];
+
+      // Function to get color for a unit
+      const getUnitColor = (unit, index = 0) => {
+        // First check the predefined map
+        if (unitColorMap[unit]) {
+          return unitColorMap[unit];
+        }
+        // Use fallback colors with modulo for unexpected units
+        return fallbackColors[index % fallbackColors.length];
+      };
 
       if (!data || !Array.isArray(data) || data.length === 0) {
         return {
@@ -188,7 +254,7 @@ const RTMUnitsPieChart = ({
           name: unit,
           unit: unit,
           mentions: count,
-          fill: colors[index % colors.length],
+          fill: getUnitColor(unit, index), // Use predefined color mapping
           isFiltered: isUnitFiltered(unit),
         }))
         .sort((a, b) => (b as any).mentions - (a as any).mentions);
@@ -199,7 +265,7 @@ const RTMUnitsPieChart = ({
       innerChartData.forEach((unitData, unitIndex) => {
         const unitName = unitData.unit;
         const unitChannels = unitChannelCounts[unitName] || {};
-        const baseColor = colors[unitIndex % colors.length];
+        const baseColor = unitData.fill; // Use the unit's assigned color from innerChartData
 
         // Get channels for this unit and sort by count
         const channelsInUnit = Object.entries(unitChannels).sort(
@@ -229,7 +295,7 @@ const RTMUnitsPieChart = ({
 
       console.log("Inner data:", innerChartData);
       console.log("Outer data:", outerChartData);
-      console.log("Colors being used:", colors);
+      console.log("Unit color mapping:", unitColorMap);
       console.log(
         "Sample inner colors:",
         innerChartData.map((item) => item.fill)
@@ -250,7 +316,7 @@ const RTMUnitsPieChart = ({
         const key = item.unit.toLowerCase().replace(/[^a-z0-9]/g, "");
         config[key] = {
           label: item.unit,
-          color: colors[index % colors.length],
+          color: item.fill, // Use the unit's assigned color from innerChartData
         };
       });
 
@@ -262,70 +328,20 @@ const RTMUnitsPieChart = ({
       };
     }, [data, isUnitFiltered]);
 
-  // Custom tooltip for inner layer (units)
-  const CustomInnerTooltip = ({ active, payload }: any) => {
-    console.log("🔍 Inner Tooltip Debug:", { active, payload });
-
-    // Always render something to test if component is being called
-    console.log("Inner tooltip rendering - active:", active);
-
-    // Test render to verify tooltip is being called
-    if (!active) {
-      return (
-        <div
-          style={{
-            background: "red",
-            padding: "10px",
-            color: "white",
-            display: "none", // Hidden when not active
-          }}
-        >
-          Tooltip Inactive
-        </div>
-      );
+  // Unified tooltip that detects which layer is being hovered
+  const UnifiedTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || payload.length === 0) {
+      return null;
     }
 
-    if (active && payload && payload.length > 0) {
-      const data = payload[0].payload;
-      const percentage = ((data.mentions / totalMentions) * 100).toFixed(1);
-      return (
-        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
-          <div className="flex items-center gap-2 mb-2">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: data.fill }}
-            ></div>
-            <p className="font-semibold text-gray-900">{data.unit}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm text-blue-600 font-medium">
-              📊 Posts: {data.mentions.toLocaleString()}
-            </p>
-            <p className="text-sm text-gray-600">
-              📈 {percentage}% of total posts
-            </p>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${percentage}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
+    const data = payload[0].payload;
 
-  // Custom tooltip for outer layer (channels)
-  const CustomOuterTooltip = ({ active, payload }: any) => {
-    console.log("🔍 Outer Tooltip Debug:", { active, payload });
+    // Check if this is outer layer (has 'unit' property and 'name' is different from 'unit')
+    // Outer layer items have both 'name' (channel) and 'unit' properties
+    const isOuterLayer = data.unit && data.name && data.name !== data.unit;
 
-    // Always render something to test if component is being called
-    console.log("Outer tooltip rendering - active:", active);
-
-    if (active && payload && payload.length > 0) {
-      const data = payload[0].payload;
+    if (isOuterLayer) {
+      // Outer layer tooltip - shows channel information
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-sm">
           <div className="flex items-center gap-2 mb-2">
@@ -342,30 +358,31 @@ const RTMUnitsPieChart = ({
             <p className="text-sm text-blue-600 font-medium">
               📊 Posts: {data.mentions.toLocaleString()}
             </p>
-            <p className="text-sm text-green-600">
-              📈 {data.percentage}% of {data.unit} posts
+          </div>
+        </div>
+      );
+    } else {
+      // Inner layer tooltip - shows unit information
+
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
+          <div className="flex items-center gap-2 mb-2">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: data.fill }}
+            ></div>
+            <p className="font-semibold text-gray-900">
+              {data.unit || data.name}
             </p>
-            <p className="text-xs text-gray-500">
-              🎯 {data.unitPercentage}% of all posts
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-blue-600 font-medium">
+              📊 Posts: {data.mentions.toLocaleString()}
             </p>
-            <div className="flex gap-2 mt-2">
-              <div className="flex-1">
-                <div className="text-xs text-gray-500 mb-1">
-                  Within {data.unit}
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${data.percentage}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       );
     }
-    return null;
   };
 
   // Loading state
@@ -438,13 +455,13 @@ const RTMUnitsPieChart = ({
 
   return (
     <Card className="flex flex-col shadow-none" style={{ border: "none" }}>
-      <CardHeader className="items-center ">
+      <CardHeader className="items-center pb-2">
         <CardTitle className="text-[24px] font-bold">{title}</CardTitle>
         <CardDescription className="">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1">
-        <div className="mx-auto aspect-square h-[450px]">
-          <ResponsiveContainer width="100%" height="100%">
+      <CardContent className="flex-1 pt-0">
+        <div className="mx-auto w-full max-w-[500px] h-[400px] overflow-visible p-4">
+          <ResponsiveContainer width={500} height="100%">
             <PieChart>
               {/* Inner layer - Pie chart with unit segments */}
               <Pie
@@ -453,13 +470,40 @@ const RTMUnitsPieChart = ({
                 nameKey="unit"
                 cx="50%"
                 cy="50%"
-                innerRadius={0}
-                outerRadius={100}
+                outerRadius={98}
                 strokeWidth={0}
                 stroke="#ffffff"
                 cursor={onFilterChange ? "pointer" : "default"}
                 onClick={handlePieClick}
                 className="hover:opacity-90 transition-all duration-200"
+                label={({
+                  cx,
+                  cy,
+                  midAngle,
+                  innerRadius,
+                  outerRadius,
+                  percent,
+                  name,
+                }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = outerRadius + 60; // Reduced from 80 to 60 to bring labels closer
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill="black"
+                      textAnchor={x > cx ? "start" : "end"}
+                      dominantBaseline="central"
+                      className="text-sm font-semibold"
+                    >
+                      {`${name} (${(percent * 100).toFixed(0)}%)`}
+                    </text>
+                  );
+                }}
+                labelLine={false}
               >
                 {innerData.map((entry, index) => {
                   console.log(
@@ -483,8 +527,8 @@ const RTMUnitsPieChart = ({
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={110}
-                outerRadius={150}
+                innerRadius={108}
+                outerRadius={148}
                 strokeWidth={1}
                 stroke="#fff"
                 cursor={onFilterChange ? "pointer" : "default"}
@@ -507,8 +551,8 @@ const RTMUnitsPieChart = ({
                 })}
               </Pie>
 
-              {/* Single Tooltip for both layers */}
-              <Tooltip content={<CustomInnerTooltip />} />
+              {/* Single unified Tooltip for both layers */}
+              <Tooltip content={<UnifiedTooltip />} />
 
               {/* Center label */}
               <Label
@@ -545,7 +589,7 @@ const RTMUnitsPieChart = ({
         </div>
 
         {/* Summary stats */}
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="mt-2 grid grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2 justify-items-center">
           {innerData.map((item, index) => {
             const percentage = ((item.mentions / totalMentions) * 100).toFixed(
               1
@@ -557,7 +601,7 @@ const RTMUnitsPieChart = ({
             return (
               <div
                 key={item.unit}
-                className={`bg-muted/50 rounded-lg p-3 text-center transition-all duration-200 ${
+                className={`bg-muted/50 rounded-lg p-2 flex flex-row items-center justify-center gap-1.5 transition-all duration-200 ${
                   onFilterChange
                     ? "cursor-pointer hover:bg-muted/80 hover:shadow-sm active:bg-muted"
                     : ""
@@ -572,33 +616,26 @@ const RTMUnitsPieChart = ({
                 style={getFilteredStyle(item.unit)}
               >
                 <div
-                  className={`w-3 h-3 rounded-full mx-auto mb-2 transition-all duration-200 ${
+                  className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-200 ${
                     isFiltered ? "ring-2 ring-blue-400" : ""
                   }`}
                   style={{ backgroundColor: color }}
                 />
-                <p
-                  className={`text-xs font-medium mb-1 ${
+                <span
+                  className={`text-sm font-medium ${
                     isFiltered ? "text-blue-900" : "text-foreground"
                   }`}
                 >
                   {item.unit}
                   {isFiltered && <span className="ml-1 text-blue-600">●</span>}
-                </p>
-                <p
-                  className={`text-lg font-bold ${
+                </span>
+                <span
+                  className={`text-sm font-bold ${
                     isFiltered ? "text-blue-900" : "text-foreground"
                   }`}
                 >
-                  {item.mentions.toLocaleString()}
-                </p>
-                <p
-                  className={`text-xs ${
-                    isFiltered ? "text-blue-700" : "text-muted-foreground"
-                  }`}
-                >
-                  {percentage}%
-                </p>
+                  ({item.mentions.toLocaleString()})
+                </span>
               </div>
             );
           })}
@@ -606,7 +643,7 @@ const RTMUnitsPieChart = ({
 
         {/* Cross-filtering hint */}
         {onFilterChange && (
-          <div className="mt-4 text-center">
+          <div className="mt-2 text-center">
             <p className="text-xs text-gray-400 italic">
               💡 Click on pie slices or unit cards to filter other charts
               {activeFilters?.unit && (
@@ -615,7 +652,7 @@ const RTMUnitsPieChart = ({
                 </span>
               )}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-0.5">
               Inner ring: Units by total posts • Outer ring: Channels
               proportional within each unit
             </p>

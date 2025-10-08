@@ -1192,9 +1192,9 @@ const MultiplatformPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pt-16">
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-8 sticky top-0 z-50 shadow-sm">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-8 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div>
@@ -1245,7 +1245,7 @@ const MultiplatformPage = () => {
         ) : (
           <>
             {/* Summary Stats */}
-            <div className="mb-8 p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm">
+            {/* <div className="mb-8 p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Quick Summary
               </h2>
@@ -1289,7 +1289,7 @@ const MultiplatformPage = () => {
                   <div className="text-sm text-gray-600">Marketing Revenue</div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Platform Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
