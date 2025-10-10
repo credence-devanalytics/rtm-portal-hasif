@@ -1,18 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Fragment } from "react";
 import ChatBot from "@/components/ai/chatbot";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Header, Starters } from "@/components/ai/empty-state";
 import { conversationStarters } from "@/data/conversation-starters";
-import { toast } from "sonner";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { Response } from "@/components/ai-elements/response";
 import { SocialMediaMessage } from "../../api/chat/social-media/route";
-import { LatestTopic } from "@/components/ai/latest-topic";
+import { CardUI } from "@/components/ai/card-ui";
 
 export default function AIPage() {
 	const [input, setInput] = useState("");
@@ -59,7 +55,10 @@ export default function AIPage() {
 			}
 			starters={<Starters starters={conversationStarters} />}
 			toolMessageComponents={{
-				"data-latestTopic": (message, part) => <LatestTopic message={message} part={part} />,
+				// "data-latestTopic": (message, part) => <LatestTopic message={message} part={part} />,
+				"data-cardUI": (message, part) => (
+					<CardUI message={message} part={part} />
+				),
 			}}
 		/>
 	);

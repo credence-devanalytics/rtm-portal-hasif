@@ -9,7 +9,7 @@ import {
 	generateText,
 } from "ai";
 import { createAzure } from "@ai-sdk/azure";
-import { z } from "zod";
+import { string, z } from "zod";
 import { nanoid } from "nanoid";
 import { getLatestTopics } from "@/lib/ai-tools/social-media/get-latest-topics";
 
@@ -26,9 +26,12 @@ export type SocialMediaMessage = UIMessage<
 	never, // metadata type
 	{
 		latestTopic:
-			| { status: "searching"; topicSummary?: never }
+			| { status: "searching" }
 			| { status: "found"; topicSummary: string };
-	} // data parts type
+		cardUI:
+			| { status: "loading" }
+			| { status: "finish"; title: string; contents: string; type: string };
+	} // data parts type,
 >;
 
 export async function POST(req: Request) {
@@ -41,12 +44,16 @@ export async function POST(req: Request) {
 	// Implement Data Stream
 	const stream = createUIMessageStream<SocialMediaMessage>({
 		execute: ({ writer }) => {
+			const currentId = nanoid();
 			const result = streamText({
 				model: azure("gpt-4o-mini"),
 				system: `Tools Usage:
                 getLatestTopicTool
                 - When user mentioned 'right now', it usually mean the last 7 days
-                - If it is success, say refer to the above information given.`,
+                - If it is success, display the summary in a card format using 'showCardTool'.
+
+                showCardTool
+                - IMPORTANT: when the tool is used, tell the user the refer to the card shown.`,
 				messages: convertToModelMessages(messages),
 				stopWhen: stepCountIs(5),
 				tools: {
@@ -58,12 +65,11 @@ export async function POST(req: Request) {
 								.describe("The number of days for the trending topics"),
 						}),
 						execute: async ({ days }) => {
-							const currentId = nanoid();
 							writer.write({
-								type: "data-latestTopic",
-								id: `latestTopic-${currentId}`,
+								type: "data-cardUI",
+								id: `cardUI-${currentId}`,
 								data: {
-									status: "searching",
+									status: "loading",
 								},
 							});
 							const result = await getLatestTopics(days);
@@ -81,18 +87,34 @@ export async function POST(req: Request) {
                                 `,
 							});
 
+							return {
+								status: "Success",
+								summary: text,
+							};
+						},
+					}),
+					showCardTool: tool({
+						description: "To show information or data into card UI",
+						inputSchema: z.object({
+							title: z.string().describe("The card title"),
+							content: z.string().describe("The card contents"),
+							type: z
+								.string()
+								.describe(
+									"The one word type of the information show about. example: Trending"
+								),
+						}),
+						execute: async ({ title, content, type }) => {
 							writer.write({
-								type: "data-latestTopic",
-								id: `latestTopic-${currentId}`,
+								type: "data-cardUI",
+								id: `cardUI-${currentId}`,
 								data: {
-									topicSummary: text,
-									status: "found",
+									status: "finish",
+									title,
+									contents: content,
+									type,
 								},
 							});
-							return {
-								status:
-									"Latest Topics Summary Succesfully Generated, refer to the above",
-							};
 						},
 					}),
 				},
