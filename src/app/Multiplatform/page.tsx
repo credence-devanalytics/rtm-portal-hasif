@@ -20,6 +20,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import Link from "next/link";
+import Header from "@/components/Header";
 
 const MultiplatformPage = () => {
   const [loading, setLoading] = useState(true);
@@ -496,22 +497,16 @@ const MultiplatformPage = () => {
     if (platform.id === "mytv" && hasAnyData && mytvMetrics.hasData) {
       return (
         <Link href={platform.link} className="block group">
-          <Card
-            className={`h-full transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer bg-white/80 backdrop-blur-sm border-2 ${platform.borderColor} rounded-2xl`}
-          >
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <div
-                  className={`p-2 rounded-lg bg-gradient-to-r ${platform.color} text-white shadow-lg`}
-                >
-                  {platform.icon}
+                <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
+                  <Tv className="h-8 w-8" />
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <CardTitle
-                className={`text-xl font-bold ${platform.textColor} mt-3`}
-              >
-                {platform.name}
+              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+                MyTV
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -519,49 +514,33 @@ const MultiplatformPage = () => {
                 {/* Left side: Main stats */}
                 <div className="flex-1 space-y-3">
                   {/* Primary Highlight - Top Channel */}
-                  <div
-                    className={`p-4 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                  >
+                  <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Trophy className={`h-4 w-4 ${platform.textColor}`} />
-                      <span
-                        className={`text-xs font-semibold ${platform.textColor} uppercase tracking-wide`}
-                      >
+                      <Trophy className="h-4 w-4 text-gray-700" />
+                      <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
                         Top Channel
                       </span>
                     </div>
-                    <div
-                      className={`text-l font-bold ${platform.textColor} leading-tight mb-1`}
-                    >
+                    <div className="text-l font-bold text-gray-900 leading-tight mb-1">
                       {mytvMetrics.topChannel.name}
                     </div>
-                    <div
-                      className={`text-l font-bold ${platform.textColor} mb-1`}
-                    >
+                    <div className="text-l font-bold text-gray-900 mb-1">
                       {mytvMetrics.topChannel.audienceShare}
                     </div>
-                    <div
-                      className={`text-xs font-medium ${platform.textColor} opacity-60`}
-                    >
+                    <div className="text-xs font-medium text-gray-600">
                       Purata Penonton: {mytvMetrics.topChannel.avgViewers}
                     </div>
                   </div>
 
                   {/* Total Viewers */}
-                  <div
-                    className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                  >
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                     <div className="flex items-center space-x-2 mb-1">
-                      <Users className={`h-4 w-4 ${platform.textColor}`} />
-                      <span
-                        className={`text-xs font-semibold ${platform.textColor}`}
-                      >
+                      <Users className="h-4 w-4 text-gray-700" />
+                      <span className="text-xs font-semibold text-gray-700">
                         Total Viewers
                       </span>
                     </div>
-                    <div
-                      className={`text-base font-bold ${platform.textColor}`}
-                    >
+                    <div className="text-base font-bold text-gray-900">
                       {mytvMetrics.totalViewers.toLocaleString()}
                     </div>
                   </div>
@@ -570,14 +549,10 @@ const MultiplatformPage = () => {
                 {/* Right side: Channel breakdown with bar chart */}
                 <div className="flex-1 space-y-3">
                   {/* Top 3 Channels */}
-                  <div
-                    className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                  >
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Star className={`h-4 w-4 ${platform.textColor}`} />
-                      <span
-                        className={`text-[10px] font-semibold ${platform.textColor} uppercase tracking-wide`}
-                      >
+                      <Star className="h-4 w-4 text-gray-700" />
+                      <span className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
                         Top 3 Channels
                       </span>
                     </div>
@@ -599,21 +574,17 @@ const MultiplatformPage = () => {
                             ></div>
                             <div className="flex flex-col">
                               <span
-                                className={`text-[10px] font-medium ${platform.textColor} truncate max-w-16`}
+                                className="text-[10px] font-medium text-gray-900 truncate max-w-16"
                                 title={channel.name}
                               >
                                 {channel.name}
                               </span>
-                              <span
-                                className={`text-[8px] font-normal ${platform.textColor} opacity-60`}
-                              >
+                              <span className="text-[8px] font-normal text-gray-600">
                                 Purata: {channel.displayAvgViewers}
                               </span>
                             </div>
                           </div>
-                          <span
-                            className={`text-[10px] font-bold ${platform.textColor}`}
-                          >
+                          <span className="text-[10px] font-bold text-gray-900">
                             {channel.displayAudienceShare}
                           </span>
                         </div>
@@ -624,9 +595,7 @@ const MultiplatformPage = () => {
                   {/* Lowest Channel */}
                   {mytvMetrics.lowestChannel.name !== "No data" &&
                     mytvMetrics.allChannels.length > 1 && (
-                      <div
-                        className={`p-2 rounded-lg ${platform.bgColor} border ${platform.borderColor} opacity-60`}
-                      >
+                      <div className="p-2 rounded-lg bg-gray-50 border border-gray-200 opacity-60">
                         <div className="flex items-center justify-between">
                           <span className="text-[9px] text-gray-500 font-medium">
                             Lowest:
@@ -695,41 +664,31 @@ const MultiplatformPage = () => {
 
       return (
         <Link href={platform.link} className="block group">
-          <Card
-            className={`h-full transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer bg-white/80 backdrop-blur-sm border-2 ${platform.borderColor} rounded-2xl`}
-          >
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <div
-                  className={`p-2 rounded-lg bg-gradient-to-r ${platform.color} text-white shadow-lg`}
-                >
-                  {platform.icon}
+                <div className="p-2 rounded-lg bg-rose-100 text-rose-700">
+                  <DollarSign className="h-8 w-8" />
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <CardTitle
-                className={`text-xl font-bold ${platform.textColor} mt-3`}
-              >
-                {platform.name}
+              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+                Marketing Revenue
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Saluran Cards Grid - TV, BES, Radio, Total */}
               <div className="grid grid-cols-2 gap-3">
                 {/* TV */}
-                <div
-                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                >
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
-                    <Tv className={`h-3 w-3 ${platform.textColor}`} />
-                    <span
-                      className={`text-xs font-semibold ${platform.textColor}`}
-                    >
+                    <Tv className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
                       TV
                     </span>
                   </div>
                   <div
-                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    className="text-sm font-bold text-gray-900 mb-1"
                     title={tvData.formattedCurrentValue}
                   >
                     {tvData.currentValue > 0
@@ -753,20 +712,16 @@ const MultiplatformPage = () => {
                   )}
                 </div>
 
-                {/* th */}
-                <div
-                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                >
+                {/* BES */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
-                    <Radio className={`h-3 w-3 ${platform.textColor}`} />
-                    <span
-                      className={`text-xs font-semibold ${platform.textColor}`}
-                    >
+                    <Radio className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
                       BES
                     </span>
                   </div>
                   <div
-                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    className="text-sm font-bold text-gray-900 mb-1"
                     title={besData.formattedCurrentValue}
                   >
                     {besData.currentValue > 0
@@ -791,19 +746,15 @@ const MultiplatformPage = () => {
                 </div>
 
                 {/* Radio */}
-                <div
-                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                >
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
-                    <Radio className={`h-3 w-3 ${platform.textColor}`} />
-                    <span
-                      className={`text-xs font-semibold ${platform.textColor}`}
-                    >
+                    <Radio className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
                       Radio
                     </span>
                   </div>
                   <div
-                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    className="text-sm font-bold text-gray-900 mb-1"
                     title={radioData.formattedCurrentValue}
                   >
                     {radioData.currentValue > 0
@@ -828,19 +779,15 @@ const MultiplatformPage = () => {
                 </div>
 
                 {/* Total */}
-                <div
-                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor} bg-gradient-to-br from-rose-100 to-rose-50`}
-                >
+                <div className="p-3 rounded-lg bg-gray-100 border border-gray-300">
                   <div className="flex items-center space-x-2 mb-1">
-                    <DollarSign className={`h-3 w-3 ${platform.textColor}`} />
-                    <span
-                      className={`text-xs font-semibold ${platform.textColor}`}
-                    >
+                    <DollarSign className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
                       Total
                     </span>
                   </div>
                   <div
-                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    className="text-sm font-bold text-gray-900 mb-1"
                     title={(marketingMetrics as any).formattedTotalValue}
                   >
                     RM{marketingMetrics.totalValue.toLocaleString()}
@@ -892,41 +839,31 @@ const MultiplatformPage = () => {
     ) {
       return (
         <Link href={platform.link} className="block group">
-          <Card
-            className={`h-full transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer bg-white/80 backdrop-blur-sm border-2 ${platform.borderColor} rounded-2xl`}
-          >
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <div
-                  className={`p-2 rounded-lg bg-gradient-to-r ${platform.color} text-white shadow-lg`}
-                >
-                  {platform.icon}
+                <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
+                  <Monitor className="h-8 w-8" />
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <CardTitle
-                className={`text-xl font-bold ${platform.textColor} mt-3`}
-              >
-                {platform.name}
+              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+                Portal Berita
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Portal Berita Metrics Grid */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Total Audience */}
-                <div
-                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                >
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
-                    <Users className={`h-3 w-3 ${platform.textColor}`} />
-                    <span
-                      className={`text-xs font-semibold ${platform.textColor}`}
-                    >
+                    <Users className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
                       Total Audience
                     </span>
                   </div>
                   <div
-                    className={`text-sm font-bold ${platform.textColor} mb-1`}
+                    className="text-sm font-bold text-gray-900 mb-1"
                     title={portalBeritaMetrics.formattedTotalAudience}
                   >
                     {portalBeritaMetrics.formattedTotalAudience}
@@ -937,19 +874,15 @@ const MultiplatformPage = () => {
                 </div>
 
                 {/* Top Region */}
-                <div
-                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                >
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
-                    <Trophy className={`h-3 w-3 ${platform.textColor}`} />
-                    <span
-                      className={`text-xs font-semibold ${platform.textColor}`}
-                    >
+                    <Trophy className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
                       Top Region
                     </span>
                   </div>
                   <div
-                    className={`text-sm font-bold ${platform.textColor} mb-1 truncate`}
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
                     title={portalBeritaMetrics.topRegion.name}
                   >
                     {portalBeritaMetrics.topRegion.name}
@@ -960,19 +893,15 @@ const MultiplatformPage = () => {
                 </div>
 
                 {/* Top Traffic Source */}
-                <div
-                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                >
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
-                    <TrendingUp className={`h-3 w-3 ${platform.textColor}`} />
-                    <span
-                      className={`text-xs font-semibold ${platform.textColor}`}
-                    >
+                    <TrendingUp className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
                       Top Traffic Source
                     </span>
                   </div>
                   <div
-                    className={`text-sm font-bold ${platform.textColor} mb-1 truncate`}
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
                     title={portalBeritaMetrics.topTrafficSource.name}
                   >
                     {portalBeritaMetrics.topTrafficSource.name}
@@ -984,19 +913,15 @@ const MultiplatformPage = () => {
                 </div>
 
                 {/* Top External Source */}
-                <div
-                  className={`p-3 rounded-lg ${platform.bgColor} border ${platform.borderColor}`}
-                >
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
-                    <ExternalLink className={`h-3 w-3 ${platform.textColor}`} />
-                    <span
-                      className={`text-xs font-semibold ${platform.textColor}`}
-                    >
+                    <ExternalLink className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
                       Top External Source
                     </span>
                   </div>
                   <div
-                    className={`text-sm font-bold ${platform.textColor} mb-1 truncate`}
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
                     title={portalBeritaMetrics.topExternalSource.name}
                   >
                     {portalBeritaMetrics.topExternalSource.name}
@@ -1027,12 +952,7 @@ const MultiplatformPage = () => {
     const availableMetrics = [
       {
         key: "topChannel",
-        icon:
-          platform.id === "marketing" ? (
-            <Trophy className={`h-4 w-4 ${platform.textColor}`} />
-          ) : (
-            <Trophy className={`h-4 w-4 ${platform.textColor}`} />
-          ),
+        icon: <Trophy className="h-4 w-4 text-gray-700" />,
         label: platform.id === "marketing" ? "Top Saluran" : "Top Channel",
         value: platform.metrics.topChannel,
         show:
@@ -1041,12 +961,7 @@ const MultiplatformPage = () => {
       },
       {
         key: "totalHours",
-        icon:
-          platform.id === "marketing" ? (
-            <Radio className={`h-4 w-4 ${platform.textColor}`} />
-          ) : (
-            <Clock className={`h-4 w-4 ${platform.textColor}`} />
-          ),
+        icon: <Clock className="h-4 w-4 text-gray-700" />,
         label: platform.id === "marketing" ? "Saluran" : "Hours",
         value: platform.metrics.totalHours,
         show:
@@ -1055,12 +970,7 @@ const MultiplatformPage = () => {
       },
       {
         key: "mau",
-        icon:
-          platform.id === "marketing" ? (
-            <DollarSign className={`h-4 w-4 ${platform.textColor}`} />
-          ) : (
-            <Users className={`h-4 w-4 ${platform.textColor}`} />
-          ),
+        icon: <Users className="h-4 w-4 text-gray-700" />,
         label: platform.id === "marketing" ? "Total Revenue" : "MAU",
         value: platform.metrics.mau,
         show:
@@ -1068,7 +978,7 @@ const MultiplatformPage = () => {
       },
       {
         key: "avgHours",
-        icon: <TrendingUp className={`h-4 w-4 ${platform.textColor}`} />,
+        icon: <TrendingUp className="h-4 w-4 text-gray-700" />,
         label:
           platform.id === "marketing"
             ? "YoY Change"
@@ -1085,23 +995,31 @@ const MultiplatformPage = () => {
       },
     ].filter((metric) => metric.show);
 
+    // Get icon color based on platform id
+    const getIconBgColor = (platformId) => {
+      switch (platformId) {
+        case "unifitv":
+          return "bg-emerald-100 text-emerald-700";
+        case "astro":
+          return "bg-purple-100 text-purple-700";
+        case "rtmclick":
+          return "bg-amber-100 text-amber-700";
+        default:
+          return "bg-gray-100 text-gray-700";
+      }
+    };
+
     return (
       <Link href={platform.link} className="block group">
-        <Card
-          className={`h-full transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer bg-white/80 backdrop-blur-sm border-2 ${platform.borderColor} rounded-2xl`}
-        >
+        <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <div
-                className={`p-2 rounded-lg bg-gradient-to-r ${platform.color} text-white shadow-lg`}
-              >
+              <div className={`p-2 rounded-lg ${getIconBgColor(platform.id)}`}>
                 {platform.icon}
               </div>
               <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
             </div>
-            <CardTitle
-              className={`text-xl font-bold ${platform.textColor} mt-3`}
-            >
+            <CardTitle className="text-xl font-bold text-gray-900 mt-3">
               {platform.name}
             </CardTitle>
           </CardHeader>
@@ -1123,9 +1041,7 @@ const MultiplatformPage = () => {
                   {availableMetrics.map((metric, index) => (
                     <div
                       key={metric.key}
-                      className={`p-3 rounded-lg ${platform.bgColor} border ${
-                        platform.borderColor
-                      } ${
+                      className={`p-3 rounded-lg bg-gray-50 border border-gray-200 ${
                         availableMetrics.length === 3 && index === 2
                           ? "col-span-2"
                           : ""
@@ -1133,14 +1049,12 @@ const MultiplatformPage = () => {
                     >
                       <div className="flex items-center space-x-2 mb-1">
                         {metric.icon}
-                        <span
-                          className={`text-xs font-semibold ${platform.textColor}`}
-                        >
+                        <span className="text-xs font-semibold text-gray-900">
                           {metric.label}
                         </span>
                       </div>
                       <div
-                        className={`text-lg font-bold ${platform.textColor} truncate`}
+                        className="text-lg font-bold text-gray-900 truncate"
                         title={
                           metric.key === "topChannel" ? metric.value : undefined
                         }
@@ -1168,12 +1082,8 @@ const MultiplatformPage = () => {
             ) : (
               /* No Data State */
               <div className="flex flex-col items-center justify-center py-8 space-y-3">
-                <div
-                  className={`p-3 rounded-full ${platform.bgColor} border ${platform.borderColor}`}
-                >
-                  <Monitor
-                    className={`h-6 w-6 ${platform.textColor} opacity-50`}
-                  />
+                <div className="p-3 rounded-full bg-gray-50 border border-gray-200">
+                  <Monitor className="h-6 w-6 text-gray-400" />
                 </div>
                 <div className="text-center">
                   <p className="text-gray-500 font-medium text-sm">
@@ -1192,43 +1102,37 @@ const MultiplatformPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pt-16">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <Header />
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-8 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Multi-Platform Performance Overview
-              </h1>
-              <p className="text-gray-600 mt-2 text-lg">
-                Comprehensive analytics across 6 streaming platforms
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="202502">Feb 2025</option>
-                <option value="202501">Jan 2025</option>
-                <option value="202412">Dec 2024</option>
-              </select>
-            </div>
-          </div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Multi-Platform Performance Overview
+          </h1>
+          <p className="text-muted-foreground">
+            Comprehensive analytics across 6 streaming platforms
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="202502">Feb 2025</option>
+            <option value="202501">Jan 2025</option>
+            <option value="202412">Dec 2024</option>
+          </select>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="space-y-6">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card
-                key={i}
-                className="h-64 bg-white/80 backdrop-blur-sm rounded-2xl animate-pulse"
-              >
+              <Card key={i} className="h-64 animate-pulse">
                 <CardContent className="p-6">
                   <div className="h-6 bg-gray-200 rounded mb-4"></div>
                   <div className="grid grid-cols-2 gap-3">
@@ -1292,36 +1196,38 @@ const MultiplatformPage = () => {
             </div> */}
 
             {/* Platform Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {platforms.map((platform) => (
                 <PlatformCard key={platform.id} platform={platform} />
               ))}
             </div>
 
             {/* Footer Note */}
-            <div className="mt-12 p-6 bg-gray-50/80 backdrop-blur-sm rounded-2xl border border-gray-200">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  📊 Data Status
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Currently showing data for <strong>UnifiTV</strong>,{" "}
-                  <strong>MyTV</strong>, <strong>Marketing Revenue</strong>, and{" "}
-                  <strong>Portal Berita</strong> platforms. Other platforms will
-                  be integrated as data becomes available.
-                </p>
-                <div className="flex justify-center space-x-4 text-sm">
-                  <span className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span>Live Data Available</span>
-                  </span>
-                  <span className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                    <span>Placeholder Data</span>
-                  </span>
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    📊 Data Status
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Currently showing data for <strong>UnifiTV</strong>,{" "}
+                    <strong>MyTV</strong>, <strong>Marketing Revenue</strong>,
+                    and <strong>Portal Berita</strong> platforms. Other
+                    platforms will be integrated as data becomes available.
+                  </p>
+                  <div className="flex justify-center space-x-4 text-sm">
+                    <span className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span>Live Data Available</span>
+                    </span>
+                    <span className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                      <span>Placeholder Data</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </>
         )}
       </div>

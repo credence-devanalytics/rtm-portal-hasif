@@ -365,6 +365,21 @@ export const mytvAnalysis = pgTable("mytv_analysis", {
 	table_idx: integer(),
 });
 
+export const mytvViewership = pgTable("mytv_viewership", {
+	id: serial().primaryKey().notNull(),
+	region: varchar({ length: 100 }),
+	metric: varchar({ length: 100 }),
+	channel: varchar({ length: 50 }),
+	month: varchar({ length: 20 }),
+	year: integer(),
+	viewers: bigint({ mode: "number" }),
+	page_num: integer(),
+	table_idx: integer(),
+	page_title: text(),
+	inserted_at: timestamp({ mode: 'string' }).defaultNow(),
+	updated_at: timestamp({ mode: 'string' }).defaultNow(),
+});
+
 export const marketingChannelByYear = pgTable("marketing_channel_byyear", {
 	id: serial().primaryKey().notNull(),
 	report_type: varchar("report_type"),

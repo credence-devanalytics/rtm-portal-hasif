@@ -32,7 +32,9 @@ import {
   ArrowDownIcon,
   FilterIcon,
   RefreshCwIcon,
+  Download,
 } from "lucide-react";
+import Header from "@/components/Header";
 
 // Import recharts components
 import {
@@ -60,7 +62,7 @@ const MyTVViewershipPage = () => {
 
   // Filters State
   const [filters, setFilters] = useState({
-    year: "2025",
+    year: "all", // Changed from "2025" to "all" to show all years
     region: "all",
     channel: "all",
     sortBy: "viewers",
@@ -77,15 +79,8 @@ const MyTVViewershipPage = () => {
     "TV6",
     "BERNAMA",
   ];
-  const availableYears = ["2024", "2025"];
-  const availableRegions = [
-    "Kuala Lumpur",
-    "Selangor",
-    "Johor",
-    "Penang",
-    "Sabah",
-    "Sarawak",
-  ];
+  const availableYears = ["2024", "2025", "2023", "2022"]; // Added more years
+  const availableRegions = ["Semenanjung Malaysia", "Kota Kinabalu & Kuching"];
 
   // Fetch data function
   const fetchData = useCallback(async () => {
@@ -132,12 +127,46 @@ const MyTVViewershipPage = () => {
 
   const resetFilters = () => {
     setFilters({
-      year: "2025",
+      year: "all", // Changed from "2025" to "all"
       region: "all",
       channel: "all",
       sortBy: "viewers",
       sortOrder: "desc",
     });
+  };
+
+  // Format number utility
+  const formatNumber = (num) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+    return num.toLocaleString();
+  };
+
+  // Export data function
+  const exportData = () => {
+    const dataToExport = {
+      summary: data?.summary,
+      channelBreakdown: data?.channelBreakdown,
+      regionalBreakdown: data?.regionalBreakdown,
+      data: data?.data,
+      filters: filters,
+      exportDate: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+      type: "application/json",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mytv-viewership-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Chart colors
@@ -150,6 +179,17 @@ const MyTVViewershipPage = () => {
     "#82CA9D",
     "#FFC658",
   ];
+
+  // Brand colors for channels
+  const CHANNEL_COLORS = {
+    TV1: "#122F86",
+    TV2: "#FF5A08",
+    OKEY: "#FDD302",
+    "BERITA RTM": "#FD0001",
+    "SUKAN RTM": "#9FA1A3",
+    TV6: "#EA1F7D",
+    BERNAMA: "#1F2023",
+  };
 
   // Prepare MAU by Channels and Months data for bar chart
   const mauChartData = React.useMemo(() => {
@@ -197,71 +237,58 @@ const MyTVViewershipPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCwIcon className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading MyTV viewership data...</p>
+      <div className="p-6 max-w-7xl mx-auto">
+        <Header />
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <RefreshCwIcon className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-muted-foreground">
+              Loading MyTV viewership data...
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-6 py-6 sticky top-0 z-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center space-x-3">
-              <TvIcon className="h-8 w-8 text-blue-600" />
-              <span>MyTV Viewership Analytics</span>
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Channel viewership and MAU analytics for MyTV platform
+      <Header />
+
+      {/* Page Header with Controls */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            MyTV Viewership Analytics
+          </h1>
+          <p className="text-muted-foreground">
+            Channel viewership and MAU analytics for MyTV platform
+          </p>
+          {data && (
+            <p className="text-xs text-gray-500 mt-1">
+              Showing {formatNumber(data.summary.totalViewers)} total viewers
+              across {data.summary.totalChannels} channels
             </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Badge
-              variant="outline"
-              className={
-                loading
-                  ? "bg-amber-50 text-amber-700 border-amber-200"
-                  : "bg-blue-50 text-blue-700 border-blue-200"
-              }
-            >
-              {loading ? "Syncing..." : "Live Data"}
-            </Badge>
-            <span className="text-sm text-gray-500">
-              Updated: {new Date().toLocaleTimeString()}
-            </span>
-          </div>
+          )}
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">
-              ⚠️ Data loading issue: {error}. Displaying with sample data.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Filters Section */}
-      <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
-        <div className="flex flex-wrap items-center gap-6">
+        {/* Controls */}
+        <div className="flex gap-2 flex-wrap items-center">
           {/* Year Filter */}
-          <div className="flex items-center space-x-3">
-            <CalendarIcon className="h-5 w-5 text-blue-600" />
-            <label className="text-sm font-semibold text-gray-700">Year:</label>
+          <div className="flex items-center space-x-2">
+            <CalendarIcon className="h-4 w-4 text-gray-600" />
             <Select
               value={filters.year}
               onValueChange={(value) => handleFilterChange("year", value)}
             >
-              <SelectTrigger className="w-32 bg-white/80">
+              <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="">
+                <SelectItem className="" value="all">
+                  All Years
+                </SelectItem>
                 {availableYears.map((year) => (
                   <SelectItem className="" key={year} value={year}>
                     {year}
@@ -272,16 +299,13 @@ const MyTVViewershipPage = () => {
           </div>
 
           {/* Channel Filter */}
-          <div className="flex items-center space-x-3">
-            <TvIcon className="h-5 w-5 text-blue-600" />
-            <label className="text-sm font-semibold text-gray-700">
-              Channel:
-            </label>
+          <div className="flex items-center space-x-2">
+            <TvIcon className="h-4 w-4 text-gray-600" />
             <Select
               value={filters.channel}
               onValueChange={(value) => handleFilterChange("channel", value)}
             >
-              <SelectTrigger className="w-40 bg-white/80">
+              <SelectTrigger className="w-40">
                 <SelectValue placeholder="All Channels" />
               </SelectTrigger>
               <SelectContent className="">
@@ -298,16 +322,13 @@ const MyTVViewershipPage = () => {
           </div>
 
           {/* Region Filter */}
-          <div className="flex items-center space-x-3">
-            <UsersIcon className="h-5 w-5 text-blue-600" />
-            <label className="text-sm font-semibold text-gray-700">
-              Region:
-            </label>
+          <div className="flex items-center space-x-2">
+            <FilterIcon className="h-4 w-4 text-gray-600" />
             <Select
               value={filters.region}
               onValueChange={(value) => handleFilterChange("region", value)}
             >
-              <SelectTrigger className="w-40 bg-white/80">
+              <SelectTrigger className="w-48">
                 <SelectValue placeholder="All Regions" />
               </SelectTrigger>
               <SelectContent className="">
@@ -323,124 +344,120 @@ const MyTVViewershipPage = () => {
             </Select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-2">
-            <Button
-              onClick={applyFilters}
-              variant="default"
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <FilterIcon className="h-4 w-4 mr-1" />
-              Apply
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={resetFilters}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              Reset
-            </Button>
-          </div>
+          <Button
+            onClick={applyFilters}
+            variant="outline"
+            size="sm"
+            className=""
+            disabled={loading}
+          >
+            <RefreshCwIcon
+              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+
+          <Button onClick={exportData} variant="outline" size="sm" className="">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="p-6 space-y-6">
-        {/* Hero Stats */}
+      {/* Error Alert */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <p className="text-red-700 text-sm">
+              ⚠️ Data loading issue: {error}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      {/* Overview Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {data && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+          <>
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium opacity-90">
+                <CardTitle className="text-sm font-medium">
                   Total Viewers
                 </CardTitle>
                 <EyeIcon className="h-5 w-5" />
               </CardHeader>
               <CardContent className="">
-                <div className="text-2xl font-bold">
-                  {data.summary.totalViewers.toLocaleString()}
+                <div className="text-3xl font-bold">
+                  {formatNumber(data.summary.totalViewers)}
                 </div>
-                <div className="flex items-center mt-2 text-sm opacity-90">
-                  <ArrowUpIcon className="h-4 w-4 mr-1" />
-                  Active viewers across all channels
-                </div>
+                <p className="text-xs mt-1">Across all channels</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium opacity-90">
+                <CardTitle className="text-sm font-medium">
                   Active Channels
                 </CardTitle>
                 <TvIcon className="h-5 w-5" />
               </CardHeader>
               <CardContent className="">
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold">
                   {data.summary.totalChannels}
                 </div>
-                <div className="flex items-center mt-2 text-sm opacity-90">
-                  <PlayCircleIcon className="h-4 w-4 mr-1" />
-                  Broadcasting channels
-                </div>
+                <p className="text-xs mt-1">Broadcasting channels</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium opacity-90">
+                <CardTitle className="text-sm font-medium">
                   Coverage Regions
                 </CardTitle>
                 <ActivityIcon className="h-5 w-5" />
               </CardHeader>
               <CardContent className="">
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold">
                   {data.summary.totalRegions}
                 </div>
-                <div className="flex items-center mt-2 text-sm opacity-90">
-                  <UsersIcon className="h-4 w-4 mr-1" />
-                  Geographic coverage
-                </div>
+                <p className="text-xs mt-1">Geographic coverage</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white">
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium opacity-90">
+                <CardTitle className="text-sm font-medium">
                   Avg Viewers per Channel
                 </CardTitle>
                 <BarChart3Icon className="h-5 w-5" />
               </CardHeader>
               <CardContent className="">
-                <div className="text-2xl font-bold">
-                  {data.summary.avgViewers.toLocaleString()}
+                <div className="text-3xl font-bold">
+                  {formatNumber(data.summary.avgViewers)}
                 </div>
-                <div className="flex items-center mt-2 text-sm opacity-90">
-                  <TrendingUpIcon className="h-4 w-4 mr-1" />
-                  Average engagement
-                </div>
+                <p className="text-xs mt-1">Average engagement</p>
               </CardContent>
             </Card>
-          </div>
+          </>
         )}
+      </div>
 
-        {/* Main Bar Chart - MAU by Channels and Months */}
+      {/* Main Line Chart - MAU by Channels and Months */}
+      <div className="grid gap-6 lg:grid-cols-1">
         {data && (
-          <Card className="bg-white/70 backdrop-blur-sm">
+          <Card className="">
             <CardHeader className="">
               <CardTitle className="flex items-center space-x-2">
-                <BarChart3Icon className="h-5 w-5 text-blue-600" />
+                <TrendingUpIcon className="h-5 w-5 text-blue-600" />
                 <span>MAU by Channels Across Months</span>
               </CardTitle>
               <CardDescription className="">
-                Monthly Active Users grouped by channels throughout the year
+                Monthly Active Users trends by channel throughout the year
               </CardDescription>
             </CardHeader>
             <CardContent className="">
               {mauChartData && mauChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={500}>
-                  <BarChart
+                  <LineChart
                     data={mauChartData}
                     margin={{
                       top: 20,
@@ -483,19 +500,26 @@ const MyTVViewershipPage = () => {
                     />
                     <Legend />
                     {availableChannels.map((channel, index) => (
-                      <Bar
+                      <Line
                         key={channel}
+                        type="linear"
                         dataKey={channel}
-                        fill={COLORS[index % COLORS.length]}
+                        stroke={
+                          CHANNEL_COLORS[channel] ||
+                          COLORS[index % COLORS.length]
+                        }
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
                         name={channel}
                       />
                     ))}
-                  </BarChart>
+                  </LineChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-64 bg-gray-50 rounded">
                   <div className="text-center text-gray-500">
-                    <BarChart3Icon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <TrendingUpIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No MAU data available</p>
                   </div>
                 </div>
@@ -503,12 +527,14 @@ const MyTVViewershipPage = () => {
             </CardContent>
           </Card>
         )}
+      </div>
 
-        {/* Additional Charts Row */}
+      {/* Additional Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
         {data && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <>
             {/* Channel Performance Breakdown */}
-            <Card className="bg-white/70 backdrop-blur-sm">
+            <Card className="">
               <CardHeader className="">
                 <CardTitle className="flex items-center space-x-2">
                   <TvIcon className="h-5 w-5 text-indigo-600" />
@@ -520,26 +546,34 @@ const MyTVViewershipPage = () => {
               </CardHeader>
               <CardContent className="">
                 <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={data.channelBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ channel, totalViewers }) =>
-                        `${channel}: ${(totalViewers / 1000000).toFixed(1)}M`
-                      }
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="totalViewers"
-                    >
-                      {data.channelBreakdown.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
+                  <BarChart
+                    data={data.channelBreakdown}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0f2fe" />
+                    <XAxis
+                      dataKey="channel"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis
+                      tickFormatter={(value) => {
+                        if (value === 0) return "0";
+                        if (value >= 1000000)
+                          return `${(Number(value) / 1000000).toFixed(1)}M`;
+                        if (value >= 1000)
+                          return `${Math.round(Number(value) / 1000)}K`;
+                        return value.toString();
+                      }}
+                      tick={{ fontSize: 12 }}
+                    />
                     <Tooltip
                       formatter={(value) => [
                         value.toLocaleString(),
@@ -552,13 +586,21 @@ const MyTVViewershipPage = () => {
                         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                       }}
                     />
-                  </PieChart>
+                    <Bar dataKey="totalViewers" radius={[8, 8, 0, 0]}>
+                      {data.channelBreakdown.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={CHANNEL_COLORS[entry.channel] || "#6366f1"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
             {/* Regional Breakdown */}
-            <Card className="bg-white/70 backdrop-blur-sm">
+            <Card className="">
               <CardHeader className="">
                 <CardTitle className="flex items-center space-x-2">
                   <UsersIcon className="h-5 w-5 text-purple-600" />
@@ -569,176 +611,44 @@ const MyTVViewershipPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="">
-                {(() => {
-                  const regions = data.regionalBreakdown || [];
-                  const midPoint = Math.ceil(regions.length / 2);
-                  const shouldSplit = regions.length > 3;
-                  const leftRegions = shouldSplit
-                    ? regions.slice(0, midPoint)
-                    : regions;
-                  const rightRegions = shouldSplit
-                    ? regions.slice(midPoint)
-                    : [];
-
-                  return (
-                    <div
-                      className={`grid ${
-                        shouldSplit ? "grid-cols-2" : "grid-cols-1"
-                      } gap-4`}
-                    >
-                      {/* Left/Main Table */}
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b bg-purple-50">
-                              <th className="text-left p-3 font-semibold text-purple-900">
-                                Region
-                              </th>
-                              <th className="text-right p-3 font-semibold text-purple-900">
-                                Total Viewers
-                              </th>
-                              <th className="text-right p-3 font-semibold text-purple-900">
-                                Formatted
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {leftRegions.map((item, index) => (
-                              <tr
-                                key={index}
-                                className="border-b hover:bg-gray-50"
-                              >
-                                <td className="p-3 font-medium text-gray-700">
-                                  {item.region}
-                                </td>
-                                <td className="p-3 text-right font-semibold text-purple-700">
-                                  {item.totalViewers.toLocaleString()}
-                                </td>
-                                <td className="p-3 text-right text-gray-600">
-                                  {item.totalViewers >= 1000000
-                                    ? `${(item.totalViewers / 1000000).toFixed(
-                                        1
-                                      )}M`
-                                    : item.totalViewers >= 1000
-                                    ? `${Math.round(item.totalViewers / 1000)}K`
-                                    : item.totalViewers.toString()}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Right Table (only if split) */}
-                      {shouldSplit && rightRegions.length > 0 && (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b bg-purple-50">
-                                <th className="text-left p-3 font-semibold text-purple-900">
-                                  Region
-                                </th>
-                                <th className="text-right p-3 font-semibold text-purple-900">
-                                  Total Viewers
-                                </th>
-                                <th className="text-right p-3 font-semibold text-purple-900">
-                                  Formatted
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {rightRegions.map((item, index) => (
-                                <tr
-                                  key={index}
-                                  className="border-b hover:bg-gray-50"
-                                >
-                                  <td className="p-3 font-medium text-gray-700">
-                                    {item.region}
-                                  </td>
-                                  <td className="p-3 text-right font-semibold text-purple-700">
-                                    {item.totalViewers.toLocaleString()}
-                                  </td>
-                                  <td className="p-3 text-right text-gray-600">
-                                    {item.totalViewers >= 1000000
-                                      ? `${(
-                                          item.totalViewers / 1000000
-                                        ).toFixed(1)}M`
-                                      : item.totalViewers >= 1000
-                                      ? `${Math.round(
-                                          item.totalViewers / 1000
-                                        )}K`
-                                      : item.totalViewers.toString()}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left p-3 font-semibold">Region</th>
+                        <th className="text-right p-3 font-semibold">
+                          Total Viewers
+                        </th>
+                        <th className="text-right p-3 font-semibold">
+                          Formatted
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(data.regionalBreakdown || []).map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="p-3 font-medium">{item.region}</td>
+                          <td className="p-3 text-right font-semibold">
+                            {item.totalViewers.toLocaleString()}
+                          </td>
+                          <td className="p-3 text-right text-gray-600">
+                            {formatNumber(item.totalViewers)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
-          </div>
+          </>
         )}
+      </div>
 
-        {/* Monthly Trends */}
+      {/* Data Table */}
+      <div className="grid gap-6 lg:grid-cols-1">
         {data && (
-          <Card className="bg-white/70 backdrop-blur-sm">
-            <CardHeader className="">
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUpIcon className="h-5 w-5 text-cyan-600" />
-                <span>Monthly Viewership Trends</span>
-              </CardTitle>
-              <CardDescription className="">
-                Overall viewership progression throughout the year
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="">
-              <ResponsiveContainer width="100%" height={400}>
-                <AreaChart data={data.monthlyTrends}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0f2fe" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    tickFormatter={(value) => {
-                      if (value >= 1000000)
-                        return `${(Number(value) / 1000000).toFixed(1)}M`;
-                      if (value >= 1000)
-                        return `${Math.round(Number(value) / 1000)}K`;
-                      return value.toString();
-                    }}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip
-                    formatter={(value) => [
-                      value.toLocaleString(),
-                      "Total Viewers",
-                    ]}
-                    contentStyle={{
-                      backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      border: "none",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="totalViewers"
-                    stroke="#06b6d4"
-                    fill="#0891b2"
-                    fillOpacity={0.6}
-                    strokeWidth={3}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Data Table */}
-        {data && (
-          <Card className="bg-white/70 backdrop-blur-sm">
+          <Card className="">
             <CardHeader className="">
               <CardTitle className="flex items-center space-x-2">
                 <PlayCircleIcon className="h-5 w-5 text-blue-600" />
@@ -818,10 +728,12 @@ const MyTVViewershipPage = () => {
             </CardContent>
           </Card>
         )}
+      </div>
 
-        {/* Quick Insights */}
+      {/* Quick Insights */}
+      <div className="grid gap-6 lg:grid-cols-1">
         {data && (
-          <Card className="bg-white/70 backdrop-blur-sm">
+          <Card className="">
             <CardHeader className="">
               <CardTitle className="flex items-center space-x-2">
                 <StarIcon className="h-5 w-5 text-amber-600" />
@@ -836,7 +748,9 @@ const MyTVViewershipPage = () => {
                   </h4>
                   <p className="text-sm text-blue-700">
                     {data.channelBreakdown?.[0]?.channel} leads with{" "}
-                    {data.channelBreakdown?.[0]?.totalViewers?.toLocaleString()}{" "}
+                    {formatNumber(
+                      data.channelBreakdown?.[0]?.totalViewers || 0
+                    )}{" "}
                     viewers
                   </p>
                 </div>
@@ -846,7 +760,9 @@ const MyTVViewershipPage = () => {
                   </h4>
                   <p className="text-sm text-indigo-700">
                     {data.regionalBreakdown?.[0]?.region} dominates with{" "}
-                    {data.regionalBreakdown?.[0]?.totalViewers?.toLocaleString()}{" "}
+                    {formatNumber(
+                      data.regionalBreakdown?.[0]?.totalViewers || 0
+                    )}{" "}
                     viewers
                   </p>
                 </div>

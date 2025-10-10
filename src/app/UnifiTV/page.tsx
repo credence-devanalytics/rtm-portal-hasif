@@ -1123,31 +1123,45 @@ const UnifiTVPage = () => {
                 </CardHeader>
                 <CardContent className="">
                   <ResponsiveContainer width="100%" height={350}>
-                    <PieChart>
-                      <Pie
-                        data={data.analytics.channelBreakdown}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ channelName, totalMau }) =>
-                          `${channelName}: ${(totalMau / 1000).toFixed(0)}K`
-                        }
-                        outerRadius={100}
-                        fill="#8884d8"
+                    <ScatterChart
+                      margin={{
+                        top: 20,
+                        right: 20,
+                        bottom: 20,
+                        left: 20,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        type="category"
+                        dataKey="channelName"
+                        name="Channel"
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis
+                        type="number"
                         dataKey="totalMau"
-                      >
-                        {data.analytics.channelBreakdown.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
+                        name="Total MAU"
+                        tickFormatter={(value) => {
+                          if (value >= 1000000)
+                            return `${(Number(value) / 1000000).toFixed(1)}M`;
+                          if (value >= 1000)
+                            return `${Math.round(Number(value) / 1000)}K`;
+                          return value.toString();
+                        }}
+                      />
+                      <ZAxis
+                        type="number"
+                        dataKey="totalMau"
+                        range={[100, 1000]}
+                      />
                       <Tooltip
-                        formatter={(value) => [
-                          value.toLocaleString(),
-                          "Total MAU",
-                        ]}
+                        formatter={(value, name) => {
+                          if (name === "Total MAU") {
+                            return [value.toLocaleString(), "Total MAU"];
+                          }
+                          return [value, name];
+                        }}
                         contentStyle={{
                           backgroundColor: "rgba(255, 255, 255, 0.95)",
                           border: "none",
@@ -1155,7 +1169,20 @@ const UnifiTVPage = () => {
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                         }}
                       />
-                    </PieChart>
+                      <Legend />
+                      <Scatter
+                        name="Channel MAU"
+                        data={data.analytics.channelBreakdown}
+                        fill="#8884d8"
+                      >
+                        {data.analytics.channelBreakdown.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Scatter>
+                    </ScatterChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
