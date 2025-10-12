@@ -1,6 +1,6 @@
 export const conversationStarters = [
-	"📈 What are people saying about the latest topic on social media right now?",
-	"🏷️ Which hashtags are trending this week?",
-	"👥 Who are the top influencers talking about RTM?",
-	"📊 What are the most engaging posts in the last 7 days?",
+	"Apa isu utama minggu ini yang sesuai dijadikan topik perbincangan di radio atau TV RTM?",
+	"Topik apa yang paling trending di media sosial dan relevan dengan masyarakat?",
+	"Apakah pandangan umum rakyat terhadap isu semasa yang paling banyak dibincangkan?",
+	"Siapa personaliti atau selebriti paling viral minggu ini yang sesuai dijemput sebagai tetamu RTM?",
 ] as const;
