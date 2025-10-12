@@ -17,3 +17,15 @@ export async function getLatestTopics(days: number) {
 
 	return mentions;
 }
+
+export async function getHighInteractionMentions(days: number) {
+	const cutoffDate = subDays(new Date(), days).toISOString();
+	const mentions = await db
+		.select()
+		.from(mentionsClassifyPublic)
+		.where(gte(mentionsClassifyPublic.inserttime, cutoffDate))
+		.orderBy(desc(mentionsClassifyPublic.interaction))
+		.limit(10);
+
+	return mentions;
+}

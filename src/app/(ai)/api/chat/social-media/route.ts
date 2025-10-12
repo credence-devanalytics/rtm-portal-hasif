@@ -11,7 +11,10 @@ import {
 import { createAzure } from "@ai-sdk/azure";
 import { string, z } from "zod";
 import { nanoid } from "nanoid";
-import { getLatestTopics } from "@/lib/ai-tools/social-media/get-latest-topics";
+import {
+	getLatestTopics,
+	getHighInteractionMentions,
+} from "@/lib/ai-tools/social-media/get-latest-topics";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -47,13 +50,24 @@ export async function POST(req: Request) {
 			const currentId = nanoid();
 			const result = streamText({
 				model: azure("gpt-4o-mini"),
-				system: `Tools Usage:
+				system: `
+                Language
+                - IMPORTANT: If user asked in Bahasa Malaysia, you will be providing all information answer in Bahasa Malaysia, do not answer in English or Bahasa Indonesia.
+
+                Tools Usage:
                 getLatestTopicTool
                 - When user mentioned 'right now', it usually mean the last 7 days
                 - If it is success, display the summary in a card format using 'showCardTool'.
 
+                getHighInteractionsTool
+                - Use this when user asks for mentions with highest interactions, engagement, or highest discussion mentions
+                - When user mentioned 'right now', it usually mean the last 7 days
+                - If it is success, display the summary in a card format using 'showCardTool'.
+
+                <IMPORTANT>
                 showCardTool
-                - IMPORTANT: when the tool is used, tell the user the refer to the card shown.`,
+                - when this tool is used, tell the user the refer to the card shown
+                </IMPORTANT>`,
 				messages: convertToModelMessages(messages),
 				stopWhen: stepCountIs(5),
 				tools: {
@@ -117,6 +131,48 @@ export async function POST(req: Request) {
 							});
 						},
 					}),
+					getHighInteractionsTool: tool({
+						description:
+							"To find mentions with the highest interactions/engagement",
+						inputSchema: z.object({
+							days: z
+								.number()
+								.describe(
+									"The number of days to search for high-interaction mentions"
+								),
+						}),
+						execute: async ({ days }) => {
+							writer.write({
+								type: "data-cardUI",
+								id: `cardUI-${currentId}`,
+								data: {
+									status: "loading",
+								},
+							});
+							const result = await getHighInteractionMentions(days);
+
+							if (result.length === 0) {
+								return {
+									status: "No high-interaction mentions were found.",
+								};
+							}
+
+							const { text } = await generateText({
+								model: azure("gpt-4o-mini"),
+								prompt: `Summarized these mentions with the highest interactions and engagement.
+                                    ${result.map((item) => item.mention)}
+                                `,
+							});
+
+							return {
+								status: "Success",
+								summary: text,
+							};
+						},
+					}),
+				},
+				onStepFinish({ toolCalls }) {
+					console.log({ toolCalls });
 				},
 				onFinish() {},
 			});
