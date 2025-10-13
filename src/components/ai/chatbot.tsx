@@ -172,7 +172,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 			<SidebarProvider>
 				<div className="flex size-full">
 					<AppSidebar />
-					<main className="pt-20 px-6 w-full h-[calc(100vh-4rem)]">
+					<main className="pt-18 px-4 w-full h-[calc(100vh-4rem)]">
 						<Button asChild size="icon" variant="outline">
 							<SidebarTrigger />
 						</Button>
