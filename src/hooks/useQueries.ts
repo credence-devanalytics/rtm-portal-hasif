@@ -3,31 +3,118 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 // Query keys factory for better organization
 export const queryKeys = {
   mentions: ['mentions'],
-  publicMentions: (filters) => ['publicMentions', filters],
-  dashboardSummary: (filters) => ['dashboardSummary', filters],
-  sentimentDistribution: (filters) => ['sentimentDistribution', filters],
-  platformDistribution: (filters) => ['platformDistribution', filters],
-  timeSeries: (filters) => ['timeSeries', filters],
-  topMentions: (filters) => ['topMentions', filters],
+  publicMentions: (filters) => ['publicMentions', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
+  publicMentionsInfinite: (filters) => ['publicMentionsInfinite', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
+  dashboardSummary: (filters) => ['dashboardSummary', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
+  sentimentDistribution: (filters) => ['sentimentDistribution', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
+  platformDistribution: (filters) => ['platformDistribution', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
+  timeSeries: (filters) => ['timeSeries', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
+  topMentions: (filters) => ['topMentions', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
   cache: ['cache'],
 };
 
 // API fetch functions
 const fetchPublicMentions = async (filters, page = 1) => {
-  const params = new URLSearchParams({
-    days: filters.days.toString(),
-    platform: filters.platform,
-    sentiment: filters.sentiment,
-    topic: filters.topic,
-    page: page.toString(),
-    limit: "10000",
-  });
+  const params = new URLSearchParams();
+  params.append('days', filters.days.toString());
+  params.append('page', Math.max(1, page).toString());
+  params.append('limit', "50"); // Reasonable default for UI pagination
 
-  const response = await fetch(`/api/public-mentions?${params}`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch data: ${response.statusText}`);
+  // Only add optional filters if they exist
+  if (filters.platform && filters.platform !== 'all' && filters.platform !== 'undefined') {
+    params.append('platform', filters.platform);
   }
-  return response.json();
+  if (filters.sentiment && filters.sentiment !== 'all' && filters.sentiment !== 'undefined') {
+    params.append('sentiment', filters.sentiment);
+  }
+  if (filters.topic && filters.topic !== 'undefined') {
+    params.append('topic', filters.topic);
+  }
+
+  const url = `/api/public-mentions?${params}`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      // Log more detailed error information
+      console.error('API Request failed:', {
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        page,
+        limit: 50
+      });
+
+      // Try to get error details from response
+      let errorMessage = `Failed to fetch data: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.details || errorMessage;
+      } catch (e) {
+        // If we can't parse error JSON, use status text
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+
+    // Enhanced response validation and logging
+    console.log('📥 Raw API Response received:', {
+      responseType: typeof data,
+      hasMentions: !!data?.mentions,
+      mentionsType: typeof data?.mentions,
+      mentionsLength: Array.isArray(data?.mentions) ? data.mentions.length : 'not array',
+      hasMetrics: !!data?.metrics,
+      metricsType: typeof data?.metrics,
+      metricsKeys: data?.metrics ? Object.keys(data.metrics) : [],
+      hasMeta: !!data?.meta,
+      metaKeys: data?.meta ? Object.keys(data.meta) : []
+    });
+
+    // Log metrics specifically
+    if (data?.metrics) {
+      console.log('📊 Metrics in response:', {
+        totalMentions: data.metrics.totalMentions,
+        totalReach: data.metrics.totalReach,
+        totalInteractions: data.metrics.totalInteractions,
+        avgEngagement: data.metrics.avgEngagement,
+        avgConfidence: data.metrics.avgConfidence
+      });
+    } else {
+      console.warn('⚠️ No metrics found in API response!');
+    }
+
+    // Validate response structure
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid response format: Expected object');
+    }
+
+    if (!Array.isArray(data.mentions)) {
+      throw new Error('Invalid response format: Expected mentions array');
+    }
+
+    if (page === 1) {
+      console.log('✅ Successfully fetched mentions:', {
+        totalCount: data.meta?.pagination?.total || 'unknown',
+        currentPage: page,
+        returnedCount: data.mentions.length,
+        filters,
+        metricsVerified: !!data?.metrics
+      });
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in fetchPublicMentions:', {
+      error: error.message,
+      url,
+      page,
+      filters
+    });
+    throw error;
+  }
 };
 
 const fetchMentions = async (filters) => {
@@ -100,20 +187,54 @@ const fetchCacheStats = async () => {
 
 // Custom hooks
 export const usePublicMentions = (filters, options = {}) => {
+  const queryKey = queryKeys.publicMentions(filters);
+  console.log('🔍 usePublicMentions called with:', filters);
+  console.log('🔍 Generated query key:', queryKey);
+  console.log('🔍 Enabled condition:', !!filters && filters.days > 0);
+
   return useQuery({
-    queryKey: queryKeys.publicMentions(filters),
-    queryFn: () => fetchPublicMentions(filters),
-    enabled: !!filters,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    queryKey,
+    queryFn: () => {
+      console.log('🚀 fetchPublicMentions called with:', filters);
+      return fetchPublicMentions(filters);
+    },
+    enabled: !!filters && filters.days > 0, // More specific enabled condition
+    staleTime: 0, // Force refetch every time for debugging
+    cacheTime: 1000, // Very short cache time for debugging
+    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnWindowFocus: false,
+    onSuccess: (data) => {
+      console.log('✅ usePublicMentions SUCCESS - received data:', {
+        hasData: !!data,
+        hasMetrics: !!data?.metrics,
+        metricsKeys: data?.metrics ? Object.keys(data.metrics) : 'none',
+        totalMentions: data?.metrics?.totalMentions,
+        totalReach: data?.metrics?.totalReach,
+        totalInteractions: data?.metrics?.totalInteractions,
+        avgEngagement: data?.metrics?.avgEngagement,
+        mentionsCount: data?.mentions?.length,
+        meta: data?.meta
+      });
+    },
+    onError: (error) => {
+      console.error('❌ usePublicMentions ERROR:', error);
+    },
     ...options,
   });
 };
 
 // Infinite query for pagination
 export const useInfinitePublicMentions = (filters, options = {}) => {
+  console.log('🔄 useInfinitePublicMentions called with:', filters);
+  const queryKey = queryKeys.publicMentionsInfinite(filters);
+  console.log('🔄 Generated infinite query key:', queryKey);
+
   return useInfiniteQuery({
-    queryKey: queryKeys.publicMentions(filters),
-    queryFn: ({ pageParam = 1 }) => fetchPublicMentions(filters, pageParam),
+    queryKey,
+    queryFn: ({ pageParam = 1 }) => {
+      console.log('🚀 fetchPublicMentions (infinite) called with:', filters, 'page:', pageParam);
+      return fetchPublicMentions(filters, pageParam);
+    },
     enabled: !!filters,
     getNextPageParam: (lastPage) => {
       if (lastPage?.meta?.pagination?.hasNextPage) {

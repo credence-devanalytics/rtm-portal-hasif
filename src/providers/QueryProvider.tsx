@@ -25,6 +25,14 @@ export default function QueryProvider({ children }) {
       })
   );
 
+  // Add global debugging function to clear cache
+  if (typeof window !== 'undefined') {
+    (window as any).clearReactQueryCache = () => {
+      queryClient.clear();
+      console.log('🧹 React Query cache cleared');
+    };
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}

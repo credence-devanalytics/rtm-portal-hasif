@@ -34,7 +34,7 @@ export async function GET(request: Request) {
             .from(mentionsClassify)
             .where(and(...whereConditions))
             .orderBy(desc(mentionsClassify.inserttime))
-            .limit(parseInt(filters.limit) || 20000),
+            .limit(Math.min(parseInt(filters.limit) || 50, 1000)), // Default 50, max 1000
            
           // 2. Get aggregated metrics
           db
@@ -108,7 +108,7 @@ export async function GET(request: Request) {
         
         const response = {
           // Raw data for detailed analysis (limited for performance)
-          mentions: mentions.slice(0, 10000), // Limit raw data in cached response
+          mentions: mentions.slice(0, Math.min(parseInt(filters.limit) || 50, 1000)), // Use requested limit, capped at 1000
           
           // Aggregated metrics
           metrics: {
@@ -156,7 +156,7 @@ export async function GET(request: Request) {
             queryDate: new Date().toISOString(),
             filters,
             cached: true,
-            dataLimited: mentions.length >= 10000
+            dataLimited: mentions.length >= (parseInt(filters.limit) || 50)
           }
         };
         

@@ -237,7 +237,7 @@ export function createFiltersFromParams(searchParams) {
     fromDate: searchParams.get('from') || null,
     toDate: searchParams.get('to') || null,
     sentiment: searchParams.get('sentiment') || 'all',
-    limit: searchParams.get('limit') || '10000'
+    limit: searchParams.get('limit') || '50'
   };
 }
 

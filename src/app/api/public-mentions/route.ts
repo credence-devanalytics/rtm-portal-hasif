@@ -50,7 +50,7 @@ export async function GET(request: Request) {
     const sentiment = searchParams.get('sentiment');
     const topic = searchParams.get('topic');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20000');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000); // Default 50, max 1000
     const offset = (page - 1) * limit;
     
     // Calculate date filter
@@ -64,6 +64,15 @@ export async function GET(request: Request) {
     console.log('   Sentiment filter:', sentiment || 'all');
     console.log('   Topic filter:', topic || 'all');
     console.log('   Pagination:', { page, limit, offset });
+
+    // Validate pagination parameters
+    if (limit > 1000) {
+      console.warn('⚠️ Limit parameter exceeds maximum, capping at 1000');
+    }
+    if (page < 1) {
+      console.warn('⚠️ Invalid page parameter, defaulting to 1');
+      page = 1;
+    }
     
     let mentions = [];
     let metrics = {};
@@ -391,10 +400,15 @@ export async function GET(request: Request) {
       }
     };
     
+    // Check response size before finalizing
+    const responseSize = JSON.stringify(mentions).length;
+    const responseSizeKB = Math.round(responseSize / 1024);
+    const responseSizeMB = Math.round(responseSize / (1024 * 1024));
+
     console.log(`Public Mentions API: ${usingLocalData ? 'Using local data' : 'Using database'} - Processed ${mentions.length} mentions for filters:`, {
       days,
       platform: platform || 'all',
-      sentiment: sentiment || 'all', 
+      sentiment: sentiment || 'all',
       topic: topic || 'all',
       totalInDB: parseInt(totalCount.count),
       currentPage: page,
@@ -402,14 +416,17 @@ export async function GET(request: Request) {
       pageSize: limit,
       returnedRecords: mentions.length,
       dateRange: `${cutoffDate.toISOString()} to now`,
-      responseSizeKB: Math.round(JSON.stringify(mentions).length / 1024),
+      responseSizeKB: responseSizeKB,
+      responseSizeMB: responseSizeMB,
       dataSource: usingLocalData ? 'LOCAL_JSON' : 'DATABASE'
     });
-    
-    // Check if response is too large
-    const responseSize = JSON.stringify(mentions).length;
-    if (responseSize > 50 * 1024 * 1024) { // 50MB
-      console.warn('⚠️ Large response detected:', responseSize / (1024 * 1024), 'MB');
+
+    // Warn about large responses
+    if (responseSize > 10 * 1024 * 1024) { // 10MB
+      console.warn('⚠️ Large response detected:', responseSizeMB, 'MB - Consider reducing limit');
+    }
+    if (responseSizeKB > 1000) {
+      console.warn('⚠️ Response size exceeds 1MB:', responseSizeKB, 'KB');
     }
     
     return NextResponse.json(response);
