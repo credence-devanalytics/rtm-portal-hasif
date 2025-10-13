@@ -10,6 +10,7 @@ export const queryKeys = {
   platformDistribution: (filters) => ['platformDistribution', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
   timeSeries: (filters) => ['timeSeries', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
   topMentions: (filters) => ['topMentions', filters.days || 30, filters.platform || 'all', filters.sentiment || 'all', filters.topic || 'all'],
+  recommendations: ['recommendations'],
   cache: ['cache'],
 };
 
@@ -185,6 +186,22 @@ const fetchCacheStats = async () => {
   return response.json();
 };
 
+const fetchRecommendations = async () => {
+  const response = await fetch('/api/recommendations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.details || `Failed to fetch recommendations: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
 // Custom hooks
 export const usePublicMentions = (filters, options = {}) => {
   const queryKey = queryKeys.publicMentions(filters);
@@ -320,6 +337,18 @@ export const useCacheStats = (options = {}) => {
     queryFn: fetchCacheStats,
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: 60 * 1000, // Refetch every minute
+    ...options,
+  });
+};
+
+export const useRecommendations = (options = {}) => {
+  return useQuery({
+    queryKey: queryKeys.recommendations,
+    queryFn: fetchRecommendations,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    cacheTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchOnWindowFocus: false,
+    retry: 2, // Retry up to 2 times on failure
     ...options,
   });
 };
