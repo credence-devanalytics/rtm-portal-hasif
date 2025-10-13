@@ -30,6 +30,7 @@ import {
   sanitizeUrl,
   cn,
 } from "@/utils/mention-utils";
+import { PostDetailModal } from "./PostDetailModal";
 
 interface MentionCardProps {
   mention: {
@@ -57,7 +58,6 @@ interface MentionCardProps {
 export function MentionCard({ mention, className }: MentionCardProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [isImageError, setIsImageError] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   // Calculate derived values
   const platformConfig = getPlatformConfig(mention.type);
@@ -71,7 +71,7 @@ export function MentionCard({ mention, className }: MentionCardProps) {
 
   // Handle text truncation
   const shouldTruncate = mention.mention && mention.mention.length > 200;
-  const displayText = shouldTruncate && !isExpanded
+  const displayText = shouldTruncate
     ? truncateText(mention.mention, 200)
     : mention.mention;
 
@@ -173,13 +173,14 @@ export function MentionCard({ mention, className }: MentionCardProps) {
               {displayText}
             </p>
             {shouldTruncate && (
-              <Button
-                variant="link"
-                className="p-0 h-auto text-xs text-blue-600 hover:text-blue-800"
-                onClick={() => setIsExpanded(!isExpanded)}
-              >
-                {isExpanded ? "Show Less" : "Read More"}
-              </Button>
+              <PostDetailModal mention={mention}>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-xs text-blue-600 hover:text-blue-800"
+                >
+                  Read More
+                </Button>
+              </PostDetailModal>
             )}
           </div>
         )}
