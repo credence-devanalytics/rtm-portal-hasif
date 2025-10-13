@@ -23,6 +23,7 @@ import {
   Instagram,
   Linkedin,
   Youtube,
+  User,
 } from "lucide-react";
 import {
   SENTIMENT_OPTIONS,
@@ -54,6 +55,8 @@ const FilterControls = ({ filters, onFiltersChange, className }) => {
 
   // Get source icon
   const getSourceIcon = (source) => {
+    if (!source) return null;
+
     switch (source.toLowerCase()) {
       case "facebook":
         return <Facebook className="h-4 w-4" />;
@@ -140,6 +143,12 @@ const FilterControls = ({ filters, onFiltersChange, className }) => {
         sources: filters.sources.filter((s) => s !== value),
       };
       onFiltersChange(newFilters);
+    } else if (type === "author") {
+      const newFilters = {
+        ...filters,
+        authors: filters.authors.filter((a) => a !== value),
+      };
+      onFiltersChange(newFilters);
     } else if (type === "dateRange") {
       const newFilters = {
         ...filters,
@@ -196,6 +205,25 @@ const FilterControls = ({ filters, onFiltersChange, className }) => {
             </Badge>
           );
         })}
+
+        {/* Author filters */}
+        {filters.authors &&
+          filters.authors.map((author) => (
+            <Badge
+              key={author}
+              variant="outline"
+              className="gap-1 bg-indigo-100 text-indigo-800"
+            >
+              <User className="h-4 w-4" />
+              {author}
+              <button
+                onClick={() => removeFilter("author", author)}
+                className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
 
         {/* Date range filter */}
         {(filters.dateRange.from || filters.dateRange.to) && (

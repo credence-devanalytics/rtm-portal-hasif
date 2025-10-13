@@ -470,3 +470,12 @@ export const pbPopularPages = pgTable("pb_popular_pages", {
 	screenPageViews: integer("screenPageViews"),
 	activeUsers: integer("activeUsers"),
 });
+
+export const pberitaAudienceGender = pgTable("pberita_audience_gender", {
+	id: serial().primaryKey().notNull(),
+	userGender: varchar("usergender", { length: 20 }),
+	date: date(),
+	hour: text(),
+	activeUsers: integer("activeusers"),
+	newUsers: integer("newusers"),
+});

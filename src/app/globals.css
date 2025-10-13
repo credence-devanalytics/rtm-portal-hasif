@@ -18,7 +18,7 @@
 
 :root {
   --radius: 0.375rem;
-  --background: oklch(1.0000 0 0);
+  --background: oklch(1.0000 0 0); /* White background */
   --foreground: oklch(0.2686 0 0);
   --card: oklch(1.0000 0 0);
   --card-foreground: oklch(0.2686 0 0);
@@ -270,5 +270,14 @@ body {
   body {
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }

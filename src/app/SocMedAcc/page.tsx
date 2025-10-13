@@ -439,7 +439,7 @@ const RTMDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 max-w-7xl mx-auto bg-white min-h-screen">
         <Header />
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
@@ -455,7 +455,7 @@ const RTMDashboard = () => {
 
   if (dataError) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 max-w-7xl mx-auto bg-white min-h-screen">
         <Header />
         <Card className="text-center p-8">
           <CardHeader className="">
@@ -481,7 +481,7 @@ const RTMDashboard = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen">
       {/* Header with Controls */}
       <Header />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">

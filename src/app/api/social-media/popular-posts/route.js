@@ -21,7 +21,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { mentionsClassifyPublic } from '@/lib/schema';
-import { desc, gte, lte, and, sql, inArray, like } from 'drizzle-orm';
+import { desc, gte, lte, and, sql, inArray, like, or } from 'drizzle-orm';
 
 // Helper function to build WHERE conditions
 const buildWhereConditions = (filters) => {
@@ -49,8 +49,13 @@ const buildWhereConditions = (filters) => {
     if (sourceConditions.length === 1) {
       conditions.push(sourceConditions[0]);
     } else {
-      conditions.push(sql`(${sourceConditions.join(' OR ')})`);
+      conditions.push(or(...sourceConditions));
     }
+  }
+
+  // Author filters
+  if (filters.authors && filters.authors.length > 0) {
+    conditions.push(inArray(mentionsClassifyPublic.author, filters.authors));
   }
 
   return conditions;
@@ -63,6 +68,7 @@ export async function GET(request) {
     // Extract filter parameters
     const sentimentsParam = searchParams.get('sentiments');
     const sourcesParam = searchParams.get('sources');
+    const authorsParam = searchParams.get('authors');
     const dateFromParam = searchParams.get('date_from');
     const dateToParam = searchParams.get('date_to');
     const limit = parseInt(searchParams.get('limit')) || 20;
@@ -72,6 +78,7 @@ export async function GET(request) {
     const filters = {
       sentiments: sentimentsParam ? sentimentsParam.split(',') : [],
       sources: sourcesParam ? sourcesParam.split(',') : [],
+      authors: authorsParam ? authorsParam.split(',') : [],
       dateRange: {
         from: dateFromParam,
         to: dateToParam
@@ -96,22 +103,30 @@ export async function GET(request) {
     const allConditions = [...baseConditions, ...whereConditions];
 
     try {
-      // Determine sort order
+      // Determine sort order based on the sortBy parameter
       let orderByClause;
       switch (sortBy) {
         case 'interactions':
+          // Sort by total interactions (likes + shares + comments)
           orderByClause = desc(sql`(COALESCE(${mentionsClassifyPublic.likecount}, 0) + COALESCE(${mentionsClassifyPublic.sharecount}, 0) + COALESCE(${mentionsClassifyPublic.commentcount}, 0))`);
+          console.log('📊 Sorting by interactions');
           break;
         case 'date':
+          // Sort by insertion time (most recent first)
           orderByClause = desc(mentionsClassifyPublic.inserttime);
+          console.log('📊 Sorting by date');
           break;
         case 'reach':
         default:
+          // Sort by reach (default)
           orderByClause = desc(mentionsClassifyPublic.reach);
+          console.log('📊 Sorting by reach');
           break;
       }
 
-      // Get popular posts
+      console.log('🔍 Executing database query with sort:', sortBy);
+
+      // Get popular posts with dynamic sorting
       const popularPosts = await db
         .select({
           id: mentionsClassifyPublic.id,

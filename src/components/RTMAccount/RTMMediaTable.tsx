@@ -6,6 +6,9 @@ import {
   MessageSquare,
   ChevronDown,
   ChevronUp,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 const RTMMediaTable = ({
@@ -17,6 +20,49 @@ const RTMMediaTable = ({
   const [currentTab, setCurrentTab] = useState("overall");
   // State to track whether to show all radio channels or just top 5
   const [showAllRadioChannels, setShowAllRadioChannels] = useState(false);
+  // State to track sorting
+  const [sortBy, setSortBy] = useState(null); // 'posts', 'reach', 'interactions', 'groupname'
+  const [sortOrder, setSortOrder] = useState("desc"); // 'asc' or 'desc'
+
+  // Radio channel groups mapping
+  const radioChannelGroups = {
+    "Radio Nasional": ["NASIONALfm", "MUTIARAfm", "Aifm"],
+    "Radio Daerah": [
+      "JOHORfm",
+      "KEDAHfm",
+      "KELANTANfm",
+      "SABAHfm",
+      "PERAKfm",
+      "PAHANGfm",
+      "SELANGORfm",
+      "TERENGGANUfm",
+      "NEGERIfm",
+      "MELAKAfm",
+      "BINTULUfm",
+      "KENINGAUfm",
+      "LABUANfm",
+      "LANGKAWIfm",
+      "LIMBANGfm",
+      "MIRIfm",
+      "SANDAKANfm",
+      "SIBUfm",
+      "SRI AMANfm",
+      "WAIfm (BIDAYUH)",
+    ],
+    "Radio Musik": ["TRAXXfm", "ASYIKfm"],
+    "Radio Klasik": ["RADIO KLASIK", "MINNALfm", "SPPR"],
+  };
+
+  // Function to get the group name for a radio channel
+  const getRadioChannelGroup = (channelName) => {
+    for (const [groupName, channels] of Object.entries(radioChannelGroups)) {
+      if (channels.includes(channelName)) {
+        return groupName;
+      }
+    }
+    return null;
+  };
+
   // Channel mapping based on your requirements
   const channelMapping = {
     Berita: ["Berita BES"],
@@ -66,17 +112,34 @@ const RTMMediaTable = ({
     if (selectedTab !== "radio") {
       setShowAllRadioChannels(false);
     }
+    // Reset sorting when tab changes
+    setSortBy(null);
+    setSortOrder("desc");
   }, [selectedTab]);
+
+  // Handle sorting
+  const handleSort = (sortType) => {
+    if (sortBy === sortType) {
+      // Toggle sort order if clicking the same column
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Set new sort column and default to descending
+      setSortBy(sortType);
+      setSortOrder("desc");
+    }
+  };
 
   // Process data based on current tab
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
 
+    let result = [];
+
     if (currentTab === "overall") {
       // Show unit-level data (Official Account, TV, Berita, Radio)
       const units = ["Official", "TV", "Berita", "Radio"];
 
-      return units.map((unit) => {
+      result = units.map((unit) => {
         let filteredData = [];
 
         if (unit === "Official") {
@@ -137,13 +200,7 @@ const RTMMediaTable = ({
           return [];
       }
 
-      // For radio channels, limit to top 5 unless showing all
-      const channelsToProcess =
-        currentTab === "radio" && !showAllRadioChannels
-          ? channels.slice(0, 5)
-          : channels;
-
-      return channelsToProcess.map((channel) => {
+      result = channels.map((channel) => {
         // Filter data by unit and try to match channel name in author or other fields
         const filteredData = data.filter((item) => {
           if (currentTab === "official") {
@@ -175,13 +232,57 @@ const RTMMediaTable = ({
           totalInteractions,
           overallTotal,
           data: filteredData,
+          groupName:
+            currentTab === "radio" ? getRadioChannelGroup(channel) : null,
         };
       });
     }
+
+    // Apply sorting
+    if (sortBy && result.length > 0) {
+      result.sort((a, b) => {
+        let compareValue = 0;
+
+        switch (sortBy) {
+          case "posts":
+            compareValue = a.totalPosts - b.totalPosts;
+            break;
+          case "reach":
+            compareValue = a.totalReach - b.totalReach;
+            break;
+          case "interactions":
+            compareValue = a.totalInteractions - b.totalInteractions;
+            break;
+          case "groupname":
+            // Sort by group name (only for radio channels)
+            if (a.groupName && b.groupName) {
+              compareValue = a.groupName.localeCompare(b.groupName);
+            } else if (a.groupName) {
+              compareValue = -1;
+            } else if (b.groupName) {
+              compareValue = 1;
+            }
+            break;
+          default:
+            compareValue = 0;
+        }
+
+        return sortOrder === "asc" ? compareValue : -compareValue;
+      });
+    }
+
+    // For radio channels, limit to top 5 unless showing all (after sorting)
+    if (currentTab === "radio" && !showAllRadioChannels && result.length > 5) {
+      result = result.slice(0, 5);
+    }
+
+    return result;
   }, [
     data,
     currentTab,
     showAllRadioChannels,
+    sortBy,
+    sortOrder,
     channelMapping.Official,
     channelMapping.TV,
     channelMapping.Berita,
@@ -269,57 +370,139 @@ const RTMMediaTable = ({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 w-1/4">
-                {getHeaderTitle()}
+                <div className="flex items-center gap-2">
+                  {getHeaderTitle()}
+                  {currentTab === "radio" && (
+                    <button
+                      onClick={() => handleSort("groupname")}
+                      className="ml-2 p-1 hover:bg-gray-200 rounded transition-colors"
+                      title="Sort by Group Name"
+                    >
+                      {sortBy === "groupname" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="h-4 w-4 text-gray-700" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4 text-gray-700" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  )}
+                </div>
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
-                <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => handleSort("posts")}
+                  className="flex items-center justify-center gap-2 w-full hover:bg-gray-100 rounded py-1 transition-colors"
+                  title="Sort by Total Posts"
+                >
                   <MessageSquare className="h-4 w-4 text-blue-600" />
                   Total Posts
-                </div>
+                  {sortBy === "posts" ? (
+                    sortOrder === "asc" ? (
+                      <ArrowUp className="h-4 w-4 text-gray-700" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4 text-gray-700" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
-                <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => handleSort("reach")}
+                  className="flex items-center justify-center gap-2 w-full hover:bg-gray-100 rounded py-1 transition-colors"
+                  title="Sort by Total Reach"
+                >
                   <Users className="h-4 w-4 text-green-600" />
                   Total Reach
-                </div>
+                  {sortBy === "reach" ? (
+                    sortOrder === "asc" ? (
+                      <ArrowUp className="h-4 w-4 text-gray-700" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4 text-gray-700" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
-                <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => handleSort("interactions")}
+                  className="flex items-center justify-center gap-2 w-full hover:bg-gray-100 rounded py-1 transition-colors"
+                  title="Sort by Total Interactions"
+                >
                   <TrendingUp className="h-4 w-4 text-purple-600" />
                   Total Interactions
-                </div>
+                  {sortBy === "interactions" ? (
+                    sortOrder === "asc" ? (
+                      <ArrowUp className="h-4 w-4 text-gray-700" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4 text-gray-700" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {processedData.map((row, index) => (
-              <tr
-                key={row.name}
-                className="hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => handleRowClick(row)}
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <div className="font-medium text-gray-900">{row.name}</div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="text-sm font-medium text-gray-900">
-                    {formatNumber(row.totalPosts)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="text-sm font-medium text-green-600">
-                    {formatNumber(row.totalReach)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="text-sm font-medium text-purple-600">
-                    {formatNumber(row.totalInteractions)}
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {processedData.map((row, index) => {
+              const isRadioChannel = currentTab === "radio";
+              const radioGroup = isRadioChannel
+                ? getRadioChannelGroup(row.name)
+                : null;
+
+              return (
+                <tr
+                  key={row.name}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => handleRowClick(row)}
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-gray-900">
+                        {row.name}
+                      </div>
+                      {radioGroup && (
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            radioGroup === "Radio Nasional"
+                              ? "bg-blue-100 text-blue-800"
+                              : radioGroup === "Radio Daerah"
+                              ? "bg-green-100 text-green-800"
+                              : radioGroup === "Radio Musik"
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-orange-100 text-orange-800"
+                          }`}
+                        >
+                          {radioGroup}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-sm font-medium text-gray-900">
+                      {formatNumber(row.totalPosts)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-sm font-medium text-green-600">
+                      {formatNumber(row.totalReach)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-sm font-medium text-purple-600">
+                      {formatNumber(row.totalInteractions)}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {/* Empty placeholder rows to maintain consistent height */}
             {Array.from({
               length: Math.max(
