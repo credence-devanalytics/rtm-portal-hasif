@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
 	NavigationMenu,
 	NavigationMenuContent,
@@ -18,6 +19,7 @@ import MedinaLogo from "./MedinaLogo";
 export default function Header() {
 	const [scrolled, setScrolled] = useState(false);
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+	const pathname = usePathname();
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -59,7 +61,11 @@ export default function Header() {
 				<div className="flex justify-between items-center h-16">
 					{/* Logo */}
 					<div className="flex-shrink-0">
-						<MedinaLogo size="sm" />
+						{pathname !== "/" ? (
+							<MedinaLogo size="sm" />
+						) : (
+							<div className="w-10 h-10" />
+						)}
 					</div>
 
 					{/* Desktop Navigation */}
