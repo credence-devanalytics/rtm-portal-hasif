@@ -37,9 +37,8 @@ export default function Header() {
 	];
 
 	const aiItems = [
-		{ name: "Social Media", href: "/ai/social-media" },
-		{ name: "Recommendations", href: "/ai/recommendations" },
-		{ name: "Forecasting", href: "/ai/forecasting" },
+		{ name: "Social Media", href: "/ai/social-media/chat" },
+		{ name: "Marketing", href: "/ai/marketing/chat" },
 	];
 
 	const mainNavItems = [
