@@ -52,8 +52,8 @@ export default function Header() {
 		<header
 			className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
 				scrolled
-					? "bg-white/20 backdrop-blur-xl border-white/20 shadow-sm"
-					: "bg-white/10 backdrop-blur-lg border-white/10"
+					? "bg-white/30 backdrop-blur-xl border border-gray-200/30 shadow-lg"
+					: "bg-white/15 backdrop-blur-xl border border-gray-200/20 shadow-md"
 			}`}
 		>
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -86,7 +86,7 @@ export default function Header() {
 									Dashboards
 								</NavigationMenuTrigger>
 								<NavigationMenuContent>
-									<div className="grid w-[200px] gap-1 p-2 bg-white/5 backdrop-blur-xl rounded-lg border border-white/20 ">
+									<div className="grid w-[200px] gap-1 p-2 bg-white/40 backdrop-blur-xl rounded-lg border border-gray-200/40 shadow-lg ">
 										{dashboardItems.map((item) => (
 											<NavigationMenuLink
 												key={item.name}
@@ -108,7 +108,7 @@ export default function Header() {
 									AI
 								</NavigationMenuTrigger>
 								<NavigationMenuContent>
-									<div className="grid w-[200px] gap-1 p-2 bg-white/5 backdrop-blur-xl rounded-lg border border-white/20 ">
+									<div className="grid w-[200px] gap-1 p-2 bg-white/40 backdrop-blur-xl rounded-lg border border-gray-200/40 shadow-lg ">
 										{aiItems.map((item) => (
 											<NavigationMenuLink
 												key={item.name}
@@ -154,7 +154,7 @@ export default function Header() {
 						</SheetTrigger>
 						<SheetContent
 							side="right"
-							className="w-[300px] sm:w-[400px] bg-white/10 backdrop-blur-xl border-white/20"
+							className="w-[300px] sm:w-[400px] bg-white/40 backdrop-blur-xl border-gray-200/40 shadow-lg"
 						>
 							<nav className="flex flex-col gap-4 mt-8">
 								{/* Home */}

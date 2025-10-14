@@ -16,7 +16,7 @@ export default function ForecastingPage() {
 	} = useTop10ChannelsForecasting(selectedCategory);
 
 	return (
-		<div className="pt-18 px-4 pb-8">
+		<div className="pt-2 px-4 pb-8">
 			<div className="max-w-7xl mx-auto">
 				<div className="mb-8">
 					<h1 className="text-3xl font-bold font-sans text-gray-900 mb-2">
