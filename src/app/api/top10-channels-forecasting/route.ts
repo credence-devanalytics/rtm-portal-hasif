@@ -3,9 +3,13 @@ import { db } from "@/index";
 import { marketingChannelByYear } from "@/lib/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: Request) {
 	try {
 		console.log("Top 10 Channels Forecasting API called");
+
+		// Get category from query params
+		const { searchParams } = new URL(request.url);
+		const category = searchParams.get('category'); // "TV", "RADIO", "BES", or null for all
 
 		// Get all report titles that contain channel data
 		const reportTitles = [
@@ -105,9 +109,19 @@ export async function GET() {
 			});
 		});
 
-		// Sort by 2024 revenue and take top 10
-		const top10Channels = channelForecasts
-			.sort((a, b) => b.data.historical[2] - a.data.historical[2])
+		// Exclude main aggregators (TV, RADIO, BES) and only keep sub-channels
+		const subChannels = channelForecasts.filter(
+			(item) => !["TV", "RADIO", "BES"].includes(item.channel)
+		);
+
+		// Filter by category if specified
+		const filteredChannels = category
+			? subChannels.filter((item) => item.category === category)
+			: subChannels;
+
+		// Sort channels by maximum forecast range (upper confidence bound) and take top 10
+		const top10Channels = filteredChannels
+			.sort((a, b) => b.data.confidenceInterval.upper - a.data.confidenceInterval.upper)
 			.slice(0, 10)
 			.map((item, index) => ({
 				rank: index + 1,
@@ -120,7 +134,7 @@ export async function GET() {
 				historical: item.data.historical,
 			}));
 
-		// Calculate summary statistics
+		// Calculate summary statistics - handle empty array case
 		const totalTop3Revenue = top10Channels
 			.slice(0, 3)
 			.reduce((sum, ch) => sum + ch.currentRevenue, 0);
@@ -128,7 +142,14 @@ export async function GET() {
 			(sum, ch) => sum + ch.currentRevenue,
 			0
 		);
-		const top3Concentration = (totalTop3Revenue / totalTop10Revenue) * 100;
+		const top3Concentration = top10Channels.length > 0 ? (totalTop3Revenue / totalTop10Revenue) * 100 : 0;
+
+		// Calculate all channels average for reference
+		const totalAllChannelsRevenue = channelForecasts.reduce(
+			(sum, ch) => sum + ch.data.historical[2],
+			0
+		);
+		const averageAllChannelsRevenue = totalAllChannelsRevenue / channelForecasts.length;
 
 		const response = {
 			success: true,
@@ -145,10 +166,17 @@ export async function GET() {
 					totalTop10Revenue,
 					top3Concentration,
 					averageGrowthRate:
-						top10Channels.reduce((sum, ch) => sum + ch.growthRate, 0) / 10,
-					highestGrowthChannel: top10Channels.reduce((max, ch) =>
-						ch.growthRate > max.growthRate ? ch : max
-					),
+						top10Channels.length > 0
+							? top10Channels.reduce((sum, ch) => sum + ch.growthRate, 0) / top10Channels.length
+							: 0,
+					highestGrowthChannel: top10Channels.length > 0
+						? top10Channels.reduce((max, ch) =>
+								ch.growthRate > max.growthRate ? ch : max
+						  )
+						: null,
+					// Add average for all channels
+					averageAllChannelsRevenue,
+					totalAllChannelsRevenue,
 				},
 			},
 		};

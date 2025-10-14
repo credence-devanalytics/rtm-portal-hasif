@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import ForecastingChart from "@/components/Marketing/ForecastingChart";
 import SeasonalRevenueCalendar from "@/components/Marketing/SeasonalRevenueCalendar";
 import Top10ChannelsChart from "@/components/Marketing/Top10ChannelsChart";
@@ -8,11 +8,12 @@ import { useTop10ChannelsForecasting } from "@/hooks/useTop10ChannelsForecasting
 
 export default function ForecastingPage() {
 	const { data, isLoading, error } = useMarketingForecasting();
+	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 	const {
 		data: top10Data,
 		isLoading: top10Loading,
 		error: top10Error
-	} = useTop10ChannelsForecasting();
+	} = useTop10ChannelsForecasting(selectedCategory);
 
 	return (
 		<div className="pt-18 px-4 pb-8">
@@ -39,6 +40,8 @@ export default function ForecastingPage() {
 						data={top10Data?.data}
 						isLoading={top10Loading}
 						error={top10Error?.message}
+						selectedCategory={selectedCategory}
+						onCategoryChange={setSelectedCategory}
 					/>
 
 					{/* Seasonal Revenue Calendar */}

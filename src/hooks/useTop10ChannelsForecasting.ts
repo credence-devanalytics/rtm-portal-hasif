@@ -27,7 +27,9 @@ export interface Top10ChannelsData {
 		totalTop10Revenue: number;
 		top3Concentration: number;
 		averageGrowthRate: number;
-		highestGrowthChannel: Top10ChannelData;
+		highestGrowthChannel: Top10ChannelData | null;
+		averageAllChannelsRevenue: number;
+		totalAllChannelsRevenue: number;
 	};
 }
 
@@ -38,11 +40,15 @@ export interface Top10ChannelsApiResponse {
 	details?: string;
 }
 
-export const useTop10ChannelsForecasting = () => {
+export const useTop10ChannelsForecasting = (category?: string | null) => {
 	return useQuery<Top10ChannelsApiResponse>({
-		queryKey: ['top10-channels-forecasting'],
+		queryKey: ['top10-channels-forecasting', category],
 		queryFn: async (): Promise<Top10ChannelsApiResponse> => {
-			const response = await fetch('/api/top10-channels-forecasting');
+			const url = category
+				? `/api/top10-channels-forecasting?category=${category}`
+				: '/api/top10-channels-forecasting';
+
+			const response = await fetch(url);
 
 			if (!response.ok) {
 				throw new Error(`Failed to fetch top 10 channels forecasting data: ${response.statusText}`);
