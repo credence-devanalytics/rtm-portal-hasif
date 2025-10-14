@@ -9,9 +9,6 @@ const MeDINALandingPage: React.FC = () => {
 
 			<div className="absolute inset-0 opacity-30" />
 			<Hero />
-
-			{/* Content */}
-			<Header />
 		</div>
 	);
 };
