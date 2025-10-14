@@ -4,6 +4,7 @@ import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 export const queryKeys = {
 	mentions: ["mentions"],
 	publicMentions: (filters) => ["publicMentions", filters],
+	publicMentionsInfinite: (filters) => ["publicMentionsInfinite", filters],
 	dashboardSummary: (filters) => ["dashboardSummary", filters],
 	sentimentDistribution: (filters) => ["sentimentDistribution", filters],
 	platformDistribution: (filters) => ["platformDistribution", filters],
@@ -299,7 +300,7 @@ export const useInfinitePublicMentions = (filters, options = {}) => {
 	console.log("🔄 Generated infinite query key:", queryKey);
 
 	return useInfiniteQuery({
-		queryKey: queryKeys.publicMentions(filters),
+		queryKey,
 		queryFn: ({ pageParam = 1 }) =>
 			fetchPublicMentions(filters, pageParam as number),
 		enabled: !!filters,

@@ -17,6 +17,9 @@ COPY package.json pnpm-lock.yaml* ./
 # Install dependencies with frozen lockfile and ignore build scripts for faster installs
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
+# Set environment variables for build
+ENV DATABASE_URL=postgresql://root:%23M3dinaCredence%2125@postgres:5432/rtmmedina
+
 # Copy the rest of the application code (excluding node_modules via .dockerignore)
 COPY . .
 
