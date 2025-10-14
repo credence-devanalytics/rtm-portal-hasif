@@ -12,7 +12,7 @@ export default function ForecastingPage() {
 	const {
 		data: top10Data,
 		isLoading: top10Loading,
-		error: top10Error
+		error: top10Error,
 	} = useTop10ChannelsForecasting(selectedCategory);
 
 	return (
@@ -20,10 +20,11 @@ export default function ForecastingPage() {
 			<div className="max-w-7xl mx-auto">
 				<div className="mb-8">
 					<h1 className="text-3xl font-bold font-sans text-gray-900 mb-2">
-						Marketing Revenue Forecasting
+						Marketing Forecasting
 					</h1>
 					<p className="text-gray-600 font-sans">
-						Analyze historical marketing channel performance and project future revenue trends
+						Analyze historical marketing channel performance and project future
+						revenue trends
 					</p>
 				</div>
 
