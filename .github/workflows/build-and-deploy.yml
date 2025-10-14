@@ -12,6 +12,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -54,22 +55,8 @@ jobs:
         build-args: |
           NEXT_TELEMETRY_DISABLED=1
           NODE_OPTIONS=--max-old-space-size=4096
-        no-cache: false
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/prod/v-1.0.0'
-
-    steps:
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USER }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        script: |
-          cd /path/to/your/app
-          docker-compose -f docker-compose.registry.yml pull
-          docker-compose -f docker-compose.registry.yml up -d
-          docker system prune -f
+    - name: Trigger Coolify Deployment
+      run: |
+        curl -X GET "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
+          -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
