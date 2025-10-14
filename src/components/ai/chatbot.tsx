@@ -28,6 +28,16 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ai/app-sidebar";
 import { Button } from "@/components/ui/button";
 
+// Type for action buttons
+export interface ActionButton {
+	id: string;
+	label: React.ReactNode;
+	onClick: () => void;
+	variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+	disabled?: boolean;
+	tooltip?: string;
+}
+
 // Type for tool message components
 export type ToolMessageComponents<T extends UIMessage<any, any>> = {
 	[K in Extract<T["parts"][number]["type"], `data-${string}`>]?: (
@@ -49,6 +59,7 @@ interface ChatBotProps<T extends UIMessage<any, any>> {
 	header?: React.ReactNode;
 	starters?: React.ReactNode;
 	toolMessageComponents?: ToolMessageComponents<T>;
+	actionButtons?: ActionButton[];
 	sidebar?: boolean;
 }
 
@@ -61,6 +72,7 @@ const ChatBotContent = <T extends UIMessage<any, any>>({
 	header,
 	starters,
 	toolMessageComponents,
+	actionButtons,
 }: Omit<ChatBotProps<T>, "sidebar">) => {
 	return (
 		<div className="max-w-9xl mx-auto relative size-full">
@@ -146,6 +158,18 @@ const ChatBotContent = <T extends UIMessage<any, any>>({
 					</PromptInputBody>
 					<PromptInputToolbar>
 						<PromptInputTools />
+						<div className="flex-1" />
+						{actionButtons?.map((button) => (
+							<Button
+								key={button.id}
+								variant={button.variant || "outline"}
+								onClick={button.onClick}
+								disabled={button.disabled}
+								title={button.tooltip}
+							>
+								{button.label}
+							</Button>
+						))}
 						<PromptInputSubmit
 							disabled={!input && !chatHook.status}
 							status={chatHook.status}
@@ -165,6 +189,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 	header,
 	starters,
 	toolMessageComponents,
+	actionButtons,
 	sidebar,
 }: ChatBotProps<T>) => {
 	if (sidebar) {
@@ -184,6 +209,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 							header={header}
 							starters={starters}
 							toolMessageComponents={toolMessageComponents}
+							actionButtons={actionButtons}
 						/>
 					</main>
 				</div>
@@ -200,6 +226,7 @@ const ChatBot = <T extends UIMessage<any, any>>({
 			header={header}
 			starters={starters}
 			toolMessageComponents={toolMessageComponents}
+			actionButtons={actionButtons}
 		/>
 	);
 };

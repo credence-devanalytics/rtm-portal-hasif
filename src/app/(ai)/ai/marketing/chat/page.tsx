@@ -18,6 +18,7 @@ const marketingStarters = [
 
 export default function AIPage() {
 	const [input, setInput] = useState("");
+	const [showModal, setShowModal] = useState(false);
 	const chatHook = useChat<MarketingMessage>({
 		transport: new DefaultChatTransport({
 			api: "/api/chat/marketing",
@@ -60,6 +61,17 @@ export default function AIPage() {
 				/>
 			}
 			starters={<Starters starters={marketingStarters} />}
+			actionButtons={[
+				{
+					id: "clear-chat",
+					label: "Clear",
+					onClick: () =>
+						chatHook.messages.length > 0 && chatHook.setMessages([]),
+					disabled: chatHook.messages.length === 0,
+					variant: "outline" as const,
+					tooltip: "Clear all messages",
+				},
+			]}
 			toolMessageComponents={
 				{
 					// "data-latestTopic": (message, part) => <LatestTopic message={message} part={part} />,
