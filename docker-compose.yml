@@ -1,4 +1,3 @@
-
 services:
   # PostgreSQL database
   postgres:
@@ -37,7 +36,6 @@ services:
       - .env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://root:%23M3dinaCredence%2125@postgres:5432/rtmmedina
     depends_on:
       postgres:
         condition: service_healthy
