@@ -18,6 +18,7 @@ import {
   ArrowDown,
   Minus,
   DollarSign,
+  ChartNoAxesCombined,
 } from "lucide-react";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -416,16 +417,7 @@ const HomepageDashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const PlatformCard = ({ platform }) => {
-    // Check if platform has any real data
-    const hasAnyData =
-      platform.hasData &&
-      ((platform.metrics.totalHours !== "No data" &&
-          platform.metrics.totalHours !== "N/A") ||
-        (platform.metrics.topChannel !== "No data" &&
-          platform.metrics.topChannel !== "N/A"));
-
-    // Helper functions for marketing change indicators
+  // Helper functions for marketing change indicators
     const getChangeIcon = (direction) => {
       switch (direction) {
         case "increase":
@@ -455,6 +447,16 @@ const HomepageDashboard = () => {
           return "text-gray-600";
       }
     };
+
+  const PlatformCard = ({ platform }) => {
+    // Check if platform has any real data
+    const hasAnyData =
+      platform.hasData &&
+      ((platform.metrics.totalHours !== "No data" &&
+          platform.metrics.totalHours !== "N/A") ||
+        (platform.metrics.topChannel !== "No data" &&
+          platform.metrics.topChannel !== "N/A"));
+
 
     // Default layout for other platforms
     const availableMetrics = [
@@ -500,14 +502,16 @@ const HomepageDashboard = () => {
       <Link href={platform.link} className="block group">
         <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className={`p-2 rounded-lg ${getIconBgColor(platform.id)}`}>
-                {platform.icon}
-              </div>
-              <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
-            </div>
             <CardTitle className="text-xl font-bold text-gray-900 mt-3">
-              {platform.name}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-row items-center space-x-3 gap-3">
+                  <div className={`p-2 rounded-lg ${getIconBgColor(platform.id)}`}>
+                    {platform.icon}
+                  </div>
+                  {platform.name}
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -546,11 +550,7 @@ const HomepageDashboard = () => {
                           metric.key === "topChannel" ? metric.value : undefined
                         }
                       >
-                        {metric.key === "topChannel" ? (
-                          <span className="text-sm">{metric.value}</span>
-                        ) : (
-                          metric.value
-                        )}
+                        {metric.value}
                       </div>
                     </div>
                   ))}
@@ -598,36 +598,185 @@ const HomepageDashboard = () => {
       data: radioMonthlyData,
       isLoading: radioLoading,
       error: radioError,
-    } = useRadioMonthlyData() || {radioError: true, data: {chartData: null, summary: null}};
-    const { chartData: tvChartData, summary: tvSummary } = tvMonthlyData.data;
-    const { summary, saluranMetrics } = marketingData.data;
+    } = useRadioMonthlyData();
+    const { chartData: tvChartData = null, summary: tvSummary = null } = tvMonthlyData?.data || {};
+    const { summary, saluranMetrics } = marketingData?.data || { summary: {}, saluranMetrics: [] };
 
-    const yearlyGrowth = () => {
+    console.log("Summary Saluran Metrics:", summary);
+    const YearlyGrowth = () => {
+      interface YearlyGrowthProps {
+        changeDirection: "increase" | "decrease";
+        currentValue: number;
+        formatted2022Value: string;
+        formattedChange: string;
+        formattedCurrentValue: string;
+        formattedPreviousValue: string;
+        percentageChange: number;
+        previousValue: number;
+        saluran: string;
+        year2022Value: number;
+      }
+      interface YearlyMetricsProps {
+        key: string;
+        label: string;
+        changeDirection: string;
+        percentageChange: number;
+        value: any;
+      }
+      const yoyMetrics: YearlyMetricsProps[] = saluranMetrics
+        ? saluranMetrics.map((item: YearlyGrowthProps) => ({
+          key: item.saluran,
+          label: item.saluran,
+          changeDirection: item.changeDirection,
+          percentageChange: item.percentageChange,
+          value: item.formattedCurrentValue,
+        }))
+      : [];
+        
+      const totalYoyMetrics: YearlyMetricsProps = {
+        key: "totalValue",
+        label: "Total Value",
+        changeDirection: summary?.overallDirection || "N/A",
+        percentageChange: summary?.overallChange || 0,
+        value: summary?.formattedTotalCurrent || "N/A",
+      };
+
       return (
-        <>
-          {/* Performance Table */}
-          <MarketingPerformanceTable data={saluranMetrics} />
-        </>
+        <Card className="h-full">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-row items-center space-x-3 gap-3">
+                  {/* <div className={`p-2 rounded-lg bg-red-100 text-red-700`}>
+                    <ChartNoAxesCombined className="h-8 w-8" />
+                  </div> */}
+                  Yearly Marketing Growth
+                </div>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 flex flex-col h-fit">
+            {/* Saluran Metrics Comparison */}
+            <div
+              className={`grid gap-3 grid-cols-3`}
+            >
+              {yoyMetrics.map((metric, index) => (
+                <div
+                  key={metric.key}
+                  className={`p-3 rounded-lg bg-gray-50 border border-gray-200`}
+                >
+                  <div className="flex justify-between space-x-2 mb-1">
+                    <span className="text-xs font-semibold text-gray-900">
+                      {metric.label}
+                    </span>
+                    <span>
+                      {metric.changeDirection !== "N/A" && (
+                        <span
+                          className={`inline-flex items-center space-x-1 text-xs font-medium ${getChangeColor(
+                            metric.changeDirection
+                          )}`}
+                        >
+                          {getChangeIcon(metric.changeDirection)}
+                          <span>{metric.percentageChange.toPrecision(3)}%</span>
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div
+                    className="text-lg font-bold text-gray-900 truncate"
+                    title={
+                      metric.key === "topChannel" ? metric.value : undefined
+                    }
+                  >
+                    {metric.key === "topChannel" ? (
+                      <span className="text-sm">{metric.value}</span>
+                    ) : (
+                      metric.value
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Total Metrics */}
+            <div
+              key={totalYoyMetrics.key}
+              className="p-3 rounded-lg bg-gray-50 border border-gray-200"
+            >
+              <div className="w-1/3 mx-auto">
+                <div className="flex justify-between space-x-2 mb-1">
+                  <span className="text-xs font-semibold text-gray-900">
+                    {totalYoyMetrics.label}
+                  </span>
+                  <span>
+                    {totalYoyMetrics.changeDirection !== "N/A" && (
+                      <span
+                        className={`inline-flex items-center space-x-1 text-xs font-medium ${getChangeColor(
+                          totalYoyMetrics.changeDirection
+                        )}`}
+                      >
+                        {getChangeIcon(totalYoyMetrics.changeDirection)}
+                        <span>{totalYoyMetrics.percentageChange}%</span>
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div
+                  className="text-lg font-bold text-gray-900 truncate text-center"
+                  title={totalYoyMetrics.key}
+                >
+                  {totalYoyMetrics.value}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )
     }
     
+    const RadioMonthlyCard = () => {
+      return (
+        !radioError ? (
+          <Card className="h-full">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+                <div className="flex items-center justify-between">
+                  Radio Monthly Performance
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 flex flex-col gap-6 h-full">
+              {/* Radio Charts Row */}
+              <RadioMonthlyPerformanceChart data={radioMonthlyData?.data} />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="p-4 bg-red-50 border border-red-200 rounded">
+            <p className="text-sm text-red-600">Failed to load Radio monthly performance data.</p>
+          </div>
+        )
+      )
+    };
+
     return (
-      <Link href="/Marketing" className="block group">
+      <Link href="/Marketing" className="block group h-full">
         <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
           <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-bold text-gray-900 mt-3">
             <div className="flex items-center justify-between">
-              <div className={`p-2 rounded-lg bg-red-100 text-red-700`}>
-                <DollarSign className="h-8 w-8" />
+              <div className="flex flex-row items-center space-x-3 gap-3">
+                <div className={`p-2 rounded-lg bg-red-100 text-red-700`}>
+                  <DollarSign className="h-8 w-8" />
+                </div>
+                Marketing Revenue
               </div>
               <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
             </div>
-            <CardTitle className="text-xl font-bold text-gray-900 mt-3">
-              Marketing Revenue
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 flex flex-col gap-6">
+          <CardContent className="space-y-4 flex flex-col gap-6 h-full">
             {/* TV Charts Row */}
-            <div className="grid gap-6 lg:grid-cols-1">
+            <div className="grid gap-6 lg:grid-cols-1 h-full">
               {!tvError 
               ? (<TVMonthlyPerformanceChart data={tvChartData} />)
               : (<div className="p-4 bg-red-50 border border-red-200 rounded">
@@ -636,16 +785,22 @@ const HomepageDashboard = () => {
               }
             </div>
             {/* Radio Charts Row */}
-            <div className="grid gap-6 lg:grid-cols-1">
-              {!radioError 
-              ? (<RadioMonthlyPerformanceChart data={radioMonthlyData?.data} />)
-              : (<div className="p-4 bg-red-50 border border-red-200 rounded">
-                <p className="text-sm text-red-600">Failed to load Radio monthly performance data.</p>
-                </div>)
-              }
+            <div className="grid gap-6 lg:grid-cols-1 h-full">
+              <RadioMonthlyCard />
             </div>
-            {/* Yearly Growth Table */}
-            {yearlyGrowth()}
+            {/* Yearly Growth Comparison */}
+            <div className="grid gap-6 lg:grid-cols-1 h-full">
+              {<YearlyGrowth />}
+            </div>
+            {/* Click Indicator */}
+                <div className="pt-2 border-t border-gray-200">
+                  <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700 transition-colors">
+                    <span className="text-xs font-medium">
+                      Click for details
+                    </span>
+                    <ExternalLink className="h-3 w-3" />
+                  </div>
+                </div>
           </CardContent>
         </Card>
       </Link>
@@ -664,17 +819,6 @@ const HomepageDashboard = () => {
           <p className="text-muted-foreground">
             Comprehensive analytics across 6 streaming platforms
           </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="202502">Feb 2025</option>
-            <option value="202501">Jan 2025</option>
-            <option value="202412">Dec 2024</option>
-          </select>
         </div>
       </div>
 
