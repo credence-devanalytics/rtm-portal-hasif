@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Astro API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      pre {
+        background: #f5f5f5;
+        padding: 15px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      button {
+        background: #0070f3;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background: #0051cc;
+      }
+      .metric {
+        background: #f0f9ff;
+        padding: 10px;
+        margin: 10px 0;
+        border-left: 4px solid #0070f3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Astro Rate & Reach API Test</h1>
+
+    <div class="section">
+      <h2>Test API</h2>
+      <button onclick="testAPI()">Fetch All Data</button>
+      <button onclick="testMetrics()">Calculate Metrics</button>
+      <div id="status"></div>
+    </div>
+
+    <div class="section">
+      <h2>Raw API Response</h2>
+      <pre id="rawResponse">Click "Fetch All Data" to see response...</pre>
+    </div>
+
+    <div class="section">
+      <h2>Calculated Metrics</h2>
+      <div id="metrics">Click "Calculate Metrics" to see results...</div>
+    </div>
+
+    <script>
+      async function testAPI() {
+        const statusDiv = document.getElementById("status");
+        const rawDiv = document.getElementById("rawResponse");
+
+        try {
+          statusDiv.textContent = "Fetching...";
+          statusDiv.style.color = "blue";
+
+          const response = await fetch("/api/astro-rate-reach");
+          const data = await response.json();
+
+          rawDiv.textContent = JSON.stringify(data, null, 2);
+
+          if (data.success) {
+            statusDiv.textContent = `✓ Success! Found ${data.data.length} records`;
+            statusDiv.style.color = "green";
+          } else {
+            statusDiv.textContent = "✗ API returned error";
+            statusDiv.style.color = "red";
+          }
+        } catch (error) {
+          statusDiv.textContent = `✗ Error: ${error.message}`;
+          statusDiv.style.color = "red";
+          rawDiv.textContent = error.stack;
+        }
+      }
+
+      async function testMetrics() {
+        const metricsDiv = document.getElementById("metrics");
+
+        try {
+          const response = await fetch("/api/astro-rate-reach");
+          const result = await response.json();
+
+          if (!result.success || !result.data || result.data.length === 0) {
+            metricsDiv.innerHTML =
+              '<p style="color: red;">No data available</p>';
+            return;
+          }
+
+          const records = result.data;
+
+          // Separate rating and reach records
+          const ratingRecords = records.filter(
+            (r) => r.metric_type === "rating"
+          );
+          const reachRecords = records.filter((r) => r.metric_type === "reach");
+
+          console.log("Rating records:", ratingRecords.length);
+          console.log("Reach records:", reachRecords.length);
+
+          // Calculate top rated channel
+          const topRated = ratingRecords.reduce(
+            (max, record) => (record.value > max.value ? record : max),
+            { channel: "No data", value: 0 }
+          );
+
+          // Calculate channel with most reach
+          const topReach = reachRecords.reduce(
+            (max, record) => (record.value > max.value ? record : max),
+            { channel: "No data", value: 0 }
+          );
+
+          // Calculate total reach
+          const totalReach = reachRecords.reduce(
+            (sum, record) => sum + (record.value || 0),
+            0
+          );
+
+          // Calculate lowest rating channel
+          const nonZeroRatings = ratingRecords.filter((r) => r.value > 0);
+          const lowestRated =
+            nonZeroRatings.length > 0
+              ? nonZeroRatings.reduce(
+                  (min, record) => (record.value < min.value ? record : min),
+                  nonZeroRatings[0]
+                )
+              : { channel: "No data", value: 0 };
+
+          metricsDiv.innerHTML = `
+                    <div class="metric">
+                        <strong>Top Rated Channel:</strong> ${
+                          topRated.channel
+                        } (${topRated.value})
+                    </div>
+                    <div class="metric">
+                        <strong>Top Reach Channel:</strong> ${
+                          topReach.channel
+                        } (${topReach.value.toLocaleString()})
+                    </div>
+                    <div class="metric">
+                        <strong>Total Reach:</strong> ${totalReach.toLocaleString()}
+                    </div>
+                    <div class="metric">
+                        <strong>Lowest Rating Channel:</strong> ${
+                          lowestRated.channel
+                        } (${lowestRated.value})
+                    </div>
+                    <div class="metric" style="background: #f0fdf4; border-left-color: #10b981;">
+                        <strong>Total Records:</strong> ${records.length}<br>
+                        <strong>Rating Records:</strong> ${
+                          ratingRecords.length
+                        }<br>
+                        <strong>Reach Records:</strong> ${reachRecords.length}
+                    </div>
+                `;
+        } catch (error) {
+          metricsDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+          console.error(error);
+        }
+      }
+    </script>
+  </body>
+</html>
