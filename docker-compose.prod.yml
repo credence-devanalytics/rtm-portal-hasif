@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # PostgreSQL database
   postgres:
@@ -21,11 +23,12 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # Next.js application
+  # Next.js application - optimized for production
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
       cache_from:
         - rtm-portal:latest
         - type=registry,ref=rtm-portal:buildcache
@@ -51,6 +54,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    # Add resource limits for better performance
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
 
 volumes:
   postgres_data:
