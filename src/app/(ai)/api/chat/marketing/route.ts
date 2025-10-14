@@ -93,6 +93,18 @@ export async function POST(req: Request) {
                             </use_case>
                             <action>Provides data-driven recommendations for Portal Berita audience engagement timing based on demographic analysis</action>
                         </tool>
+
+                        <tool name="getRTMKlikAudienceAnalysisTool">
+                            <use_case>Use when user asks about audience engagement timing, optimal times for content, or when to target specific demographics for RTMKlik platform. Examples:
+                            - "When is the best time to target young women on RTMKlik?"
+                            - "Peak engagement times for male 25-34 age group on RTMKlik"
+                            - "What days have highest RTMKlik traffic for all genders?"
+                            - "When should I publish content for young adults on RTMKlik?"
+                            - "Optimal timing for RTMKlik video/streaming content distribution"
+                            - "Best times to advertise on RTMKlik streaming platform"
+                            </use_case>
+                            <action>Provides data-driven recommendations for RTMKlik audience engagement timing based on demographic analysis for the streaming platform</action>
+                        </tool>
                     </tools>
                 </instructions>`,
 				messages: convertToModelMessages(messages),
@@ -158,6 +170,69 @@ export async function POST(req: Request) {
 
 							} catch (error) {
 								console.error('Portal Berita audience analysis tool error:', error);
+								return {
+									success: false,
+									error: error.message,
+									analysis: {
+										targetDemographic: 'Analysis failed',
+										recommendations: { bestTimes: [], peakDays: [], peakHours: [] },
+										insights: { trend: 'Unable to analyze due to error' }
+									}
+								};
+							}
+						},
+					}),
+
+					getRTMKlikAudienceAnalysisTool: tool({
+						description: "Get RTMKlik streaming platform audience engagement timing recommendations based on demographics analysis",
+						inputSchema: z.object({
+							gender: genderEnum
+								.optional()
+								.describe("Target gender: male, female, or all (default: all)"),
+							ageRange: ageRangeEnum
+								.optional()
+								.describe("Target age range: 18-24, 25-34, 35-44, 45-54, 55-64, or all (default: all)"),
+							dayFilter: dayFilterEnum
+								.optional()
+								.describe("Day filter: specific day name, weekdays, weekends, or all (default: all)"),
+						}),
+						execute: async ({ gender, ageRange, dayFilter }) => {
+							try {
+								// Build API URL with parameters
+								const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+								let apiUrl = `${baseUrl}/api/rtmklik-audience-joined?analysis=true`;
+
+								// Map 'all' to no filter (API will return all data)
+								if (gender && gender !== 'all') {
+									apiUrl += `&gender=${gender}`;
+								}
+
+								if (ageRange && ageRange !== 'all') {
+									apiUrl += `&ageRange=${ageRange}`;
+								}
+
+								if (dayFilter && dayFilter !== 'all') {
+									apiUrl += `&dayFilter=${dayFilter}`;
+								}
+
+								console.log('Calling RTMKlik audience analysis API:', apiUrl);
+
+								const response = await fetch(apiUrl);
+								if (!response.ok) {
+									throw new Error(`API call failed: ${response.status}`);
+								}
+
+								const data = await response.json();
+								console.log('RTMKlik audience analysis result:', data);
+
+								return {
+									success: true,
+									analysis: data.analysis,
+									rawData: data.rawData
+								};
+
+							} catch (error) {
+								console.error('RTMKlik audience analysis tool error:', error);
 								return {
 									success: false,
 									error: error.message,
