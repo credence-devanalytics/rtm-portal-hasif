@@ -6,7 +6,7 @@ set -e
 echo "🚀 Deploying from registry (no local build required)..."
 
 # Configuration
-REGISTRY="ghcr.io/your-username/rtm-portal"  # Update with your registry
+REGISTRY="ghcr.io/credence-devanalytics/rtm-portal-hasif"
 COMPOSE_FILE="docker-compose.registry.yml"
 
 echo "📥 Pulling latest images..."

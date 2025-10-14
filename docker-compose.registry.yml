@@ -25,7 +25,7 @@ services:
 
   # Next.js application - using pre-built image from registry
   app:
-    image: ghcr.io/your-username/rtm-portal:latest  # Update with your registry
+    image: ghcr.io/credence-devanalytics/rtm-portal-hasif:latest
     container_name: dashboard_app
     ports:
       - "3031:3031"

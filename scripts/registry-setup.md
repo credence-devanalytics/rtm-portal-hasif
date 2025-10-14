@@ -6,8 +6,8 @@
 echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
 
 # Push manually
-docker tag rtm-portal:latest ghcr.io/your-username/rtm-portal:latest
-docker push ghcr.io/your-username/rtm-portal:latest
+docker tag rtm-portal:latest ghcr.io/credence-devanalytics/rtm-portal-hasif:latest
+docker push ghcr.io/credence-devanalytics/rtm-portal-hasif:latest
 ```
 
 ## 2. Docker Hub (Free tier)
