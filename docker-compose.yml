@@ -23,15 +23,8 @@ services:
 
   # Next.js application
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      cache_from:
-        - rtm-portal:latest
-        - type=registry,ref=rtm-portal:buildcache
-      cache_to:
-        - type=registry,ref=rtm-portal:buildcache,mode=max
-    image: rtm-portal:latest
+    image: ghcr.io/credence-devanalytics/rtm-portal-hasif:latest
+    pull_policy: always
     container_name: dashboard_app
     ports:
       - "3031:3031"
