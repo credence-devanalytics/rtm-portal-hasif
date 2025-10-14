@@ -19,7 +19,8 @@
 		"db:migrate": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
-		"db:seed": "tsx scripts/seed.ts"
+		"db:seed": "tsx scripts/seed.ts",
+		"analyze:marketing": "tsx scripts/marketing-channel-analysis.ts"
 	},
 	"dependencies": {
 		"@ai-sdk/azure": "^2.0.42",
