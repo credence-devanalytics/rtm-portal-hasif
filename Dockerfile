@@ -25,8 +25,10 @@ ENV DATABASE_URL=postgresql://root:%23M3dinaCredence%2125@postgres:5432/rtmmedin
 COPY . .
 
 # Build the application with optimized settings
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+ARG NEXT_TELEMETRY_DISABLED=1
+ARG NODE_OPTIONS="--max-old-space-size=4096"
+ENV NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED}
+ENV NODE_OPTIONS=${NODE_OPTIONS}
 RUN pnpm run build
 
 # Production image, copy all the files and run next

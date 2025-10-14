@@ -1,4 +1,4 @@
-name: Build and Deploy to Production
+name: Simple Build and Deploy
 
 on:
   push:
@@ -12,6 +12,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30  # Add timeout
     permissions:
       contents: read
       packages: write
@@ -19,6 +20,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -29,6 +36,12 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build image locally (faster)
+      run: |
+        echo "Building locally before pushing..."
+        docker build -t temp-image .
+        echo "Local build successful!"
 
     - name: Extract metadata
       id: meta
@@ -51,25 +64,4 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: linux/amd64
-        build-args: |
-          NEXT_TELEMETRY_DISABLED=1
-          NODE_OPTIONS=--max-old-space-size=4096
-        no-cache: false
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/prod/v-1.0.0'
-
-    steps:
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USER }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        script: |
-          cd /path/to/your/app
-          docker-compose -f docker-compose.registry.yml pull
-          docker-compose -f docker-compose.registry.yml up -d
-          docker system prune -f
+        load: false
