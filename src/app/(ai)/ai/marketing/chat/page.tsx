@@ -5,10 +5,16 @@ import ChatBot from "@/components/ai/chatbot";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Header, Starters } from "@/components/ai/empty-state";
-import { conversationStarters } from "@/data/conversation-starters";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { MarketingMessage } from "../../../api/chat/marketing/route";
-import { CardUI } from "@/components/ai/card-ui";
+
+// Define Bahasa Malaysia conversation starters for audience analysis
+const marketingStarters = [
+	"Bila waktu terbaik untuk menyiarkan iklan kepada wanita muda di Portal Berita?",
+	"Apakah hari dan masa yang paling sesuai untuk mencapai audiens lelaki 25-34 tahun?",
+	"Analisis traffic tertinggi untuk semua kumpulan umur di RTMKlik?",
+	"Waktu puncak penggunaan RTMKlik untuk kandungan hiburan?",
+];
 
 export default function AIPage() {
 	const [input, setInput] = useState("");
@@ -53,7 +59,7 @@ export default function AIPage() {
 					description="Get insights about social media trends and conversations"
 				/>
 			}
-			starters={<Starters starters={conversationStarters} />}
+			starters={<Starters starters={marketingStarters} />}
 			toolMessageComponents={
 				{
 					// "data-latestTopic": (message, part) => <LatestTopic message={message} part={part} />,
