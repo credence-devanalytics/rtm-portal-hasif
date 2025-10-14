@@ -7,14 +7,14 @@ import { DefaultChatTransport } from "ai";
 import { Header, Starters } from "@/components/ai/empty-state";
 import { conversationStarters } from "@/data/conversation-starters";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
-import { SocialMediaMessage } from "../../../api/chat/social-media/route";
+import { MarketingMessage } from "../../../api/chat/marketing/route";
 import { CardUI } from "@/components/ai/card-ui";
 
 export default function AIPage() {
 	const [input, setInput] = useState("");
-	const chatHook = useChat<SocialMediaMessage>({
+	const chatHook = useChat<MarketingMessage>({
 		transport: new DefaultChatTransport({
-			api: "/api/chat/social-media",
+			api: "/api/chat/marketing",
 		}),
 		onData: (dataPart) => {},
 	});
@@ -54,12 +54,14 @@ export default function AIPage() {
 				/>
 			}
 			starters={<Starters starters={conversationStarters} />}
-			toolMessageComponents={{
-				// "data-latestTopic": (message, part) => <LatestTopic message={message} part={part} />,
-				"data-cardUI": (message, part) => (
-					<CardUI message={message} part={part} />
-				),
-			}}
+			toolMessageComponents={
+				{
+					// "data-latestTopic": (message, part) => <LatestTopic message={message} part={part} />,
+					// "data-cardUI": (message, part) => (
+					// 	<CardUI message={message} part={part} />
+					// ),
+				}
+			}
 		/>
 	);
 }
