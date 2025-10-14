@@ -2,10 +2,17 @@
 import React from "react";
 import ForecastingChart from "@/components/Marketing/ForecastingChart";
 import SeasonalRevenueCalendar from "@/components/Marketing/SeasonalRevenueCalendar";
+import Top10ChannelsChart from "@/components/Marketing/Top10ChannelsChart";
 import { useMarketingForecasting } from "@/hooks/useMarketingForecasting";
+import { useTop10ChannelsForecasting } from "@/hooks/useTop10ChannelsForecasting";
 
 export default function ForecastingPage() {
 	const { data, isLoading, error } = useMarketingForecasting();
+	const {
+		data: top10Data,
+		isLoading: top10Loading,
+		error: top10Error
+	} = useTop10ChannelsForecasting();
 
 	return (
 		<div className="pt-18 px-4 pb-8">
@@ -25,6 +32,13 @@ export default function ForecastingPage() {
 						data={data?.data}
 						isLoading={isLoading}
 						error={error?.message}
+					/>
+
+					{/* Top 10 Channels Chart */}
+					<Top10ChannelsChart
+						data={top10Data?.data}
+						isLoading={top10Loading}
+						error={top10Error?.message}
 					/>
 
 					{/* Seasonal Revenue Calendar */}
