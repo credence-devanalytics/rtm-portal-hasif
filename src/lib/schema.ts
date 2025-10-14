@@ -8,6 +8,7 @@ import {
 	date,
 	serial,
 	integer,
+	unique,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -379,3 +380,81 @@ export const marketingChannelByMonth = pgTable("marketing_channel_bymonth", {
 	insertdate: timestamp({ mode: "string" }),
 	updatedate: timestamp({ mode: "string" }),
 });
+
+export const pberitaAudienceGender = pgTable(
+	"pberita_audience_gender",
+	{
+		id: serial().primaryKey().notNull(),
+		usergender: text(),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_audience_gender_usergender_date_hour").on(
+			table.usergender,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const pberitaAudienceAge = pgTable(
+	"pberita_audience_age",
+	{
+		id: serial().primaryKey().notNull(),
+		useragebracket: text(),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_audience_age_useragebracket_date_hour").on(
+			table.useragebracket,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const rtmklikGender = pgTable(
+	"rtmklik_gender",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		gender: text(),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_gender_gender_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.gender,
+			table.metric
+		),
+	]
+);
+
+export const rtmklikAge = pgTable(
+	"rtmklik_age",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		age: text(),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_age_age_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.age,
+			table.metric
+		),
+	]
+);

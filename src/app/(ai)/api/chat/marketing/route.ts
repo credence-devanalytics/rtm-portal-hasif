@@ -19,6 +19,8 @@ import {
 	createBraveSearchClient,
 	BraveSearchOptions,
 } from "@/lib/ai-tools/web-search/brave-search";
+import { fetchPortalBeritaAudienceData } from "@/lib/ai-tools/audience-analysis/pberita-analysis";
+import { fetchRTMKlikAudienceData } from "@/lib/ai-tools/audience-analysis/rtmklik-analysis";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -135,32 +137,21 @@ export async function POST(req: Request) {
 						}),
 						execute: async ({ gender, ageRange, dayFilter }) => {
 							try {
-								// Build API URL with parameters
-								const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-								let apiUrl = `${baseUrl}/api/pberita-audience-joined?analysis=true`;
+								console.log('Calling Portal Berita audience analysis function with filters:', { gender, ageRange, dayFilter });
 
-								// Map 'all' to no filter (API will return all data)
-								if (gender && gender !== 'all') {
-									apiUrl += `&gender=${gender}`;
-								}
+								// Use the direct function call instead of API endpoint
+								const data = await fetchPortalBeritaAudienceData({
+									gender,
+									ageRange,
+									dayFilter,
+									analysis: true
+								});
 
-								if (ageRange && ageRange !== 'all') {
-									apiUrl += `&ageRange=${ageRange}`;
-								}
-
-								if (dayFilter && dayFilter !== 'all') {
-									apiUrl += `&dayFilter=${dayFilter}`;
-								}
-
-								console.log('Calling Portal Berita audience analysis API:', apiUrl);
-
-								const response = await fetch(apiUrl);
-								if (!response.ok) {
-									throw new Error(`API call failed: ${response.status}`);
-								}
-
-								const data = await response.json();
 								console.log('Portal Berita audience analysis result:', data);
+
+								if (!data.success) {
+									throw new Error(data.error || 'Analysis function failed');
+								}
 
 								return {
 									success: true,
@@ -168,7 +159,7 @@ export async function POST(req: Request) {
 									rawData: data.rawData
 								};
 
-							} catch (error) {
+							} catch (error: any) {
 								console.error('Portal Berita audience analysis tool error:', error);
 								return {
 									success: false,
@@ -198,32 +189,21 @@ export async function POST(req: Request) {
 						}),
 						execute: async ({ gender, ageRange, dayFilter }) => {
 							try {
-								// Build API URL with parameters
-								const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-								let apiUrl = `${baseUrl}/api/rtmklik-audience-joined?analysis=true`;
+								console.log('Calling RTMKlik audience analysis function with filters:', { gender, ageRange, dayFilter });
 
-								// Map 'all' to no filter (API will return all data)
-								if (gender && gender !== 'all') {
-									apiUrl += `&gender=${gender}`;
-								}
+								// Use the direct function call instead of API endpoint
+								const data = await fetchRTMKlikAudienceData({
+									gender,
+									ageRange,
+									dayFilter,
+									analysis: true
+								});
 
-								if (ageRange && ageRange !== 'all') {
-									apiUrl += `&ageRange=${ageRange}`;
-								}
-
-								if (dayFilter && dayFilter !== 'all') {
-									apiUrl += `&dayFilter=${dayFilter}`;
-								}
-
-								console.log('Calling RTMKlik audience analysis API:', apiUrl);
-
-								const response = await fetch(apiUrl);
-								if (!response.ok) {
-									throw new Error(`API call failed: ${response.status}`);
-								}
-
-								const data = await response.json();
 								console.log('RTMKlik audience analysis result:', data);
+
+								if (!data.success) {
+									throw new Error(data.error || 'Analysis function failed');
+								}
 
 								return {
 									success: true,
@@ -231,7 +211,7 @@ export async function POST(req: Request) {
 									rawData: data.rawData
 								};
 
-							} catch (error) {
+							} catch (error: any) {
 								console.error('RTMKlik audience analysis tool error:', error);
 								return {
 									success: false,
