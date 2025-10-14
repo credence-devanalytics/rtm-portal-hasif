@@ -62,3 +62,7 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+.font-fredoka {
+  font-family: var(--font-fredoka), sans-serif;
+}
