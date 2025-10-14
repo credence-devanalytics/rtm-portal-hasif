@@ -13,7 +13,7 @@ export async function getLatestTopics(days: number) {
 		.orderBy(desc(mentionsClassifyPublic.engagementrate))
 		.limit(10);
 
-	console.log({ mentions });
+	// console.log({ mentions });
 
 	return mentions;
 }
@@ -27,7 +27,7 @@ export async function getHighInteractionMentions(days: number) {
 		.orderBy(desc(mentionsClassifyPublic.interaction))
 		.limit(10);
 
-	console.log({ mentions });
+	// console.log({ mentions });
 
 	return mentions;
 }
