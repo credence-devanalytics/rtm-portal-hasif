@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { mentionsClassifyPublic } from '@/lib/schema';
-import { desc, gte, lte, and, sql, inArray, like } from 'drizzle-orm';
+import { desc, asc, gte, lte, and, sql, inArray, like } from 'drizzle-orm';
 
 // Helper function to build WHERE conditions
 const buildWhereConditions = (filters) => {
@@ -57,6 +57,10 @@ export async function GET(request) {
     const dateFromParam = searchParams.get('date_from');
     const dateToParam = searchParams.get('date_to');
     const limit = parseInt(searchParams.get('limit')) || 10;
+    
+    // Extract sorting parameters
+    const sortBy = searchParams.get('sortBy') || 'totalPosts'; // Default sort by total posts
+    const sortOrder = searchParams.get('sortOrder') || 'desc'; // Default descending
 
     // Process filters
     const filters = {
@@ -70,6 +74,7 @@ export async function GET(request) {
     };
 
     console.log('👥 Top Authors API - Processing filters:', filters);
+    console.log('📊 Sorting by:', sortBy, sortOrder);
 
     // Build WHERE conditions
     const whereConditions = buildWhereConditions(filters);
@@ -83,6 +88,14 @@ export async function GET(request) {
     const allConditions = [...baseConditions, ...whereConditions];
 
     try {
+      // Determine the sort column expression
+      const sortColumn = sortBy === 'followers' 
+        ? sql`MAX(COALESCE(${mentionsClassifyPublic.followerscount}, 0))`
+        : sql`COUNT(*)`;
+
+      // Determine the order direction
+      const orderBy = sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
+
       // First, get the basic author statistics
       const authorStats = await db
         .select({
@@ -97,7 +110,7 @@ export async function GET(request) {
         .from(mentionsClassifyPublic)
         .where(and(...allConditions))
         .groupBy(mentionsClassifyPublic.author)
-        .orderBy(desc(sql`COUNT(*)`))
+        .orderBy(orderBy)
         .limit(limit);
 
       console.log('📊 Top authors found:', authorStats.length);
@@ -147,6 +160,8 @@ export async function GET(request) {
         data: processedAuthors,
         meta: {
           filters,
+          sortBy,
+          sortOrder,
           queryTime: new Date().toISOString(),
           dataSource: 'database',
           totalAuthors: processedAuthors.length,

@@ -28,6 +28,7 @@ const MultiplatformPage = () => {
   const [mytvData, setMytvData] = useState(null);
   const [marketingData, setMarketingData] = useState(null);
   const [portalBeritaData, setPortalBeritaData] = useState(null);
+  const [astroData, setAstroData] = useState(null);
 
   // Total audience for MyTV platform
   const totalAudience = 7581399;
@@ -125,6 +126,30 @@ const MultiplatformPage = () => {
     };
 
     fetchPortalBeritaData();
+  }, []);
+
+  // Fetch Astro Rate & Reach data
+  useEffect(() => {
+    const fetchAstroData = async () => {
+      try {
+        console.log("Fetching Astro Rate & Reach data...");
+        const response = await fetch("/api/astro-rate-reach");
+        console.log("Astro response status:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Astro API Response:", data);
+        setAstroData(data);
+      } catch (error) {
+        console.error("Error fetching Astro data:", error);
+        console.error("Full error details:", error.message);
+      }
+    };
+
+    fetchAstroData();
   }, []);
 
   // Calculate MyTV metrics using the mytv-analysis API
@@ -313,6 +338,100 @@ const MultiplatformPage = () => {
     };
   }, [portalBeritaData]);
 
+  // Calculate Astro metrics
+  const astroMetrics = useMemo(() => {
+    console.log("Calculating Astro metrics...");
+    console.log("Astro data:", astroData);
+    console.log("Astro data success:", astroData?.success);
+    console.log("Astro data array:", astroData?.data);
+    console.log("Astro data length:", astroData?.data?.length);
+
+    if (
+      !astroData?.success ||
+      !astroData?.data ||
+      astroData.data.length === 0
+    ) {
+      console.log("Astro data not available, returning default values");
+      return {
+        hasData: false,
+        topRatedChannel: { name: "No data", rating: 0 },
+        topReachChannel: { name: "No data", reach: 0 },
+        totalReach: 0,
+        lowestRatingChannel: { name: "No data", rating: 0 },
+      };
+    }
+
+    const records = astroData.data;
+    console.log("Astro records:", records);
+    console.log("First record:", records[0]);
+
+    // Separate rating and reach records - using metricType (camelCase) instead of metric_type
+    const ratingRecords = records.filter((r) => r.metricType === "rating");
+    const reachRecords = records.filter((r) => r.metricType === "reach");
+
+    console.log("Rating records count:", ratingRecords.length);
+    console.log("Reach records count:", reachRecords.length);
+    console.log("Sample rating record:", ratingRecords[0]);
+    console.log("Sample reach record:", reachRecords[0]);
+
+    // Calculate top rated channel (highest rating value)
+    const topRated = ratingRecords.reduce(
+      (max, record) => (record.value > max.value ? record : max),
+      { channel: "No data", value: 0 }
+    );
+
+    console.log("Top rated channel:", topRated);
+
+    // Calculate channel with most reach
+    const topReach = reachRecords.reduce(
+      (max, record) => (record.value > max.value ? record : max),
+      { channel: "No data", value: 0 }
+    );
+
+    console.log("Top reach channel:", topReach);
+
+    // Calculate total reach across all channels
+    const totalReach = reachRecords.reduce(
+      (sum, record) => sum + (record.value || 0),
+      0
+    );
+
+    console.log("Total reach:", totalReach);
+
+    // Calculate lowest rating channel (minimum rating value, excluding zeros)
+    const nonZeroRatings = ratingRecords.filter((r) => r.value > 0);
+    const lowestRated =
+      nonZeroRatings.length > 0
+        ? nonZeroRatings.reduce(
+            (min, record) => (record.value < min.value ? record : min),
+            nonZeroRatings[0]
+          )
+        : { channel: "No data", value: 0 };
+
+    console.log("Lowest rated channel:", lowestRated);
+
+    const result = {
+      hasData: true,
+      topRatedChannel: {
+        name: topRated.channel,
+        rating: topRated.value,
+      },
+      topReachChannel: {
+        name: topReach.channel,
+        reach: topReach.value,
+      },
+      totalReach,
+      lowestRatingChannel: {
+        name: lowestRated.channel,
+        rating: lowestRated.value,
+      },
+    };
+
+    console.log("Final Astro metrics:", result);
+
+    return result;
+  }, [astroData]);
+
   // Platform data structure
   const platforms = [
     {
@@ -388,12 +507,22 @@ const MultiplatformPage = () => {
       bgColor: "bg-purple-50",
       textColor: "text-purple-900",
       link: "/ASTRO",
-      hasData: false,
+      hasData: astroMetrics.hasData,
       metrics: {
-        mau: "No data available yet",
-        totalHours: "No data available yet",
-        avgHours: "No data available yet",
-        topChannel: "No data available yet",
+        mau: astroMetrics.hasData
+          ? `${astroMetrics.topRatedChannel.name} (${astroMetrics.topRatedChannel.rating})`
+          : "No data available yet",
+        totalHours: astroMetrics.hasData
+          ? `${
+              astroMetrics.topReachChannel.name
+            } (${astroMetrics.topReachChannel.reach.toLocaleString()})`
+          : "No data available yet",
+        avgHours: astroMetrics.hasData
+          ? `${astroMetrics.totalReach.toLocaleString()}`
+          : "No data available yet",
+        topChannel: astroMetrics.hasData
+          ? `${astroMetrics.lowestRatingChannel.name} (${astroMetrics.lowestRatingChannel.rating})`
+          : "No data available yet",
       },
     },
     {
@@ -948,43 +1077,174 @@ const MultiplatformPage = () => {
       );
     }
 
+    // Special layout for ASTRO with enhanced analytics
+    if (platform.id === "astro" && hasAnyData && astroMetrics.hasData) {
+      return (
+        <Link href={platform.link} className="block group">
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
+                  <Star className="h-8 w-8" />
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+                ASTRO
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* ASTRO Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Top Rated Channel */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Star className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Top Rated Channel
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={astroMetrics.topRatedChannel.name}
+                  >
+                    {astroMetrics.topRatedChannel.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Rating: {astroMetrics.topRatedChannel.rating}
+                  </div>
+                </div>
+
+                {/* Top Reach Channel */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <TrendingUp className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Top Reach Channel
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={astroMetrics.topReachChannel.name}
+                  >
+                    {astroMetrics.topReachChannel.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Reach: {astroMetrics.topReachChannel.reach.toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Total Reach */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Reach
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={astroMetrics.totalReach.toLocaleString()}
+                  >
+                    {astroMetrics.totalReach.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    All Channels Combined
+                  </div>
+                </div>
+
+                {/* Lowest Rating Channel */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Trophy className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Lowest Rating Channel
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={astroMetrics.lowestRatingChannel.name}
+                  >
+                    {astroMetrics.lowestRatingChannel.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Rating: {astroMetrics.lowestRatingChannel.rating}
+                  </div>
+                </div>
+              </div>
+
+              {/* Click Indicator */}
+              <div className="pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700 transition-colors">
+                  <span className="text-xs font-medium">
+                    Click for detailed analytics
+                  </span>
+                  <ExternalLink className="h-3 w-3" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      );
+    }
+
     // Default layout for other platforms
     const availableMetrics = [
       {
-        key: "topChannel",
-        icon: <Trophy className="h-4 w-4 text-gray-700" />,
-        label: platform.id === "marketing" ? "Top Saluran" : "Top Channel",
-        value: platform.metrics.topChannel,
+        key: "mau",
+        icon:
+          platform.id === "astro" ? (
+            <Star className="h-4 w-4 text-gray-700" />
+          ) : (
+            <Users className="h-4 w-4 text-gray-700" />
+          ),
+        label:
+          platform.id === "marketing"
+            ? "Total Revenue"
+            : platform.id === "astro"
+            ? "Top Rated Channel"
+            : "MAU",
+        value: platform.metrics.mau,
         show:
-          platform.metrics.topChannel !== "No data" &&
-          platform.metrics.topChannel !== "N/A",
+          platform.metrics.mau !== "No data" && platform.metrics.mau !== "N/A",
       },
       {
         key: "totalHours",
-        icon: <Clock className="h-4 w-4 text-gray-700" />,
-        label: platform.id === "marketing" ? "Saluran" : "Hours",
+        icon:
+          platform.id === "astro" ? (
+            <TrendingUp className="h-4 w-4 text-gray-700" />
+          ) : (
+            <Clock className="h-4 w-4 text-gray-700" />
+          ),
+        label:
+          platform.id === "marketing"
+            ? "Saluran"
+            : platform.id === "astro"
+            ? "Top Reach Channel"
+            : "Hours",
         value: platform.metrics.totalHours,
         show:
           platform.metrics.totalHours !== "No data" &&
           platform.metrics.totalHours !== "N/A",
       },
       {
-        key: "mau",
-        icon: <Users className="h-4 w-4 text-gray-700" />,
-        label: platform.id === "marketing" ? "Total Revenue" : "MAU",
-        value: platform.metrics.mau,
-        show:
-          platform.metrics.mau !== "No data" && platform.metrics.mau !== "N/A",
-      },
-      {
         key: "avgHours",
-        icon: <TrendingUp className="h-4 w-4 text-gray-700" />,
+        icon:
+          platform.id === "astro" ? (
+            <Users className="h-4 w-4 text-gray-700" />
+          ) : (
+            <TrendingUp className="h-4 w-4 text-gray-700" />
+          ),
         label:
           platform.id === "marketing"
             ? "YoY Change"
+            : platform.id === "astro"
+            ? "Total Reach"
             : "Average Hours User Watched",
         value:
           platform.id === "marketing"
+            ? platform.metrics.avgHours
+            : platform.id === "astro"
             ? platform.metrics.avgHours
             : platform.metrics.avgHours !== "N/A"
             ? `${platform.metrics.avgHours}h`
@@ -992,6 +1252,20 @@ const MultiplatformPage = () => {
         show:
           platform.metrics.avgHours !== "No data" &&
           platform.metrics.avgHours !== "N/A",
+      },
+      {
+        key: "topChannel",
+        icon: <Trophy className="h-4 w-4 text-gray-700" />,
+        label:
+          platform.id === "marketing"
+            ? "Top Saluran"
+            : platform.id === "astro"
+            ? "Lowest Rating Channel"
+            : "Top Channel",
+        value: platform.metrics.topChannel,
+        show:
+          platform.metrics.topChannel !== "No data" &&
+          platform.metrics.topChannel !== "N/A",
       },
     ].filter((metric) => metric.show);
 

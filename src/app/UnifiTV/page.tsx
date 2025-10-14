@@ -136,20 +136,20 @@ const UnifiTVPage = () => {
         if (value && value !== "all") params.append(key, value);
       });
 
-      // Also fetch all-time data for trends (without month filter)
-      const trendsParams = new URLSearchParams();
+      // Also fetch all-time data for trends and scatter plot (without month filter)
+      const allTimeParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (key !== "monthYear" && value && value !== "all") {
-          trendsParams.append(key, value);
+          allTimeParams.append(key, value);
         }
       });
 
-      const [response, trendsResponse] = await Promise.all([
+      const [response, allTimeResponse] = await Promise.all([
         fetch(`/api/unifi-viewership?${params}`),
-        fetch(`/api/unifi-viewership?${trendsParams}`),
+        fetch(`/api/unifi-viewership?${allTimeParams}`),
       ]);
 
-      if (!response.ok || !trendsResponse.ok) {
+      if (!response.ok || !allTimeResponse.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("API Error Response:", errorData);
         throw new Error(
@@ -160,19 +160,20 @@ const UnifiTVPage = () => {
       }
 
       const result = await response.json();
-      const trendsResult = await trendsResponse.json();
+      const allTimeResult = await allTimeResponse.json();
 
       // Check if we have valid data
       if (!result || !result.analytics) {
         throw new Error("Invalid data format received from API");
       }
 
-      // Combine the results - use filtered data for most charts, but all-time data for trends
+      // Combine the results - use filtered data for most charts, but all-time data for trends and scatter
       setData({
         ...result,
         analytics: {
           ...result.analytics,
-          monthlyTrends: trendsResult.analytics?.monthlyTrends || [], // Use unfiltered trends
+          monthlyTrends: allTimeResult.analytics?.monthlyTrends || [], // Use unfiltered trends
+          allTimePrograms: allTimeResult.analytics?.topPrograms || [], // All programs across all months for scatter plot
         },
       });
       setError(null);
@@ -876,74 +877,98 @@ const UnifiTVPage = () => {
         {/* Hero Stats */}
         {data && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-card shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total MAU
-                </CardTitle>
-                <UsersIcon className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-2xl font-bold text-foreground">
-                  {data.summary.totalMau.toLocaleString()}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                  <ArrowUpIcon className="h-4 w-4 mr-1" />
-                  Active users this period
+            {/* TV1 Combined Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1 md:col-span-2">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-tv1.png"
+                      alt="TV1 Logo"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Active Users (Total MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-5xl font-bold text-blue-900">
+                        {(
+                          data.analytics.channelBreakdown?.find(
+                            (ch) => ch.channelName === "TV1"
+                          )?.totalMau || 0
+                        ).toLocaleString()}
+                      </div>
+                      <div className="text-base font-medium text-blue-700">
+                        Active Users
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-blue-300"></div>
+
+                    {/* Viewers (Programs) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-5xl font-bold text-blue-900">
+                        {data.analytics.topPrograms?.filter(
+                          (p) => p.channelName === "TV1"
+                        ).length || 0}
+                      </div>
+                      <div className="text-base font-medium text-blue-700">
+                        Programs
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Programs
-                </CardTitle>
-                <PlayCircleIcon className="h-5 w-5 text-accent" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-2xl font-bold text-foreground">
-                  {data.summary.totalPrograms}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                  <EyeIcon className="h-4 w-4 mr-1" />
-                  Unique programs aired
-                </div>
-              </CardContent>
-            </Card>
+            {/* TV2 Combined Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1 md:col-span-2">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-tv2.png"
+                      alt="TV2 Logo"
+                      className="h-40 w-40 object-contain"
+                    />
+                  </div>
 
-            <Card className="bg-white shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Avg MAU per Program
-                </CardTitle>
-                <BarChart3Icon className="h-5 w-5 text-cyan-600" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-2xl font-bold text-gray-900">
-                  {data.summary.avgMau.toLocaleString()}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-gray-600">
-                  <TrendingUpIcon className="h-4 w-4 mr-1" />
-                  Average engagement
-                </div>
-              </CardContent>
-            </Card>
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Active Users (Total MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-5xl font-bold text-orange-900">
+                        {(
+                          data.analytics.channelBreakdown?.find(
+                            (ch) => ch.channelName === "TV2"
+                          )?.totalMau || 0
+                        ).toLocaleString()}
+                      </div>
+                      <div className="text-base font-medium text-orange-700">
+                        Active Users
+                      </div>
+                    </div>
 
-            <Card className="bg-white shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Active Channels
-                </CardTitle>
-                <TvIcon className="h-5 w-5 text-blue-600" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-2xl font-bold text-gray-900">
-                  {data.summary.totalChannels}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-gray-600">
-                  <ActivityIcon className="h-4 w-4 mr-1" />
-                  Broadcasting channels
+                    {/* Divider */}
+                    <div className="border-t border-orange-300"></div>
+
+                    {/* Viewers (Programs) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-5xl font-bold text-orange-900">
+                        {data.analytics.topPrograms?.filter(
+                          (p) => p.channelName === "TV2"
+                        ).length || 0}
+                      </div>
+                      <div className="text-base font-medium text-orange-700">
+                        Programs
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1008,13 +1033,31 @@ const UnifiTVPage = () => {
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                         }}
                       />
-                      <Bar
-                        dataKey="mau"
-                        fill="#10b981"
-                        radius={[0, 4, 4, 0]}
-                        stroke="#059669"
-                        strokeWidth={1}
-                      />
+                      <Bar dataKey="mau" radius={[0, 4, 4, 0]} strokeWidth={1}>
+                        {data.analytics.topPrograms
+                          .slice(0, 10)
+                          .map((entry, index) => {
+                            // Define channel colors
+                            const channelColors = {
+                              TV1: "#102D84",
+                              TV2: "#FE5400",
+                              OKEY: "#00C49F",
+                              "BERITA RTM": "#FF8042",
+                              "SUKAN RTM": "#8884D8",
+                              TV6: "#82CA9D",
+                              BERNAMA: "#FFC658",
+                            };
+                            const fillColor =
+                              channelColors[entry.channelName] || "#10b981";
+                            return (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={fillColor}
+                                stroke={fillColor}
+                              />
+                            );
+                          })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -1115,10 +1158,11 @@ const UnifiTVPage = () => {
                 <CardHeader className="">
                   <CardTitle className="flex items-center space-x-2">
                     <TvIcon className="h-5 w-5 text-chart-1" />
-                    <span>Channel Performance</span>
+                    <span>Program Duration vs MAU Analysis</span>
                   </CardTitle>
                   <CardDescription className="">
-                    MAU distribution by channel
+                    Relationship between average program duration and MAU
+                    performance
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="">
@@ -1126,22 +1170,29 @@ const UnifiTVPage = () => {
                     <ScatterChart
                       margin={{
                         top: 20,
-                        right: 20,
+                        right: 30,
                         bottom: 20,
                         left: 20,
                       }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
-                        type="category"
-                        dataKey="channelName"
-                        name="Channel"
-                        tick={{ fontSize: 12 }}
+                        type="number"
+                        dataKey="avgDuration"
+                        name="Avg Duration"
+                        unit=" min"
+                        label={{
+                          value: "Average Duration (minutes)",
+                          position: "insideBottom",
+                          offset: -10,
+                          fontSize: 12,
+                        }}
+                        tick={{ fontSize: 11 }}
                       />
                       <YAxis
                         type="number"
-                        dataKey="totalMau"
-                        name="Total MAU"
+                        dataKey="avgMau"
+                        name="Avg MAU"
                         tickFormatter={(value) => {
                           if (value >= 1000000)
                             return `${(Number(value) / 1000000).toFixed(1)}M`;
@@ -1149,19 +1200,25 @@ const UnifiTVPage = () => {
                             return `${Math.round(Number(value) / 1000)}K`;
                           return value.toString();
                         }}
+                        label={{
+                          value: "Average MAU",
+                          angle: -90,
+                          position: "insideLeft",
+                          fontSize: 12,
+                        }}
+                        tick={{ fontSize: 11 }}
                       />
-                      <ZAxis
-                        type="number"
-                        dataKey="totalMau"
-                        range={[100, 1000]}
-                      />
+                      <ZAxis range={[60, 400]} />
                       <Tooltip
+                        cursor={{ strokeDasharray: "3 3" }}
                         formatter={(value, name) => {
-                          if (name === "Total MAU") {
-                            return [value.toLocaleString(), "Total MAU"];
-                          }
+                          if (name === "Avg MAU")
+                            return [value.toLocaleString(), "Avg MAU"];
+                          if (name === "Avg Duration")
+                            return [value + " min", "Avg Duration"];
                           return [value, name];
                         }}
+                        labelFormatter={(label) => `Program: ${label}`}
                         contentStyle={{
                           backgroundColor: "rgba(255, 255, 255, 0.95)",
                           border: "none",
@@ -1169,19 +1226,43 @@ const UnifiTVPage = () => {
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                         }}
                       />
-                      <Legend />
+                      <Legend wrapperStyle={{ paddingTop: "10px" }} />
                       <Scatter
-                        name="Channel MAU"
-                        data={data.analytics.channelBreakdown}
-                        fill="#8884d8"
-                      >
-                        {data.analytics.channelBreakdown.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Scatter>
+                        name="TV1 Programs"
+                        data={(data.analytics.programBreakdown || [])
+                          .filter(
+                            (p) =>
+                              p.channelName === "TV1" &&
+                              p.avgDurationMinutes > 0
+                          )
+                          .map((program) => ({
+                            avgDuration: program.avgDurationMinutes || 0,
+                            avgMau: program.avgMau || 0,
+                            programName: program.programName,
+                            channelName: program.channelName,
+                            episodeCount: program.episodeCount || 0,
+                          }))}
+                        fill="#102D84"
+                        shape="circle"
+                      />
+                      <Scatter
+                        name="TV2 Programs"
+                        data={(data.analytics.programBreakdown || [])
+                          .filter(
+                            (p) =>
+                              p.channelName === "TV2" &&
+                              p.avgDurationMinutes > 0
+                          )
+                          .map((program) => ({
+                            avgDuration: program.avgDurationMinutes || 0,
+                            avgMau: program.avgMau || 0,
+                            programName: program.programName,
+                            channelName: program.channelName,
+                            episodeCount: program.episodeCount || 0,
+                          }))}
+                        fill="#FE5400"
+                        shape="circle"
+                      />
                     </ScatterChart>
                   </ResponsiveContainer>
                 </CardContent>

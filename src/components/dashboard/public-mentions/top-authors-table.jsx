@@ -22,9 +22,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, TrendingUp, Award, Hash } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Users,
+  TrendingUp,
+  Award,
+  Hash,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 
-const TopAuthorsTable = ({ data, isLoading, activeFilters }) => {
+const TopAuthorsTable = ({
+  data,
+  isLoading,
+  activeFilters,
+  sortConfig,
+  onSortChange,
+  onAuthorClick,
+}) => {
   // Format number with commas
   const formatNumber = (num) => {
     return new Intl.NumberFormat("en-US").format(num);
@@ -50,6 +66,69 @@ const TopAuthorsTable = ({ data, isLoading, activeFilters }) => {
     if (max === positive) return "positive";
     if (max === negative) return "negative";
     return "neutral";
+  };
+
+  // Handle sorting - communicate back to parent
+  const handleSort = (column) => {
+    if (!onSortChange) return;
+
+    const columnMap = {
+      followers: "followers",
+      totalPosts: "totalPosts",
+    };
+
+    const sortBy = columnMap[column];
+    if (!sortBy) return;
+
+    // Toggle sort order if clicking the same column
+    const newSortOrder =
+      sortConfig?.sortBy === sortBy && sortConfig?.sortOrder === "desc"
+        ? "asc"
+        : "desc";
+
+    onSortChange(sortBy, newSortOrder);
+  };
+
+  // Get sort icon
+  const getSortIcon = (column) => {
+    const columnMap = {
+      followers: "followers",
+      totalPosts: "totalPosts",
+    };
+
+    const mappedColumn = columnMap[column];
+
+    if (!sortConfig || sortConfig.sortBy !== mappedColumn) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
+    }
+
+    return sortConfig.sortOrder === "desc" ? (
+      <ArrowDown className="h-4 w-4 ml-1" />
+    ) : (
+      <ArrowUp className="h-4 w-4 ml-1" />
+    );
+  };
+
+  // Handle author row click
+  const handleAuthorRowClick = (author) => {
+    if (onAuthorClick) {
+      console.log("🎯 Author clicked:", author);
+      onAuthorClick("author", author);
+    }
+  };
+
+  // Handle sentiment badge click within author row
+  const handleSentimentBadgeClick = (e, author, sentiment) => {
+    e.stopPropagation(); // Prevent row click
+    if (onAuthorClick) {
+      console.log("🎯 Author + Sentiment clicked:", { author, sentiment });
+      onAuthorClick({ type: "author", author, sentiment });
+    }
+  };
+
+  // Check if an author is currently filtered
+  const isAuthorFiltered = (author) => {
+    return activeFilters?.authors?.includes(author) || false;
   };
 
   // Loading state
@@ -120,7 +199,17 @@ const TopAuthorsTable = ({ data, isLoading, activeFilters }) => {
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Author Name</TableHead>
-                <TableHead className="text-right">Followers</TableHead>
+                <TableHead className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 font-medium hover:bg-gray-100"
+                    onClick={() => handleSort("followers")}
+                  >
+                    Followers
+                    {getSortIcon("followers")}
+                  </Button>
+                </TableHead>
                 <TableHead>Top Topic</TableHead>
                 <TableHead className="text-center">
                   <div className="flex items-center justify-center gap-1">
@@ -140,7 +229,17 @@ const TopAuthorsTable = ({ data, isLoading, activeFilters }) => {
                     Neutral
                   </div>
                 </TableHead>
-                <TableHead className="text-right">Total Posts</TableHead>
+                <TableHead className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 font-medium hover:bg-gray-100"
+                    onClick={() => handleSort("totalPosts")}
+                  >
+                    Total Posts
+                    {getSortIcon("totalPosts")}
+                  </Button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -150,9 +249,18 @@ const TopAuthorsTable = ({ data, isLoading, activeFilters }) => {
                   author.negativeCount,
                   author.neutralCount
                 );
+                const isFiltered = isAuthorFiltered(author.author);
 
                 return (
-                  <TableRow key={author.author} className="hover:bg-gray-50">
+                  <TableRow
+                    key={author.author}
+                    className={`hover:bg-gray-50 cursor-pointer transition-colors ${
+                      isFiltered
+                        ? "bg-indigo-50 border-l-4 border-indigo-500"
+                        : ""
+                    }`}
+                    onClick={() => handleAuthorRowClick(author.author)}
+                  >
                     <TableCell className="font-medium text-gray-500">
                       {index === 0 && (
                         <Award className="h-5 w-5 text-yellow-500" />
@@ -167,12 +275,33 @@ const TopAuthorsTable = ({ data, isLoading, activeFilters }) => {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium">{author.author}</span>
+                        <span
+                          className={`font-medium ${
+                            isFiltered ? "text-indigo-900" : ""
+                          }`}
+                        >
+                          {author.author}
+                          {isFiltered && (
+                            <Badge
+                              variant="outline"
+                              className="ml-2 bg-indigo-100 text-indigo-800 text-xs"
+                            >
+                              Filtered
+                            </Badge>
+                          )}
+                        </span>
                         <Badge
                           variant="outline"
-                          className={`w-fit mt-1 ${getSentimentColor(
+                          className={`w-fit mt-1 cursor-pointer ${getSentimentColor(
                             dominantSentiment
                           )}`}
+                          onClick={(e) =>
+                            handleSentimentBadgeClick(
+                              e,
+                              author.author,
+                              dominantSentiment
+                            )
+                          }
                         >
                           {dominantSentiment}
                         </Badge>
@@ -201,17 +330,40 @@ const TopAuthorsTable = ({ data, isLoading, activeFilters }) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                      <Badge
+                        className="bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer transition-colors"
+                        onClick={(e) =>
+                          handleSentimentBadgeClick(
+                            e,
+                            author.author,
+                            "positive"
+                          )
+                        }
+                      >
                         {author.positiveCount}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
+                      <Badge
+                        className="bg-red-100 text-red-800 hover:bg-red-200 cursor-pointer transition-colors"
+                        onClick={(e) =>
+                          handleSentimentBadgeClick(
+                            e,
+                            author.author,
+                            "negative"
+                          )
+                        }
+                      >
                         {author.negativeCount}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
+                      <Badge
+                        className="bg-gray-100 text-gray-800 hover:bg-gray-200 cursor-pointer transition-colors"
+                        onClick={(e) =>
+                          handleSentimentBadgeClick(e, author.author, "neutral")
+                        }
+                      >
                         {author.neutralCount}
                       </Badge>
                     </TableCell>
