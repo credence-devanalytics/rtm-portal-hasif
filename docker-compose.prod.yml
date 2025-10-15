@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: dashboard_postgres
+    environment:
+      POSTGRES_DB: rtmmedina
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: "#M3dinaCredence!25"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d rtmmedina"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Next.js application - optimized for production
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      cache_from:
+        - rtm-portal:latest
+        - type=registry,ref=rtm-portal:buildcache
+      cache_to:
+        - type=registry,ref=rtm-portal:buildcache,mode=max
+    image: rtm-portal:latest
+    container_name: dashboard_app
+    ports:
+      - "3031:3031"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3031/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Add resource limits for better performance
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
