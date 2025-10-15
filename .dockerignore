@@ -1,20 +1,105 @@
-Dockerfile
-.dockerignore
+# Dependencies
 node_modules
-npm-debug.log
-README.md
+.pnpm-store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
 .env
 .env.local
+.env.development.local
+.env.test.local
 .env.production.local
 .env.staging.local
-.git
-.gitignore
+
+# Build outputs
 .next
 .vercel
+out
+build
+dist
+
+# Cache directories
+.cache
+.parcel-cache
+.eslintcache
+
+# Testing
 coverage
 .nyc_output
-.DS_Store
-*.tgz
-*.tar.gz
+junit.xml
+
+# IDE
 .vscode
 .idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp
+temp
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Documentation
+README.md
+*.md
+!**/README.md
+
+# Test files
+test_*.js
+test_*.ts
+*.test.js
+*.test.ts
+
+# Development scripts
+scripts/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Package manager lock files (keeping only pnpm)
+package-lock.json
+yarn.lock
+
+# Archive files
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+
+# Miscellaneous
+.npm
+.eslintcache
+node_modules
