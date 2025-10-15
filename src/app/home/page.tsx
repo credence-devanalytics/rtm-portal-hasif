@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Users,
   Clock,
@@ -25,15 +24,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Header from "@/components/Header";
-import TVMonthlyPerformanceChart from "@/components/Marketing/TVMonthlyPerformanceChart";
-import { useMarketingData } from "@/hooks/useMarketingData";
-import { useMarketingTable2Data } from "@/hooks/useMarketingTable2Data";
-import { useRadioChannelsData } from "@/hooks/useRadioChannelsData";
+import TVMonthlyPerformanceChart from "@/components/Marketing/TVMonthlyPerformanceChart";;
 import { useRadioMonthlyData } from "@/hooks/useRadioMonthlyData";
 import { useTVMonthlyData } from "@/hooks/useTVMonthlyData";
 import RadioMonthlyPerformanceChart from "@/components/Marketing/RadioMonthlyPerformanceChart";
-import MarketingPerformanceTable from "@/components/Marketing/MarketingPerformanceTable";
-import { MetricsCards } from "@/components/dashboard/public-mentions/metrics-cards";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DEFAULT_FILTERS, filterUtils } from "@/lib/types/filters";
 import { cn } from "@/lib/utils";
@@ -41,6 +35,9 @@ import PlatformDonutChart from "@/components/RTMAccount/PlatformDonutChart";
 import { useRTMMentions, transformRTMData } from "@/hooks/useRTMQueries";
 import { SentimentBySourceChart } from "@/components/dashboard/public-mentions/sentiment-by-source-chart";
 import EngagementOverTimeChart from "@/components/RTMAccount/EngagementOverTimeChart";
+import { Button } from "@/components/ui/button";
+import MedinaLogo from "@/components/MedinaLogo";
+import Stats09 from "@/components/stats-3";
 
 const MultiplatformSection = () => {
   const [loading, setLoading] = useState(true);
@@ -817,11 +814,11 @@ const MultiplatformSection = () => {
   return (
     <>
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div className="w-full">
+        <h1 className="text-3xl font-bold tracking-tight text-center">
           Multi-Platform Performance Overview
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-center">
           Comprehensive analytics across 6 streaming platforms
         </p>
       </div>
@@ -1124,6 +1121,7 @@ const AccountsSection = () => {
       unit: "",
       category: "",
       author: "",
+      limit:"1000",
     };
   }, []);
 
@@ -1137,7 +1135,7 @@ const AccountsSection = () => {
   // Debug API response
   React.useEffect(() => {
     if (dashboardData) {
-      console.log("📡 RTM API Response received:", dashboardData);
+      console.log("📡 RTM API Response received");
     }
     if (dataError) {
       console.error("❌ RTM API Error:", dataError);
@@ -1146,9 +1144,9 @@ const AccountsSection = () => {
 
   // Transform and filter data efficiently
   const platformData = useMemo(() => {
-    console.log("🔍 Raw dashboardData:", dashboardData);
+    console.log("🔍 Raw dashboardData");
     console.log("🔍 dashboardData type:", typeof dashboardData);
-    console.log("🔍 dashboardData.mentions:", dashboardData?.mentions);
+    console.log("🔍 dashboardData.mentions");
     
     if (!dashboardData) {
       console.log("❌ No dashboardData");
@@ -1262,15 +1260,114 @@ const AccountsSection = () => {
   )
 };
 
+const HeroSection = () => {
+  const buttonData = [
+    { href: "/SocMedAcc", label: "SocMed RTM Accounts" },
+    { href: "/dashboard", label: "SocMed Public Sentiment" },
+    { href: "/Multiplatform", label: "Multiplatform" },
+    { href: "#KPI", label: "KPI" },
+    { href: "#ai", label: "AI Chat" },
+    { href: "https://app.determ.com/174980/feed/q/6746731", label: "Determ" },
+  ]
+  return(
+    <>
+    {/* Content overlay */}
+			<main className="relative z-10">
+				<section className="h-fit grid place-items-center pt-4 sm:pt-6 lg:pt-8 pb-6">
+					<div className="max-w-4xl justify-center items-center flex flex-col gap-10">
+						{/* Title */}
+						<div className="">
+							<MedinaLogo size="lg" className="transform translate-x-6" />
+							<h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold animate-fade-in-up text-black">
+								Media Data Insight and Analytics
+							</h2>
+						</div>
+            <div className="flex flex-col gap-6 md:items-center md:justify-between pt-6">
+              <div className="text-center w-full">
+                <h1 className="text-3xl font-bold tracking-tight w-full">
+                  Quick Links
+                </h1>
+              </div>
+              <div className="grid grid-cols-3 justify-center gap-6">
+                {/* CTA Button */}
+                { buttonData.map((button, index) => (
+                  <Link href={button.href}>
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="w-full flex items-center  bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-600 hover:to-slate-700 text-white font-semibold rounded-md text-md space-x-2 "
+                  >
+                    <ChartNoAxesCombined />
+                    <span>{button.label}</span>
+                    { button.label === "Determ" && <ExternalLink className="h-4 w-4 text-white" /> }
+                  </Button>
+                  </Link>
+                ))}
+              </div>
+            </div>
+					</div>
+				</section>
+			</main></>
+  )
+};
+
+const KPISection = () => {
+
+  const KPIdata = [
+    {"name": "Total Viewers for RTM Channel", "stat": 100000000, "limit": 115000000, "percentage": 80},
+    {"name": "Total Radio Listeners on RTMKlik", "stat": 1800000, "limit": 3000000, "percentage": 66.67},
+  ]
+
+  const KPICard = ({ data }) => {
+    return (
+      <Card className="h-full">
+        <CardHeader className="">
+          <CardTitle className="text-xl font-bold text-gray-900">
+            <div className="flex items-center justify-between">
+              KPI Statistics
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 flex flex-col h-fit">
+          <div className="flex justify-center items-center">
+            <Stats09 data={data}/>
+          </div>
+          </CardContent>
+      </Card>
+    )
+  };
+
+  return (
+    <section id="KPI" className="pt-6">
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+        <div className="text-center w-full">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Key Performance Indicators (KPI)
+          </h1>
+          <p className="text-muted-foreground">
+            Overview of key metrics across all platforms
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-6 mt-6 h-fit w-full">
+        <KPICard data={KPIdata}/>
+      </div>
+    </section>
+  )
+};
+
 export default function HomepageDashboard () {
   return (
     <>
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <Header />
       {/* Header */}
-      
+      <Header />
+      <HeroSection />
+
+      <KPISection />
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
-        <div>
+        <div className="text-center w-full">
           <h1 className="text-3xl font-bold tracking-tight">
             Dashboard at a Glance
           </h1>
@@ -1279,9 +1376,9 @@ export default function HomepageDashboard () {
           </p>
         </div>
       </div>
-
       <AccountsSection />
       <SentimentSection />
+
       <MultiplatformSection />
     </div>
     </>
