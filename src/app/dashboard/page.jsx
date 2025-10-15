@@ -158,6 +158,13 @@ const SocialMediaDashboard = () => {
       retry: 2,
     });
 
+  // Debug sentiment by source data
+  React.useEffect(() => {
+    if (sentimentBySourceData) {
+      console.log("📊 Sentiment By Source Data:", sentimentBySourceData);
+    }
+  }, [sentimentBySourceData]);
+
   const { data: sentimentTimelineData, isLoading: isLoadingTimeline } =
     useQuery({
       queryKey: QUERY_KEYS.sentimentTimeline(filters),
@@ -413,6 +420,7 @@ const SocialMediaDashboard = () => {
         onChartClick={handleChartClick}
         activeFilters={filters}
         isLoading={isLoadingBySource}
+        extra={true}
       />
 
       {/* Timeline Chart */}
