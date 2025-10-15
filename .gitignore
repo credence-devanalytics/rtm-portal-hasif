@@ -13,6 +13,8 @@
 # testing
 /coverage
 
+/.specstory
+
 # next.js
 /.next/
 /out/
