@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Users,
@@ -19,6 +19,9 @@ import {
   Minus,
   DollarSign,
   ChartNoAxesCombined,
+  Smile,
+  Frown,
+  Meh,
 } from "lucide-react";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -30,8 +33,16 @@ import { useRadioMonthlyData } from "@/hooks/useRadioMonthlyData";
 import { useTVMonthlyData } from "@/hooks/useTVMonthlyData";
 import RadioMonthlyPerformanceChart from "@/components/Marketing/RadioMonthlyPerformanceChart";
 import MarketingPerformanceTable from "@/components/Marketing/MarketingPerformanceTable";
+import { MetricsCards } from "@/components/dashboard/public-mentions/metrics-cards";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { DEFAULT_FILTERS, filterUtils } from "@/lib/types/filters";
+import { cn } from "@/lib/utils";
+import PlatformDonutChart from "@/components/RTMAccount/PlatformDonutChart";
+import { useRTMMentions, transformRTMData } from "@/hooks/useRTMQueries";
+import { SentimentBySourceChart } from "@/components/dashboard/public-mentions/sentiment-by-source-chart";
+import EngagementOverTimeChart from "@/components/RTMAccount/EngagementOverTimeChart";
 
-const HomepageDashboard = () => {
+const MultiplatformSection = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("202502");
   const [mytvData, setMytvData] = useState(null);
@@ -643,15 +654,10 @@ const HomepageDashboard = () => {
 
       return (
         <Card className="h-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+          <CardHeader className="">
+            <CardTitle className="text-xl font-bold text-gray-900">
               <div className="flex items-center justify-between">
-                <div className="flex flex-row items-center space-x-3 gap-3">
-                  {/* <div className={`p-2 rounded-lg bg-red-100 text-red-700`}>
-                    <ChartNoAxesCombined className="h-8 w-8" />
-                  </div> */}
-                  Yearly Marketing Growth
-                </div>
+                Yearly Marketing Growth
               </div>
             </CardTitle>
           </CardHeader>
@@ -774,9 +780,9 @@ const HomepageDashboard = () => {
             </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 flex flex-col gap-6 h-full">
+          <CardContent className="space-y-4 flex flex-col gap-3 h-full">
             {/* TV Charts Row */}
-            <div className="grid gap-6 lg:grid-cols-1 h-full">
+            <div className="h-full">
               {!tvError 
               ? (<TVMonthlyPerformanceChart data={tvChartData} />)
               : (<div className="p-4 bg-red-50 border border-red-200 rounded">
@@ -785,7 +791,7 @@ const HomepageDashboard = () => {
               }
             </div>
             {/* Radio Charts Row */}
-            <div className="grid gap-6 lg:grid-cols-1 h-full">
+            <div className="h-full">
               <RadioMonthlyCard />
             </div>
             {/* Yearly Growth Comparison */}
@@ -807,89 +813,480 @@ const HomepageDashboard = () => {
     )
   }
 
+  {/* Multiplatform Dashboard Component */}
   return (
+    <>
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Multi-Platform Performance Overview
+        </h1>
+        <p className="text-muted-foreground">
+          Comprehensive analytics across 6 streaming platforms
+        </p>
+      </div>
+    </div>
+
+    {/* Main Content */}
+    <div className="space-y-6">
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="h-64 animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="h-16 bg-gray-200 rounded"></div>
+                  <div className="h-16 bg-gray-200 rounded"></div>
+                  <div className="h-16 bg-gray-200 rounded"></div>
+                  <div className="h-16 bg-gray-200 rounded"></div>
+                </div>
+                <div className="h-4 bg-gray-200 rounded mt-4"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <>
+
+          {/* Platform Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-6">
+              {platforms.map((platform) => (
+                <PlatformCard key={platform.id} platform={platform} />
+              ))}
+            </div>
+            <div>
+              <MarketingCard />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+    </>
+  );
+};
+
+const SentimentSection = () => {
+  // Query keys
+  const QUERY_KEYS = {
+    socialMediaMentions: (filters: any) => ["social-media", "mentions", filters],
+    socialMediaMetrics: (filters: any) => ["social-media", "metrics", filters],
+    sentimentBySource: (filters: any) => [
+      "social-media",
+      "sentiment-by-source",
+      filters,
+    ],
+    sentimentTimeline: (filters: any) => [
+      "social-media",
+      "sentiment-timeline",
+      filters,
+    ],
+    popularPosts: (filters: any) => ["social-media", "popular-posts", filters],
+    topAuthors: (filters: any) => ["social-media", "top-authors", filters],
+    engagementRate: (filters: any) => ["social-media", "engagement-rate", filters],
+  };
+
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const queryClient = useQueryClient();
+
+  // API fetch functions
+  const fetchSocialMediaData = async (filters: any) => {
+    const params = filterUtils.toUrlParams(filters);
+    const response = await fetch(`/api/social-media/public_mentions?${params}`);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch social media data: ${response.statusText}`
+      );
+    }
+    return response.json();
+  };
+  
+  const fetchMetricsData = async (filters: any) => {
+    const params = filterUtils.toUrlParams(filters);
+    const response = await fetch(`/api/social-media/metrics?${params}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch metrics: ${response.statusText}`);
+    }
+    return response.json();
+  };
+  
+  const fetchSentimentBySource = async (filters: any) => {
+    const params = filterUtils.toUrlParams(filters);
+    const response = await fetch(
+      `/api/social-media/sentiment-by-source?${params}`
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch sentiment by source: ${response.statusText}`
+      );
+    }
+    return response.json();
+  };
+
+  // Missing handler function
+  const handleChartClick = (filterData: any) => {
+    // Add your chart click logic here
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      ...filterData
+    }));
+  };
+
+  const {
+    data: mentionsData,
+    isLoading: isLoadingMentions,
+    error: mentionsError,
+  } = useQuery({
+    queryKey: QUERY_KEYS.socialMediaMentions(filters),
+    queryFn: () => fetchSocialMediaData(filters),
+    staleTime: 30 * 1000, // 30 seconds
+    retry: 2,
+  });
+
+  const { data: metricsData, isLoading: isLoadingMetrics } = useQuery({
+    queryKey: QUERY_KEYS.socialMediaMetrics(filters),
+    queryFn: () => fetchMetricsData(filters),
+    staleTime: 30 * 1000,
+    retry: 2,
+  });
+
+  const { data: sentimentBySourceData, isLoading: isLoadingBySource } =
+    useQuery({
+    queryKey: QUERY_KEYS.sentimentBySource(filters),
+    queryFn: () => fetchSentimentBySource(filters),
+    staleTime: 30 * 1000,
+    retry: 2,
+  });
+
+  // Format large numbers
+  const formatNumber = (num) => {
+    if (num === null || num === undefined || isNaN(num)) {
+      return "0";
+    }
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M";
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K";
+    }
+    return num.toLocaleString();
+  };
+
+  // Calculate total and percentages for sentiment
+  const total =
+    (mentionsData?.data?.positive || 0) + (mentionsData?.data?.negative || 0) + (mentionsData?.data?.neutral || 0);
+
+  const getPercentage = (value) => {
+    if (!value || total === 0) return "0";
+    return ((value / total) * 100).toFixed(1);
+  };
+
+  const SentimentCard = () => {
+    return (
+      <>
+      {/* Sentiment Analysis Card */}
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="font-medium">
+            Sentiment Analysis
+          </CardTitle>
+          <Smile className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="h-full">
+          <div className="flex gap-3 justify-between h-full">
+            {/* Positive */}
+            <div
+              className={cn(
+                "flex flex-col items-center p-2 rounded cursor-pointer transition-all flex-1 bg-green-100 ring-1 ring-green-300 h-full justify-center"
+              )}
+            >
+              <div className="flex items-center gap-1 mb-1">
+                <Smile className="h-4 w-4 text-green-600" />
+                <span className="text-md font-medium text-green-700">
+                  Positive
+                </span>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-green-700">
+                  {formatNumber(mentionsData?.data?.positive || 0)}
+                </div>
+                <div className="text-md text-green-600">
+                  {getPercentage(mentionsData?.data?.positive || 0)}%
+                </div>
+              </div>
+            </div>
+
+            {/* Negative */}
+            <div
+              className={cn(
+                "flex flex-col items-center p-2 rounded cursor-pointer transition-all flex-1 bg-red-100 ring-1 ring-red-300 h-full justify-center"
+              )}
+            >
+              <div className="flex items-center gap-1 mb-1">
+                <Frown className="h-4 w-4 text-red-600" />
+                <span className="text-md font-medium text-red-700">
+                  Negative
+                </span>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-red-700">
+                  {formatNumber(mentionsData?.data?.negative || 0)}
+                </div>
+                <div className="text-md text-red-600">
+                  {getPercentage(mentionsData?.data?.negative || 0)}%
+                </div>
+              </div>
+            </div>
+
+            {/* Neutral */}
+            <div
+              className={cn(
+                "flex flex-col items-center p-2 rounded cursor-pointer transition-all flex-1 bg-gray-100 ring-1 ring-gray-300 h-full justify-center"
+              )}
+            >
+              <div className="flex items-center gap-1 mb-1">
+                <Meh className="h-4 w-4 text-gray-600" />
+                <span className="text-md font-medium text-gray-700">
+                  Neutral
+                </span>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-gray-700">
+                  {formatNumber(mentionsData?.data?.neutral || 0)}
+                </div>
+                <div className="text-md text-gray-600">
+                  {getPercentage(mentionsData?.data?.neutral || 0)}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      </>
+    )
+  }
+    
+  return (
+    <>
+    {/* Main Content */}
+    <Link href={"/dashboard"} className="block group">
+        <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-row items-center space-x-3 gap-3">
+                  Social Media Public Sentiment
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3" style={{ minHeight: '250px' }}>
+              <SentimentCard />
+              {/* Sentiment by Platform Chart */}
+              <SentimentBySourceChart
+                data={sentimentBySourceData?.data}
+                onChartClick={null}
+                activeFilters={filters}
+                isLoading={isLoadingBySource}
+                extra={false}
+              />
+            </div>
+            {/* Click Indicator */}
+            <div className="pt-2 border-t border-gray-200">
+              <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700 transition-colors">
+                <span className="text-xs font-medium">
+                  Click for details
+                </span>
+                <ExternalLink className="h-3 w-3" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    </>
+  );
+};
+
+const AccountsSection = () => {
+  // Query filters similar to SocMedAcc page
+  const queryFilters = useMemo(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    return {
+      days: "30",
+      from: thirtyDaysAgo.toISOString(),
+      to: now.toISOString(),
+      platform: "",
+      sentiment: "",
+      unit: "",
+      category: "",
+      author: "",
+    };
+  }, []);
+
+  // Fetch real RTM data
+  const {
+    data: dashboardData,
+    isLoading: isLoadingData,
+    error: dataError,
+  } = useRTMMentions(queryFilters);
+
+  // Debug API response
+  React.useEffect(() => {
+    if (dashboardData) {
+      console.log("📡 RTM API Response received:", dashboardData);
+    }
+    if (dataError) {
+      console.error("❌ RTM API Error:", dataError);
+    }
+  }, [dashboardData, dataError]);
+
+  // Transform and filter data efficiently
+  const platformData = useMemo(() => {
+    console.log("🔍 Raw dashboardData:", dashboardData);
+    console.log("🔍 dashboardData type:", typeof dashboardData);
+    console.log("🔍 dashboardData.mentions:", dashboardData?.mentions);
+    
+    if (!dashboardData) {
+      console.log("❌ No dashboardData");
+      return [];
+    }
+    
+    if (!dashboardData.mentions) {
+      console.log("❌ No mentions in dashboardData");
+      console.log("Available keys:", Object.keys(dashboardData));
+      return [];
+    }
+
+    // Transform data only once
+    const transformed = transformRTMData(dashboardData);
+    console.log("📊 RTM Home page - Transformed data count:", transformed.length);
+    console.log("📊 Sample transformed data:", transformed.slice(0, 3));
+
+    return transformed;
+  }, [dashboardData]);
+
+  const handleFilterChange = (filterType: string, value: string) => {
+    // Placeholder handler - could be connected to actual filtering logic later
+    console.log("Filter change:", filterType, value);
+  };
+
+  const DonutChartCard = () => {
+    if (isLoadingData) {
+      return (
+        <Card className="h-full mb-3">
+          <CardContent className="p-6 h-64 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (dataError) {
+      return (
+        <Card className="h-full mb-3">
+          <CardContent className="p-6 h-64 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-red-500 text-sm mb-2">Error loading RTM data</p>
+              <p className="text-gray-400 text-xs">{dataError.message}</p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (!platformData || !Array.isArray(platformData) || platformData.length === 0) {
+      return (
+        <Card className="h-full mb-3">
+          <CardContent className="p-6 h-64 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-gray-500 text-sm mb-2">No RTM data available</p>
+              <p className="text-gray-400 text-xs">
+                {dashboardData ? "Data exists but no mentions found" : "No dashboard data received"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    console.log("✅ Rendering PlatformDonutChart with data:", platformData.length, "items");
+
+    return (
+      <Card className="h-full mb-3">
+        <PlatformDonutChart
+            data={platformData}
+            onFilterChange={handleFilterChange}
+            activeFilters={{}}
+          />
+      </Card>
+    )
+  };
+
+  return (
+    <Link href="/SocMedAcc" className="block group">
+      <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl font-bold text-gray-900">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-row items-center space-x-3 gap-3">
+                RTM Social Media Accounts
+              </div>
+              <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="">
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <DonutChartCard />
+            {/* Summary metrics */}
+            <Card className="">
+            <EngagementOverTimeChart data={platformData} />
+          </Card>
+          </div>
+          {/* Click Indicator */}
+          <div className="pt-2 border-t border-gray-200">
+            <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700 transition-colors">
+              <span className="text-xs font-medium">
+                Click for details
+              </span>
+              <ExternalLink className="h-3 w-3" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  )
+};
+
+export default function HomepageDashboard () {
+  return (
+    <>
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <Header />
       {/* Header */}
+      
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Multi-Platform Performance Overview
+            Dashboard at a Glance
           </h1>
           <p className="text-muted-foreground">
-            Comprehensive analytics across 6 streaming platforms
+            Basic analytics of all the dashboards in one place
           </p>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="space-y-6">
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="h-64 animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="h-16 bg-gray-200 rounded"></div>
-                    <div className="h-16 bg-gray-200 rounded"></div>
-                    <div className="h-16 bg-gray-200 rounded"></div>
-                    <div className="h-16 bg-gray-200 rounded"></div>
-                  </div>
-                  <div className="h-4 bg-gray-200 rounded mt-4"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <>
-
-            {/* Platform Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col gap-6">
-                {platforms.map((platform) => (
-                  <PlatformCard key={platform.id} platform={platform} />
-                ))}
-              </div>
-              <div>
-                <MarketingCard />
-              </div>
-            </div>
-
-            {/* Footer Note */}
-            <Card className="border-gray-200">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    📊 Data Status
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Currently showing data for <strong>UnifiTV</strong>,{" "}
-                    <strong>MyTV</strong>, <strong>Marketing Revenue</strong>,
-                    and <strong>Portal Berita</strong> platforms. Other
-                    platforms will be integrated as data becomes available.
-                  </p>
-                  <div className="flex justify-center space-x-4 text-sm">
-                    <span className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <span>Live Data Available</span>
-                    </span>
-                    <span className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                      <span>Placeholder Data</span>
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
+      <AccountsSection />
+      <SentimentSection />
+      <MultiplatformSection />
     </div>
+    </>
   );
 };
-
-export default HomepageDashboard;
 
 /*
     TODO:

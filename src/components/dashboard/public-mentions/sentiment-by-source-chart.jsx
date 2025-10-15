@@ -17,7 +17,15 @@ const SentimentBySourceChart = ({
   onChartClick,
   activeFilters,
   isLoading,
+  extra=true,
 }) => {
+  console.log("SentimentBySourceChart - Component rendering with props:", {
+    dataLength: data ? data.length : 0,
+    isLoading,
+    extra,
+    activeFilters
+  });
+
   // Color scheme for sentiments
   const SENTIMENT_COLORS = {
     positive: "#10B981", // green
@@ -46,9 +54,13 @@ const SentimentBySourceChart = ({
 
   // Prepare chart data
   const chartData = React.useMemo(() => {
-    if (!data || !Array.isArray(data)) return [];
+    console.log("SentimentBySourceChart - Raw data:", data);
+    if (!data || !Array.isArray(data)) {
+      console.log("SentimentBySourceChart - Data is not array or missing:", data);
+      return [];
+    }
 
-    return data
+    const processedData = data
       .map((item) => ({
         platform: item.platform || item.source || "Unknown",
         positive: item.positive || 0,
@@ -58,6 +70,9 @@ const SentimentBySourceChart = ({
           (item.positive || 0) + (item.negative || 0) + (item.neutral || 0),
       }))
       .filter((item) => item.total > 0);
+    
+    console.log("SentimentBySourceChart - Processed data:", processedData);
+    return processedData;
   }, [data]);
 
   // Custom tooltip
@@ -103,7 +118,7 @@ const SentimentBySourceChart = ({
           <CardTitle>Sentiment by Platform</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center">
+          <div style={{ height: extra ? '400px' : '200px' }} className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
           </div>
         </CardContent>
@@ -118,7 +133,7 @@ const SentimentBySourceChart = ({
           <CardTitle>Sentiment by Platform</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center">
+          <div style={{ height: extra ? '400px' : '200px' }} className="flex items-center justify-center">
             <p className="text-gray-500">No platform data available</p>
           </div>
         </CardContent>
@@ -130,34 +145,36 @@ const SentimentBySourceChart = ({
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle>Sentiment by Platform</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Click on a bar to filter by platform
-        </p>
+        {extra && 
+          <p className="text-sm text-muted-foreground">
+            Click on a bar to filter by platform
+          </p>
+        }
       </CardHeader>
       <CardContent>
-        <div className="h-64">
+        <div className="w-full" style={{ height: extra ? '400px' : '200px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
               margin={{
-                top: 20,
-                right: 30,
-                left: 20,
-                bottom: 5,
+                top: extra ? 12 : 8,
+                right: extra ? 20 : 10,
+                left: extra ? 14 : 8,
+                bottom: extra ? 5 : 2,
               }}
-              onClick={handleBarClick}
+              onClick={handleBarClick || null}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="platform"
-                tick={{ fontSize: 12 }}
-                angle={-45}
+                tick={{ fontSize: extra ? 12 : 10 }}
+                angle={extra ? -45 : -30}
                 textAnchor="end"
-                height={80}
+                height={extra ? 80 : 60}
               />
               <YAxis />
               <Tooltip content={<CustomTooltip />} />
-              <Legend />
+              {extra && <Legend />}
               <Bar
                 dataKey="positive"
                 stackId="sentiment"
@@ -184,35 +201,37 @@ const SentimentBySourceChart = ({
         </div>
 
         {/* Platform Summary */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {chartData.slice(0, 4).map((item) => {
-              const isActive = activeFilters?.sources?.includes(item.platform);
-              return (
-                <div
-                  key={item.platform}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
-                    isActive
-                      ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                  onClick={() =>
-                    onChartClick && onChartClick("source", item.platform)
-                  }
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    {getPlatformIcon(item.platform)}
-                    <span className="text-sm font-medium">{item.platform}</span>
+        {extra &&
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {chartData.slice(0, 4).map((item) => {
+                const isActive = activeFilters?.sources?.includes(item.platform);
+                return (
+                  <div
+                    key={item.platform}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
+                      isActive
+                        ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() =>
+                      onChartClick && onChartClick("source", item.platform)
+                    }
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      {getPlatformIcon(item.platform)}
+                      <span className="text-sm font-medium">{item.platform}</span>
+                    </div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {item.total.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">total mentions</div>
                   </div>
-                  <div className="text-lg font-bold text-gray-900">
-                    {item.total.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-500">total mentions</div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+      }
       </CardContent>
     </Card>
   );
