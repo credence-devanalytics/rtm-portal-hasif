@@ -16,11 +16,11 @@ export async function GET(request) {
 			const hourlyGenderData = await db
 				.select({
 					hour: pberitaAudienceGender.hour,
-					userGender: pberitaAudienceGender.userGender,
-					totalActiveUsers: sql`SUM(${pberitaAudienceGender.activeUsers})`.as(
+					usergender: pberitaAudienceGender.usergender,
+					totalActiveUsers: sql`SUM(${pberitaAudienceGender.activeusers})`.as(
 						"totalActiveUsers"
 					),
-					totalNewUsers: sql`SUM(${pberitaAudienceGender.newUsers})`.as(
+					totalNewUsers: sql`SUM(${pberitaAudienceGender.newusers})`.as(
 						"totalNewUsers"
 					),
 				})
@@ -28,7 +28,7 @@ export async function GET(request) {
 				.where(
 					sql`${pberitaAudienceGender.hour} IS NOT NULL AND ${pberitaAudienceGender.hour} != ''`
 				)
-				.groupBy(pberitaAudienceGender.hour, pberitaAudienceGender.userGender)
+				.groupBy(pberitaAudienceGender.hour, pberitaAudienceGender.usergender)
 				.orderBy(pberitaAudienceGender.hour);
 
 			console.log("Hourly gender data from DB:", hourlyGenderData);
@@ -50,10 +50,10 @@ export async function GET(request) {
 				}
 
 				const femaleData = hourlyGenderData.find(
-					(item) => item.hour === hourHHMM && item.userGender === "female"
+					(item) => item.hour === hourHHMM && item.usergender === "female"
 				);
 				const maleData = hourlyGenderData.find(
-					(item) => item.hour === hourHHMM && item.userGender === "male"
+					(item) => item.hour === hourHHMM && item.usergender === "male"
 				);
 
 				chartData.push({
@@ -76,20 +76,20 @@ export async function GET(request) {
 		// Overall gender distribution
 		const genderData = await db
 			.select({
-				userGender: pberitaAudienceGender.userGender,
-				totalActiveUsers: sql`SUM(${pberitaAudienceGender.activeUsers})`.as(
+				usergender: pberitaAudienceGender.usergender,
+				totalActiveUsers: sql`SUM(${pberitaAudienceGender.activeusers})`.as(
 					"totalActiveUsers"
 				),
-				totalNewUsers: sql`SUM(${pberitaAudienceGender.newUsers})`.as(
+				totalNewUsers: sql`SUM(${pberitaAudienceGender.newusers})`.as(
 					"totalNewUsers"
 				),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
 			})
 			.from(pberitaAudienceGender)
-			.groupBy(pberitaAudienceGender.userGender);
+			.groupBy(pberitaAudienceGender.usergender);
 
 		const chartData = genderData.map((item) => ({
-			gender: item.userGender,
+			gender: item.usergender,
 			activeUsers: parseInt(item.totalActiveUsers) || 0,
 			newUsers: parseInt(item.totalNewUsers) || 0,
 			recordCount: parseInt(item.recordCount) || 0,
@@ -113,7 +113,7 @@ export async function GET(request) {
 		});
 
 		const dominantGender = chartData.reduce(
-			(max, item) => (item.activeUsers > max.activeUsers ? item : max),
+			(max, item) => (item.activeUsers > max.activeusers ? item : max),
 			chartData[0] || {}
 		);
 
@@ -124,7 +124,7 @@ export async function GET(request) {
 				summary: {
 					totalUsers,
 					totalNewUsers: chartData.reduce(
-						(sum, item) => sum + item.newUsers,
+						(sum, item) => sum + item.newusers,
 						0
 					),
 					dominantGender: dominantGender.gender || "N/A",
