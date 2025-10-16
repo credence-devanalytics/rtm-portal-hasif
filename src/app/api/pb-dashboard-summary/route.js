@@ -12,6 +12,15 @@ export async function GET() {
   try {
     console.log('PB Dashboard Summary API called');
     
+    // Get the latest date from pb_audience table
+    const latestDateResult = await db
+      .select({
+        maxDate: sql`MAX(${pbAudience.date})`.as('maxDate')
+      })
+      .from(pbAudience);
+
+    const latestDate = latestDateResult[0]?.maxDate || null;
+    
     // 1. Total Audience - Sum totalUsers where audienceName = "All Users"
     const totalAudienceResult = await db
       .select({
@@ -93,6 +102,7 @@ export async function GET() {
         topRegion,
         topTrafficSource,
         topExternalSource,
+        latestDate: latestDate,
         summary: {
           hasData: totalAudience > 0 || topRegion.users > 0 || topTrafficSource.users > 0 || topExternalSource.users > 0,
           formattedTotalAudience: totalAudience.toLocaleString(),

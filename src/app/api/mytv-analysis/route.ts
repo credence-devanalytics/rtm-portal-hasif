@@ -6,9 +6,19 @@
 import { db } from '../../../index';
 import { sql, desc, asc, count, sum, avg } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { mytvViewership } from '../../../../drizzle/schema';
 
 export async function GET(request: Request) {
   try {
+    // Get the latest date from mytv_viewership table
+    const latestDateResult = await db
+      .select({
+        maxDate: sql`MAX(${mytvViewership.updated_at})`.as('maxDate')
+      })
+      .from(mytvViewership);
+
+    const latestDate = latestDateResult[0]?.maxDate || null;
+
     // TEMPORARY: Return the exact data from your database query until server issues are resolved
     // Based on your actual SQL query output
     const mockChannelMetrics = [
@@ -27,6 +37,7 @@ export async function GET(request: Request) {
         avgViewers: item.avg_viewers,
         audienceShare: item.perc_from_total_access
       })),
+      latestDate: latestDate,
       meta: {
         queryType: 'mytv_analysis_mock',
         timestamp: new Date().toISOString(),

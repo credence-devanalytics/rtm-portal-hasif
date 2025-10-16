@@ -29,37 +29,42 @@ const MultiplatformPage = () => {
   const [marketingData, setMarketingData] = useState(null);
   const [portalBeritaData, setPortalBeritaData] = useState(null);
   const [astroData, setAstroData] = useState(null);
+  const [unifiData, setUnifiData] = useState(null);
 
   // Total audience for MyTV platform
   const totalAudience = 7581399;
 
-  // Mock data for UnifiTV (from unifi_summary table)
-  const unifiData = {
-    mau_total: 518883,
-    duration_total_hour: 2345678,
-    programmes: [
-      { programme_name: "Berita RTM", duration_total_hour: 456789 },
-      { programme_name: "TV1 Drama", duration_total_hour: 389456 },
-      { programme_name: "Sukan RTM", duration_total_hour: 234567 },
-    ],
-  };
-
   // Calculate UnifiTV metrics
-  const unifiMetrics = {
-    mau: unifiData.mau_total,
-    totalHours: unifiData.duration_total_hour,
-    avgHoursPerUser: (
-      unifiData.duration_total_hour / unifiData.mau_total
-    ).toFixed(1),
-    topChannel: {
-      name: unifiData.programmes[0].programme_name,
-      percentage: (
-        (unifiData.programmes[0].duration_total_hour /
-          unifiData.duration_total_hour) *
-        100
-      ).toFixed(1),
-    },
-  };
+  const unifiMetrics = useMemo(() => {
+    if (!unifiData?.data) {
+      return {
+        mau: 0,
+        totalHours: 0,
+        avgHoursPerUser: 0,
+        topChannel: {
+          name: "No data",
+          percentage: "0.0",
+        },
+      };
+    }
+
+    const data = unifiData.data;
+    return {
+      mau: data.mau_total,
+      totalHours: data.duration_total_hour,
+      avgHoursPerUser: (data.duration_total_hour / data.mau_total).toFixed(1),
+      topChannel: {
+        name: data.programmes[0]?.programme_name || "No data",
+        percentage: data.programmes[0]
+          ? (
+              (data.programmes[0].duration_total_hour /
+                data.duration_total_hour) *
+              100
+            ).toFixed(1)
+          : "0.0",
+      },
+    };
+  }, [unifiData]);
 
   // Fetch MyTV data
   useEffect(() => {
@@ -152,6 +157,30 @@ const MultiplatformPage = () => {
     fetchAstroData();
   }, []);
 
+  // Fetch UnifiTV data
+  useEffect(() => {
+    const fetchUnifiData = async () => {
+      try {
+        console.log("Fetching UnifiTV data...");
+        const response = await fetch("/api/unifitv-summary");
+        console.log("UnifiTV response status:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("UnifiTV API Response:", data);
+        setUnifiData(data);
+      } catch (error) {
+        console.error("Error fetching UnifiTV data:", error);
+        console.error("Full error details:", error.message);
+      }
+    };
+
+    fetchUnifiData();
+  }, []);
+
   // Calculate MyTV metrics using the mytv-analysis API
   const mytvMetrics = useMemo(() => {
     if (!mytvData?.channelMetrics || !Array.isArray(mytvData.channelMetrics)) {
@@ -170,6 +199,7 @@ const MultiplatformPage = () => {
         },
         allChannels: [],
         hasData: false,
+        latestDate: null,
       };
     }
 
@@ -219,6 +249,7 @@ const MultiplatformPage = () => {
         },
         allChannels: [],
         hasData: false,
+        latestDate: mytvData.latestDate || null,
       };
     }
 
@@ -254,6 +285,7 @@ const MultiplatformPage = () => {
       },
       allChannels: channelsWithData,
       hasData: true,
+      latestDate: mytvData.latestDate || null,
     };
   }, [mytvData]);
 
@@ -321,6 +353,7 @@ const MultiplatformPage = () => {
         topRegion: { name: "No data", users: 0 },
         topTrafficSource: { name: "No data", users: 0 },
         topExternalSource: { name: "No data", users: 0 },
+        latestDate: null,
       };
     }
 
@@ -335,6 +368,7 @@ const MultiplatformPage = () => {
       topTrafficSource: data.topTrafficSource,
       topExternalSource: data.topExternalSource,
       metrics: data.summary.metrics,
+      latestDate: data.latestDate || null,
     };
   }, [portalBeritaData]);
 
@@ -659,11 +693,20 @@ const MultiplatformPage = () => {
               {/* Updated Date */}
               <div className="text-center text-xs text-gray-400 mb-3">
                 Updated as of:{" "}
-                {new Date().toLocaleDateString("en-MY", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {mytvMetrics.latestDate
+                  ? new Date(mytvMetrics.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : new Date().toLocaleDateString("en-MY", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
               </div>
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
@@ -679,35 +722,35 @@ const MultiplatformPage = () => {
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Left side: Main stats */}
                 <div className="flex-1 space-y-3">
-                  {/* Primary Highlight - Top Channel */}
+                  {/* Total Viewers */}
                   <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
                     <div className="flex items-center space-x-2 mb-2">
+                      <Users className="h-4 w-4 text-gray-700" />
+                      <span className="text-xs font-semibold text-gray-700 tracking-wide">
+                        Total Viewers for All TV Channels (Viewers)
+                      </span>
+                    </div>
+                    <div className="text-l font-bold text-gray-900">
+                      {mytvMetrics.totalViewers.toLocaleString()}
+                    </div>
+                  </div>
+
+                  {/* Primary Highlight - Top Channel */}
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="flex items-center space-x-2 mb-1">
                       <Trophy className="h-4 w-4 text-gray-700" />
-                      <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                      <span className="text-xs font-semibold text-gray-700">
                         Top Channel
                       </span>
                     </div>
-                    <div className="text-l font-bold text-gray-900 leading-tight mb-1">
+                    <div className="text-base font-bold text-gray-900 leading-tight mb-1">
                       {mytvMetrics.topChannel.name}
                     </div>
-                    <div className="text-l font-bold text-gray-900 mb-1">
+                    <div className="text-base font-bold text-gray-900 mb-1">
                       {mytvMetrics.topChannel.audienceShare}
                     </div>
                     <div className="text-xs font-medium text-gray-600">
                       Purata Penonton: {mytvMetrics.topChannel.avgViewers}
-                    </div>
-                  </div>
-
-                  {/* Total Viewers */}
-                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <Users className="h-4 w-4 text-gray-700" />
-                      <span className="text-xs font-semibold text-gray-700">
-                        Total Viewers for All TV Channels (Viewers)
-                      </span>
-                    </div>
-                    <div className="text-base font-bold text-gray-900">
-                      {mytvMetrics.totalViewers.toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -832,6 +875,10 @@ const MultiplatformPage = () => {
         <Link href={platform.link} className="block group">
           <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of: 2024
+              </div>
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-rose-100 text-rose-700">
                   <DollarSign className="h-8 w-8" />
@@ -845,34 +892,38 @@ const MultiplatformPage = () => {
             <CardContent className="space-y-4">
               {/* Saluran Cards Grid - TV, BES, Radio, Total */}
               <div className="grid grid-cols-2 gap-3">
-                {/* TV */}
-                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                {/* Total */}
+                <div className="p-3 rounded-lg bg-gray-100 border border-gray-300">
                   <div className="flex items-center space-x-2 mb-1">
-                    <Tv className="h-3 w-3 text-gray-700" />
+                    <DollarSign className="h-3 w-3 text-gray-700" />
                     <span className="text-xs font-semibold text-gray-900">
-                      TV
+                      Total
                     </span>
                   </div>
                   <div
                     className="text-sm font-bold text-gray-900 mb-1"
-                    title={tvData.formattedCurrentValue}
+                    title={(marketingMetrics as any).formattedTotalValue}
                   >
-                    {tvData.currentValue > 0
-                      ? `RM${tvData.currentValue.toLocaleString()}`
-                      : "N/A"}
+                    RM{marketingMetrics.totalValue.toLocaleString()}
                   </div>
-                  {tvData.previousValue > 0 && (
+                  {(marketingMetrics as any).totalPreviousValue > 0 && (
                     <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
-                      vs RM{tvData.previousValue.toLocaleString()} (2023)
+                      vs RM
+                      {(
+                        marketingMetrics as any
+                      ).totalPreviousValue.toLocaleString()}{" "}
+                      (2023)
                       <div className="flex items-center space-x-1">
                         <span
                           className={`text-xs font-medium ${getChangeColor(
-                            tvData.changeDirection
+                            (marketingMetrics as any).overallDirection
                           )}`}
                         >
-                          {tvData.formattedChange}
+                          {marketingMetrics.overallChange}%
                         </span>
-                        {getChangeIcon(tvData.changeDirection)}
+                        {getChangeIcon(
+                          (marketingMetrics as any).overallDirection
+                        )}
                       </div>
                     </div>
                   )}
@@ -944,38 +995,34 @@ const MultiplatformPage = () => {
                   )}
                 </div>
 
-                {/* Total */}
-                <div className="p-3 rounded-lg bg-gray-100 border border-gray-300">
+                {/* TV */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
-                    <DollarSign className="h-3 w-3 text-gray-700" />
+                    <Tv className="h-3 w-3 text-gray-700" />
                     <span className="text-xs font-semibold text-gray-900">
-                      Total
+                      TV
                     </span>
                   </div>
                   <div
                     className="text-sm font-bold text-gray-900 mb-1"
-                    title={(marketingMetrics as any).formattedTotalValue}
+                    title={tvData.formattedCurrentValue}
                   >
-                    RM{marketingMetrics.totalValue.toLocaleString()}
+                    {tvData.currentValue > 0
+                      ? `RM${tvData.currentValue.toLocaleString()}`
+                      : "N/A"}
                   </div>
-                  {(marketingMetrics as any).totalPreviousValue > 0 && (
+                  {tvData.previousValue > 0 && (
                     <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
-                      vs RM
-                      {(
-                        marketingMetrics as any
-                      ).totalPreviousValue.toLocaleString()}{" "}
-                      (2023)
+                      vs RM{tvData.previousValue.toLocaleString()} (2023)
                       <div className="flex items-center space-x-1">
                         <span
                           className={`text-xs font-medium ${getChangeColor(
-                            (marketingMetrics as any).overallDirection
+                            tvData.changeDirection
                           )}`}
                         >
-                          {marketingMetrics.overallChange}%
+                          {tvData.formattedChange}
                         </span>
-                        {getChangeIcon(
-                          (marketingMetrics as any).overallDirection
-                        )}
+                        {getChangeIcon(tvData.changeDirection)}
                       </div>
                     </div>
                   )}
@@ -1010,11 +1057,20 @@ const MultiplatformPage = () => {
               {/* Updated Date */}
               <div className="text-center text-xs text-gray-400 mb-3">
                 Updated as of:{" "}
-                {new Date().toLocaleDateString("en-MY", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {portalBeritaMetrics.latestDate
+                  ? new Date(portalBeritaMetrics.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : new Date().toLocaleDateString("en-MY", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
               </div>
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
@@ -1255,13 +1311,17 @@ const MultiplatformPage = () => {
             <Users className="h-4 w-4 text-gray-700" />
           ),
         label:
-          platform.id === "marketing"
-            ? "Total Revenue"
-            : platform.id === "astro"
-            ? "Top Rated Channel"
-            : platform.id === "unifitv"
-            ? "Total Viewers for All TV Channels (MAU)"
-            : "MAU",
+          platform.id === "marketing" ? (
+            "Total Revenue"
+          ) : platform.id === "astro" ? (
+            "Top Rated Channel"
+          ) : platform.id === "unifitv" ? (
+            <>
+              Total Viewers for All TV Channels <br /> (MAU)
+            </>
+          ) : (
+            "MAU"
+          ),
         value: platform.metrics.mau,
         show:
           platform.metrics.mau !== "No data" && platform.metrics.mau !== "N/A",
@@ -1284,6 +1344,20 @@ const MultiplatformPage = () => {
         show:
           platform.metrics.totalHours !== "No data" &&
           platform.metrics.totalHours !== "N/A",
+      },
+      {
+        key: "topChannel",
+        icon: <Trophy className="h-4 w-4 text-gray-700" />,
+        label:
+          platform.id === "marketing"
+            ? "Top Saluran"
+            : platform.id === "astro"
+            ? "Lowest Rating Channel"
+            : "Top Channel",
+        value: platform.metrics.topChannel,
+        show:
+          platform.metrics.topChannel !== "No data" &&
+          platform.metrics.topChannel !== "N/A",
       },
       {
         key: "avgHours",
@@ -1311,20 +1385,6 @@ const MultiplatformPage = () => {
           platform.metrics.avgHours !== "No data" &&
           platform.metrics.avgHours !== "N/A",
       },
-      {
-        key: "topChannel",
-        icon: <Trophy className="h-4 w-4 text-gray-700" />,
-        label:
-          platform.id === "marketing"
-            ? "Top Saluran"
-            : platform.id === "astro"
-            ? "Lowest Rating Channel"
-            : "Top Channel",
-        value: platform.metrics.topChannel,
-        show:
-          platform.metrics.topChannel !== "No data" &&
-          platform.metrics.topChannel !== "N/A",
-      },
     ].filter((metric) => metric.show);
 
     // Get icon color based on platform id
@@ -1349,11 +1409,20 @@ const MultiplatformPage = () => {
             {platform.id === "unifitv" && (
               <div className="text-center text-xs text-gray-400 mb-3">
                 Updated as of:{" "}
-                {new Date().toLocaleDateString("en-MY", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {unifiData?.data?.latestDate
+                  ? new Date(unifiData.data.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : new Date().toLocaleDateString("en-MY", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
               </div>
             )}
             <div className="flex items-center justify-between">
