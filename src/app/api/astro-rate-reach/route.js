@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-// import { db } from '../../../lib/db';
+// import { db } from '@/index';
 import { db } from "@/index";
 import { astroRateNReach } from "../../../../drizzle/schema";
 import { sql, eq, and, gte, lte, inArray } from "drizzle-orm";
