@@ -68,12 +68,14 @@ const ASTROPage = () => {
 
   // Channel colors for line chart
   const channelColors = {
-    TV1: "#8b5cf6",
-    TV2: "#3b82f6",
-    "TV OKEY": "#10b981",
-    "BERITA RTM": "#f59e0b",
-    "SUKAN RTM": "#ef4444",
-    TV6: "#ec4899",
+    TV1: "#122F86",
+    TV2: "#FF5A08",
+    "TV OKEY": "#FDD302",
+    OKEY: "#FDD302",
+    "BERITA RTM": "#FD0001",
+    "SUKAN RTM": "#9FA1A3",
+    TV6: "#EA1F7D",
+    BERNAMA: "#1F2023",
   };
 
   // Fetch data function
