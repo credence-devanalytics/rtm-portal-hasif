@@ -1,53 +1,106 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { db } from '../../../lib/db';
-import { pbAudienceGender } from '../../../../drizzle/schema';
+import { pberitaAudienceGender } from '../../../../drizzle/schema';
 import { sql } from 'drizzle-orm';
 
-export async function GET() {
+export async function GET(request) {
   try {
     console.log('PB Gender Distribution API called');
     
-    // Fetch gender distribution data and group by gender
+    // Get view type from query parameters
+    const { searchParams } = new URL(request.url);
+    const viewType = searchParams.get('view');
+
+    if (viewType === 'hourly' || viewType === 'hourly-pm') {
+      // Fetch hourly gender distribution
+      const hourlyGenderData = await db
+        .select({
+          hour: pberitaAudienceGender.hour,
+          userGender: pberitaAudienceGender.userGender,
+          totalActiveUsers: sql`SUM(${ pberitaAudienceGender.activeUsers})`.as('totalActiveUsers'),
+          totalNewUsers: sql`SUM(${pberitaAudienceGender.newUsers})`.as('totalNewUsers')
+        })
+        .from(pberitaAudienceGender)
+        .where(sql`${pberitaAudienceGender.hour} IS NOT NULL AND ${pberitaAudienceGender.hour} != ''`)
+        .groupBy(pberitaAudienceGender.hour, pberitaAudienceGender.userGender)
+        .orderBy(pberitaAudienceGender.hour);
+
+      console.log('Hourly gender data from DB:', hourlyGenderData);
+
+      // Create chart data based on view type
+      const chartData = [];
+      const isAM = viewType === 'hourly';
+      const startHour = isAM ? 0 : 12;
+      const endHour = isAM ? 11 : 23;
+      
+      for (let hour = startHour; hour <= endHour; hour++) {
+        const hourHHMM = (hour * 100).toString().padStart(4, '0');
+        let hourLabel;
+        
+        if (isAM) {
+          hourLabel = hour === 0 ? '12 AM' : `${hour} AM`;
+        } else {
+          hourLabel = hour === 12 ? '12 PM' : `${hour - 12} PM`;
+        }
+        
+        const femaleData = hourlyGenderData.find(
+          item => item.hour === hourHHMM && item.userGender === 'female'
+        );
+        const maleData = hourlyGenderData.find(
+          item => item.hour === hourHHMM && item.userGender === 'male'
+        );
+
+        chartData.push({
+          time: hourLabel,
+          hour: hourHHMM,
+          female: femaleData ? parseInt(femaleData.totalActiveUsers) : 0,
+          male: maleData ? parseInt(maleData.totalActiveUsers) : 0,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          chartData,
+          viewType
+        }
+      });
+    }
+
+    // Overall gender distribution
     const genderData = await db
       .select({
-        userGender: pbAudienceGender.userGender,
-        totalActiveUsers: sql`SUM(${pbAudienceGender.activeUsers})`.as('totalActiveUsers'),
-        totalNewUsers: sql`SUM(${pbAudienceGender.newUsers})`.as('totalNewUsers'),
+        userGender: pberitaAudienceGender.userGender,
+        totalActiveUsers: sql`SUM(${pberitaAudienceGender.activeUsers})`.as('totalActiveUsers'),
+        totalNewUsers: sql`SUM(${pberitaAudienceGender.newUsers})`.as('totalNewUsers'),
         recordCount: sql`COUNT(*)`.as('recordCount')
       })
-      .from(pbAudienceGender)
-      .groupBy(pbAudienceGender.userGender);
+      .from(pberitaAudienceGender)
+      .groupBy(pberitaAudienceGender.userGender);
 
-    console.log('PB Gender data:', genderData);
-
-    // Process data for charts
     const chartData = genderData.map(item => ({
       gender: item.userGender,
       activeUsers: parseInt(item.totalActiveUsers) || 0,
       newUsers: parseInt(item.totalNewUsers) || 0,
       recordCount: parseInt(item.recordCount) || 0,
-      percentage: 0 // Will calculate after getting totals
+      percentage: 0
     }));
 
-    // Calculate percentages
     const totalUsers = chartData.reduce((sum, item) => sum + item.activeUsers, 0);
     chartData.forEach(item => {
-      item.percentage = totalUsers > 0 ? 
-        parseFloat(((item.activeUsers / totalUsers) * 100).toFixed(1)) : 0;
+      item.percentage = totalUsers > 0 ? parseFloat(((item.activeUsers / totalUsers) * 100).toFixed(1)) : 0;
     });
 
-    // Sort for consistent display (female, male, other)
     chartData.sort((a, b) => {
       const genderOrder = { 'female': 1, 'male': 2 };
       return (genderOrder[a.gender] || 999) - (genderOrder[b.gender] || 999);
     });
 
-    // Find dominant gender
     const dominantGender = chartData.reduce((max, item) => 
       item.activeUsers > max.activeUsers ? item : max, chartData[0] || {}
     );
 
-    const response = {
+    return NextResponse.json({
       success: true,
       data: {
         chartData,
@@ -62,10 +115,7 @@ export async function GET() {
           } : null
         }
       }
-    };
-
-    console.log('PB Gender Distribution API response:', response);
-    return NextResponse.json(response);
+    });
 
   } catch (error) {
     console.error('PB Gender Distribution API error:', error);

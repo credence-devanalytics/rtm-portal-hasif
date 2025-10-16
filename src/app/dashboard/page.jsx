@@ -48,8 +48,19 @@ const QUERY_KEYS = {
     "sentiment-timeline",
     filters,
   ],
-  popularPosts: (filters) => ["social-media", "popular-posts", filters],
-  topAuthors: (filters) => ["social-media", "top-authors", filters],
+  popularPosts: (filters, sortBy = "reach") => [
+    "social-media",
+    "popular-posts",
+    filters,
+    sortBy,
+  ],
+  topAuthors: (filters, sortBy, sortOrder) => [
+    "social-media",
+    "top-authors",
+    filters,
+    sortBy,
+    sortOrder,
+  ],
   engagementRate: (filters) => ["social-media", "engagement-rate", filters],
 };
 
@@ -100,18 +111,28 @@ const fetchSentimentTimeline = async (filters) => {
   return response.json();
 };
 
-const fetchPopularPosts = async (filters) => {
+const fetchPopularPosts = async (filters, sortBy = "reach") => {
   const params = filterUtils.toUrlParams(filters);
-  const response = await fetch(`/api/social-media/popular-posts?${params}`);
+  const sortParam = `&sort=${sortBy}`;
+  const response = await fetch(
+    `/api/social-media/popular-posts?${params}${sortParam}`
+  );
   if (!response.ok) {
     throw new Error(`Failed to fetch popular posts: ${response.statusText}`);
   }
   return response.json();
 };
 
-const fetchTopAuthors = async (filters) => {
+const fetchTopAuthors = async (
+  filters,
+  sortBy = "totalPosts",
+  sortOrder = "desc"
+) => {
   const params = filterUtils.toUrlParams(filters);
-  const response = await fetch(`/api/social-media/top-authors?${params}`);
+  const sortParams = `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+  const response = await fetch(
+    `/api/social-media/top-authors?${params}${sortParams}`
+  );
   if (!response.ok) {
     throw new Error(`Failed to fetch top authors: ${response.statusText}`);
   }
@@ -129,6 +150,11 @@ const fetchEngagementRate = async (filters) => {
 
 const SocialMediaDashboard = () => {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [authorSortConfig, setAuthorSortConfig] = useState({
+    sortBy: "totalPosts",
+    sortOrder: "desc",
+  });
+  const [postsSortBy, setPostsSortBy] = useState("reach"); // Add sort state for popular posts
   const queryClient = useQueryClient();
 
   // Data queries
@@ -167,15 +193,24 @@ const SocialMediaDashboard = () => {
     });
 
   const { data: popularPostsData, isLoading: isLoadingPopular } = useQuery({
-    queryKey: QUERY_KEYS.popularPosts(filters),
-    queryFn: () => fetchPopularPosts(filters),
+    queryKey: QUERY_KEYS.popularPosts(filters, postsSortBy),
+    queryFn: () => fetchPopularPosts(filters, postsSortBy),
     staleTime: 30 * 1000,
     retry: 2,
   });
 
   const { data: topAuthorsData, isLoading: isLoadingTopAuthors } = useQuery({
-    queryKey: QUERY_KEYS.topAuthors(filters),
-    queryFn: () => fetchTopAuthors(filters),
+    queryKey: QUERY_KEYS.topAuthors(
+      filters,
+      authorSortConfig.sortBy,
+      authorSortConfig.sortOrder
+    ),
+    queryFn: () =>
+      fetchTopAuthors(
+        filters,
+        authorSortConfig.sortBy,
+        authorSortConfig.sortOrder
+      ),
     staleTime: 30 * 1000,
     retry: 2,
   });
@@ -241,6 +276,13 @@ const SocialMediaDashboard = () => {
           } else {
             newFilters.sources = [...currentSources, value];
           }
+        } else if (type === "author") {
+          const currentAuthors = newFilters.authors || [];
+          if (currentAuthors.includes(value)) {
+            newFilters.authors = currentAuthors.filter((a) => a !== value);
+          } else {
+            newFilters.authors = [...currentAuthors, value];
+          }
         }
       } else if (clickDataOrType && typeof clickDataOrType === "object") {
         // New object-based clicks
@@ -271,6 +313,31 @@ const SocialMediaDashboard = () => {
               ];
             }
           }
+        } else if (clickData.type === "author") {
+          // Handle author clicks with optional sentiment
+          const currentAuthors = newFilters.authors || [];
+          if (currentAuthors.includes(clickData.author)) {
+            newFilters.authors = currentAuthors.filter(
+              (a) => a !== clickData.author
+            );
+          } else {
+            newFilters.authors = [...currentAuthors, clickData.author];
+          }
+
+          // Also handle sentiment filter if specified
+          if (clickData.sentiment) {
+            const currentSentiments = newFilters.sentiments || [];
+            if (currentSentiments.includes(clickData.sentiment)) {
+              newFilters.sentiments = currentSentiments.filter(
+                (s) => s !== clickData.sentiment
+              );
+            } else {
+              newFilters.sentiments = [
+                ...currentSentiments,
+                clickData.sentiment,
+              ];
+            }
+          }
         }
       }
 
@@ -285,10 +352,21 @@ const SocialMediaDashboard = () => {
     // Could open a modal or navigate to post details
   }, []);
 
+  // Handle author sort change
+  const handleAuthorSortChange = useCallback((sortBy, sortOrder) => {
+    setAuthorSortConfig({ sortBy, sortOrder });
+  }, []);
+
   // Refresh all data
   const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["social-media"] });
   }, [queryClient]);
+
+  // Handle popular posts sort change
+  const handlePostsSortChange = useCallback((newSort) => {
+    console.log("🔄 Changing posts sort to:", newSort);
+    setPostsSortBy(newSort);
+  }, []);
 
   // Export functionality (placeholder)
   const handleExport = useCallback(() => {
@@ -324,7 +402,7 @@ const SocialMediaDashboard = () => {
 
   if (mentionsError) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-6 bg-white min-h-screen">
         <Header />
         <div className="pt-20">
           <Card className="border-red-200 bg-red-50">
@@ -348,7 +426,7 @@ const SocialMediaDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-6 bg-white min-h-screen">
       <Header />
 
       {/* Dashboard Header */}
@@ -444,6 +522,9 @@ const SocialMediaDashboard = () => {
         data={topAuthorsData?.data}
         activeFilters={filters}
         isLoading={isLoadingTopAuthors}
+        sortConfig={authorSortConfig}
+        onSortChange={handleAuthorSortChange}
+        onAuthorClick={handleChartClick}
       />
 
       {/* Popular Posts */}
@@ -452,6 +533,8 @@ const SocialMediaDashboard = () => {
         onPostClick={handlePostClick}
         activeFilters={filters}
         isLoading={isLoadingPopular}
+        onSortChange={handlePostsSortChange}
+        currentSort={postsSortBy}
       />
 
       {/* Dashboard Footer Info */}

@@ -470,3 +470,22 @@ export const pbPopularPages = pgTable("pb_popular_pages", {
 	screenPageViews: integer("screenPageViews"),
 	activeUsers: integer("activeUsers"),
 });
+
+export const pberitaAudienceGender = pgTable("pberita_audience_gender", {
+	id: serial().primaryKey().notNull(),
+	userGender: varchar("usergender", { length: 20 }),
+	date: date(),
+	hour: text(),
+	activeUsers: integer("activeusers"),
+	newUsers: integer("newusers"),
+});
+
+export const astroRateNReach = pgTable("astro_rate_n_reach", {
+	id: serial().primaryKey().notNull(),
+	txDate: date("tx_date"),
+	txYear: integer("tx_year"),
+	txMonth: integer("tx_month"),
+	channel: text(),
+	metricType: text("metric_type"),
+	value: integer(),
+});
