@@ -119,9 +119,17 @@ export async function GET(request) {
       .from(astroRateNReach)
       .orderBy(astroRateNReach.metricType);
 
+    // Get the latest date directly from the database using MAX
+    const latestDateResult = await db
+      .select({ maxDate: sql`MAX(${astroRateNReach.txDate})` })
+      .from(astroRateNReach);
+    
+    const latestDate = latestDateResult[0]?.maxDate || null;
+
     return NextResponse.json({
       success: true,
       data: data,
+      latestDate: latestDate,
       filters: {
         channels: channels.map(c => c.channel).filter(Boolean),
         metricTypes: metrics.map(m => m.metricType).filter(Boolean)

@@ -345,6 +345,7 @@ const MultiplatformPage = () => {
     console.log("Astro data success:", astroData?.success);
     console.log("Astro data array:", astroData?.data);
     console.log("Astro data length:", astroData?.data?.length);
+    console.log("Astro latest date:", astroData?.latestDate);
 
     if (
       !astroData?.success ||
@@ -354,10 +355,11 @@ const MultiplatformPage = () => {
       console.log("Astro data not available, returning default values");
       return {
         hasData: false,
-        topRatedChannel: { name: "No data", rating: 0 },
-        topReachChannel: { name: "No data", reach: 0 },
-        totalReach: 0,
-        lowestRatingChannel: { name: "No data", rating: 0 },
+        topRatedTVChannel: { name: "No data", rating: 0 },
+        topRatedRadioChannel: { name: "No data", rating: 0 },
+        totalTVReach: 0,
+        totalRadioReach: 0,
+        latestDate: null,
       };
     }
 
@@ -374,57 +376,85 @@ const MultiplatformPage = () => {
     console.log("Sample rating record:", ratingRecords[0]);
     console.log("Sample reach record:", reachRecords[0]);
 
-    // Calculate top rated channel (highest rating value)
-    const topRated = ratingRecords.reduce(
-      (max, record) => (record.value > max.value ? record : max),
-      { channel: "No data", value: 0 }
+    // Helper function to determine channel type based on channel name
+    const getChannelType = (channelName) => {
+      if (!channelName) return null;
+      const upperName = channelName.toUpperCase();
+      if (upperName.includes("FM")) return "radio";
+      if (upperName.includes("TV")) return "tv";
+      return null;
+    };
+
+    // Separate TV and Radio records based on channel name
+    const tvRatingRecords = ratingRecords.filter(
+      (r) => getChannelType(r.channel) === "tv"
+    );
+    const radioRatingRecords = ratingRecords.filter(
+      (r) => getChannelType(r.channel) === "radio"
+    );
+    const tvReachRecords = reachRecords.filter(
+      (r) => getChannelType(r.channel) === "tv"
+    );
+    const radioReachRecords = reachRecords.filter(
+      (r) => getChannelType(r.channel) === "radio"
     );
 
-    console.log("Top rated channel:", topRated);
+    console.log("TV Rating records count:", tvRatingRecords.length);
+    console.log("Radio Rating records count:", radioRatingRecords.length);
+    console.log("TV Reach records count:", tvReachRecords.length);
+    console.log("Radio Reach records count:", radioReachRecords.length);
 
-    // Calculate channel with most reach
-    const topReach = reachRecords.reduce(
-      (max, record) => (record.value > max.value ? record : max),
-      { channel: "No data", value: 0 }
-    );
+    // Calculate top rated TV channel (highest rating value)
+    const topRatedTV =
+      tvRatingRecords.length > 0
+        ? tvRatingRecords.reduce(
+            (max, record) => (record.value > max.value ? record : max),
+            tvRatingRecords[0]
+          )
+        : { channel: "No data", value: 0 };
 
-    console.log("Top reach channel:", topReach);
+    console.log("Top rated TV channel:", topRatedTV);
 
-    // Calculate total reach across all channels
-    const totalReach = reachRecords.reduce(
+    // Calculate top rated Radio channel (highest rating value)
+    const topRatedRadio =
+      radioRatingRecords.length > 0
+        ? radioRatingRecords.reduce(
+            (max, record) => (record.value > max.value ? record : max),
+            radioRatingRecords[0]
+          )
+        : { channel: "No data", value: 0 };
+
+    console.log("Top rated Radio channel:", topRatedRadio);
+
+    // Calculate total TV reach
+    const totalTVReach = tvReachRecords.reduce(
       (sum, record) => sum + (record.value || 0),
       0
     );
 
-    console.log("Total reach:", totalReach);
+    console.log("Total TV reach:", totalTVReach);
 
-    // Calculate lowest rating channel (minimum rating value, excluding zeros)
-    const nonZeroRatings = ratingRecords.filter((r) => r.value > 0);
-    const lowestRated =
-      nonZeroRatings.length > 0
-        ? nonZeroRatings.reduce(
-            (min, record) => (record.value < min.value ? record : min),
-            nonZeroRatings[0]
-          )
-        : { channel: "No data", value: 0 };
+    // Calculate total Radio reach
+    const totalRadioReach = radioReachRecords.reduce(
+      (sum, record) => sum + (record.value || 0),
+      0
+    );
 
-    console.log("Lowest rated channel:", lowestRated);
+    console.log("Total Radio reach:", totalRadioReach);
 
     const result = {
       hasData: true,
-      topRatedChannel: {
-        name: topRated.channel,
-        rating: topRated.value,
+      topRatedTVChannel: {
+        name: topRatedTV.channel,
+        rating: topRatedTV.value,
       },
-      topReachChannel: {
-        name: topReach.channel,
-        reach: topReach.value,
+      topRatedRadioChannel: {
+        name: topRatedRadio.channel,
+        rating: topRatedRadio.value,
       },
-      totalReach,
-      lowestRatingChannel: {
-        name: lowestRated.channel,
-        rating: lowestRated.value,
-      },
+      totalTVReach,
+      totalRadioReach,
+      latestDate: astroData.latestDate,
     };
 
     console.log("Final Astro metrics:", result);
@@ -510,18 +540,16 @@ const MultiplatformPage = () => {
       hasData: astroMetrics.hasData,
       metrics: {
         mau: astroMetrics.hasData
-          ? `${astroMetrics.topRatedChannel.name} (${astroMetrics.topRatedChannel.rating})`
+          ? `${astroMetrics.topRatedTVChannel.name} (${astroMetrics.topRatedTVChannel.rating})`
           : "No data available yet",
         totalHours: astroMetrics.hasData
-          ? `${
-              astroMetrics.topReachChannel.name
-            } (${astroMetrics.topReachChannel.reach.toLocaleString()})`
+          ? `${astroMetrics.totalTVReach.toLocaleString()}`
           : "No data available yet",
         avgHours: astroMetrics.hasData
-          ? `${astroMetrics.totalReach.toLocaleString()}`
+          ? `${astroMetrics.topRatedRadioChannel.name} (${astroMetrics.topRatedRadioChannel.rating})`
           : "No data available yet",
         topChannel: astroMetrics.hasData
-          ? `${astroMetrics.lowestRatingChannel.name} (${astroMetrics.lowestRatingChannel.rating})`
+          ? `${astroMetrics.totalRadioReach.toLocaleString()}`
           : "No data available yet",
       },
     },
@@ -628,6 +656,15 @@ const MultiplatformPage = () => {
         <Link href={platform.link} className="block group">
           <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {new Date().toLocaleDateString("en-MY", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </div>
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
                   <Tv className="h-8 w-8" />
@@ -666,7 +703,7 @@ const MultiplatformPage = () => {
                     <div className="flex items-center space-x-2 mb-1">
                       <Users className="h-4 w-4 text-gray-700" />
                       <span className="text-xs font-semibold text-gray-700">
-                        Total Viewers
+                        Total Viewers for All TV Channels (Viewers)
                       </span>
                     </div>
                     <div className="text-base font-bold text-gray-900">
@@ -970,6 +1007,15 @@ const MultiplatformPage = () => {
         <Link href={platform.link} className="block group">
           <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {new Date().toLocaleDateString("en-MY", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </div>
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
                   <Monitor className="h-8 w-8" />
@@ -1083,6 +1129,20 @@ const MultiplatformPage = () => {
         <Link href={platform.link} className="block group">
           <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {astroMetrics.latestDate
+                  ? new Date(astroMetrics.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : "N/A"}
+              </div>
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
                   <Star className="h-8 w-8" />
@@ -1096,80 +1156,76 @@ const MultiplatformPage = () => {
             <CardContent className="space-y-4">
               {/* ASTRO Metrics Grid */}
               <div className="grid grid-cols-2 gap-3">
-                {/* Top Rated Channel */}
+                {/* Top TV Channel (Rating) - Top Left */}
                 <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
                     <Star className="h-3 w-3 text-gray-700" />
                     <span className="text-xs font-semibold text-gray-900">
-                      Top Rated Channel
+                      Top TV Channel (Rating)
                     </span>
                   </div>
                   <div
                     className="text-sm font-bold text-gray-900 mb-1 truncate"
-                    title={astroMetrics.topRatedChannel.name}
+                    title={astroMetrics.topRatedTVChannel.name}
                   >
-                    {astroMetrics.topRatedChannel.name}
+                    {astroMetrics.topRatedTVChannel.name}
                   </div>
                   <div className="text-xs text-gray-500">
-                    Rating: {astroMetrics.topRatedChannel.rating}
+                    Rating: {astroMetrics.topRatedTVChannel.rating}
                   </div>
                 </div>
 
-                {/* Top Reach Channel */}
-                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <TrendingUp className="h-3 w-3 text-gray-700" />
-                    <span className="text-xs font-semibold text-gray-900">
-                      Top Reach Channel
-                    </span>
-                  </div>
-                  <div
-                    className="text-sm font-bold text-gray-900 mb-1 truncate"
-                    title={astroMetrics.topReachChannel.name}
-                  >
-                    {astroMetrics.topReachChannel.name}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Reach: {astroMetrics.topReachChannel.reach.toLocaleString()}
-                  </div>
-                </div>
-
-                {/* Total Reach */}
+                {/* Total Viewer TV (Reach) - Top Right */}
                 <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
                     <Users className="h-3 w-3 text-gray-700" />
                     <span className="text-xs font-semibold text-gray-900">
-                      Total Reach
+                      Total Viewer TV (Reach)
                     </span>
                   </div>
                   <div
                     className="text-sm font-bold text-gray-900 mb-1"
-                    title={astroMetrics.totalReach.toLocaleString()}
+                    title={astroMetrics.totalTVReach.toLocaleString()}
                   >
-                    {astroMetrics.totalReach.toLocaleString()}
+                    {astroMetrics.totalTVReach.toLocaleString()}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    All Channels Combined
-                  </div>
+                  <div className="text-xs text-gray-500">Viewers</div>
                 </div>
 
-                {/* Lowest Rating Channel */}
+                {/* Top Radio Channel (Rating) - Bottom Left */}
                 <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <div className="flex items-center space-x-2 mb-1">
                     <Trophy className="h-3 w-3 text-gray-700" />
                     <span className="text-xs font-semibold text-gray-900">
-                      Lowest Rating Channel
+                      Top Radio Channel (Rating)
                     </span>
                   </div>
                   <div
                     className="text-sm font-bold text-gray-900 mb-1 truncate"
-                    title={astroMetrics.lowestRatingChannel.name}
+                    title={astroMetrics.topRatedRadioChannel.name}
                   >
-                    {astroMetrics.lowestRatingChannel.name}
+                    {astroMetrics.topRatedRadioChannel.name}
                   </div>
                   <div className="text-xs text-gray-500">
-                    Rating: {astroMetrics.lowestRatingChannel.rating}
+                    Rating: {astroMetrics.topRatedRadioChannel.rating}
                   </div>
+                </div>
+
+                {/* Total Listener Radio (Reach) - Bottom Right */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Listener Radio (Reach)
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={astroMetrics.totalRadioReach.toLocaleString()}
+                  >
+                    {astroMetrics.totalRadioReach.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500">Listeners</div>
                 </div>
               </div>
 
@@ -1203,6 +1259,8 @@ const MultiplatformPage = () => {
             ? "Total Revenue"
             : platform.id === "astro"
             ? "Top Rated Channel"
+            : platform.id === "unifitv"
+            ? "Total Viewers for All TV Channels (MAU)"
             : "MAU",
         value: platform.metrics.mau,
         show:
@@ -1287,6 +1345,17 @@ const MultiplatformPage = () => {
       <Link href={platform.link} className="block group">
         <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
           <CardHeader className="pb-3">
+            {/* Updated Date - Only for UnifiTV */}
+            {platform.id === "unifitv" && (
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {new Date().toLocaleDateString("en-MY", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <div className={`p-2 rounded-lg ${getIconBgColor(platform.id)}`}>
                 {platform.icon}
