@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../../lib/db';
+import { db } from '../../../index';
 import { marketingChannelByYear } from '../../../../drizzle/schema';
 import { eq, and } from 'drizzle-orm';
 
@@ -41,18 +41,18 @@ export async function GET() {
     // Create a map for easy lookup of previous year data
     const previousYearMap = {};
     previousYearData.forEach(item => {
-      previousYearMap[item.saluran] = parseFloat(item.value) || 0;
+      previousYearMap[item.saluran] = item.value || 0;
     });
 
     // Create a map for easy lookup of 2022 data
     const year2022Map = {};
     year2022Data.forEach(item => {
-      year2022Map[item.saluran] = parseFloat(item.value) || 0;
+      year2022Map[item.saluran] = item.value || 0;
     });
 
     // Calculate percentage change and prepare metrics
     const saluranMetrics = currentYearData.map(item => {
-      const currentValue = parseFloat(item.value) || 0;
+      const currentValue = item.value || 0;
       const previousValue = previousYearMap[item.saluran] || 0;
       const year2022Value = year2022Map[item.saluran] || 0;
       

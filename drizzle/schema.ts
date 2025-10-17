@@ -382,14 +382,12 @@ export const mytvViewership = pgTable("mytv_viewership", {
 
 export const marketingChannelByYear = pgTable("marketing_channel_byyear", {
 	id: serial().primaryKey().notNull(),
-	report_type: varchar("report_type"),
-	report_title: text("report_title"),
-	saluran: varchar(),
-	groupby: varchar(),
+	saluran: text(),
+	groupby: text(),
 	year: integer(),
-	value: varchar(),
-	insertdate: timestamp({ mode: 'string' }),
-	updatedate: timestamp({ mode: 'string' }),
+	value: doublePrecision(),
+	report_type: text("report_type"),
+	report_title: text("report_title"),
 });
 
 export const marketingChannelByMonth = pgTable("marketing_channel_bymonth", {
@@ -488,4 +486,28 @@ export const astroRateNReach = pgTable("astro_rate_n_reach", {
 	channel: text(),
 	metricType: text("metric_type"),
 	value: integer(),
+});
+
+// RTMKlik Tables
+export const rtmklikLiveMalaysia = pgTable("rtmklik_live_malaysia", {
+	id: serial().primaryKey().notNull(),
+	date: date(),
+	location: varchar("location", { length: 255 }),
+	metric: varchar("metric", { length: 100 }),
+	value: doublePrecision(),
+});
+
+export const rtmklikRadioMalaysia = pgTable("rtmklik_radio_malaysia", {
+	id: serial().primaryKey().notNull(),
+	date: date(),
+	location: varchar("location", { length: 255 }),
+	metric: varchar("metric", { length: 100 }),
+	value: doublePrecision(),
+});
+
+export const rtmklikPopularPages = pgTable("rtmklik_popular_pages", {
+	id: serial().primaryKey().notNull(),
+	channel: varchar("channel", { length: 255 }),
+	metric: varchar("metric", { length: 100 }),
+	value: doublePrecision(),
 });

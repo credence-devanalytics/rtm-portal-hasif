@@ -24,12 +24,12 @@ import Header from "@/components/Header";
 
 const MultiplatformPage = () => {
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState("202502");
   const [mytvData, setMytvData] = useState(null);
   const [marketingData, setMarketingData] = useState(null);
   const [portalBeritaData, setPortalBeritaData] = useState(null);
   const [astroData, setAstroData] = useState(null);
   const [unifiData, setUnifiData] = useState(null);
+  const [rtmklikData, setRtmklikData] = useState(null);
 
   // Total audience for MyTV platform
   const totalAudience = 7581399;
@@ -179,6 +179,30 @@ const MultiplatformPage = () => {
     };
 
     fetchUnifiData();
+  }, []);
+
+  // Fetch RTMKlik data
+  useEffect(() => {
+    const fetchRtmklikData = async () => {
+      try {
+        console.log("Fetching RTMKlik data...");
+        const response = await fetch("/api/rtmklik-summary");
+        console.log("RTMKlik response status:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("RTMKlik API Response:", data);
+        setRtmklikData(data);
+      } catch (error) {
+        console.error("Error fetching RTMKlik data:", error);
+        console.error("Full error details:", error.message);
+      }
+    };
+
+    fetchRtmklikData();
   }, []);
 
   // Calculate MyTV metrics using the mytv-analysis API
@@ -496,6 +520,38 @@ const MultiplatformPage = () => {
     return result;
   }, [astroData]);
 
+  // Calculate RTMKlik metrics
+  const rtmklikMetrics = useMemo(() => {
+    console.log("Calculating RTMKlik metrics...");
+    console.log("RTMKlik data:", rtmklikData);
+
+    if (!rtmklikData?.success || !rtmklikData?.data) {
+      console.log("RTMKlik data not available, returning default values");
+      return {
+        hasData: false,
+        totalActiveUsers: 0,
+        topRegion: { name: "No data", users: 0 },
+        topChannel: { name: "No data", users: 0 },
+        totalPageViews: 0,
+        latestDate: null,
+      };
+    }
+
+    const { data } = rtmklikData;
+    console.log("RTMKlik data summary:", data);
+
+    return {
+      hasData: data.hasData,
+      totalActiveUsers: data.totalActiveUsers,
+      formattedTotalActiveUsers: data.formattedTotalActiveUsers,
+      topRegion: data.topRegion,
+      topChannel: data.topChannel,
+      totalPageViews: data.totalPageViews,
+      formattedTotalPageViews: data.formattedTotalPageViews,
+      latestDate: data.latestDate || null,
+    };
+  }, [rtmklikData]);
+
   // Platform data structure
   const platforms = [
     {
@@ -596,12 +652,20 @@ const MultiplatformPage = () => {
       bgColor: "bg-amber-50",
       textColor: "text-amber-900",
       link: "/RTMClick",
-      hasData: false,
+      hasData: rtmklikMetrics.hasData,
       metrics: {
-        mau: "No data available yet",
-        totalHours: "No data available yet",
-        avgHours: "No data available yet",
-        topChannel: "No data available yet",
+        mau: rtmklikMetrics.hasData
+          ? rtmklikMetrics.formattedTotalActiveUsers
+          : "No data available yet",
+        totalHours: rtmklikMetrics.hasData
+          ? `${rtmklikMetrics.topRegion.name} (${rtmklikMetrics.topRegion.formattedUsers})`
+          : "No data available yet",
+        avgHours: rtmklikMetrics.hasData
+          ? `${rtmklikMetrics.topChannel.name}`
+          : "No data available yet",
+        topChannel: rtmklikMetrics.hasData
+          ? rtmklikMetrics.formattedTotalPageViews
+          : "No data available yet",
       },
     },
     {
@@ -744,11 +808,10 @@ const MultiplatformPage = () => {
                       </span>
                     </div>
                     <div className="text-base font-bold text-gray-900 leading-tight mb-1">
-                      {mytvMetrics.topChannel.name}
+                      {mytvMetrics.topChannel.name} ({" "}
+                      {mytvMetrics.topChannel.audienceShare})
                     </div>
-                    <div className="text-base font-bold text-gray-900 mb-1">
-                      {mytvMetrics.topChannel.audienceShare}
-                    </div>
+                    <div className="text-base font-bold text-gray-900 mb-1"></div>
                     <div className="text-xs font-medium text-gray-600">
                       Purata Penonton: {mytvMetrics.topChannel.avgViewers}
                     </div>
@@ -1300,6 +1363,129 @@ const MultiplatformPage = () => {
       );
     }
 
+    // Special layout for RTMKlik with enhanced analytics
+    if (platform.id === "rtmclick" && hasAnyData && rtmklikMetrics.hasData) {
+      return (
+        <Link href={platform.link} className="block group">
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {rtmklikMetrics.latestDate
+                  ? new Date(rtmklikMetrics.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : "N/A"}
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
+                  <Radio className="h-8 w-8" />
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
+                RTMKlik
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* RTMKlik Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Total Viewers for All TV and Radio Channels (MAU) - Top Left */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Viewers (MAU)
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={rtmklikMetrics.formattedTotalActiveUsers}
+                  >
+                    {rtmklikMetrics.formattedTotalActiveUsers}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    TV + Radio Channels
+                  </div>
+                </div>
+
+                {/* Top Region (TV+Radio MAU) - Top Right */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Trophy className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Top Region
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={rtmklikMetrics.topRegion.name}
+                  >
+                    {rtmklikMetrics.topRegion.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {rtmklikMetrics.topRegion.formattedUsers} users
+                  </div>
+                </div>
+
+                {/* Top Channel - Bottom Left */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Star className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Top Channel
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={rtmklikMetrics.topChannel.name}
+                  >
+                    {rtmklikMetrics.topChannel.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {rtmklikMetrics.topChannel.formattedUsers} MAU
+                  </div>
+                </div>
+
+                {/* Total Page Views - Bottom Right */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <TrendingUp className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Page Views
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={rtmklikMetrics.formattedTotalPageViews}
+                  >
+                    {rtmklikMetrics.formattedTotalPageViews}
+                  </div>
+                  <div className="text-xs text-gray-500">Screen/Page Views</div>
+                </div>
+              </div>
+
+              {/* Click Indicator */}
+              <div className="pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700 transition-colors">
+                  <span className="text-xs font-medium">
+                    Click for detailed analytics
+                  </span>
+                  <ExternalLink className="h-3 w-3" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      );
+    }
+
     // Default layout for other platforms
     const availableMetrics = [
       {
@@ -1514,7 +1700,7 @@ const MultiplatformPage = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 pt-24">
       <Header />
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
@@ -1525,17 +1711,6 @@ const MultiplatformPage = () => {
           <p className="text-muted-foreground">
             Comprehensive analytics across 6 streaming platforms
           </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="202502">Feb 2025</option>
-            <option value="202501">Jan 2025</option>
-            <option value="202412">Dec 2024</option>
-          </select>
         </div>
       </div>
 
