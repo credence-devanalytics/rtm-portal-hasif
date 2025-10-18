@@ -374,71 +374,319 @@ const MyTVViewershipPage = () => {
           </CardContent>
         </Card>
       )}
-      {/* Overview Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {data && (
-          <>
-            <Card className="">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Viewers
-                </CardTitle>
-                <EyeIcon className="h-5 w-5" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-3xl font-bold">
-                  {formatNumber(data.summary.totalViewers)}
+      {/* Channel Summary Cards - 6 Channels */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Channel Performance Overview</h2>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 px-3 py-1">
+            📊 2024 Data
+          </Badge>
+        </div>
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {data && (
+            <>
+              {/* TV1 Card */}
+              <Card className="bg-white shadow-sm border-black col-span-1">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-tv1.png"
+                      alt="TV1 Logo"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Total Viewers (MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* TODO: Calculate TV1 viewers from mytv_v2_viewership */}
+                        {formatNumber(
+                          data.channelBreakdown?.find(
+                            (ch) => ch.channel === "TV1"
+                          )?.totalViewers || 0
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Total Viewers (MAU)
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-300"></div>
+
+                    {/* Number of Programs */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* Program count from mytv_v2_top_programs */}
+                        {data.channelBreakdown?.find(
+                          (ch) => ch.channel === "TV1"
+                        )?.programCount || 0}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Number of Programs
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs mt-1">Across all channels</p>
               </CardContent>
             </Card>
 
-            <Card className="">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Active Channels
-                </CardTitle>
-                <TvIcon className="h-5 w-5" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-3xl font-bold">
-                  {data.summary.totalChannels}
+            {/* TV2 Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-tv2.png"
+                      alt="TV2 Logo"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Total Viewers (MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* TODO: Calculate TV2 viewers from mytv_v2_viewership */}
+                        {formatNumber(
+                          data.channelBreakdown?.find(
+                            (ch) => ch.channel === "TV2"
+                          )?.totalViewers || 0
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Total Viewers (MAU)
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-300"></div>
+
+                    {/* Number of Programs */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* Program count from mytv_v2_top_programs */}
+                        {data.channelBreakdown?.find(
+                          (ch) => ch.channel === "TV2"
+                        )?.programCount || 0}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Number of Programs
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs mt-1">Broadcasting channels</p>
               </CardContent>
             </Card>
 
-            <Card className="">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Coverage Regions
-                </CardTitle>
-                <ActivityIcon className="h-5 w-5" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-3xl font-bold">
-                  {data.summary.totalRegions}
+            {/* TV6 Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-tv6.png"
+                      alt="TV6 Logo"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Total Viewers (MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* TODO: Calculate TV6 viewers from mytv_v2_viewership */}
+                        {formatNumber(
+                          data.channelBreakdown?.find(
+                            (ch) => ch.channel === "TV6"
+                          )?.totalViewers || 0
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Total Viewers (MAU)
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-300"></div>
+
+                    {/* Number of Programs */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* Program count from mytv_v2_top_programs */}
+                        {data.channelBreakdown?.find(
+                          (ch) => ch.channel === "TV6"
+                        )?.programCount || 0}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Number of Programs
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs mt-1">Geographic coverage</p>
               </CardContent>
             </Card>
 
-            <Card className="">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Avg Viewers per Channel
-                </CardTitle>
-                <BarChart3Icon className="h-5 w-5" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-3xl font-bold">
-                  {formatNumber(data.summary.avgViewers)}
+            {/* OKEY Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-okey tv.png"
+                      alt="OKEY Logo"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Total Viewers (MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* TODO: Calculate OKEY viewers from mytv_v2_viewership */}
+                        {formatNumber(
+                          data.channelBreakdown?.find(
+                            (ch) => ch.channel === "OKEY"
+                          )?.totalViewers || 0
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Total Viewers (MAU)
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-300"></div>
+
+                    {/* Number of Programs */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* Program count from mytv_v2_top_programs */}
+                        {data.channelBreakdown?.find(
+                          (ch) => ch.channel === "OKEY"
+                        )?.programCount || 0}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Number of Programs
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs mt-1">Average engagement</p>
+              </CardContent>
+            </Card>
+
+            {/* SUKAN RTM Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-sukan rtm.png"
+                      alt="SUKAN RTM Logo"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Total Viewers (MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* TODO: Calculate SUKAN RTM viewers from mytv_v2_viewership */}
+                        {formatNumber(
+                          data.channelBreakdown?.find(
+                            (ch) => ch.channel === "SUKAN RTM"
+                          )?.totalViewers || 0
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Total Viewers (MAU)
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-300"></div>
+
+                    {/* Number of Programs */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* Program count from mytv_v2_top_programs */}
+                        {data.channelBreakdown?.find(
+                          (ch) => ch.channel === "SUKAN RTM"
+                        )?.programCount || 0}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Number of Programs
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* BERITA RTM Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-berita rtm.png"
+                      alt="BERITA RTM Logo"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Total Viewers (MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* TODO: Calculate BERITA RTM viewers from mytv_v2_viewership */}
+                        {formatNumber(
+                          data.channelBreakdown?.find(
+                            (ch) => ch.channel === "BERITA RTM"
+                          )?.totalViewers || 0
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Total Viewers (MAU)
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-300"></div>
+
+                    {/* Number of Programs */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {/* Program count from mytv_v2_top_programs */}
+                        {data.channelBreakdown?.find(
+                          (ch) => ch.channel === "BERITA RTM"
+                        )?.programCount || 0}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Number of Programs
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </>
         )}
+        </div>
       </div>
 
       {/* Main Line Chart - MAU by Channels and Months */}
