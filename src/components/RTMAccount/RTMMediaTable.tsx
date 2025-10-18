@@ -26,31 +26,45 @@ const RTMMediaTable = ({
 
   // Radio channel groups mapping
   const radioChannelGroups = {
-    "Radio Nasional": ["NASIONALfm", "MUTIARAfm", "Aifm"],
-    "Radio Daerah": [
-      "JOHORfm",
-      "KEDAHfm",
-      "KELANTANfm",
-      "SABAHfm",
-      "PERAKfm",
-      "PAHANGfm",
-      "SELANGORfm",
-      "TERENGGANUfm",
-      "NEGERIfm",
-      "MELAKAfm",
-      "BINTULUfm",
-      "KENINGAUfm",
-      "LABUANfm",
-      "LANGKAWIfm",
+    "STESEN DAERAH": [
       "LIMBANGfm",
-      "MIRIfm",
-      "SANDAKANfm",
-      "SIBUfm",
-      "SRI AMANfm",
+      "SABAH Vfm",
       "WAIfm (BIDAYUH)",
+      "SIBUfm",
+      "REDfm",
+      "SANDAKANfm",
+      "TAWAUfm",
+      "BINTULUfm",
+      "SRI AMANfm",
+      "KENINGAUfm",
+      "MIRIfm",
     ],
-    "Radio Musik": ["TRAXXfm", "ASYIKfm"],
-    "Radio Klasik": ["RADIO KLASIK", "MINNALfm", "SPPR"],
+    "STESEN IBU PEJABAT": [
+      "MINNALfm",
+      "NASIONALfm",
+      "TRAXXfm",
+      "ASYIKfm",
+      "Aifm",
+      "RADIO KLASIK",
+    ],
+    "STESEN NEGERI": [
+      "KLfm",
+      "SELANGORfm",
+      "MELAKAfm",
+      "PERAKfm",
+      "TERENGGANUfm",
+      "MUTIARAfm",
+      "PERLISfm",
+      "LABUANfm",
+      "KEDAHfm",
+      "NEGERIfm",
+      "JOHORfm",
+      "PAHANGfm",
+      "SABAHfm",
+      "KELANTANfm",
+      "SARAWAKfm",
+      "LANGKAWIfm",
+    ],
   };
 
   // Function to get the group name for a radio channel
@@ -471,11 +485,11 @@ const RTMMediaTable = ({
                       {radioGroup && (
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            radioGroup === "Radio Nasional"
+                            radioGroup === "STESEN IBU PEJABAT"
                               ? "bg-blue-100 text-blue-800"
-                              : radioGroup === "Radio Daerah"
+                              : radioGroup === "STESEN NEGERI"
                               ? "bg-green-100 text-green-800"
-                              : radioGroup === "Radio Musik"
+                              : radioGroup === "STESEN DAERAH"
                               ? "bg-purple-100 text-purple-800"
                               : "bg-orange-100 text-orange-800"
                           }`}

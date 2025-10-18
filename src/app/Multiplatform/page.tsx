@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import Image from "next/image";
 
 const MultiplatformPage = () => {
   const [loading, setLoading] = useState(true);
@@ -555,26 +556,50 @@ const MultiplatformPage = () => {
   // Platform data structure
   const platforms = [
     {
-      id: "unifitv",
-      name: "UnifiTV",
-      icon: <Wifi className="h-8 w-8" />,
-      color: "from-emerald-500 to-emerald-600",
-      borderColor: "border-emerald-200",
-      bgColor: "bg-emerald-50",
-      textColor: "text-emerald-900",
-      link: "/UnifiTV",
-      hasData: true,
+      id: "rtmclick",
+      name: "RTMKlik",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-rtmklik.png"
+          alt="RTMKlik Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-amber-500 to-amber-600",
+      borderColor: "border-amber-200",
+      bgColor: "bg-amber-50",
+      textColor: "text-amber-900",
+      link: "/RTMClick",
+      hasData: rtmklikMetrics.hasData,
       metrics: {
-        mau: unifiMetrics.mau.toLocaleString(),
-        totalHours: unifiMetrics.totalHours.toLocaleString(),
-        avgHours: unifiMetrics.avgHoursPerUser,
-        topChannel: `${unifiMetrics.topChannel.name} (${unifiMetrics.topChannel.percentage}%)`,
+        mau: rtmklikMetrics.hasData
+          ? rtmklikMetrics.formattedTotalActiveUsers
+          : "No data available yet",
+        totalHours: rtmklikMetrics.hasData
+          ? `${rtmklikMetrics.topRegion.name} (${rtmklikMetrics.topRegion.formattedUsers})`
+          : "No data available yet",
+        avgHours: rtmklikMetrics.hasData
+          ? `${rtmklikMetrics.topChannel.name}`
+          : "No data available yet",
+        topChannel: rtmklikMetrics.hasData
+          ? rtmklikMetrics.formattedTotalPageViews
+          : "No data available yet",
       },
     },
     {
       id: "mytv",
       name: "MyTV",
-      icon: <Tv className="h-8 w-8" />,
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-mytv.png"
+          alt="MyTV Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
       color: "from-blue-500 to-blue-600",
       borderColor: "border-blue-200",
       bgColor: "bg-blue-50",
@@ -591,6 +616,99 @@ const MultiplatformPage = () => {
         topChannel: mytvMetrics.hasData
           ? `${mytvMetrics.topChannel.name} – ${mytvMetrics.topChannel.audienceShare}`
           : "No data",
+      },
+    },
+    {
+      id: "astro",
+      name: "ASTRO",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-astro.png"
+          alt="ASTRO Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-purple-500 to-purple-600",
+      borderColor: "border-purple-200",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-900",
+      link: "/ASTRO",
+      hasData: astroMetrics.hasData,
+      metrics: {
+        mau: astroMetrics.hasData
+          ? `${astroMetrics.topRatedTVChannel.name} (${astroMetrics.topRatedTVChannel.rating})`
+          : "No data available yet",
+        totalHours: astroMetrics.hasData
+          ? `${astroMetrics.totalTVReach.toLocaleString()}`
+          : "No data available yet",
+        avgHours: astroMetrics.hasData
+          ? `${astroMetrics.topRatedRadioChannel.name} (${astroMetrics.topRatedRadioChannel.rating})`
+          : "No data available yet",
+        topChannel: astroMetrics.hasData
+          ? `${astroMetrics.totalRadioReach.toLocaleString()}`
+          : "No data available yet",
+      },
+    },
+    {
+      id: "unifitv",
+      name: "UnifiTV",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-unifitv.png"
+          alt="UnifiTV Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-emerald-500 to-emerald-600",
+      borderColor: "border-emerald-200",
+      bgColor: "bg-emerald-50",
+      textColor: "text-emerald-900",
+      link: "/UnifiTV",
+      hasData: true,
+      metrics: {
+        mau: unifiMetrics.mau.toLocaleString(),
+        totalHours: unifiMetrics.totalHours.toLocaleString(),
+        avgHours: unifiMetrics.avgHoursPerUser,
+        topChannel: `${unifiMetrics.topChannel.name} (${unifiMetrics.topChannel.percentage}%)`,
+      },
+    },
+    {
+      id: "wartaberita",
+      name: "Portal Berita",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-portalberita.png"
+          alt="Portal Berita Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-indigo-500 to-indigo-600",
+      borderColor: "border-indigo-200",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-900",
+      link: "/WartaBerita",
+      hasData: portalBeritaMetrics.hasData,
+      metrics: {
+        mau: portalBeritaMetrics.hasData
+          ? portalBeritaMetrics.formattedTotalAudience
+          : "No data available yet",
+        totalHours: portalBeritaMetrics.hasData
+          ? `${
+              portalBeritaMetrics.topRegion.name
+            } (${portalBeritaMetrics.topRegion.users.toLocaleString()})`
+          : "No data available yet",
+        avgHours: portalBeritaMetrics.hasData
+          ? `${portalBeritaMetrics.topTrafficSource.name}`
+          : "No data available yet",
+        topChannel: portalBeritaMetrics.hasData
+          ? `${portalBeritaMetrics.topExternalSource.name}`
+          : "No data available yet",
       },
     },
     {
@@ -615,83 +733,6 @@ const MultiplatformPage = () => {
           : "No data available yet",
         topChannel: marketingMetrics.hasData
           ? `${marketingMetrics.topSaluran.name} (${marketingMetrics.topSaluran.change})`
-          : "No data available yet",
-      },
-    },
-    {
-      id: "astro",
-      name: "ASTRO",
-      icon: <Star className="h-8 w-8" />,
-      color: "from-purple-500 to-purple-600",
-      borderColor: "border-purple-200",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-900",
-      link: "/ASTRO",
-      hasData: astroMetrics.hasData,
-      metrics: {
-        mau: astroMetrics.hasData
-          ? `${astroMetrics.topRatedTVChannel.name} (${astroMetrics.topRatedTVChannel.rating})`
-          : "No data available yet",
-        totalHours: astroMetrics.hasData
-          ? `${astroMetrics.totalTVReach.toLocaleString()}`
-          : "No data available yet",
-        avgHours: astroMetrics.hasData
-          ? `${astroMetrics.topRatedRadioChannel.name} (${astroMetrics.topRatedRadioChannel.rating})`
-          : "No data available yet",
-        topChannel: astroMetrics.hasData
-          ? `${astroMetrics.totalRadioReach.toLocaleString()}`
-          : "No data available yet",
-      },
-    },
-    {
-      id: "rtmclick",
-      name: "RTMKlik",
-      icon: <Radio className="h-8 w-8" />,
-      color: "from-amber-500 to-amber-600",
-      borderColor: "border-amber-200",
-      bgColor: "bg-amber-50",
-      textColor: "text-amber-900",
-      link: "/RTMClick",
-      hasData: rtmklikMetrics.hasData,
-      metrics: {
-        mau: rtmklikMetrics.hasData
-          ? rtmklikMetrics.formattedTotalActiveUsers
-          : "No data available yet",
-        totalHours: rtmklikMetrics.hasData
-          ? `${rtmklikMetrics.topRegion.name} (${rtmklikMetrics.topRegion.formattedUsers})`
-          : "No data available yet",
-        avgHours: rtmklikMetrics.hasData
-          ? `${rtmklikMetrics.topChannel.name}`
-          : "No data available yet",
-        topChannel: rtmklikMetrics.hasData
-          ? rtmklikMetrics.formattedTotalPageViews
-          : "No data available yet",
-      },
-    },
-    {
-      id: "wartaberita",
-      name: "Portal Berita",
-      icon: <Monitor className="h-8 w-8" />,
-      color: "from-indigo-500 to-indigo-600",
-      borderColor: "border-indigo-200",
-      bgColor: "bg-indigo-50",
-      textColor: "text-indigo-900",
-      link: "/WartaBerita",
-      hasData: portalBeritaMetrics.hasData,
-      metrics: {
-        mau: portalBeritaMetrics.hasData
-          ? portalBeritaMetrics.formattedTotalAudience
-          : "No data available yet",
-        totalHours: portalBeritaMetrics.hasData
-          ? `${
-              portalBeritaMetrics.topRegion.name
-            } (${portalBeritaMetrics.topRegion.users.toLocaleString()})`
-          : "No data available yet",
-        avgHours: portalBeritaMetrics.hasData
-          ? `${portalBeritaMetrics.topTrafficSource.name}`
-          : "No data available yet",
-        topChannel: portalBeritaMetrics.hasData
-          ? `${portalBeritaMetrics.topExternalSource.name}`
           : "No data available yet",
       },
     },
@@ -773,14 +814,20 @@ const MultiplatformPage = () => {
                     })}
               </div>
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
-                  <Tv className="h-8 w-8" />
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/multiplatform-logos/new-size-mytv.png"
+                    alt="MyTV Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    MyTV
+                  </CardTitle>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
-                MyTV
-              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col lg:flex-row gap-4">
@@ -943,14 +990,16 @@ const MultiplatformPage = () => {
                 Updated as of: 2024
               </div>
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-rose-100 text-rose-700">
-                  <DollarSign className="h-8 w-8" />
+                <div className="flex items-center gap-4">
+                  <div className="p-2 rounded-lg bg-rose-100 text-rose-700">
+                    <DollarSign className="h-8 w-8" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    Marketing Revenue
+                  </CardTitle>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
-                Marketing Revenue
-              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Saluran Cards Grid - TV, BES, Radio, Total */}
@@ -1136,14 +1185,20 @@ const MultiplatformPage = () => {
                     })}
               </div>
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
-                  <Monitor className="h-8 w-8" />
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/multiplatform-logos/new-size-portalberita.png"
+                    alt="Portal Berita Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    Portal Berita
+                  </CardTitle>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
-                Portal Berita
-              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Portal Berita Metrics Grid */}
@@ -1263,14 +1318,20 @@ const MultiplatformPage = () => {
                   : "N/A"}
               </div>
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
-                  <Star className="h-8 w-8" />
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/multiplatform-logos/new-size-astro.png"
+                    alt="ASTRO Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    ASTRO
+                  </CardTitle>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
-                ASTRO
-              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* ASTRO Metrics Grid */}
@@ -1384,14 +1445,20 @@ const MultiplatformPage = () => {
                   : "N/A"}
               </div>
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
-                  <Radio className="h-8 w-8" />
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/multiplatform-logos/new-size-rtmklik.png"
+                    alt="RTMKlik Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    RTMKlik
+                  </CardTitle>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900 mt-3">
-                RTMKlik
-              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* RTMKlik Metrics Grid */}
@@ -1573,20 +1640,6 @@ const MultiplatformPage = () => {
       },
     ].filter((metric) => metric.show);
 
-    // Get icon color based on platform id
-    const getIconBgColor = (platformId) => {
-      switch (platformId) {
-        case "unifitv":
-          return "bg-emerald-100 text-emerald-700";
-        case "astro":
-          return "bg-purple-100 text-purple-700";
-        case "rtmclick":
-          return "bg-amber-100 text-amber-700";
-        default:
-          return "bg-gray-100 text-gray-700";
-      }
-    };
-
     return (
       <Link href={platform.link} className="block group">
         <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
@@ -1612,14 +1665,14 @@ const MultiplatformPage = () => {
               </div>
             )}
             <div className="flex items-center justify-between">
-              <div className={`p-2 rounded-lg ${getIconBgColor(platform.id)}`}>
+              <div className="flex items-center gap-4">
                 {platform.icon}
+                <CardTitle className="text-xl font-bold text-gray-900">
+                  {platform.name}
+                </CardTitle>
               </div>
               <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
             </div>
-            <CardTitle className="text-xl font-bold text-gray-900 mt-3">
-              {platform.name}
-            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {hasAnyData ? (
