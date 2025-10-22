@@ -11,13 +11,148 @@ import {
 } from "recharts";
 import { TrendingUp, Users, Filter, Search } from "lucide-react";
 
-const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
+const PlatformMentionsChart = ({
+  data = [],
+  authorsData = [],
+  channelsData = [],
+  hasActiveFilters = false,
+  activeFilters = {},
+  onFilterChange,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("count"); // 'count' or 'alphabetical'
   const [showTop, setShowTop] = useState(10); // Show top N platforms (reduced default)
 
   // Process the data to count mentions per author (platform)
   const processedData = useMemo(() => {
+    // Check if author filter is active (for cross-filtering)
+    const hasAuthorFilter =
+      (activeFilters as any)?.author && (activeFilters as any).author !== "";
+
+    // Check if unit filter is active
+    const hasUnitFilter =
+      (activeFilters as any)?.unit && (activeFilters as any).unit !== "overall";
+
+    // Check if there are any REAL data-limiting filters active (excluding author and unit)
+    // Author and unit filters are NOT data-limiting - we can filter API data by them
+    const hasDataLimitingFilters = Object.entries(activeFilters)
+      .filter(([key]) => key !== "unit" && key !== "author") // Exclude unit and author
+      .some(([, value]) => Boolean(value));
+
+    // Decide data source: use API aggregation when no data-limiting filters are active
+    const useApiData =
+      !hasDataLimitingFilters && authorsData && authorsData.length > 0;
+
+    console.log("🔍 PlatformMentionsChart data source decision:", {
+      useApiData,
+      hasActiveFilters,
+      hasDataLimitingFilters,
+      hasAuthorFilter,
+      hasUnitFilter,
+      authorFilter: (activeFilters as any)?.author,
+      unitFilter: (activeFilters as any)?.unit,
+      authorsDataLength: authorsData?.length,
+      channelsDataLength: channelsData?.length,
+      filteredDataLength: data?.length,
+    });
+
+    // BRANCH 1: Use accurate API authorsData (when no data-limiting filters)
+    if (useApiData) {
+      console.log("✅ Using accurate API authorsData for Channel Posts chart");
+      console.log("📊 Sample authorsData:", authorsData.slice(0, 3));
+
+      // authorsData now includes unit directly from database (via groupname)
+      // No need to map from channelsData anymore!
+      let chartData = authorsData.map((author) => ({
+        author: author.author,
+        count: parseInt(author.count),
+        unit: author.unit, // Unit comes directly from API
+        displayName:
+          author.author.length > 12
+            ? author.author.substring(0, 10) + "..."
+            : author.author,
+      }));
+
+      console.log("📊 chartData with units (first 3):", chartData.slice(0, 3));
+      console.log("📊 Unique units in data:", [
+        ...new Set(chartData.map((c) => c.unit)),
+      ]);
+
+      // Filter by unit if unit filter is active (for unit tabs)
+      if (hasUnitFilter) {
+        const targetUnit = (activeFilters as any).unit;
+        // Map unit filter to actual unit names
+        const unitMap: Record<string, string> = {
+          tv: "TV",
+          radio: "Radio",
+          berita: "News",
+          news: "News",
+          official: "Official",
+        };
+        const mappedUnit = unitMap[targetUnit.toLowerCase()] || targetUnit;
+        console.log(
+          `🎯 Filtering API data by unit: "${targetUnit}" → "${mappedUnit}"`
+        );
+        console.log(`📊 Before filter: ${chartData.length} items`);
+
+        // Debug: show what units are in the data
+        const unitsInData = chartData.map((item) => item.unit);
+        console.log("📊 Units in chartData:", [...new Set(unitsInData)]);
+
+        chartData = chartData.filter((item) => {
+          console.log(
+            `   Comparing: "${item.unit}" === "${mappedUnit}" ? ${
+              item.unit === mappedUnit
+            }`
+          );
+          return item.unit === mappedUnit;
+        });
+
+        console.log(`📊 After filter: ${chartData.length} items`);
+      }
+
+      // Filter by author if author filter is active (for cross-filtering)
+      if (hasAuthorFilter) {
+        const targetAuthor = (activeFilters as any).author;
+        console.log(`🎯 Filtering API data by author: "${targetAuthor}"`);
+        const beforeFilter = chartData.length;
+        chartData = chartData.filter((item) => item.author === targetAuthor);
+        console.log(
+          `   Found ${chartData.length} matching authors (from ${beforeFilter} total)`
+        );
+        if (chartData.length === 0) {
+          console.log(
+            `   ⚠️ No authors match "${targetAuthor}". Available authors:`,
+            authorsData.slice(0, 10).map((a) => a.author)
+          );
+        }
+      }
+
+      // Filter by search term
+      if (searchTerm) {
+        chartData = chartData.filter((item) =>
+          item.author.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      // Sort data
+      if (sortBy === "count") {
+        chartData.sort((a, b) => Number(b.count) - Number(a.count));
+      } else {
+        chartData.sort((a, b) => a.author.localeCompare(b.author));
+      }
+
+      // Limit to top N
+      const finalData = chartData.slice(0, showTop);
+      console.log(
+        `📊 Returning ${finalData.length} items from API data (after all filters)`
+      );
+      return finalData;
+    }
+
+    // BRANCH 2: Count from filtered mentions array (when filters active)
+    console.log("⚠️ Counting from filtered mentions array (filters active)");
+
     if (!data || !Array.isArray(data) || data.length === 0) {
       return [];
     }
@@ -60,7 +195,16 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
       console.error("Error processing data:", error);
       return [];
     }
-  }, [data, searchTerm, sortBy, showTop]);
+  }, [
+    data,
+    authorsData,
+    channelsData,
+    hasActiveFilters,
+    activeFilters,
+    searchTerm,
+    sortBy,
+    showTop,
+  ]);
 
   const totalMentions = useMemo(() => {
     return processedData.reduce(
@@ -73,9 +217,78 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
 
   // Handle bar click for cross-filtering
   const handleBarClick = (data, index) => {
-    if (onFilterChange && data && data.author) {
-      onFilterChange("author", data.author);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🖱️ BAR CLICKED - DEBUG INFO");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("1. Raw data object:", data);
+    console.log("2. data.payload:", data.payload);
+    console.log("3. data.author:", data.author);
+    console.log("4. data.payload?.author:", data.payload?.author);
+
+    if (onFilterChange && data) {
+      // Recharts passes the data in different ways depending on what's clicked
+      // When clicking the bar, it passes the full data object with payload
+      const authorName = data.payload?.author || data.author;
+
+      console.log("5. ✅ Extracted author name:", authorName);
+      console.log("6. Author type:", typeof authorName);
+      console.log("7. Author length:", authorName?.length);
+      console.log("8. Author (JSON):", JSON.stringify(authorName));
+
+      if (authorName) {
+        console.log("9. 🎯 Calling onFilterChange with:", {
+          key: "author",
+          value: authorName,
+        });
+        onFilterChange("author", authorName);
+        console.log("10. ✅ onFilterChange called successfully");
+      } else {
+        console.warn("⚠️ No author found in clicked data");
+      }
+    } else {
+      console.error("❌ Missing requirements:", {
+        hasOnFilterChange: !!onFilterChange,
+        hasData: !!data,
+      });
     }
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+  };
+
+  // Custom tick component for Y-axis that makes author names clickable
+  const CustomYAxisTick = (props) => {
+    const { x, y, payload } = props;
+    const displayName = payload.value;
+
+    // Find the full author name from displayName
+    const item = processedData.find((d) => d.displayName === displayName);
+    const fullAuthor = item?.author || displayName;
+
+    const handleClick = () => {
+      if (onFilterChange && fullAuthor) {
+        console.log("🖱️ Y-axis label clicked:", fullAuthor);
+        onFilterChange("author", fullAuthor);
+      }
+    };
+
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={4}
+          textAnchor="end"
+          fill="#666"
+          fontSize={9}
+          onClick={handleClick}
+          style={{ cursor: onFilterChange ? "pointer" : "default" }}
+          className={
+            onFilterChange ? "hover:fill-blue-600 transition-colors" : ""
+          }
+        >
+          {displayName}
+        </text>
+      </g>
+    );
   };
 
   // Custom tooltip component
@@ -265,8 +478,7 @@ const PlatformMentionsChart = ({ data = [], onFilterChange }) => {
               stroke="#666"
               width={60}
               interval={0}
-              className={onFilterChange ? "cursor-pointer" : ""}
-              tick={{ cursor: onFilterChange ? "pointer" : "default" }}
+              tick={<CustomYAxisTick />}
             />
             <Tooltip
               cursor={false}

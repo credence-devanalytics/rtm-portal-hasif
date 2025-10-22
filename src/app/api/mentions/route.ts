@@ -27,10 +27,14 @@ export async function GET(request: Request) {
 					[metrics],
 					sentimentBreakdown,
 					platformDistribution,
+					platformByUnitDistribution,
 					dailyTrends,
 					topMentions,
 					influencerMentions,
 					channelGroupBreakdown,
+					unitBreakdown,
+					channelBreakdown,
+					authorBreakdown,
 				] = await Promise.all([
 					// 1. Get limited raw mentions data (for tables)
 					db
@@ -45,7 +49,7 @@ export async function GET(request: Request) {
 						.select({
 							totalMentions: count(),
 							totalReach: sum(mentionsClassify.reach),
-							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0))`,
+							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
 							avgEngagement: avg(mentionsClassify.engagementrate),
 						})
 						.from(mentionsClassify)
@@ -61,19 +65,60 @@ export async function GET(request: Request) {
 						.where(and(...whereConditions))
 						.groupBy(mentionsClassify.sentiment),
 
-					// 4. Get platform distribution
-					db
-						.select({
-							platform: mentionsClassify.type,
-							count: count(),
-							totalReach: sum(mentionsClassify.reach),
-						})
-						.from(mentionsClassify)
-						.where(and(...whereConditions))
-						.groupBy(mentionsClassify.type)
-						.orderBy(desc(count())),
-
-					// 5. Get daily trends (mentions over time)
+				// 4. Get platform distribution
+				db
+				.select({
+					platform: mentionsClassify.type,
+					count: count(),
+					totalReach: sum(mentionsClassify.reach),
+					totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
+					// Calculate engagement rate: (total interactions / total reach) * 100
+					// Use NULLIF to avoid division by zero
+					avgEngagement: sql`AVG(
+						COALESCE(${mentionsClassify.engagementrate}, 
+							(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0)) 
+							/ NULLIF(COALESCE(${mentionsClassify.reach}, 1), 0) * 100
+						)
+					)`,
+				})
+					.from(mentionsClassify)
+					.where(and(...whereConditions))
+					.groupBy(mentionsClassify.type)
+					.orderBy(desc(count())),					// 5. Get platform distribution by unit (TV, Radio, News, Official)
+				db
+					.select({
+						unit: sql`CASE 
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+							ELSE 'Other'
+						END`.as('unit'),
+					platform: mentionsClassify.type,
+					count: count(),
+					totalReach: sum(mentionsClassify.reach),
+					totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
+					// Calculate engagement rate: (total interactions / total reach) * 100
+					avgEngagement: sql`AVG(
+						COALESCE(${mentionsClassify.engagementrate}, 
+							(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0)) 
+							/ NULLIF(COALESCE(${mentionsClassify.reach}, 1), 0) * 100
+						)
+					)`,
+				})
+					.from(mentionsClassify)
+					.where(and(...whereConditions))
+					.groupBy(
+						sql`CASE 
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+							ELSE 'Other'
+						END`,
+						mentionsClassify.type
+					)
+					.orderBy(desc(count())),					// 6. Get daily trends (mentions over time)
 					db
 						.select({
 							date: sql`DATE(${mentionsClassify.inserttime})`.as("date"),
@@ -91,14 +136,14 @@ export async function GET(request: Request) {
 									"neutral"
 								),
 							totalReach: sum(mentionsClassify.reach),
-							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0))`,
+							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
 						})
 						.from(mentionsClassify)
 						.where(and(...whereConditions))
 						.groupBy(sql`DATE(${mentionsClassify.inserttime})`)
 						.orderBy(sql`DATE(${mentionsClassify.inserttime})`),
 
-					// 6. Get top mentions by reach
+					// 7. Get top mentions by reach
 					db
 						.select()
 						.from(mentionsClassify)
@@ -106,7 +151,7 @@ export async function GET(request: Request) {
 						.orderBy(desc(mentionsClassify.reach))
 						.limit(10),
 
-					// 7. Get influencer mentions (high follower count)
+					// 8. Get influencer mentions (high follower count)
 					db
 						.select({
 							count: count(),
@@ -120,7 +165,7 @@ export async function GET(request: Request) {
 							)
 						),
 
-					// 8. Get channel group breakdown (for radio stations and other channels)
+					// 9. Get channel group breakdown (for radio stations and other channels)
 					db
 						.select({
 							groupname: mentionsClassify.groupname,
@@ -138,16 +183,105 @@ export async function GET(request: Request) {
 						)
 						.orderBy(desc(count()))
 						.limit(100),
+
+					// 10. Get unit breakdown (Official, TV, News, Radio, Other)
+					db
+						.select({
+							unit: sql`CASE 
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+								ELSE 'Other'
+							END`.as('unit'),
+							count: count(),
+							totalReach: sum(mentionsClassify.reach),
+							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
+						})
+						.from(mentionsClassify)
+						.where(and(...whereConditions))
+						.groupBy(sql`CASE 
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+							ELSE 'Other'
+						END`),
+
+					// 11. Get channel-level breakdown (for each channel within units)
+					db
+						.select({
+							channel: mentionsClassify.channel,
+							groupname: mentionsClassify.groupname,
+							unit: sql`CASE 
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+								ELSE 'Other'
+							END`.as('unit'),
+							count: count(),
+							totalReach: sum(mentionsClassify.reach),
+							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
+						})
+						.from(mentionsClassify)
+						.where(and(...whereConditions))
+						.groupBy(
+							mentionsClassify.channel,
+							mentionsClassify.groupname,
+							sql`CASE 
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+								ELSE 'Other'
+							END`
+						)
+						.orderBy(desc(count())),
+
+					// 12. Get channel breakdown (for Channel Posts chart)
+					db
+						.select({
+							author: mentionsClassify.channel, // Use channel field instead of author
+							unit: sql`CASE 
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+								ELSE 'Other'
+							END`.as('unit'),
+							count: count(),
+							totalReach: sum(mentionsClassify.reach),
+							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
+						})
+						.from(mentionsClassify)
+						.where(
+							and(
+								...whereConditions,
+								sql`${mentionsClassify.channel} IS NOT NULL AND ${mentionsClassify.channel} != ''`
+							)
+						)
+						.groupBy(
+							mentionsClassify.channel,
+							sql`CASE 
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+								WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+								ELSE 'Other'
+							END`
+						)
+						.orderBy(desc(count())),
 				]);
 
-				const response = {
-					// Raw data for detailed analysis (limited for performance)
-					mentions: mentions.slice(
-						0,
-						Math.min(parseInt(filters.limit) || 50, 1000)
-					), // Use requested limit, capped at 1000
+			const response = {
+				// Raw data for detailed analysis
+				mentions: mentions.slice(
+					0,
+					parseInt(filters.limit) || 20000
+				), // Use requested limit, default 20000
 
-					// Aggregated metrics
+				// Aggregated metrics
 					metrics: {
 						totalMentions: Number(metrics.totalMentions) || 0,
 						totalReach: Number(metrics.totalReach) || 0,
@@ -160,29 +294,37 @@ export async function GET(request: Request) {
 					sentiment: {
 						breakdown: sentimentBreakdown.map((s) => ({
 							sentiment: s.sentiment || "unknown",
-							count: Number(),
+							count: Number(s.count) || 0,
 						})),
 						trend: dailyTrends.map((d) => ({
 							date: d.date,
-							positive: Number(),
-							negative: Number(),
-							neutral: Number(),
+							positive: Number(d.positive) || 0,
+							negative: Number(d.negative) || 0,
+							neutral: Number(d.neutral) || 0,
 						})),
 					},
 
-					// Platform data
-					platforms: platformDistribution.map((p) => ({
-						platform: p.platform,
-						count: Number(),
-						totalReach: Number() || 0,
-					})),
-
-					// Time series data
+				// Platform data
+				platforms: platformDistribution.map((p) => ({
+					platform: p.platform,
+					count: Number(p.count) || 0,
+					totalReach: Number(p.totalReach) || 0,
+					totalInteractions: Number(p.totalInteractions) || 0,
+					avgEngagementRate: Number(p.avgEngagement) || 0,
+				})),					// Platform distribution by unit (TV, Radio, News, Official)
+				platformByUnit: platformByUnitDistribution.map((p) => ({
+					unit: p.unit,
+					platform: p.platform,
+					count: Number(p.count) || 0,
+					totalReach: Number(p.totalReach) || 0,
+					totalInteractions: Number(p.totalInteractions) || 0,
+					avgEngagementRate: Number(p.avgEngagement) || 0,
+				})),					// Time series data
 					timeSeries: dailyTrends.map((d) => ({
 						date: d.date,
-						mentions: Number(),
-						reach: parseInt(String(d.totalReach)) || 0,
-						interactions: Number() || 0,
+						mentions: Number(d.count) || 0,
+						reach: Number(d.totalReach) || 0,
+						interactions: Number(d.totalInteractions) || 0,
 					})),
 
 					// Channel group breakdown (includes new channelgroup field)
@@ -190,8 +332,35 @@ export async function GET(request: Request) {
 						groupname: c.groupname,
 						channel: c.channel,
 						channelgroup: c.channelgroup,
-						count: Number(),
-						totalReach: Number() || 0,
+						count: Number(c.count) || 0,
+						totalReach: Number(c.totalReach) || 0,
+					})),
+
+					// Unit breakdown with accurate database counts
+					units: unitBreakdown.map((u) => ({
+						unit: u.unit,
+						count: Number(u.count) || 0,
+						totalReach: Number(u.totalReach) || 0,
+						totalInteractions: Number(u.totalInteractions) || 0,
+					})),
+
+					// Channel breakdown with accurate database counts (grouped by unit and channel)
+					channels: channelBreakdown.map((c) => ({
+						channel: c.channel,
+						groupname: c.groupname,
+						unit: c.unit,
+						count: Number(c.count) || 0,
+						totalReach: Number(c.totalReach) || 0,
+						totalInteractions: Number(c.totalInteractions) || 0,
+					})),
+
+					// Author breakdown with accurate database counts (for Channel Posts chart)
+					authorsData: authorBreakdown.map((a) => ({
+						author: a.author,
+						unit: a.unit, // Include unit from groupname CASE logic
+						count: Number(a.count) || 0,
+						totalReach: Number(a.totalReach) || 0,
+						totalInteractions: Number(a.totalInteractions) || 0,
 					})),
 
 					// Top performing content

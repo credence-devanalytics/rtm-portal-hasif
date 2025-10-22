@@ -15,6 +15,9 @@ const RTMMediaTable = ({
   data = [],
   selectedTab = "overall",
   onFilterChange,
+  unitsData = null,
+  channelsData = null,
+  hasActiveFilters = false,
 }) => {
   // State to track the current active tab from RTMTabs
   const [currentTab, setCurrentTab] = useState("overall");
@@ -46,6 +49,7 @@ const RTMMediaTable = ({
       "ASYIKfm",
       "Aifm",
       "RADIO KLASIK",
+      "SPPR",
     ],
     "STESEN NEGERI": [
       "KLfm",
@@ -150,44 +154,151 @@ const RTMMediaTable = ({
     let result = [];
 
     if (currentTab === "overall") {
-      // Show unit-level data (Official Account, TV, Berita, Radio)
-      const units = ["Official", "TV", "Berita", "Radio"];
+      // Debug logging
+      console.log("🔍 RTMMediaTable Debug:", {
+        hasActiveFilters,
+        unitsData,
+        dataLength: data.length,
+        currentTab,
+      });
 
-      result = units.map((unit) => {
-        let filteredData = [];
+      // Use accurate database unit counts when available and no filters active
+      if (!hasActiveFilters && unitsData && unitsData.length > 0) {
+        // Map unit names to display names
+        const unitDisplayNames = {
+          Official: "Official",
+          TV: "TV",
+          News: "Berita",
+          Radio: "Radio",
+          Other: "Other",
+        };
 
-        if (unit === "Official") {
-          filteredData = data.filter(
-            (item) => item.unit === "Official" || item.author === "RTM"
+        console.log("✅ Using database units data:", unitsData);
+
+        result = unitsData.map((unit) => ({
+          name: unitDisplayNames[unit.unit] || unit.unit,
+          unit: unit.unit,
+          totalPosts: unit.count,
+          totalReach: unit.totalReach,
+          totalInteractions: unit.totalInteractions,
+          overallTotal: unit.count + unit.totalReach + unit.totalInteractions,
+          data: [], // No detailed data for database aggregates
+          isFromDatabase: true, // Flag to indicate this is accurate DB data
+        }));
+
+        // Sort units in a preferred order
+        const unitOrder = ["Official", "TV", "News", "Radio", "Other"];
+        result.sort((a, b) => {
+          const indexA = unitOrder.indexOf(a.unit);
+          const indexB = unitOrder.indexOf(b.unit);
+          return (
+            (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB)
           );
-        } else if (unit === "TV") {
-          filteredData = data.filter((item) => item.unit === "TV");
-        } else if (unit === "Berita") {
-          filteredData = data.filter((item) => item.unit === "News");
-        } else if (unit === "Radio") {
-          filteredData = data.filter((item) => item.unit === "Radio");
+        });
+
+        if (process.env.NODE_ENV === "development") {
+          console.log("✅ Using accurate database unit counts:", result);
+        }
+      } else {
+        // Fall back to client-side calculation when filters are active
+        // Show unit-level data - Get all unique units from data
+        const unitCounts = {};
+        data.forEach((item) => {
+          const unitName = item.unit || "Other";
+          if (!unitCounts[unitName]) {
+            unitCounts[unitName] = 0;
+          }
+          unitCounts[unitName]++;
+        });
+
+        // Debug: Check for all units
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "📊 Client-side unit calculation (filtered data):",
+            unitCounts
+          );
+          console.log("📊 Total records:", data.length);
         }
 
-        const totalPosts = filteredData.length;
-        const totalReach = filteredData.reduce(
-          (sum, item) => sum + (item.reach || 0),
-          0
-        );
-        const totalInteractions = filteredData.reduce(
-          (sum, item) => sum + (item.interactions || 0),
-          0
-        );
-        const overallTotal = totalPosts + totalReach + totalInteractions;
-
-        return {
-          name: unit,
-          totalPosts,
-          totalReach,
-          totalInteractions,
-          overallTotal,
-          data: filteredData,
+        // Map unit names to display names
+        const unitDisplayNames = {
+          Official: "Official",
+          TV: "TV",
+          News: "Berita",
+          Radio: "Radio",
+          Other: "Other",
         };
-      });
+
+        // Get all unique units that exist in the data
+        const unitsInData = Object.keys(unitCounts);
+
+        result = unitsInData.map((unit) => {
+          // Filter data by unit
+          let filteredData = data.filter((item) => {
+            const itemUnit = item.unit || "Other";
+            return itemUnit === unit;
+          });
+
+          const totalPosts = filteredData.length;
+          const totalReach = filteredData.reduce(
+            (sum, item) => sum + (item.reach || 0),
+            0
+          );
+          const totalInteractions = filteredData.reduce(
+            (sum, item) => sum + (item.interactions || 0),
+            0
+          );
+          const overallTotal = totalPosts + totalReach + totalInteractions;
+
+          // Debug logging for unit-level aggregation
+          if (process.env.NODE_ENV === "development") {
+            console.log(`📊 Overall - ${unit}:`, {
+              posts: totalPosts,
+              reach: totalReach,
+              interactions: totalInteractions,
+              uniqueAuthors: new Set(filteredData.map((d) => d.author)).size,
+            });
+          }
+
+          return {
+            name: unitDisplayNames[unit] || unit,
+            unit: unit, // Keep original unit for reference
+            totalPosts,
+            totalReach,
+            totalInteractions,
+            overallTotal,
+            data: filteredData,
+          };
+        });
+
+        // Sort units in a preferred order
+        const unitOrder = ["Official", "TV", "News", "Radio", "Other"];
+        result.sort((a, b) => {
+          const indexA = unitOrder.indexOf(a.unit);
+          const indexB = unitOrder.indexOf(b.unit);
+          return (
+            (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB)
+          );
+        });
+
+        // Debug: Verify total categorized
+        if (process.env.NODE_ENV === "development") {
+          const totalCategorized = result.reduce(
+            (sum, unit) => sum + unit.totalPosts,
+            0
+          );
+          console.log(
+            `✅ Categorized: ${totalCategorized} out of ${data.length} records`
+          );
+          if (totalCategorized !== data.length) {
+            console.warn(
+              `⚠️ Mismatch: ${
+                data.length - totalCategorized
+              } records not categorized`
+            );
+          }
+        }
+      }
     } else {
       // Show channel-level data based on selected tab
       let channels = [];
@@ -214,42 +325,122 @@ const RTMMediaTable = ({
           return [];
       }
 
-      result = channels.map((channel) => {
-        // Filter data by unit and try to match channel name in author or other fields
-        const filteredData = data.filter((item) => {
-          if (currentTab === "official") {
-            return item.unit === unitFilter || item.author === channel;
-          }
-          return (
-            item.unit === unitFilter &&
-            (item.author?.includes(channel) ||
-              item.mentionSnippet?.includes(channel) ||
-              item.author === channel)
-          );
+      // Debug logging
+      console.log("🔍 Channel Data Debug:", {
+        currentTab,
+        unitFilter,
+        hasActiveFilters,
+        channelsData,
+        channelsDataLength: channelsData?.length,
+        dataLength: data.length,
+        willUseDatabase:
+          !hasActiveFilters && channelsData && channelsData.length > 0,
+      });
+
+      // Use accurate database channel counts when available and no filters active
+      if (!hasActiveFilters && channelsData && channelsData.length > 0) {
+        // Filter channelsData for the current unit
+        const unitChannels = channelsData.filter(
+          (ch) => ch.unit === unitFilter
+        );
+
+        console.log("✅ Using database channels data:", {
+          unitFilter,
+          unitChannels,
         });
 
-        const totalPosts = filteredData.length;
-        const totalReach = filteredData.reduce(
-          (sum, item) => sum + (item.reach || 0),
-          0
-        );
-        const totalInteractions = filteredData.reduce(
-          (sum, item) => sum + (item.interactions || 0),
-          0
-        );
-        const overallTotal = totalPosts + totalReach + totalInteractions;
-
-        return {
-          name: channel,
-          totalPosts,
-          totalReach,
-          totalInteractions,
-          overallTotal,
-          data: filteredData,
+        // Map the database channel data to our expected format
+        result = unitChannels.map((channelData) => ({
+          name: (channelData.channel || "").trim(), // Trim whitespace
+          totalPosts: channelData.count,
+          totalReach: channelData.totalReach,
+          totalInteractions: channelData.totalInteractions,
+          overallTotal:
+            channelData.count +
+            channelData.totalReach +
+            channelData.totalInteractions,
+          data: [], // No detailed data for database aggregates
+          isFromDatabase: true, // Flag to indicate this is accurate DB data
           groupName:
-            currentTab === "radio" ? getRadioChannelGroup(channel) : null,
-        };
-      });
+            currentTab === "radio"
+              ? getRadioChannelGroup((channelData.channel || "").trim())
+              : null,
+        }));
+
+        if (process.env.NODE_ENV === "development") {
+          console.log("✅ Using accurate database channel counts:", result);
+        }
+      } else {
+        // Fall back to client-side calculation when filters are active
+        console.log("⚠️ Using client-side channel calculation (filtered)");
+
+        result = channels.map((channel) => {
+          // Filter data by unit and match channel name more precisely
+          const filteredData = data.filter((item) => {
+            if (currentTab === "official") {
+              return item.unit === unitFilter || item.author === channel;
+            }
+
+            // More precise matching logic to avoid false positives
+            if (item.unit !== unitFilter) {
+              return false;
+            }
+
+            // Exact match first (most accurate)
+            if (item.author === channel || item.channel === channel) {
+              return true;
+            }
+
+            // Check if author contains the channel name as a separate word
+            // This prevents "TV1" from matching "TV10" or "TV11"
+            const authorLower = (item.author || "").toLowerCase();
+            const channelLower = channel.toLowerCase();
+
+            // Use word boundaries for more precise matching
+            const regex = new RegExp(
+              `\\b${channelLower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+              "i"
+            );
+
+            return regex.test(authorLower);
+          });
+
+          const totalPosts = filteredData.length;
+          const totalReach = filteredData.reduce(
+            (sum, item) => sum + (item.reach || 0),
+            0
+          );
+          const totalInteractions = filteredData.reduce(
+            (sum, item) => sum + (item.interactions || 0),
+            0
+          );
+          const overallTotal = totalPosts + totalReach + totalInteractions;
+
+          // Debug logging for verification
+          if (
+            filteredData.length > 0 &&
+            process.env.NODE_ENV === "development"
+          ) {
+            console.log(`📊 ${currentTab} - ${channel}:`, {
+              posts: totalPosts,
+              reach: totalReach,
+              interactions: totalInteractions,
+              sampleAuthors: filteredData.slice(0, 3).map((d) => d.author),
+            });
+          }
+
+          return {
+            name: channel,
+            totalPosts,
+            totalReach,
+            totalInteractions,
+            overallTotal,
+            data: filteredData,
+            groupName:
+              currentTab === "radio" ? getRadioChannelGroup(channel) : null,
+          };
+        });
+      }
     }
 
     // Apply sorting
@@ -301,6 +492,9 @@ const RTMMediaTable = ({
     channelMapping.TV,
     channelMapping.Berita,
     channelMapping.Radio,
+    unitsData,
+    channelsData,
+    hasActiveFilters,
   ]);
 
   // Handle row click for filtering
