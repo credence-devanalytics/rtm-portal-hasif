@@ -38,6 +38,7 @@ import EngagementOverTimeChart from "@/components/RTMAccount/EngagementOverTimeC
 import { Button } from "@/components/ui/button";
 import MedinaLogo from "@/components/MedinaLogo";
 import Stats09 from "@/components/stats-3";
+import TableauEmbedServer from "@/components/dashboard/tableau/TableauEmbedServer";
 
 const MultiplatformSection = () => {
   const [loading, setLoading] = useState(true);
@@ -1224,6 +1225,27 @@ const AccountsSection = () => {
     )
   };
 
+  const TableauEmbedCard = () => {
+    return (
+      <Card className="h-full">
+        <CardHeader className="">
+          <CardTitle className="text-xl font-bold text-gray-900">
+            <div className="flex items-center justify-between">
+              RTM Tableau Dashboard
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 flex flex-col h-fit">
+          <div className="h-96">
+            <TableauEmbedServer
+              viewUrl="http://100.83.250.224:8080/views/RTMKlik_17576649176570/RadioAnalysis2_1"
+            />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  };
+
   return (
     <Link href="/SocMedAcc" className="block group">
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
@@ -1241,9 +1263,9 @@ const AccountsSection = () => {
           <div className="grid grid-cols-2 gap-3 mb-3">
             <DonutChartCard />
             {/* Summary metrics */}
-            <Card className="">
-            <EngagementOverTimeChart data={platformData} />
-          </Card>
+            {/* <Card className=""> */}
+              <TableauEmbedCard />
+            {/* </Card> */}
           </div>
           {/* Click Indicator */}
           <div className="pt-2 border-t border-gray-200">

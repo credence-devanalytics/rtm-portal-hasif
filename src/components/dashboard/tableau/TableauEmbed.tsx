@@ -58,7 +58,7 @@ const TableauEmbedv3: React.FC<TableauEmbedProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // Tableau Public URL
-  const vizUrl = "https://public.tableau.com/views/Groundwater-2/Story1";
+  const vizUrl = "https://100.83.250.224:8080/views/Groundwater-2/Story1";
 
   useEffect(() => {
     const loadTableauAPI = async () => {
@@ -72,7 +72,7 @@ const TableauEmbedv3: React.FC<TableauEmbedProps> = ({
         // Load Tableau Embedding API v3
         const script = document.createElement("script");
         script.src =
-          "https://public.tableau.com/javascripts/api/tableau-2.min.js";
+          "https://100.83.250.224:8080/javascripts/api/tableau-2.min.js";
         script.type = "text/javascript";
 
         script.onload = () => {
@@ -347,12 +347,12 @@ export const MyViz: React.FC = () => {
           <a href="#">
             <img
               alt="Story 1 "
-              src="https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Gr&#47;Groundwater-2&#47;Story1&#47;1_rss.png"
+              src="https:&#47;&#47;100.83.250.224:8080&#47;static&#47;images&#47;Gr&#47;Groundwater-2&#47;Story1&#47;1_rss.png"
             />
           </a>
         </noscript>
         <object className="tableauViz">
-          <param name="host_url" value="https%3A%2F%2Fpublic.tableau.com%2F" />
+          <param name="host_url" value="https%3A%2F%2F100.83.250.224:8080%2F" />
           <param name="embed_code_version" value="3" />
           <param name="site_root" value="" />
           <param name="name" value="Groundwater-2&#47;Story1" />
@@ -360,7 +360,7 @@ export const MyViz: React.FC = () => {
           <param name="toolbar" value="yes" />
           <param
             name="static_image"
-            value="https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Gr&#47;Groundwater-2&#47;Story1&#47;1.png"
+            value="https:&#47;&#47;100.83.250.224:8080&#47;static&#47;images&#47;Gr&#47;Groundwater-2&#47;Story1&#47;1.png"
           />
           <param name="animate_transition" value="yes" />
           <param name="display_static_image" value="yes" />
@@ -375,7 +375,7 @@ export const MyViz: React.FC = () => {
         vizElement = divElement.getElementsByTagName('object')[0];
         vizElement.style.width='1600px'; vizElement.style.height='927px'; var
         scriptElement = document.createElement('script'); scriptElement.src =
-        'https://public.tableau.com/javascripts/api/viz_v1.js';
+        'https://100.83.250.224:8080/javascripts/api/viz_v1.js';
         vizElement.parentNode.insertBefore(scriptElement, vizElement);
       </script>
     </>
@@ -401,7 +401,7 @@ const TableauEmbed: React.FC<TableauProps> = ({ url, sheetName }) => {
       }
       const scriptElement = document.createElement("script");
       scriptElement.src =
-        "https://public.tableau.com/javascripts/api/viz_v1.js";
+        "https://100.83.250.224:8080/javascripts/api/viz_v1.js";
       scriptElement.onload = () => {
         scriptLoaded.current = true;
         initializeViz();
@@ -438,7 +438,7 @@ const TableauEmbed: React.FC<TableauProps> = ({ url, sheetName }) => {
                   
                   // Load the Tableau API script
                   var apiScript = document.createElement('script');
-                  apiScript.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+                  apiScript.src = 'https://100.83.250.224:8080/javascripts/api/viz_v1.js';
                   vizElement.parentNode.insertBefore(apiScript, vizElement);
                   
                   // Wait for iframe to load and apply responsive styles
@@ -509,7 +509,7 @@ const TableauEmbed: React.FC<TableauProps> = ({ url, sheetName }) => {
       >
         
         <object className="tableauViz" style={{ width: "100%", height: "100%", display: "block" }}>
-          <param name="host_url" value="https%3A%2F%2Fpublic.tableau.com%2F" />
+          <param name="host_url" value="https%3A%2F%2F100.83.250.224:8080%2F" />
           <param name="embed_code_version" value="3" />
           <param name="site_root" value="" />
           <param name="name" value={sheetName} />

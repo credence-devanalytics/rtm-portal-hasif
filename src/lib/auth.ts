@@ -1,0 +1,47 @@
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db } from "@/lib/db";
+import * as schema from "@/lib/db/schema";
+
+const isProduction = process.env.NODE_ENV === "production";
+const trustedOriginsList = [
+    process.env.CORS_ORIGIN || "",
+    process.env.BETTER_AUTH_URL || "",
+    isProduction ? "https://demo-portal.nightmunch.com" : "",
+    "http://localhost:3000", // Add localhost for development
+  ].filter(Boolean); // Remove empty strings
+const baseURLList = isProduction  ? (process.env.BETTER_AUTH_URL || "https://demo-portal.nightmunch.com") :  (process.env.BETTER_AUTH_URL || "http://localhost:3000");
+
+// // Log the configuration for debugging purposes
+// console.log("BetterAuth Configuration:");
+// console.log("Trusted Origins:", trustedOriginsList);
+// console.log("Base URL:", baseURLList);
+// console.log("Environment:", process.env.NODE_ENV);
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "sqlite",
+    schema: {
+      user: schema.users,
+      session: schema.sessions,
+      account: schema.accounts,
+      verification: schema.verificationTokens,
+    },
+  }),
+
+  trustedOrigins: [
+    process.env.CORS_ORIGIN || "",
+    process.env.BETTER_AUTH_URL || "",
+    "http://localhost:3000", // Add localhost for development
+  ].filter(Boolean), // Remove empty strings
+
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false, // Disable email verification for now
+  },
+  
+  secret: process.env.BETTER_AUTH_SECRET || "fallback-secret-key-for-development-only",
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+});
+
+export type Session = typeof auth.$Infer.Session;
