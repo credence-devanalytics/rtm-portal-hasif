@@ -143,8 +143,8 @@ Progress.displayName = ProgressPrimitive.Root.displayName;
 
 interface Stats09Props {
   name: string;
-  stat: string;
-  limit: string;
+  stat: number;
+  limit: number;
   percentage: number;
 }
 
@@ -152,29 +152,27 @@ interface Stats09ComponentProps {
   data: Stats09Props[];
 }
 
-export default function Stats09({ data }: Stats09ComponentProps) {
+export default function Stats09(data: Stats09Props) {
   return (
-    <div className="flex items-center justify-center w-full h-fit">
-      <dl className="grid grid-cols-1 gap-6 lg:grid-cols-2 w-full">
-        {data.map((item) => (
-          <Card key={item.name} className="py-4">
-            <CardContent className="">
-              <dt className="text-sm text-muted-foreground">{item.name}</dt>
-              <dd className="text-2xl font-semibold text-foreground">
-                {item.stat.toLocaleString()}
-              </dd>
-              <Progress value={item.percentage} className="mt-6 h-2" />
-              <dd className="mt-2 flex items-center justify-between text-sm">
-                {/* Add dynamic color based on percentage like the progress bar*/}
-                <span style={{ color: getProgressColor(item.percentage), fontWeight: "bold" }}>{item.percentage}%</span>
-                <span className="text-muted-foreground">
-                  {item.stat.toLocaleString()} of {item.limit.toLocaleString()}
-                </span>
-              </dd>
-            </CardContent>
-          </Card>
-        ))}
-      </dl>
+    <div className="w-full h-fit">
+      <div className="w-full">
+        <Card key={data.name} className="py-4 w-full">
+          <CardContent className="w-full">
+            <dt className="text-sm text-muted-foreground">{data.name}</dt>
+            <dd className="text-2xl font-semibold text-foreground">
+              {data.stat.toLocaleString()}
+            </dd>
+            <Progress value={data.percentage} className="mt-6 h-2" />
+            <dd className="mt-2 flex items-center justify-between text-sm">
+              {/* Add dynamic color based on percentage like the progress bar*/}
+              <span style={{ color: getProgressColor(data.percentage), fontWeight: "bold" }}>{data.percentage}%</span>
+              <span className="text-muted-foreground">
+                {data.stat.toLocaleString()} of {data.limit.toLocaleString()}
+              </span>
+            </dd>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
