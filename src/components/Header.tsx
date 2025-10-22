@@ -38,7 +38,7 @@ export default function Header() {
     { name: "AI", href: "#ai" },
     { name: "Determ", href: "https://app.determ.com/174980/feed/q/6746731" },
     { name: "Contact Us", href: "#contact" },
-    { name: "Login", href: "#login" },
+    { name: "Login", href: "/auth/login" },
   ];
 
   return (
