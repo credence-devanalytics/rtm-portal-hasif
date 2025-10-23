@@ -9,16 +9,25 @@ import {
 import { sql, eq } from "drizzle-orm";
 
 export async function GET() {
-	try {
-		console.log("PB Dashboard Summary API called");
+  try {
+    console.log('PB Dashboard Summary API called');
+    
+    // Get the latest date from pb_audience table
+    const latestDateResult = await db
+      .select({
+        maxDate: sql`MAX(${pbAudience.date})`.as('maxDate')
+      })
+      .from(pbAudience);
 
-		// 1. Total Audience - Sum totalUsers where audienceName = "All Users"
-		const totalAudienceResult = await db
-			.select({
-				totalUsers: sql`SUM(${pbAudience.totalUsers})`.as("totalUsers"),
-			})
-			.from(pbAudience)
-			.where(eq(pbAudience.audienceName, "All Users"));
+    const latestDate = latestDateResult[0]?.maxDate || null;
+    
+    // 1. Total Audience - Sum totalUsers where audienceName = "All Users"
+    const totalAudienceResult = await db
+      .select({
+        totalUsers: sql`SUM(${pbAudience.totalUsers})`.as('totalUsers')
+      })
+      .from(pbAudience)
+      .where(eq(pbAudience.audienceName, 'All Users'));
 
 		const totalAudience = parseInt(totalAudienceResult[0]?.totalUsers) || 0;
 
@@ -94,69 +103,61 @@ export async function GET() {
 			  }
 			: { name: "No data", users: 0 };
 
-		const response = {
-			success: true,
-			data: {
-				totalAudience,
-				topRegion,
-				topTrafficSource,
-				topExternalSource,
-				summary: {
-					hasData:
-						totalAudience > 0 ||
-						topRegion.users > 0 ||
-						topTrafficSource.users > 0 ||
-						topExternalSource.users > 0,
-					formattedTotalAudience: totalAudience.toLocaleString(),
-					metrics: {
-						totalAudience: {
-							value: totalAudience,
-							formatted: totalAudience.toLocaleString(),
-							label: "Total Audience",
-						},
-						topRegion: {
-							value: topRegion.users,
-							formatted: `${
-								topRegion.name
-							} (${topRegion.users.toLocaleString()})`,
-							label: "Top Region",
-							name: topRegion.name,
-							count: topRegion.users,
-						},
-						topTrafficSource: {
-							value: topTrafficSource.users,
-							formatted: `${
-								topTrafficSource.name
-							} (${topTrafficSource.users.toLocaleString()})`,
-							label: "Top Traffic Source",
-							name: topTrafficSource.name,
-							count: topTrafficSource.users,
-						},
-						topExternalSource: {
-							value: topExternalSource.users,
-							formatted: `${
-								topExternalSource.name
-							} (${topExternalSource.users.toLocaleString()})`,
-							label: "Top External Source",
-							name: topExternalSource.name,
-							count: topExternalSource.users,
-						},
-					},
-				},
-			},
-		};
+    const response = {
+      success: true,
+      data: {
+        totalAudience,
+        topRegion,
+        topTrafficSource,
+        topExternalSource,
+        latestDate: latestDate,
+        summary: {
+          hasData: totalAudience > 0 || topRegion.users > 0 || topTrafficSource.users > 0 || topExternalSource.users > 0,
+          formattedTotalAudience: totalAudience.toLocaleString(),
+          metrics: {
+            totalAudience: {
+              value: totalAudience,
+              formatted: totalAudience.toLocaleString(),
+              label: 'Total Audience'
+            },
+            topRegion: {
+              value: topRegion.users,
+              formatted: `${topRegion.name} (${topRegion.users.toLocaleString()})`,
+              label: 'Top Region',
+              name: topRegion.name,
+              count: topRegion.users
+            },
+            topTrafficSource: {
+              value: topTrafficSource.users,
+              formatted: `${topTrafficSource.name} (${topTrafficSource.users.toLocaleString()})`,
+              label: 'Top Traffic Source',
+              name: topTrafficSource.name,
+              count: topTrafficSource.users
+            },
+            topExternalSource: {
+              value: topExternalSource.users,
+              formatted: `${topExternalSource.name} (${topExternalSource.users.toLocaleString()})`,
+              label: 'Top External Source',
+              name: topExternalSource.name,
+              count: topExternalSource.users
+            }
+          }
+        }
+      }
+    };
 
-		console.log("PB Dashboard Summary API response:", response);
-		return NextResponse.json(response);
-	} catch (error) {
-		console.error("PB Dashboard Summary API error:", error);
-		return NextResponse.json(
-			{
-				success: false,
-				error: "Failed to fetch PB dashboard summary data",
-				details: error.message,
-			},
-			{ status: 500 }
-		);
-	}
+    console.log('PB Dashboard Summary API response:', response);
+    return NextResponse.json(response);
+
+  } catch (error) {
+    console.error('PB Dashboard Summary API error:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Failed to fetch PB dashboard summary data',
+        details: error.message 
+      },
+      { status: 500 }
+    );
+  }
 }

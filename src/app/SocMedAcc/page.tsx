@@ -122,50 +122,55 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
 
 	if (activeFilters.length === 0) return null;
 
-	return (
-		<Card className="mb-4">
-			<CardHeader className="pb-3">
-				<div className="flex items-center justify-between">
-					<CardTitle className="text-sm font-medium">Active Filters</CardTitle>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={onClearAll}
-						className="text-xs"
-					>
-						Clear All
-					</Button>
-				</div>
-			</CardHeader>
-			<CardContent className="pt-0">
-				<div className="flex flex-wrap gap-2">
-					{activeFilters.map(([key, value]) => (
-						<Badge
-							key={key}
-							variant="outline"
-							className="flex items-center gap-1"
-						>
-							{key}: {value}
-							<X
-								className="h-3 w-3 cursor-pointer"
-								onClick={() => onRemoveFilter(key)}
-							/>
-						</Badge>
-					))}
-				</div>
-			</CardContent>
-		</Card>
-	);
+  return (
+    <Card className="mb-4">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium">Active Filters</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearAll}
+            className="text-xs"
+          >
+            Clear All
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="flex flex-wrap gap-2">
+          {activeFilters.map(([key, value]) => (
+            <Badge
+              key={key}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              {key}: {String(value)}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onRemoveFilter(key)}
+              />
+            </Badge>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 
 const RTMDashboard = () => {
-	const queryClient = useQueryClient();
-	const [activeTab, setActiveTab] = useState("overall");
-	const [selectedPlatform, setSelectedPlatform] = useState("all");
-	const [selectedDateRange, setSelectedDateRange] = useState({
-		from: new Date("2025-08-01"),
-		to: new Date("2025-09-17"),
-	});
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("overall");
+  const [selectedPlatform, setSelectedPlatform] = useState("all");
+  const [selectedDateRange, setSelectedDateRange] = useState(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    return {
+      from: thirtyDaysAgo,
+      to: today,
+    };
+  });
 
 	// Global filter state
 	const [globalFilters, setGlobalFilters] = useState({
@@ -183,18 +188,18 @@ const RTMDashboard = () => {
 				(1000 * 60 * 60 * 24)
 		);
 
-		return {
-			days: daysDiff.toString(),
-			from: selectedDateRange.from.toISOString(),
-			to: selectedDateRange.to.toISOString(),
-			platform: selectedPlatform !== "all" ? selectedPlatform : "",
-			// Remove filters that are handled client-side to prevent unnecessary API calls
-			sentiment: "", // Handle client-side for better performance
-			unit: "", // Handle client-side for better performance
-			category: "", // Handle client-side for better performance
-			author: "", // Handle client-side for better performance
-		};
-	}, [selectedDateRange, selectedPlatform]); // Remove globalFilters dependency
+    return {
+      days: daysDiff.toString(),
+      from: selectedDateRange.from.toISOString(),
+      to: selectedDateRange.to.toISOString(),
+      platform: selectedPlatform !== "all" ? selectedPlatform : "",
+      // Remove filters that are handled client-side to prevent unnecessary API calls
+      sentiment: "", // Handle client-side for better performance
+      unit: "", // Handle client-side for better performance
+      category: "", // Handle client-side for better performance
+      author: globalFilters.author || "", // FIXED: Send author to API for filtering
+    };
+  }, [selectedDateRange, selectedPlatform, globalFilters.author]); // Add globalFilters.author dependency
 
 	// Single optimized data fetch
 	const {
@@ -203,11 +208,47 @@ const RTMDashboard = () => {
 		error: dataError,
 	} = useRTMMentions(queryFilters); // This now uses the optimized single call
 
-	// Extract data from single response
-	const rawMentionsData = dashboardData;
-	const metricsData = dashboardData?.metrics;
-	const timelineData = dashboardData?.timeSeries;
-	const platformsData = dashboardData?.platforms;
+  // Extract data from single response
+  const rawMentionsData = dashboardData;
+  const metricsData = dashboardData?.metrics;
+  const timelineData = dashboardData?.timeSeries;
+  const platformsData = dashboardData?.platforms;
+  const platformByUnitData = dashboardData?.platformByUnit; // Platform distribution per unit
+  const unitsData = dashboardData?.units; // Unit breakdown from database
+  const channelsData = dashboardData?.channels; // Channel breakdown from database
+  const authorsData = dashboardData?.authorsData; // Author breakdown from database
+
+  // Debug logging
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("� DASHBOARD DATA RECEIVED");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("1. Query Filters:", queryFilters);
+  console.log("2. Global Filters:", globalFilters);
+  console.log("3. Raw mentions count:", dashboardData?.mentions?.length);
+  console.log("4. Metrics:", metricsData);
+  console.log(
+    "5. Has platformByUnitData:",
+    !!platformByUnitData,
+    platformByUnitData?.length
+  );
+  console.log("6. Has unitsData:", !!unitsData, unitsData?.length);
+  console.log("7. Has channelsData:", !!channelsData, channelsData?.length);
+  console.log("8. Has authorsData:", !!authorsData, authorsData?.length);
+  if (authorsData && authorsData.length > 0) {
+    console.log(
+      "9. Top 10 authors in authorsData:",
+      authorsData.slice(0, 10).map((a: any) => ({
+        author: a.author,
+        count: a.count,
+        unit: a.unit,
+      }))
+    );
+  }
+  console.log(
+    "10. Sample mentions (first 3):",
+    dashboardData?.mentions?.slice(0, 3)
+  );
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
 	// Single loading state
 	const isLoading = isLoadingData;
@@ -221,85 +262,141 @@ const RTMDashboard = () => {
 		const transformed = transformRTMData(rawMentionsData);
 		console.log("📊 Transformed data count:", transformed.length);
 
-		// Quick return if no filters
-		const hasActiveFilters = Object.values(globalFilters).some(Boolean);
-		if (!hasActiveFilters) {
-			console.log("✅ No active filters, showing all data");
-			return { transformedData: transformed, filteredData: transformed };
-		}
+    // Debug: Check platform format in transformed data
+    if (transformed.length > 0) {
+      console.log(
+        "🔍 Sample platform values:",
+        transformed.slice(0, 3).map((d) => d.platform)
+      );
+    }
+
+    // Check if there are any non-unit filters active
+    const hasActiveFilters = Object.entries(globalFilters)
+      .filter(([key]) => key !== "unit") // Exclude unit filter for this check
+      .some(([, value]) => Boolean(value));
+
+    // Check if unit filter is active
+    const hasUnitFilter =
+      globalFilters.unit && globalFilters.unit !== "overall";
+
+    // If no filters at all (including unit), return all data
+    if (!hasActiveFilters && !hasUnitFilter) {
+      console.log("✅ No active filters, showing all data");
+      return { transformedData: transformed, filteredData: transformed };
+    }
 
 		console.log("🔎 Active filters:", globalFilters);
 
-		// Optimized filtering with early returns
-		const filtered = transformed.filter((item) => {
-			// Unit filter (most common)
-			if (globalFilters.unit) {
-				const unit = globalFilters.unit;
-				if (unit === "overall") {
-					// Show all data
-					return true;
-				} else if (unit === "official") {
-					if (
-						!(
-							item.unit === "Official" ||
-							item.isInfluencer ||
-							item.followerCount > 50000
-						)
-					)
-						return false;
-				} else if (unit === "tv") {
-					if (
-						!(
-							item.unit === "TV" ||
-							item.unit?.toLowerCase().includes("tv") ||
-							item.platform === "YouTube"
-						)
-					)
-						return false;
-				} else if (unit === "berita") {
-					if (
-						!(
-							item.unit === "News" ||
-							item.unit?.toLowerCase().includes("news") ||
-							item.unit?.toLowerCase().includes("berita")
-						)
-					)
-						return false;
-				} else if (unit === "radio") {
-					if (
-						!(
-							item.unit === "Radio" ||
-							item.unit?.toLowerCase().includes("radio")
-						)
-					)
-						return false;
-				} else {
-					// Handle any other unit values with exact match (case-insensitive)
-					if (item.unit?.toLowerCase() !== unit.toLowerCase()) {
-						return false;
-					}
-				}
-			}
+    // Optimized filtering with early returns
+    const filtered = transformed.filter((item) => {
+      // Unit filter (most common) - ALWAYS process this first
+      if (globalFilters.unit) {
+        const unit = globalFilters.unit;
+        if (unit === "overall") {
+          // Show all data
+          return true;
+        } else if (unit === "official") {
+          if (
+            !(
+              item.unit === "Official" ||
+              item.isInfluencer ||
+              item.followerCount > 50000
+            )
+          )
+            return false;
+        } else if (unit === "tv") {
+          if (
+            !(
+              item.unit === "TV" ||
+              item.unit?.toLowerCase().includes("tv") ||
+              item.platform === "YouTube"
+            )
+          )
+            return false;
+        } else if (unit === "berita") {
+          if (
+            !(
+              item.unit === "News" ||
+              item.unit?.toLowerCase().includes("news") ||
+              item.unit?.toLowerCase().includes("berita")
+            )
+          )
+            return false;
+        } else if (unit === "radio") {
+          if (
+            !(
+              item.unit === "Radio" ||
+              item.unit?.toLowerCase().includes("radio")
+            )
+          )
+            return false;
+        } else {
+          // Handle any other unit values with exact match (case-insensitive)
+          if (item.unit?.toLowerCase() !== unit.toLowerCase()) {
+            return false;
+          }
+        }
+      }
 
-			// Other filters (exact matches for performance)
-			if (globalFilters.sentiment && item.sentiment !== globalFilters.sentiment)
-				return false;
-			if (globalFilters.platform && item.platform !== globalFilters.platform)
-				return false;
-			if (globalFilters.category && item.category !== globalFilters.category)
-				return false;
-			if (globalFilters.author && item.author !== globalFilters.author)
-				return false;
+      // Other filters (exact matches for performance)
+      if (globalFilters.sentiment && item.sentiment !== globalFilters.sentiment)
+        return false;
+      if (globalFilters.platform && item.platform !== globalFilters.platform)
+        return false;
+      if (globalFilters.category && item.category !== globalFilters.category)
+        return false;
+      if (globalFilters.author && item.author !== globalFilters.author) {
+        // Debug author filtering
+        if (transformed.indexOf(item) < 5) {
+          // Only log first 5 to avoid spam
+          console.log(
+            `   ❌ Author mismatch: "${item.author}" !== "${globalFilters.author}"`
+          );
+        }
+        return false;
+      }
 
 			return true;
 		});
 
-		console.log(
-			"✨ Filtered data count:",
-			filtered.length,
-			"from",
-			transformed.length
-		);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📊 FILTERING RESULTS");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("1. Transformed count:", transformed.length);
+    console.log("2. Filtered count:", filtered.length);
+    console.log("3. Applied filters:", globalFilters);
+    if (filtered.length > 0) {
+      console.log(
+        "4. Sample filtered items (first 3):",
+        filtered.slice(0, 3).map((f) => ({
+          author: f.author,
+          platform: f.platform,
+          date: f.date,
+        }))
+      );
+    }
+    if (filtered.length === 0 && transformed.length > 0) {
+      const uniqueAuthors = [...new Set(transformed.map((t) => t.author))];
+      console.log(
+        "4. ⚠️ NO MATCHES! All unique authors in data:",
+        uniqueAuthors
+      );
+      console.log("5. Looking for:", globalFilters.author);
+      console.log(
+        "6. Does data contain this author?",
+        uniqueAuthors.includes(globalFilters.author)
+      );
+
+      // Check for similar author names
+      if (globalFilters.author) {
+        const searchTerm = globalFilters.author.toLowerCase().split(" ")[0];
+        const similar = uniqueAuthors.filter(
+          (a) => a && String(a).toLowerCase().includes(searchTerm)
+        );
+        console.log("7. Similar author names:", similar);
+      }
+    }
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
 		return { transformedData: transformed, filteredData: filtered };
 	}, [rawMentionsData, globalFilters]);
@@ -336,18 +433,34 @@ const RTMDashboard = () => {
 		);
 	}, [filteredData]);
 
-	// Filter handlers with debouncing for better performance
-	const handleGlobalFilterChange = (filterType, filterValue) => {
-		console.log("🔍 Filter change:", {
-			filterType,
-			filterValue,
-			currentFilters: globalFilters,
-		});
-		setGlobalFilters((prev) => ({
-			...prev,
-			[filterType]: filterValue === prev[filterType] ? null : filterValue,
-		}));
-	};
+  // Filter handlers with debouncing for better performance
+  const handleGlobalFilterChange = (filterType, filterValue) => {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🔍 FILTER CHANGE HANDLER");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("1. Filter Type:", filterType);
+    console.log("2. Filter Value:", filterValue);
+    console.log("3. Filter Value Type:", typeof filterValue);
+    console.log("4. Current Filters:", globalFilters);
+    console.log(
+      "5. Is toggle (same value)?:",
+      filterValue === globalFilters[filterType]
+    );
+
+    const newValue =
+      filterValue === globalFilters[filterType] ? null : filterValue;
+    console.log("6. New Value (after toggle check):", newValue);
+
+    setGlobalFilters((prev) => {
+      const updated = {
+        ...prev,
+        [filterType]: newValue,
+      };
+      console.log("7. Updated Filters:", updated);
+      return updated;
+    });
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+  };
 
 	const handleRemoveFilter = (filterType) => {
 		setGlobalFilters((prev) => ({
@@ -376,13 +489,27 @@ const RTMDashboard = () => {
 		queryClient.invalidateQueries({ queryKey: rtmQueryKeys.all });
 	};
 
-	// Calculate metrics
-	const totalMentions = filteredData.length;
-	const totalEngagements = filteredData.reduce(
-		(sum, item) => sum + item.interactions,
-		0
-	);
-	const totalReach = filteredData.reduce((sum, item) => sum + item.reach, 0);
+  // Calculate metrics
+  // If no client-side filters are active, use accurate database metrics from API
+  // Otherwise, calculate from filtered data (which is limited to returned records)
+  // Note: unit filter AND author filter are excluded as they're handled by the API
+  const hasActiveFilters = Object.entries(globalFilters)
+    .filter(([key]) => key !== "unit" && key !== "author") // Exclude unit and author filters (API handles these)
+    .some(([, value]) => Boolean(value));
+
+  const totalMentions = hasActiveFilters
+    ? filteredData.length
+    : metricsData?.totalMentions || filteredData.length;
+
+  const totalEngagements = hasActiveFilters
+    ? filteredData.reduce((sum, item) => sum + item.interactions, 0)
+    : metricsData?.totalInteractions ||
+      filteredData.reduce((sum, item) => sum + item.interactions, 0);
+
+  const totalReach = hasActiveFilters
+    ? filteredData.reduce((sum, item) => sum + item.reach, 0)
+    : metricsData?.totalReach ||
+      filteredData.reduce((sum, item) => sum + item.reach, 0);
 
 	const positiveMentions = filteredData.filter(
 		(d) => d.sentiment === "positive"
@@ -480,28 +607,34 @@ const RTMDashboard = () => {
 		);
 	}
 
-	return (
-		<div className="py-6 pt-16 pb-6  max-w-7xl mx-auto space-y-6 bg-white min-h-screen">
-			{/* Header with Controls */}
-			<Header />
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">
-						RTM Social Media Dashboard
-					</h1>
-					<p className="text-muted-foreground">
-						Real-time monitoring across Radio, TV, and Berita social channels
-					</p>
-					<p className="text-xs text-gray-500 mt-1">
-						Showing {formatNumber(totalMentions)} mentions from selected date
-						range (
-						{Math.ceil(
-							(Number(selectedDateRange.to) - Number(selectedDateRange.from)) /
-								(1000 * 60 * 60 * 24)
-						)}{" "}
-						days)
-					</p>
-				</div>
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20">
+      {/* Header with Controls */}
+      <Header />
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            RTM Social Media Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Real-time monitoring across Radio, TV, and Berita social channels
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Showing {formatNumber(totalMentions)} mentions from selected date
+            range (
+            {Math.ceil(
+              (Number(selectedDateRange.to) - Number(selectedDateRange.from)) /
+                (1000 * 60 * 60 * 24)
+            )}{" "}
+            days)
+            {hasActiveFilters &&
+              transformedData.length > filteredData.length && (
+                <span className="text-orange-600 ml-1">
+                  (filtered from {formatNumber(transformedData.length)} total)
+                </span>
+              )}
+          </p>
+        </div>
 
 				<ActiveFilters
 					filters={globalFilters}
@@ -677,18 +810,21 @@ const RTMDashboard = () => {
 				)}
 			</div>
 
-			{/* RTM Media Table */}
-			<div className="grid gap-6 lg:grid-cols-1">
-				{isLoading ? (
-					<SkeletonCard className="h-96" />
-				) : (
-					<RTMMediaTable
-						data={filteredData}
-						selectedTab={activeTab}
-						onFilterChange={handleGlobalFilterChange}
-					/>
-				)}
-			</div>
+      {/* RTM Media Table */}
+      <div className="grid gap-6 lg:grid-cols-1">
+        {isLoading ? (
+          <SkeletonCard className="h-96" />
+        ) : (
+          <RTMMediaTable
+            data={filteredData}
+            selectedTab={activeTab}
+            onFilterChange={handleGlobalFilterChange}
+            unitsData={unitsData}
+            channelsData={channelsData}
+            hasActiveFilters={hasActiveFilters}
+          />
+        )}
+      </div>
 
 			{/* RTM Tabs */}
 			<div className="grid gap-6 lg:grid-cols-1">
@@ -699,57 +835,72 @@ const RTMDashboard = () => {
 				/>
 			</div>
 
-			{/* Platform and Units Charts */}
-			<div className="grid gap-6 lg:grid-cols-2">
-				{isLoading ? (
-					<>
-						<SkeletonCard className="h-96" />
-						<SkeletonCard className="h-96" />
-					</>
-				) : (
-					<>
-						<Card className="">
-							<PlatformDonutChart
-								data={filteredData}
-								onFilterChange={handleGlobalFilterChange}
-								activeFilters={globalFilters}
-							/>
-						</Card>
-						<Card className="">
-							<RTMUnitsPieChart
-								data={filteredData}
-								onFilterChange={handleGlobalFilterChange}
-								activeFilters={globalFilters}
-							/>
-						</Card>
-					</>
-				)}
-			</div>
+      {/* Platform and Units Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {isLoading ? (
+          <>
+            <SkeletonCard className="h-96" />
+            <SkeletonCard className="h-96" />
+          </>
+        ) : (
+          <>
+            <Card className="">
+              <PlatformDonutChart
+                data={filteredData}
+                platformsData={platformsData}
+                platformByUnitData={platformByUnitData}
+                channelsData={channelsData}
+                hasActiveFilters={hasActiveFilters}
+                onFilterChange={handleGlobalFilterChange}
+                activeFilters={globalFilters}
+              />
+            </Card>
+            <Card className="">
+              <RTMUnitsPieChart
+                data={filteredData}
+                unitsData={unitsData}
+                channelsData={channelsData}
+                hasActiveFilters={hasActiveFilters}
+                onFilterChange={handleGlobalFilterChange}
+                activeFilters={globalFilters}
+              />
+            </Card>
+          </>
+        )}
+      </div>
 
-			{/* Main Charts */}
-			<div className="grid gap-6 lg:grid-cols-2">
-				{isLoading ? (
-					<>
-						<SkeletonCard className="h-96" />
-						<SkeletonCard className="h-96" />
-					</>
-				) : (
-					<>
-						<Card className="">
-							<PlatformMentionsChart
-								data={filteredData}
-								onFilterChange={handleGlobalFilterChange}
-							/>
-						</Card>
-						<Card className="">
-							<EngagementRateChart
-								data={filteredData}
-								onFilterChange={handleGlobalFilterChange}
-							/>
-						</Card>
-					</>
-				)}
-			</div>
+      {/* Main Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {isLoading ? (
+          <>
+            <SkeletonCard className="h-96" />
+            <SkeletonCard className="h-96" />
+          </>
+        ) : (
+          <>
+            <Card className="">
+              <PlatformMentionsChart
+                data={filteredData}
+                authorsData={authorsData}
+                channelsData={channelsData}
+                hasActiveFilters={hasActiveFilters}
+                activeFilters={globalFilters}
+                onFilterChange={handleGlobalFilterChange}
+              />
+            </Card>
+            <Card className="">
+              <EngagementRateChart
+                data={filteredData}
+                platformsData={platformsData}
+                platformByUnitData={platformByUnitData}
+                hasActiveFilters={hasActiveFilters}
+                activeFilters={globalFilters}
+                onFilterChange={handleGlobalFilterChange}
+              />
+            </Card>
+          </>
+        )}
+      </div>
 
 			{/* Timeline Charts */}
 			<div className="grid gap-6 lg:grid-cols-1">

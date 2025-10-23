@@ -120,32 +120,37 @@ export async function GET(request) {
 			.from(astroRateNReach)
 			.orderBy(astroRateNReach.metricType);
 
-		return NextResponse.json({
-			success: true,
-			data: data,
-			filters: {
-				channels: channels.map((c) => c.channel).filter(Boolean),
-				metricTypes: metrics.map((m) => m.metricType).filter(Boolean),
-			},
-			summary: {
-				totalRecords: data.length,
-				totalValue: data.reduce((sum, item) => sum + (item.value || 0), 0),
-				avgValue:
-					data.length > 0
-						? data.reduce((sum, item) => sum + (item.value || 0), 0) /
-						  data.length
-						: 0,
-			},
-		});
-	} catch (error) {
-		console.error("Astro Rate & Reach API error:", error);
-		return NextResponse.json(
-			{
-				success: false,
-				error: "Failed to fetch Astro Rate & Reach data",
-				details: error.message,
-			},
-			{ status: 500 }
-		);
-	}
+    // Get the latest date directly from the database using MAX
+    const latestDateResult = await db
+      .select({ maxDate: sql`MAX(${astroRateNReach.txDate})` })
+      .from(astroRateNReach);
+    
+    const latestDate = latestDateResult[0]?.maxDate || null;
+
+    return NextResponse.json({
+      success: true,
+      data: data,
+      latestDate: latestDate,
+      filters: {
+        channels: channels.map(c => c.channel).filter(Boolean),
+        metricTypes: metrics.map(m => m.metricType).filter(Boolean)
+      },
+      summary: {
+        totalRecords: data.length,
+        totalValue: data.reduce((sum, item) => sum + (item.value || 0), 0),
+        avgValue: data.length > 0 ? data.reduce((sum, item) => sum + (item.value || 0), 0) / data.length : 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Astro Rate & Reach API error:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Failed to fetch Astro Rate & Reach data',
+        details: error.message 
+      },
+      { status: 500 }
+    );
+  }
 }

@@ -936,25 +936,15 @@ export const rtmklikDevice = pgTable(
 	]
 );
 
-export const rtmklikCountry = pgTable(
-	"rtmklik_country",
-	{
-		id: serial().primaryKey().notNull(),
-		date: date(),
-		hour: text(),
-		location: text(),
-		metric: text(),
-		value: integer(),
-	},
-	(table) => [
-		unique("uq_rtmklik_country_location_hour_date_metric").on(
-			table.date,
-			table.hour,
-			table.location,
-			table.metric
-		),
-	]
-);
+export const marketingChannelByYear = pgTable("marketing_channel_byyear", {
+	id: serial().primaryKey().notNull(),
+	saluran: text(),
+	groupby: text(),
+	year: integer(),
+	value: doublePrecision(),
+	report_type: text("report_type"),
+	report_title: text("report_title"),
+});
 
 export const pberitaAudienceGender = pgTable(
 	"pberita_audience_gender",
@@ -1268,126 +1258,36 @@ export const pberitaAudienceAge = pgTable(
 	]
 );
 
-export const rtmklikRadioBycountry = pgTable(
-	"rtmklik_radio_bycountry",
-	{
-		id: serial().primaryKey().notNull(),
-		date: date(),
-		hour: text(),
-		location: text(),
-		metric: text(),
-		value: integer(),
-	},
-	(table) => [
-		unique("uq_rtmklik_radio_bycountry_location_hour_date_metric").on(
-			table.date,
-			table.hour,
-			table.location,
-			table.metric
-		),
-	]
-);
+export const astroRateNReach = pgTable("astro_rate_n_reach", {
+	id: serial().primaryKey().notNull(),
+	txDate: date("tx_date"),
+	txYear: integer("tx_year"),
+	txMonth: integer("tx_month"),
+	channel: text(),
+	metricType: text("metric_type"),
+	value: integer(),
+});
 
-export const rtmklikPopularPages = pgTable(
-	"rtmklik_popular_pages",
-	{
-		id: serial().primaryKey().notNull(),
-		class: text(),
-		pagepath: text(),
-		category: text(),
-		subCategory: text("sub_category"),
-		channel: text(),
-		episodes: text(),
-		metric: text(),
-		date: date(),
-		hour: text(),
-		value: integer(),
-	},
-	(table) => [
-		unique(
-			"uq_rtmklik_popular_pages_class_pagepath_category_sub_category_c"
-		).on(
-			table.class,
-			table.pagepath,
-			table.category,
-			table.subCategory,
-			table.channel,
-			table.episodes,
-			table.metric,
-			table.date,
-			table.hour
-		),
-	]
-);
+// RTMKlik Tables
+export const rtmklikLiveMalaysia = pgTable("rtmklik_live_malaysia", {
+	id: serial().primaryKey().notNull(),
+	date: date(),
+	location: varchar("location", { length: 255 }),
+	metric: varchar("metric", { length: 100 }),
+	value: doublePrecision(),
+});
 
-export const rtmklikLiveBycountry = pgTable(
-	"rtmklik_live_bycountry",
-	{
-		id: serial().primaryKey().notNull(),
-		date: date(),
-		hour: text(),
-		location: text(),
-		metric: text(),
-		value: integer(),
-	},
-	(table) => [
-		unique("uq_rtmklik_live_bycountry_location_hour_date_metric").on(
-			table.date,
-			table.hour,
-			table.location,
-			table.metric
-		),
-	]
-);
+export const rtmklikRadioMalaysia = pgTable("rtmklik_radio_malaysia", {
+	id: serial().primaryKey().notNull(),
+	date: date(),
+	location: varchar("location", { length: 255 }),
+	metric: varchar("metric", { length: 100 }),
+	value: doublePrecision(),
+});
 
-export const rtmklikRadioMalaysia = pgTable(
-	"rtmklik_radio_malaysia",
-	{
-		id: serial().primaryKey().notNull(),
-		date: date(),
-		hour: text(),
-		location: text(),
-		metric: text(),
-		value: integer(),
-	},
-	(table) => [
-		unique("uq_rtmklik_radio_malaysia_location_hour_date_metric").on(
-			table.date,
-			table.hour,
-			table.location,
-			table.metric
-		),
-	]
-);
-
-export const unifiViewership = pgTable(
-	"unifi_viewership",
-	{
-		id: serial().primaryKey().notNull(),
-		viewershipMonthYear: text("viewership_month_year"),
-		channelName: text("channel_name"),
-		programName: text("program_name"),
-		programTime: text("program_time"),
-		programmeDate: date("programme_date"),
-		startTime: time("start_time"),
-		endTime: time("end_time"),
-		mau: integer(),
-		avgAccessDuration: interval("avg_access_duration"),
-		sheetName: text("sheet_name"),
-		filename: text(),
-		duration: interval(),
-	},
-	(table) => [
-		unique(
-			"uq_unifi_viewership_viewership_month_year_channel_name_program_"
-		).on(
-			table.viewershipMonthYear,
-			table.channelName,
-			table.programName,
-			table.programTime,
-			table.programmeDate,
-			table.startTime,
-			table.endTime
-		),
-	]
-);
+export const rtmklikPopularPages = pgTable("rtmklik_popular_pages", {
+	id: serial().primaryKey().notNull(),
+	channel: varchar("channel", { length: 255 }),
+	metric: varchar("metric", { length: 100 }),
+	value: doublePrecision(),
+});

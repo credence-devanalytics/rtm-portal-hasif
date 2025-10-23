@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../../index';
 import { mytvViewership } from '../../../../drizzle/schema';
-import { eq, and, gte, lte, like, inArray } from 'drizzle-orm';
+import { eq, and, gte, lte, like, inArray, sql } from 'drizzle-orm';
 
 function generateChannelBreakdown(data) {
   const channelData = {};
@@ -17,7 +17,8 @@ function generateChannelBreakdown(data) {
         channel: item.channel,
         totalViewers: 0,
         recordCount: 0,
-        uniqueRegions: new Set()
+        uniqueRegions: new Set(),
+        programCount: 0 // Will be populated from mytv_v2_top_programs
       };
     }
     channelData[item.channel].totalViewers += Number(item.viewers) || 0;
@@ -30,7 +31,8 @@ function generateChannelBreakdown(data) {
     totalViewers: parseInt(String((channel as any).totalViewers)) || 0,
     recordCount: (channel as any).recordCount,
     regionCount: (channel as any).uniqueRegions.size,
-    avgViewers: Math.round((channel as any).totalViewers / (channel as any).recordCount)
+    avgViewers: Math.round((channel as any).totalViewers / (channel as any).recordCount),
+    programCount: (channel as any).programCount || 0
   })).sort((a, b) => b.totalViewers - a.totalViewers);
 }
 
@@ -198,6 +200,84 @@ export async function GET(request: Request) {
 
     try {
       channelBreakdown = generateChannelBreakdown(filteredData);
+      
+      // Fetch total viewers for year 2024 from mytv_v2_viewership table
+      try {
+        const viewerCounts = await db.execute(sql`
+          SELECT 
+            channel,
+            SUM(viewers) AS total_viewers
+          FROM mytv_v2_viewership
+          WHERE year = 2024
+            AND channel ILIKE ANY (ARRAY[
+              '%TV1%',
+              '%TV2%',
+              '%TV6%',
+              '%OKEY%',
+              '%SUKAN%',
+              '%BERITA%'
+            ])
+          GROUP BY channel
+        `);
+        
+        // Map total viewers to channel breakdown
+        if (viewerCounts && viewerCounts.rows) {
+          viewerCounts.rows.forEach((row: any) => {
+            const channelMatch = channelBreakdown.find(ch => {
+              const channelName = row.channel.toUpperCase();
+              const breakdownName = ch.channel.toUpperCase();
+              return channelName.includes(breakdownName) || breakdownName.includes(channelName);
+            });
+            
+            if (channelMatch) {
+              channelMatch.totalViewers = parseInt(row.total_viewers) || 0;
+            }
+          });
+        }
+        
+        console.log('Total viewers for 2024 fetched successfully:', viewerCounts?.rows);
+      } catch (viewerError) {
+        console.error('Error fetching total viewers:', viewerError);
+        // Continue with calculated totals from filtered data
+      }
+      
+      // Fetch program counts from mytv_v2_top_programs table
+      try {
+        const programCounts = await db.execute(sql`
+          SELECT count(*) as program_count, channel
+          FROM mytv_v2_top_programs
+          WHERE channel ILIKE ANY (ARRAY[
+            '%TV1%',
+            '%TV2%',
+            '%TV6%',
+            '%OKEY%',
+            '%SUKAN%',
+            '%BERITA%'
+          ])
+          GROUP BY channel
+        `);
+        
+        // Map program counts to channel breakdown
+        if (programCounts && programCounts.rows) {
+          programCounts.rows.forEach((row: any) => {
+            const channelMatch = channelBreakdown.find(ch => {
+              const channelName = row.channel.toUpperCase();
+              const breakdownName = ch.channel.toUpperCase();
+              return channelName.includes(breakdownName) || breakdownName.includes(channelName);
+            });
+            
+            if (channelMatch) {
+              channelMatch.programCount = parseInt(row.program_count) || 0;
+            }
+          });
+        }
+        
+        console.log('Program counts fetched successfully:', programCounts?.rows);
+      } catch (programError) {
+        console.error('Error fetching program counts:', programError);
+        // Continue with 0 program counts
+      }
+      
       regionalBreakdown = generateRegionalBreakdown(filteredData);
       monthlyTrends = generateMonthlyTrends(filteredData);
       console.log('Analytics generated successfully');

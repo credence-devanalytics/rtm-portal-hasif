@@ -240,6 +240,7 @@ export function createFiltersFromParams(searchParams) {
     fromDate: searchParams.get('from') || null,
     toDate: searchParams.get('to') || null,
     sentiment: searchParams.get('sentiment') || 'all',
+    author: searchParams.get('author') || null, // Add author filter
     limit: searchParams.get('limit') || '50'
   };
 }
@@ -252,6 +253,14 @@ export function createFiltersFromParams(searchParams) {
  */
 export function buildWhereConditions(filters, schema) {
   const { gte, sql, and } = require('drizzle-orm');
+  
+  console.log('🔧 buildWhereConditions called with:', {
+    filters,
+    hasAuthor: !!filters.author,
+    authorValue: filters.author,
+    authorType: typeof filters.author
+  });
+  
   let whereConditions = [];
   
   // Date filtering
@@ -286,6 +295,21 @@ export function buildWhereConditions(filters, schema) {
   if (filters.sentiment && filters.sentiment !== 'all') {
     whereConditions.push(
       sql`LOWER(${schema.sentiment}) = ${filters.sentiment.toLowerCase()}`
+    );
+  }
+  
+  // Author/Channel filtering (for cross-filtering by channel)
+  // Filter by 'channel' field which contains channel names
+  if (filters.author && filters.author !== '' && filters.author !== 'all') {
+    console.log('🔍 Building channel WHERE clause:', {
+      filterValue: filters.author,
+      filterType: typeof filters.author,
+      filterLength: filters.author.length
+    });
+    
+    // Filter by channel field (exact match, case-insensitive)
+    whereConditions.push(
+      sql`LOWER(${schema.channel}) = LOWER(${filters.author})`
     );
   }
   

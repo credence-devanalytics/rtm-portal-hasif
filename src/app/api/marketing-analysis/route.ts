@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { db } from "@/index";
-import { marketingChannelByyear as marketingChannelByYear } from "../../../../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { NextResponse } from 'next/server';
+import { db } from '../../../index';
+import { marketingChannelByYear } from '../../../../drizzle/schema';
+import { eq, and } from 'drizzle-orm';
 
 export async function GET() {
 	try {
@@ -44,40 +44,34 @@ export async function GET() {
 		console.log("2023 data:", previousYearData);
 		console.log("2022 data:", year2022Data);
 
-		// Create a map for easy lookup of previous year data
-		const previousYearMap = {};
-		previousYearData.forEach((item) => {
-			previousYearMap[item.saluran] = parseFloat(item.value) || 0;
-		});
+    // Create a map for easy lookup of previous year data
+    const previousYearMap = {};
+    previousYearData.forEach(item => {
+      previousYearMap[item.saluran] = item.value || 0;
+    });
 
-		// Create a map for easy lookup of 2022 data
-		const year2022Map = {};
-		year2022Data.forEach((item) => {
-			year2022Map[item.saluran] = parseFloat(item.value) || 0;
-		});
+    // Create a map for easy lookup of 2022 data
+    const year2022Map = {};
+    year2022Data.forEach(item => {
+      year2022Map[item.saluran] = item.value || 0;
+    });
 
-		// Calculate percentage change and prepare metrics
-		const saluranMetrics = currentYearData.map((item) => {
-			const currentValue = parseFloat(item.value) || 0;
-			const previousValue = previousYearMap[item.saluran] || 0;
-			const year2022Value = year2022Map[item.saluran] || 0;
-
-			let percentageChange = 0;
-			let changeDirection = "no change";
-
-			if (previousValue > 0) {
-				percentageChange =
-					((currentValue - previousValue) / previousValue) * 100;
-				changeDirection =
-					percentageChange > 0
-						? "increase"
-						: percentageChange < 0
-						? "decrease"
-						: "no change";
-			} else if (currentValue > 0) {
-				percentageChange = 100; // New saluran
-				changeDirection = "new";
-			}
+    // Calculate percentage change and prepare metrics
+    const saluranMetrics = currentYearData.map(item => {
+      const currentValue = item.value || 0;
+      const previousValue = previousYearMap[item.saluran] || 0;
+      const year2022Value = year2022Map[item.saluran] || 0;
+      
+      let percentageChange = 0;
+      let changeDirection = 'no change';
+      
+      if (previousValue > 0) {
+        percentageChange = ((currentValue - previousValue) / previousValue) * 100;
+        changeDirection = percentageChange > 0 ? 'increase' : percentageChange < 0 ? 'decrease' : 'no change';
+      } else if (currentValue > 0) {
+        percentageChange = 100; // New saluran
+        changeDirection = 'new';
+      }
 
 			return {
 				saluran: item.saluran,

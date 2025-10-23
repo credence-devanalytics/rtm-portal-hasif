@@ -21,45 +21,51 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import Image from "next/image";
 
 const MultiplatformPage = () => {
-	const [loading, setLoading] = useState(true);
-	const [selectedMonth, setSelectedMonth] = useState("202502");
-	const [mytvData, setMytvData] = useState(null);
-	const [marketingData, setMarketingData] = useState(null);
-	const [portalBeritaData, setPortalBeritaData] = useState(null);
-	const [astroData, setAstroData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mytvData, setMytvData] = useState(null);
+  const [marketingData, setMarketingData] = useState(null);
+  const [portalBeritaData, setPortalBeritaData] = useState(null);
+  const [astroData, setAstroData] = useState(null);
+  const [unifiData, setUnifiData] = useState(null);
+  const [rtmklikData, setRtmklikData] = useState(null);
 
 	// Total audience for MyTV platform
 	const totalAudience = 7581399;
 
-	// Mock data for UnifiTV (from unifi_summary table)
-	const unifiData = {
-		mau_total: 518883,
-		duration_total_hour: 2345678,
-		programmes: [
-			{ programme_name: "Berita RTM", duration_total_hour: 456789 },
-			{ programme_name: "TV1 Drama", duration_total_hour: 389456 },
-			{ programme_name: "Sukan RTM", duration_total_hour: 234567 },
-		],
-	};
+  // Calculate UnifiTV metrics
+  const unifiMetrics = useMemo(() => {
+    if (!unifiData?.data) {
+      return {
+        mau: 0,
+        totalHours: 0,
+        avgHoursPerUser: 0,
+        topChannel: {
+          name: "No data",
+          percentage: "0.0",
+        },
+      };
+    }
 
-	// Calculate UnifiTV metrics
-	const unifiMetrics = {
-		mau: unifiData.mau_total,
-		totalHours: unifiData.duration_total_hour,
-		avgHoursPerUser: (
-			unifiData.duration_total_hour / unifiData.mau_total
-		).toFixed(1),
-		topChannel: {
-			name: unifiData.programmes[0].programme_name,
-			percentage: (
-				(unifiData.programmes[0].duration_total_hour /
-					unifiData.duration_total_hour) *
-				100
-			).toFixed(1),
-		},
-	};
+    const data = unifiData.data;
+    return {
+      mau: data.mau_total,
+      totalHours: data.duration_total_hour,
+      avgHoursPerUser: (data.duration_total_hour / data.mau_total).toFixed(1),
+      topChannel: {
+        name: data.programmes[0]?.programme_name || "No data",
+        percentage: data.programmes[0]
+          ? (
+              (data.programmes[0].duration_total_hour /
+                data.duration_total_hour) *
+              100
+            ).toFixed(1)
+          : "0.0",
+      },
+    };
+  }, [unifiData]);
 
 	// Fetch MyTV data
 	useEffect(() => {
@@ -149,29 +155,78 @@ const MultiplatformPage = () => {
 			}
 		};
 
-		fetchAstroData();
-	}, []);
+    fetchAstroData();
+  }, []);
 
-	// Calculate MyTV metrics using the mytv-analysis API
-	const mytvMetrics = useMemo(() => {
-		if (!mytvData?.channelMetrics || !Array.isArray(mytvData.channelMetrics)) {
-			return {
-				totalViewers: 0,
-				topChannel: {
-					name: "No data",
-					audienceShare: "Data not available",
-					avgViewers: "Data not available",
-				},
-				top3Channels: [],
-				lowestChannel: {
-					name: "No data",
-					audienceShare: "Data not available",
-					avgViewers: "Data not available",
-				},
-				allChannels: [],
-				hasData: false,
-			};
-		}
+  // Fetch UnifiTV data
+  useEffect(() => {
+    const fetchUnifiData = async () => {
+      try {
+        console.log("Fetching UnifiTV data...");
+        const response = await fetch("/api/unifitv-summary");
+        console.log("UnifiTV response status:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("UnifiTV API Response:", data);
+        setUnifiData(data);
+      } catch (error) {
+        console.error("Error fetching UnifiTV data:", error);
+        console.error("Full error details:", error.message);
+      }
+    };
+
+    fetchUnifiData();
+  }, []);
+
+  // Fetch RTMKlik data
+  useEffect(() => {
+    const fetchRtmklikData = async () => {
+      try {
+        console.log("Fetching RTMKlik data...");
+        const response = await fetch("/api/rtmklik-summary");
+        console.log("RTMKlik response status:", response.status);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("RTMKlik API Response:", data);
+        setRtmklikData(data);
+      } catch (error) {
+        console.error("Error fetching RTMKlik data:", error);
+        console.error("Full error details:", error.message);
+      }
+    };
+
+    fetchRtmklikData();
+  }, []);
+
+  // Calculate MyTV metrics using the mytv-analysis API
+  const mytvMetrics = useMemo(() => {
+    if (!mytvData?.channelMetrics || !Array.isArray(mytvData.channelMetrics)) {
+      return {
+        totalViewers: 0,
+        topChannel: {
+          name: "No data",
+          audienceShare: "Data not available",
+          avgViewers: "Data not available",
+        },
+        top3Channels: [],
+        lowestChannel: {
+          name: "No data",
+          audienceShare: "Data not available",
+          avgViewers: "Data not available",
+        },
+        allChannels: [],
+        hasData: false,
+        latestDate: null,
+      };
+    }
 
 		// Use the channel metrics data from the mytv-analysis API
 		const channelData = mytvData.channelMetrics;
@@ -203,24 +258,25 @@ const MultiplatformPage = () => {
 			.filter((item) => item.audienceShare > 0 || item.avgViewers !== null)
 			.sort((a, b) => (b.audienceShare || 0) - (a.audienceShare || 0));
 
-		if (channelsWithData.length === 0) {
-			return {
-				totalViewers: 0,
-				topChannel: {
-					name: "No data",
-					audienceShare: "Data not available",
-					avgViewers: "Data not available",
-				},
-				top3Channels: [],
-				lowestChannel: {
-					name: "No data",
-					audienceShare: "Data not available",
-					avgViewers: "Data not available",
-				},
-				allChannels: [],
-				hasData: false,
-			};
-		}
+    if (channelsWithData.length === 0) {
+      return {
+        totalViewers: 0,
+        topChannel: {
+          name: "No data",
+          audienceShare: "Data not available",
+          avgViewers: "Data not available",
+        },
+        top3Channels: [],
+        lowestChannel: {
+          name: "No data",
+          audienceShare: "Data not available",
+          avgViewers: "Data not available",
+        },
+        allChannels: [],
+        hasData: false,
+        latestDate: mytvData.latestDate || null,
+      };
+    }
 
 		// Get top channel
 		const topChannel = channelsWithData[0] || {
@@ -239,23 +295,24 @@ const MultiplatformPage = () => {
 			displayAvgViewers: "Data not available",
 		};
 
-		return {
-			totalViewers: totalAudience, // Using the fixed total audience number
-			topChannel: {
-				name: topChannel.name,
-				audienceShare: topChannel.displayAudienceShare,
-				avgViewers: topChannel.displayAvgViewers,
-			},
-			top3Channels,
-			lowestChannel: {
-				name: lowestChannel.name,
-				audienceShare: lowestChannel.displayAudienceShare,
-				avgViewers: lowestChannel.displayAvgViewers,
-			},
-			allChannels: channelsWithData,
-			hasData: true,
-		};
-	}, [mytvData]);
+    return {
+      totalViewers: totalAudience, // Using the fixed total audience number
+      topChannel: {
+        name: topChannel.name,
+        audienceShare: topChannel.displayAudienceShare,
+        avgViewers: topChannel.displayAvgViewers,
+      },
+      top3Channels,
+      lowestChannel: {
+        name: lowestChannel.name,
+        audienceShare: lowestChannel.displayAudienceShare,
+        avgViewers: lowestChannel.displayAvgViewers,
+      },
+      allChannels: channelsWithData,
+      hasData: true,
+      latestDate: mytvData.latestDate || null,
+    };
+  }, [mytvData]);
 
 	// Calculate Marketing metrics
 	const marketingMetrics = useMemo(() => {
@@ -313,53 +370,57 @@ const MultiplatformPage = () => {
 		console.log("Calculating Portal Berita metrics...");
 		console.log("Portal Berita data:", portalBeritaData);
 
-		if (!portalBeritaData?.success || !portalBeritaData?.data) {
-			console.log("Portal Berita data not available, returning default values");
-			return {
-				hasData: false,
-				totalAudience: 0,
-				topRegion: { name: "No data", users: 0 },
-				topTrafficSource: { name: "No data", users: 0 },
-				topExternalSource: { name: "No data", users: 0 },
-			};
-		}
+    if (!portalBeritaData?.success || !portalBeritaData?.data) {
+      console.log("Portal Berita data not available, returning default values");
+      return {
+        hasData: false,
+        totalAudience: 0,
+        topRegion: { name: "No data", users: 0 },
+        topTrafficSource: { name: "No data", users: 0 },
+        topExternalSource: { name: "No data", users: 0 },
+        latestDate: null,
+      };
+    }
 
 		const { data } = portalBeritaData;
 		console.log("Portal Berita summary:", data.summary);
 
-		return {
-			hasData: data.summary.hasData,
-			totalAudience: data.totalAudience,
-			formattedTotalAudience: data.summary.formattedTotalAudience,
-			topRegion: data.topRegion,
-			topTrafficSource: data.topTrafficSource,
-			topExternalSource: data.topExternalSource,
-			metrics: data.summary.metrics,
-		};
-	}, [portalBeritaData]);
+    return {
+      hasData: data.summary.hasData,
+      totalAudience: data.totalAudience,
+      formattedTotalAudience: data.summary.formattedTotalAudience,
+      topRegion: data.topRegion,
+      topTrafficSource: data.topTrafficSource,
+      topExternalSource: data.topExternalSource,
+      metrics: data.summary.metrics,
+      latestDate: data.latestDate || null,
+    };
+  }, [portalBeritaData]);
 
-	// Calculate Astro metrics
-	const astroMetrics = useMemo(() => {
-		console.log("Calculating Astro metrics...");
-		console.log("Astro data:", astroData);
-		console.log("Astro data success:", astroData?.success);
-		console.log("Astro data array:", astroData?.data);
-		console.log("Astro data length:", astroData?.data?.length);
+  // Calculate Astro metrics
+  const astroMetrics = useMemo(() => {
+    console.log("Calculating Astro metrics...");
+    console.log("Astro data:", astroData);
+    console.log("Astro data success:", astroData?.success);
+    console.log("Astro data array:", astroData?.data);
+    console.log("Astro data length:", astroData?.data?.length);
+    console.log("Astro latest date:", astroData?.latestDate);
 
-		if (
-			!astroData?.success ||
-			!astroData?.data ||
-			astroData.data.length === 0
-		) {
-			console.log("Astro data not available, returning default values");
-			return {
-				hasData: false,
-				topRatedChannel: { name: "No data", rating: 0 },
-				topReachChannel: { name: "No data", reach: 0 },
-				totalReach: 0,
-				lowestRatingChannel: { name: "No data", rating: 0 },
-			};
-		}
+    if (
+      !astroData?.success ||
+      !astroData?.data ||
+      astroData.data.length === 0
+    ) {
+      console.log("Astro data not available, returning default values");
+      return {
+        hasData: false,
+        topRatedTVChannel: { name: "No data", rating: 0 },
+        topRatedRadioChannel: { name: "No data", rating: 0 },
+        totalTVReach: 0,
+        totalRadioReach: 0,
+        latestDate: null,
+      };
+    }
 
 		const records = astroData.data;
 		console.log("Astro records:", records);
@@ -374,202 +435,308 @@ const MultiplatformPage = () => {
 		console.log("Sample rating record:", ratingRecords[0]);
 		console.log("Sample reach record:", reachRecords[0]);
 
-		// Calculate top rated channel (highest rating value)
-		const topRated = ratingRecords.reduce(
-			(max, record) => (record.value > max.value ? record : max),
-			{ channel: "No data", value: 0 }
-		);
+    // Helper function to determine channel type based on channel name
+    const getChannelType = (channelName) => {
+      if (!channelName) return null;
+      const upperName = channelName.toUpperCase();
+      if (upperName.includes("FM")) return "radio";
+      if (upperName.includes("TV")) return "tv";
+      return null;
+    };
 
-		console.log("Top rated channel:", topRated);
+    // Separate TV and Radio records based on channel name
+    const tvRatingRecords = ratingRecords.filter(
+      (r) => getChannelType(r.channel) === "tv"
+    );
+    const radioRatingRecords = ratingRecords.filter(
+      (r) => getChannelType(r.channel) === "radio"
+    );
+    const tvReachRecords = reachRecords.filter(
+      (r) => getChannelType(r.channel) === "tv"
+    );
+    const radioReachRecords = reachRecords.filter(
+      (r) => getChannelType(r.channel) === "radio"
+    );
 
-		// Calculate channel with most reach
-		const topReach = reachRecords.reduce(
-			(max, record) => (record.value > max.value ? record : max),
-			{ channel: "No data", value: 0 }
-		);
+    console.log("TV Rating records count:", tvRatingRecords.length);
+    console.log("Radio Rating records count:", radioRatingRecords.length);
+    console.log("TV Reach records count:", tvReachRecords.length);
+    console.log("Radio Reach records count:", radioReachRecords.length);
 
-		console.log("Top reach channel:", topReach);
+    // Calculate top rated TV channel (highest rating value)
+    const topRatedTV =
+      tvRatingRecords.length > 0
+        ? tvRatingRecords.reduce(
+            (max, record) => (record.value > max.value ? record : max),
+            tvRatingRecords[0]
+          )
+        : { channel: "No data", value: 0 };
 
-		// Calculate total reach across all channels
-		const totalReach = reachRecords.reduce(
-			(sum, record) => sum + (record.value || 0),
-			0
-		);
+    console.log("Top rated TV channel:", topRatedTV);
 
-		console.log("Total reach:", totalReach);
+    // Calculate top rated Radio channel (highest rating value)
+    const topRatedRadio =
+      radioRatingRecords.length > 0
+        ? radioRatingRecords.reduce(
+            (max, record) => (record.value > max.value ? record : max),
+            radioRatingRecords[0]
+          )
+        : { channel: "No data", value: 0 };
 
-		// Calculate lowest rating channel (minimum rating value, excluding zeros)
-		const nonZeroRatings = ratingRecords.filter((r) => r.value > 0);
-		const lowestRated =
-			nonZeroRatings.length > 0
-				? nonZeroRatings.reduce(
-						(min, record) => (record.value < min.value ? record : min),
-						nonZeroRatings[0]
-				  )
-				: { channel: "No data", value: 0 };
+    console.log("Top rated Radio channel:", topRatedRadio);
 
-		console.log("Lowest rated channel:", lowestRated);
+    // Calculate total TV reach
+    const totalTVReach = tvReachRecords.reduce(
+      (sum, record) => sum + (record.value || 0),
+      0
+    );
 
-		const result = {
-			hasData: true,
-			topRatedChannel: {
-				name: topRated.channel,
-				rating: topRated.value,
-			},
-			topReachChannel: {
-				name: topReach.channel,
-				reach: topReach.value,
-			},
-			totalReach,
-			lowestRatingChannel: {
-				name: lowestRated.channel,
-				rating: lowestRated.value,
-			},
-		};
+    console.log("Total TV reach:", totalTVReach);
+
+    // Calculate total Radio reach
+    const totalRadioReach = radioReachRecords.reduce(
+      (sum, record) => sum + (record.value || 0),
+      0
+    );
+
+    console.log("Total Radio reach:", totalRadioReach);
+
+    const result = {
+      hasData: true,
+      topRatedTVChannel: {
+        name: topRatedTV.channel,
+        rating: topRatedTV.value,
+      },
+      topRatedRadioChannel: {
+        name: topRatedRadio.channel,
+        rating: topRatedRadio.value,
+      },
+      totalTVReach,
+      totalRadioReach,
+      latestDate: astroData.latestDate,
+    };
 
 		console.log("Final Astro metrics:", result);
 
-		return result;
-	}, [astroData]);
+    return result;
+  }, [astroData]);
 
-	// Platform data structure
-	const platforms = [
-		{
-			id: "unifitv",
-			name: "UnifiTV",
-			icon: <Wifi className="h-8 w-8" />,
-			color: "from-emerald-500 to-emerald-600",
-			borderColor: "border-emerald-200",
-			bgColor: "bg-emerald-50",
-			textColor: "text-emerald-900",
-			link: "/UnifiTV",
-			hasData: true,
-			metrics: {
-				mau: unifiMetrics.mau.toLocaleString(),
-				totalHours: unifiMetrics.totalHours.toLocaleString(),
-				avgHours: unifiMetrics.avgHoursPerUser,
-				topChannel: `${unifiMetrics.topChannel.name} (${unifiMetrics.topChannel.percentage}%)`,
-			},
-		},
-		{
-			id: "mytv",
-			name: "MyTV",
-			icon: <Tv className="h-8 w-8" />,
-			color: "from-blue-500 to-blue-600",
-			borderColor: "border-blue-200",
-			bgColor: "bg-blue-50",
-			textColor: "text-blue-900",
-			link: "/MyTVViewership",
-			hasData: mytvMetrics.hasData,
-			metrics: {
-				mau:
-					mytvMetrics.totalViewers > 0
-						? mytvMetrics.totalViewers.toLocaleString()
-						: "No data",
-				totalHours: "N/A",
-				avgHours: "N/A",
-				topChannel: mytvMetrics.hasData
-					? `${mytvMetrics.topChannel.name} – ${mytvMetrics.topChannel.audienceShare}`
-					: "No data",
-			},
-		},
-		{
-			id: "marketing",
-			name: "Marketing Revenue",
-			icon: <DollarSign className="h-8 w-8" />,
-			color: "from-rose-500 to-rose-600",
-			borderColor: "border-rose-200",
-			bgColor: "bg-rose-50",
-			textColor: "text-rose-900",
-			link: "/Marketing",
-			hasData: marketingMetrics.hasData,
-			metrics: {
-				mau: marketingMetrics.hasData
-					? (marketingMetrics as any).formattedTotalValue
-					: "No data available yet",
-				totalHours: marketingMetrics.hasData
-					? `${(marketingMetrics as any).activeSaluran} Active Saluran`
-					: "No data available yet",
-				avgHours: marketingMetrics.hasData
-					? `${marketingMetrics.overallChange}% YoY`
-					: "No data available yet",
-				topChannel: marketingMetrics.hasData
-					? `${marketingMetrics.topSaluran.name} (${marketingMetrics.topSaluran.change})`
-					: "No data available yet",
-			},
-		},
-		{
-			id: "astro",
-			name: "ASTRO",
-			icon: <Star className="h-8 w-8" />,
-			color: "from-purple-500 to-purple-600",
-			borderColor: "border-purple-200",
-			bgColor: "bg-purple-50",
-			textColor: "text-purple-900",
-			link: "/ASTRO",
-			hasData: astroMetrics.hasData,
-			metrics: {
-				mau: astroMetrics.hasData
-					? `${astroMetrics.topRatedChannel.name} (${astroMetrics.topRatedChannel.rating})`
-					: "No data available yet",
-				totalHours: astroMetrics.hasData
-					? `${
-							astroMetrics.topReachChannel.name
-					  } (${astroMetrics.topReachChannel.reach.toLocaleString()})`
-					: "No data available yet",
-				avgHours: astroMetrics.hasData
-					? `${astroMetrics.totalReach.toLocaleString()}`
-					: "No data available yet",
-				topChannel: astroMetrics.hasData
-					? `${astroMetrics.lowestRatingChannel.name} (${astroMetrics.lowestRatingChannel.rating})`
-					: "No data available yet",
-			},
-		},
-		{
-			id: "rtmclick",
-			name: "RTMKlik",
-			icon: <Radio className="h-8 w-8" />,
-			color: "from-amber-500 to-amber-600",
-			borderColor: "border-amber-200",
-			bgColor: "bg-amber-50",
-			textColor: "text-amber-900",
-			link: "/RTMClick",
-			hasData: false,
-			metrics: {
-				mau: "No data available yet",
-				totalHours: "No data available yet",
-				avgHours: "No data available yet",
-				topChannel: "No data available yet",
-			},
-		},
-		{
-			id: "wartaberita",
-			name: "Portal Berita",
-			icon: <Monitor className="h-8 w-8" />,
-			color: "from-indigo-500 to-indigo-600",
-			borderColor: "border-indigo-200",
-			bgColor: "bg-indigo-50",
-			textColor: "text-indigo-900",
-			link: "/WartaBerita",
-			hasData: portalBeritaMetrics.hasData,
-			metrics: {
-				mau: portalBeritaMetrics.hasData
-					? portalBeritaMetrics.formattedTotalAudience
-					: "No data available yet",
-				totalHours: portalBeritaMetrics.hasData
-					? `${
-							portalBeritaMetrics.topRegion.name
-					  } (${portalBeritaMetrics.topRegion.users.toLocaleString()})`
-					: "No data available yet",
-				avgHours: portalBeritaMetrics.hasData
-					? `${portalBeritaMetrics.topTrafficSource.name}`
-					: "No data available yet",
-				topChannel: portalBeritaMetrics.hasData
-					? `${portalBeritaMetrics.topExternalSource.name}`
-					: "No data available yet",
-			},
-		},
-	];
+  // Calculate RTMKlik metrics
+  const rtmklikMetrics = useMemo(() => {
+    console.log("Calculating RTMKlik metrics...");
+    console.log("RTMKlik data:", rtmklikData);
+
+    if (!rtmklikData?.success || !rtmklikData?.data) {
+      console.log("RTMKlik data not available, returning default values");
+      return {
+        hasData: false,
+        totalActiveUsers: 0,
+        topRegion: { name: "No data", users: 0 },
+        topChannel: { name: "No data", users: 0 },
+        totalPageViews: 0,
+        latestDate: null,
+      };
+    }
+
+    const { data } = rtmklikData;
+    console.log("RTMKlik data summary:", data);
+
+    return {
+      hasData: data.hasData,
+      totalActiveUsers: data.totalActiveUsers,
+      formattedTotalActiveUsers: data.formattedTotalActiveUsers,
+      topRegion: data.topRegion,
+      topChannel: data.topChannel,
+      totalPageViews: data.totalPageViews,
+      formattedTotalPageViews: data.formattedTotalPageViews,
+      latestDate: data.latestDate || null,
+    };
+  }, [rtmklikData]);
+
+  // Platform data structure
+  const platforms = [
+    {
+      id: "rtmclick",
+      name: "RTMKlik",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-rtmklik.png"
+          alt="RTMKlik Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-amber-500 to-amber-600",
+      borderColor: "border-amber-200",
+      bgColor: "bg-amber-50",
+      textColor: "text-amber-900",
+      link: "/RTMClick",
+      hasData: rtmklikMetrics.hasData,
+      metrics: {
+        mau: rtmklikMetrics.hasData
+          ? rtmklikMetrics.formattedTotalActiveUsers
+          : "No data available yet",
+        totalHours: rtmklikMetrics.hasData
+          ? `${rtmklikMetrics.topRegion.name} (${rtmklikMetrics.topRegion.formattedUsers})`
+          : "No data available yet",
+        avgHours: rtmklikMetrics.hasData
+          ? `${rtmklikMetrics.topChannel.name}`
+          : "No data available yet",
+        topChannel: rtmklikMetrics.hasData
+          ? rtmklikMetrics.formattedTotalPageViews
+          : "No data available yet",
+      },
+    },
+    {
+      id: "mytv",
+      name: "MyTV",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-mytv.png"
+          alt="MyTV Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-blue-500 to-blue-600",
+      borderColor: "border-blue-200",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-900",
+      link: "/MyTVViewership",
+      hasData: mytvMetrics.hasData,
+      metrics: {
+        mau:
+          mytvMetrics.totalViewers > 0
+            ? mytvMetrics.totalViewers.toLocaleString()
+            : "No data",
+        totalHours: "N/A",
+        avgHours: "N/A",
+        topChannel: mytvMetrics.hasData
+          ? `${mytvMetrics.topChannel.name} – ${mytvMetrics.topChannel.audienceShare}`
+          : "No data",
+      },
+    },
+    {
+      id: "astro",
+      name: "ASTRO",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-astro.png"
+          alt="ASTRO Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-purple-500 to-purple-600",
+      borderColor: "border-purple-200",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-900",
+      link: "/ASTRO",
+      hasData: astroMetrics.hasData,
+      metrics: {
+        mau: astroMetrics.hasData
+          ? `${astroMetrics.topRatedTVChannel.name} (${astroMetrics.topRatedTVChannel.rating})`
+          : "No data available yet",
+        totalHours: astroMetrics.hasData
+          ? `${astroMetrics.totalTVReach.toLocaleString()}`
+          : "No data available yet",
+        avgHours: astroMetrics.hasData
+          ? `${astroMetrics.topRatedRadioChannel.name} (${astroMetrics.topRatedRadioChannel.rating})`
+          : "No data available yet",
+        topChannel: astroMetrics.hasData
+          ? `${astroMetrics.totalRadioReach.toLocaleString()}`
+          : "No data available yet",
+      },
+    },
+    {
+      id: "unifitv",
+      name: "UnifiTV",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-unifitv.png"
+          alt="UnifiTV Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-emerald-500 to-emerald-600",
+      borderColor: "border-emerald-200",
+      bgColor: "bg-emerald-50",
+      textColor: "text-emerald-900",
+      link: "/UnifiTV",
+      hasData: true,
+      metrics: {
+        mau: unifiMetrics.mau.toLocaleString(),
+        totalHours: unifiMetrics.totalHours.toLocaleString(),
+        avgHours: unifiMetrics.avgHoursPerUser,
+        topChannel: `${unifiMetrics.topChannel.name} (${unifiMetrics.topChannel.percentage}%)`,
+      },
+    },
+    {
+      id: "wartaberita",
+      name: "Portal Berita",
+      icon: (
+        <Image
+          src="/multiplatform-logos/new-size-portalberita.png"
+          alt="Portal Berita Logo"
+          width={64}
+          height={64}
+          className="object-contain"
+        />
+      ),
+      color: "from-indigo-500 to-indigo-600",
+      borderColor: "border-indigo-200",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-900",
+      link: "/WartaBerita",
+      hasData: portalBeritaMetrics.hasData,
+      metrics: {
+        mau: portalBeritaMetrics.hasData
+          ? portalBeritaMetrics.formattedTotalAudience
+          : "No data available yet",
+        totalHours: portalBeritaMetrics.hasData
+          ? `${
+              portalBeritaMetrics.topRegion.name
+            } (${portalBeritaMetrics.topRegion.users.toLocaleString()})`
+          : "No data available yet",
+        avgHours: portalBeritaMetrics.hasData
+          ? `${portalBeritaMetrics.topTrafficSource.name}`
+          : "No data available yet",
+        topChannel: portalBeritaMetrics.hasData
+          ? `${portalBeritaMetrics.topExternalSource.name}`
+          : "No data available yet",
+      },
+    },
+    {
+      id: "marketing",
+      name: "Marketing Revenue",
+      icon: <DollarSign className="h-8 w-8" />,
+      color: "from-rose-500 to-rose-600",
+      borderColor: "border-rose-200",
+      bgColor: "bg-rose-50",
+      textColor: "text-rose-900",
+      link: "/Marketing",
+      hasData: marketingMetrics.hasData,
+      metrics: {
+        mau: marketingMetrics.hasData
+          ? (marketingMetrics as any).formattedTotalValue
+          : "No data available yet",
+        totalHours: marketingMetrics.hasData
+          ? `${(marketingMetrics as any).activeSaluran} Active Saluran`
+          : "No data available yet",
+        avgHours: marketingMetrics.hasData
+          ? `${marketingMetrics.overallChange}% YoY`
+          : "No data available yet",
+        topChannel: marketingMetrics.hasData
+          ? `${marketingMetrics.topSaluran.name} (${marketingMetrics.topSaluran.change})`
+          : "No data available yet",
+      },
+    },
+  ];
 
 	useEffect(() => {
 		// Simulate loading
@@ -622,58 +789,81 @@ const MultiplatformPage = () => {
 			}
 		};
 
-		// Special layout for MyTV with enhanced analytics
-		if (platform.id === "mytv" && hasAnyData && mytvMetrics.hasData) {
-			return (
-				<Link href={platform.link} className="block group">
-					<Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
-						<CardHeader className="pb-3">
-							<div className="flex items-center justify-between">
-								<div className="p-2 rounded-lg bg-blue-100 text-blue-700">
-									<Tv className="h-8 w-8" />
-								</div>
-								<ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
-							</div>
-							<CardTitle className="text-xl font-bold text-gray-900 mt-3">
-								MyTV
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<div className="flex flex-col lg:flex-row gap-4">
-								{/* Left side: Main stats */}
-								<div className="flex-1 space-y-3">
-									{/* Primary Highlight - Top Channel */}
-									<div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-										<div className="flex items-center space-x-2 mb-2">
-											<Trophy className="h-4 w-4 text-gray-700" />
-											<span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-												Top Channel
-											</span>
-										</div>
-										<div className="text-l font-bold text-gray-900 leading-tight mb-1">
-											{mytvMetrics.topChannel.name}
-										</div>
-										<div className="text-l font-bold text-gray-900 mb-1">
-											{mytvMetrics.topChannel.audienceShare}
-										</div>
-										<div className="text-xs font-medium text-gray-600">
-											Purata Penonton: {mytvMetrics.topChannel.avgViewers}
-										</div>
-									</div>
+    // Special layout for MyTV with enhanced analytics
+    if (platform.id === "mytv" && hasAnyData && mytvMetrics.hasData) {
+      return (
+        <Link href={platform.link} className="block group">
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {mytvMetrics.latestDate
+                  ? new Date(mytvMetrics.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : new Date().toLocaleDateString("en-MY", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/multiplatform-logos/new-size-mytv.png"
+                    alt="MyTV Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    MyTV
+                  </CardTitle>
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Left side: Main stats */}
+                <div className="flex-1 space-y-3">
+                  {/* Total Viewers */}
+                  <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Users className="h-4 w-4 text-gray-700" />
+                      <span className="text-xs font-semibold text-gray-700 tracking-wide">
+                        Total Viewers for All TV Channels (Viewers)
+                      </span>
+                    </div>
+                    <div className="text-l font-bold text-gray-900">
+                      {mytvMetrics.totalViewers.toLocaleString()}
+                    </div>
+                  </div>
 
-									{/* Total Viewers */}
-									<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-										<div className="flex items-center space-x-2 mb-1">
-											<Users className="h-4 w-4 text-gray-700" />
-											<span className="text-xs font-semibold text-gray-700">
-												Total Viewers
-											</span>
-										</div>
-										<div className="text-base font-bold text-gray-900">
-											{mytvMetrics.totalViewers.toLocaleString()}
-										</div>
-									</div>
-								</div>
+                  {/* Primary Highlight - Top Channel */}
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <Trophy className="h-4 w-4 text-gray-700" />
+                      <span className="text-xs font-semibold text-gray-700">
+                        Top Channel
+                      </span>
+                    </div>
+                    <div className="text-base font-bold text-gray-900 leading-tight mb-1">
+                      {mytvMetrics.topChannel.name} ({" "}
+                      {mytvMetrics.topChannel.audienceShare})
+                    </div>
+                    <div className="text-base font-bold text-gray-900 mb-1"></div>
+                    <div className="text-xs font-medium text-gray-600">
+                      Purata Penonton: {mytvMetrics.topChannel.avgViewers}
+                    </div>
+                  </div>
+                </div>
 
 								{/* Right side: Channel breakdown with bar chart */}
 								<div className="flex-1 space-y-3">
@@ -791,55 +981,65 @@ const MultiplatformPage = () => {
 			const besData = getSaluranData("BES");
 			const radioData = getSaluranData("RADIO"); // Changed from 'Radio' to 'RADIO'
 
-			return (
-				<Link href={platform.link} className="block group">
-					<Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
-						<CardHeader className="pb-3">
-							<div className="flex items-center justify-between">
-								<div className="p-2 rounded-lg bg-rose-100 text-rose-700">
-									<DollarSign className="h-8 w-8" />
-								</div>
-								<ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
-							</div>
-							<CardTitle className="text-xl font-bold text-gray-900 mt-3">
-								Marketing Revenue
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							{/* Saluran Cards Grid - TV, BES, Radio, Total */}
-							<div className="grid grid-cols-2 gap-3">
-								{/* TV */}
-								<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-									<div className="flex items-center space-x-2 mb-1">
-										<Tv className="h-3 w-3 text-gray-700" />
-										<span className="text-xs font-semibold text-gray-900">
-											TV
-										</span>
-									</div>
-									<div
-										className="text-sm font-bold text-gray-900 mb-1"
-										title={tvData.formattedCurrentValue}
-									>
-										{tvData.currentValue > 0
-											? `RM${tvData.currentValue.toLocaleString()}`
-											: "N/A"}
-									</div>
-									{tvData.previousValue > 0 && (
-										<div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
-											vs RM{tvData.previousValue.toLocaleString()} (2023)
-											<div className="flex items-center space-x-1">
-												<span
-													className={`text-xs font-medium ${getChangeColor(
-														tvData.changeDirection
-													)}`}
-												>
-													{tvData.formattedChange}
-												</span>
-												{getChangeIcon(tvData.changeDirection)}
-											</div>
-										</div>
-									)}
-								</div>
+      return (
+        <Link href={platform.link} className="block group">
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of: 2024
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 rounded-lg bg-rose-100 text-rose-700">
+                    <DollarSign className="h-8 w-8" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    Marketing Revenue
+                  </CardTitle>
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Saluran Cards Grid - TV, BES, Radio, Total */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Total */}
+                <div className="p-3 rounded-lg bg-gray-100 border border-gray-300">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <DollarSign className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={(marketingMetrics as any).formattedTotalValue}
+                  >
+                    RM{marketingMetrics.totalValue.toLocaleString()}
+                  </div>
+                  {(marketingMetrics as any).totalPreviousValue > 0 && (
+                    <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
+                      vs RM
+                      {(
+                        marketingMetrics as any
+                      ).totalPreviousValue.toLocaleString()}{" "}
+                      (2023)
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className={`text-xs font-medium ${getChangeColor(
+                            (marketingMetrics as any).overallDirection
+                          )}`}
+                        >
+                          {marketingMetrics.overallChange}%
+                        </span>
+                        {getChangeIcon(
+                          (marketingMetrics as any).overallDirection
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
 								{/* BES */}
 								<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
@@ -907,43 +1107,39 @@ const MultiplatformPage = () => {
 									)}
 								</div>
 
-								{/* Total */}
-								<div className="p-3 rounded-lg bg-gray-100 border border-gray-300">
-									<div className="flex items-center space-x-2 mb-1">
-										<DollarSign className="h-3 w-3 text-gray-700" />
-										<span className="text-xs font-semibold text-gray-900">
-											Total
-										</span>
-									</div>
-									<div
-										className="text-sm font-bold text-gray-900 mb-1"
-										title={(marketingMetrics as any).formattedTotalValue}
-									>
-										RM{marketingMetrics.totalValue.toLocaleString()}
-									</div>
-									{(marketingMetrics as any).totalPreviousValue > 0 && (
-										<div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
-											vs RM
-											{(
-												marketingMetrics as any
-											).totalPreviousValue.toLocaleString()}{" "}
-											(2023)
-											<div className="flex items-center space-x-1">
-												<span
-													className={`text-xs font-medium ${getChangeColor(
-														(marketingMetrics as any).overallDirection
-													)}`}
-												>
-													{marketingMetrics.overallChange}%
-												</span>
-												{getChangeIcon(
-													(marketingMetrics as any).overallDirection
-												)}
-											</div>
-										</div>
-									)}
-								</div>
-							</div>
+                {/* TV */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Tv className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      TV
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={tvData.formattedCurrentValue}
+                  >
+                    {tvData.currentValue > 0
+                      ? `RM${tvData.currentValue.toLocaleString()}`
+                      : "N/A"}
+                  </div>
+                  {tvData.previousValue > 0 && (
+                    <div className="flex flex-row gap-2 text-xs text-gray-500 mb-1">
+                      vs RM{tvData.previousValue.toLocaleString()} (2023)
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className={`text-xs font-medium ${getChangeColor(
+                            tvData.changeDirection
+                          )}`}
+                        >
+                          {tvData.formattedChange}
+                        </span>
+                        {getChangeIcon(tvData.changeDirection)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
 							{/* Click Indicator */}
 							<div className="pt-2 border-t border-gray-200">
@@ -960,47 +1156,71 @@ const MultiplatformPage = () => {
 			);
 		}
 
-		// Special layout for Portal Berita with enhanced analytics
-		if (
-			platform.id === "wartaberita" &&
-			hasAnyData &&
-			portalBeritaMetrics.hasData
-		) {
-			return (
-				<Link href={platform.link} className="block group">
-					<Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
-						<CardHeader className="pb-3">
-							<div className="flex items-center justify-between">
-								<div className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
-									<Monitor className="h-8 w-8" />
-								</div>
-								<ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
-							</div>
-							<CardTitle className="text-xl font-bold text-gray-900 mt-3">
-								Portal Berita
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							{/* Portal Berita Metrics Grid */}
-							<div className="grid grid-cols-2 gap-3">
-								{/* Total Audience */}
-								<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-									<div className="flex items-center space-x-2 mb-1">
-										<Users className="h-3 w-3 text-gray-700" />
-										<span className="text-xs font-semibold text-gray-900">
-											Total Audience
-										</span>
-									</div>
-									<div
-										className="text-sm font-bold text-gray-900 mb-1"
-										title={portalBeritaMetrics.formattedTotalAudience}
-									>
-										{portalBeritaMetrics.formattedTotalAudience}
-									</div>
-									<div className="text-xs text-gray-500">
-										All Users Combined
-									</div>
-								</div>
+    // Special layout for Portal Berita with enhanced analytics
+    if (
+      platform.id === "wartaberita" &&
+      hasAnyData &&
+      portalBeritaMetrics.hasData
+    ) {
+      return (
+        <Link href={platform.link} className="block group">
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {portalBeritaMetrics.latestDate
+                  ? new Date(portalBeritaMetrics.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : new Date().toLocaleDateString("en-MY", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/multiplatform-logos/new-size-portalberita.png"
+                    alt="Portal Berita Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    Portal Berita
+                  </CardTitle>
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Portal Berita Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Total Audience */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Audience
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={portalBeritaMetrics.formattedTotalAudience}
+                  >
+                    {portalBeritaMetrics.formattedTotalAudience}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    All Users Combined
+                  </div>
+                </div>
 
 								{/* Top Region */}
 								<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
@@ -1077,101 +1297,246 @@ const MultiplatformPage = () => {
 			);
 		}
 
-		// Special layout for ASTRO with enhanced analytics
-		if (platform.id === "astro" && hasAnyData && astroMetrics.hasData) {
-			return (
-				<Link href={platform.link} className="block group">
-					<Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
-						<CardHeader className="pb-3">
-							<div className="flex items-center justify-between">
-								<div className="p-2 rounded-lg bg-purple-100 text-purple-700">
-									<Star className="h-8 w-8" />
-								</div>
-								<ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
-							</div>
-							<CardTitle className="text-xl font-bold text-gray-900 mt-3">
-								ASTRO
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							{/* ASTRO Metrics Grid */}
-							<div className="grid grid-cols-2 gap-3">
-								{/* Top Rated Channel */}
-								<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-									<div className="flex items-center space-x-2 mb-1">
-										<Star className="h-3 w-3 text-gray-700" />
-										<span className="text-xs font-semibold text-gray-900">
-											Top Rated Channel
-										</span>
-									</div>
-									<div
-										className="text-sm font-bold text-gray-900 mb-1 truncate"
-										title={astroMetrics.topRatedChannel.name}
-									>
-										{astroMetrics.topRatedChannel.name}
-									</div>
-									<div className="text-xs text-gray-500">
-										Rating: {astroMetrics.topRatedChannel.rating}
-									</div>
-								</div>
+    // Special layout for ASTRO with enhanced analytics
+    if (platform.id === "astro" && hasAnyData && astroMetrics.hasData) {
+      return (
+        <Link href={platform.link} className="block group">
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {astroMetrics.latestDate
+                  ? new Date(astroMetrics.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : "N/A"}
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/multiplatform-logos/new-size-astro.png"
+                    alt="ASTRO Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    ASTRO
+                  </CardTitle>
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* ASTRO Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Top TV Channel (Rating) - Top Left */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Star className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Top TV Channel (Rating)
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={astroMetrics.topRatedTVChannel.name}
+                  >
+                    {astroMetrics.topRatedTVChannel.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Rating: {astroMetrics.topRatedTVChannel.rating}
+                  </div>
+                </div>
 
-								{/* Top Reach Channel */}
-								<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-									<div className="flex items-center space-x-2 mb-1">
-										<TrendingUp className="h-3 w-3 text-gray-700" />
-										<span className="text-xs font-semibold text-gray-900">
-											Top Reach Channel
-										</span>
-									</div>
-									<div
-										className="text-sm font-bold text-gray-900 mb-1 truncate"
-										title={astroMetrics.topReachChannel.name}
-									>
-										{astroMetrics.topReachChannel.name}
-									</div>
-									<div className="text-xs text-gray-500">
-										Reach: {astroMetrics.topReachChannel.reach.toLocaleString()}
-									</div>
-								</div>
+                {/* Total Viewer TV (Reach) - Top Right */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Viewer TV (Reach)
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={astroMetrics.totalTVReach.toLocaleString()}
+                  >
+                    {astroMetrics.totalTVReach.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500">Viewers</div>
+                </div>
 
-								{/* Total Reach */}
-								<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-									<div className="flex items-center space-x-2 mb-1">
-										<Users className="h-3 w-3 text-gray-700" />
-										<span className="text-xs font-semibold text-gray-900">
-											Total Reach
-										</span>
-									</div>
-									<div
-										className="text-sm font-bold text-gray-900 mb-1"
-										title={astroMetrics.totalReach.toLocaleString()}
-									>
-										{astroMetrics.totalReach.toLocaleString()}
-									</div>
-									<div className="text-xs text-gray-500">
-										All Channels Combined
-									</div>
-								</div>
+                {/* Top Radio Channel (Rating) - Bottom Left */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Trophy className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Top Radio Channel (Rating)
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={astroMetrics.topRatedRadioChannel.name}
+                  >
+                    {astroMetrics.topRatedRadioChannel.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Rating: {astroMetrics.topRatedRadioChannel.rating}
+                  </div>
+                </div>
 
-								{/* Lowest Rating Channel */}
-								<div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-									<div className="flex items-center space-x-2 mb-1">
-										<Trophy className="h-3 w-3 text-gray-700" />
-										<span className="text-xs font-semibold text-gray-900">
-											Lowest Rating Channel
-										</span>
-									</div>
-									<div
-										className="text-sm font-bold text-gray-900 mb-1 truncate"
-										title={astroMetrics.lowestRatingChannel.name}
-									>
-										{astroMetrics.lowestRatingChannel.name}
-									</div>
-									<div className="text-xs text-gray-500">
-										Rating: {astroMetrics.lowestRatingChannel.rating}
-									</div>
-								</div>
-							</div>
+                {/* Total Listener Radio (Reach) - Bottom Right */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Listener Radio (Reach)
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={astroMetrics.totalRadioReach.toLocaleString()}
+                  >
+                    {astroMetrics.totalRadioReach.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500">Listeners</div>
+                </div>
+              </div>
+
+              {/* Click Indicator */}
+              <div className="pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700 transition-colors">
+                  <span className="text-xs font-medium">
+                    Click for detailed analytics
+                  </span>
+                  <ExternalLink className="h-3 w-3" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      );
+    }
+
+    // Special layout for RTMKlik with enhanced analytics
+    if (platform.id === "rtmclick" && hasAnyData && rtmklikMetrics.hasData) {
+      return (
+        <Link href={platform.link} className="block group">
+          <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              {/* Updated Date */}
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {rtmklikMetrics.latestDate
+                  ? new Date(rtmklikMetrics.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : "N/A"}
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/multiplatform-logos/new-size-rtmklik.png"
+                    alt="RTMKlik Logo"
+                    width={64}
+                    height={64}
+                    className="object-contain"
+                  />
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    RTMKlik
+                  </CardTitle>
+                </div>
+                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* RTMKlik Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Total Viewers for All TV and Radio Channels (MAU) - Top Left */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Viewers (MAU)
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={rtmklikMetrics.formattedTotalActiveUsers}
+                  >
+                    {rtmklikMetrics.formattedTotalActiveUsers}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    TV + Radio Channels
+                  </div>
+                </div>
+
+                {/* Top Region (TV+Radio MAU) - Top Right */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Trophy className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Top Region
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={rtmklikMetrics.topRegion.name}
+                  >
+                    {rtmklikMetrics.topRegion.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {rtmklikMetrics.topRegion.formattedUsers} users
+                  </div>
+                </div>
+
+                {/* Top Channel - Bottom Left */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Star className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Top Channel
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1 truncate"
+                    title={rtmklikMetrics.topChannel.name}
+                  >
+                    {rtmklikMetrics.topChannel.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {rtmklikMetrics.topChannel.formattedUsers} MAU
+                  </div>
+                </div>
+
+                {/* Total Page Views - Bottom Right */}
+                <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <TrendingUp className="h-3 w-3 text-gray-700" />
+                    <span className="text-xs font-semibold text-gray-900">
+                      Total Page Views
+                    </span>
+                  </div>
+                  <div
+                    className="text-sm font-bold text-gray-900 mb-1"
+                    title={rtmklikMetrics.formattedTotalPageViews}
+                  >
+                    {rtmklikMetrics.formattedTotalPageViews}
+                  </div>
+                  <div className="text-xs text-gray-500">Screen/Page Views</div>
+                </div>
+              </div>
 
 							{/* Click Indicator */}
 							<div className="pt-2 border-t border-gray-200">
@@ -1188,160 +1553,172 @@ const MultiplatformPage = () => {
 			);
 		}
 
-		// Default layout for other platforms
-		const availableMetrics = [
-			{
-				key: "mau",
-				icon:
-					platform.id === "astro" ? (
-						<Star className="h-4 w-4 text-gray-700" />
-					) : (
-						<Users className="h-4 w-4 text-gray-700" />
-					),
-				label:
-					platform.id === "marketing"
-						? "Total Revenue"
-						: platform.id === "astro"
-						? "Top Rated Channel"
-						: "MAU",
-				value: platform.metrics.mau,
-				show:
-					platform.metrics.mau !== "No data" && platform.metrics.mau !== "N/A",
-			},
-			{
-				key: "totalHours",
-				icon:
-					platform.id === "astro" ? (
-						<TrendingUp className="h-4 w-4 text-gray-700" />
-					) : (
-						<Clock className="h-4 w-4 text-gray-700" />
-					),
-				label:
-					platform.id === "marketing"
-						? "Saluran"
-						: platform.id === "astro"
-						? "Top Reach Channel"
-						: "Hours",
-				value: platform.metrics.totalHours,
-				show:
-					platform.metrics.totalHours !== "No data" &&
-					platform.metrics.totalHours !== "N/A",
-			},
-			{
-				key: "avgHours",
-				icon:
-					platform.id === "astro" ? (
-						<Users className="h-4 w-4 text-gray-700" />
-					) : (
-						<TrendingUp className="h-4 w-4 text-gray-700" />
-					),
-				label:
-					platform.id === "marketing"
-						? "YoY Change"
-						: platform.id === "astro"
-						? "Total Reach"
-						: "Average Hours User Watched",
-				value:
-					platform.id === "marketing"
-						? platform.metrics.avgHours
-						: platform.id === "astro"
-						? platform.metrics.avgHours
-						: platform.metrics.avgHours !== "N/A"
-						? `${platform.metrics.avgHours}h`
-						: platform.metrics.avgHours,
-				show:
-					platform.metrics.avgHours !== "No data" &&
-					platform.metrics.avgHours !== "N/A",
-			},
-			{
-				key: "topChannel",
-				icon: <Trophy className="h-4 w-4 text-gray-700" />,
-				label:
-					platform.id === "marketing"
-						? "Top Saluran"
-						: platform.id === "astro"
-						? "Lowest Rating Channel"
-						: "Top Channel",
-				value: platform.metrics.topChannel,
-				show:
-					platform.metrics.topChannel !== "No data" &&
-					platform.metrics.topChannel !== "N/A",
-			},
-		].filter((metric) => metric.show);
+    // Default layout for other platforms
+    const availableMetrics = [
+      {
+        key: "mau",
+        icon:
+          platform.id === "astro" ? (
+            <Star className="h-4 w-4 text-gray-700" />
+          ) : (
+            <Users className="h-4 w-4 text-gray-700" />
+          ),
+        label:
+          platform.id === "marketing" ? (
+            "Total Revenue"
+          ) : platform.id === "astro" ? (
+            "Top Rated Channel"
+          ) : platform.id === "unifitv" ? (
+            <>
+              Total Viewers for All TV Channels <br /> (MAU)
+            </>
+          ) : (
+            "MAU"
+          ),
+        value: platform.metrics.mau,
+        show:
+          platform.metrics.mau !== "No data" && platform.metrics.mau !== "N/A",
+      },
+      {
+        key: "totalHours",
+        icon:
+          platform.id === "astro" ? (
+            <TrendingUp className="h-4 w-4 text-gray-700" />
+          ) : (
+            <Clock className="h-4 w-4 text-gray-700" />
+          ),
+        label:
+          platform.id === "marketing"
+            ? "Saluran"
+            : platform.id === "astro"
+            ? "Top Reach Channel"
+            : "Hours",
+        value: platform.metrics.totalHours,
+        show:
+          platform.metrics.totalHours !== "No data" &&
+          platform.metrics.totalHours !== "N/A",
+      },
+      {
+        key: "topChannel",
+        icon: <Trophy className="h-4 w-4 text-gray-700" />,
+        label:
+          platform.id === "marketing"
+            ? "Top Saluran"
+            : platform.id === "astro"
+            ? "Lowest Rating Channel"
+            : "Top Channel",
+        value: platform.metrics.topChannel,
+        show:
+          platform.metrics.topChannel !== "No data" &&
+          platform.metrics.topChannel !== "N/A",
+      },
+      {
+        key: "avgHours",
+        icon:
+          platform.id === "astro" ? (
+            <Users className="h-4 w-4 text-gray-700" />
+          ) : (
+            <TrendingUp className="h-4 w-4 text-gray-700" />
+          ),
+        label:
+          platform.id === "marketing"
+            ? "YoY Change"
+            : platform.id === "astro"
+            ? "Total Reach"
+            : "Average Hours User Watched",
+        value:
+          platform.id === "marketing"
+            ? platform.metrics.avgHours
+            : platform.id === "astro"
+            ? platform.metrics.avgHours
+            : platform.metrics.avgHours !== "N/A"
+            ? `${platform.metrics.avgHours}h`
+            : platform.metrics.avgHours,
+        show:
+          platform.metrics.avgHours !== "No data" &&
+          platform.metrics.avgHours !== "N/A",
+      },
+    ].filter((metric) => metric.show);
 
-		// Get icon color based on platform id
-		const getIconBgColor = (platformId) => {
-			switch (platformId) {
-				case "unifitv":
-					return "bg-emerald-100 text-emerald-700";
-				case "astro":
-					return "bg-purple-100 text-purple-700";
-				case "rtmclick":
-					return "bg-amber-100 text-amber-700";
-				default:
-					return "bg-gray-100 text-gray-700";
-			}
-		};
-
-		return (
-			<Link href={platform.link} className="block group">
-				<Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
-					<CardHeader className="pb-3">
-						<div className="flex items-center justify-between">
-							<div className={`p-2 rounded-lg ${getIconBgColor(platform.id)}`}>
-								{platform.icon}
-							</div>
-							<ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
-						</div>
-						<CardTitle className="text-xl font-bold text-gray-900 mt-3">
-							{platform.name}
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						{hasAnyData ? (
-							<>
-								{/* Metrics Grid - Dynamic Layout */}
-								<div
-									className={`grid gap-3 ${
-										availableMetrics.length === 1
-											? "grid-cols-1"
-											: availableMetrics.length === 2
-											? "grid-cols-2"
-											: availableMetrics.length === 3
-											? "grid-cols-2"
-											: "grid-cols-2"
-									}`}
-								>
-									{availableMetrics.map((metric, index) => (
-										<div
-											key={metric.key}
-											className={`p-3 rounded-lg bg-gray-50 border border-gray-200 ${
-												availableMetrics.length === 3 && index === 2
-													? "col-span-2"
-													: ""
-											}`}
-										>
-											<div className="flex items-center space-x-2 mb-1">
-												{metric.icon}
-												<span className="text-xs font-semibold text-gray-900">
-													{metric.label}
-												</span>
-											</div>
-											<div
-												className="text-lg font-bold text-gray-900 truncate"
-												title={
-													metric.key === "topChannel" ? metric.value : undefined
-												}
-											>
-												{metric.key === "topChannel" ? (
-													<span className="text-sm">{metric.value}</span>
-												) : (
-													metric.value
-												)}
-											</div>
-										</div>
-									))}
-								</div>
+    return (
+      <Link href={platform.link} className="block group">
+        <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            {/* Updated Date - Only for UnifiTV */}
+            {platform.id === "unifitv" && (
+              <div className="text-center text-xs text-gray-400 mb-3">
+                Updated as of:{" "}
+                {unifiData?.data?.latestDate
+                  ? new Date(unifiData.data.latestDate).toLocaleDateString(
+                      "en-MY",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )
+                  : new Date().toLocaleDateString("en-MY", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {platform.icon}
+                <CardTitle className="text-xl font-bold text-gray-900">
+                  {platform.name}
+                </CardTitle>
+              </div>
+              <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {hasAnyData ? (
+              <>
+                {/* Metrics Grid - Dynamic Layout */}
+                <div
+                  className={`grid gap-3 ${
+                    availableMetrics.length === 1
+                      ? "grid-cols-1"
+                      : availableMetrics.length === 2
+                      ? "grid-cols-2"
+                      : availableMetrics.length === 3
+                      ? "grid-cols-2"
+                      : "grid-cols-2"
+                  }`}
+                >
+                  {availableMetrics.map((metric, index) => (
+                    <div
+                      key={metric.key}
+                      className={`p-3 rounded-lg bg-gray-50 border border-gray-200 ${
+                        availableMetrics.length === 3 && index === 2
+                          ? "col-span-2"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 mb-1">
+                        {metric.icon}
+                        <span className="text-xs font-semibold text-gray-900">
+                          {metric.label}
+                        </span>
+                      </div>
+                      <div
+                        className="text-lg font-bold text-gray-900 truncate"
+                        title={
+                          metric.key === "topChannel" ? metric.value : undefined
+                        }
+                      >
+                        {metric.key === "topChannel" ? (
+                          <span className="text-sm">{metric.value}</span>
+                        ) : (
+                          metric.value
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
 								{/* Click Indicator */}
 								<div className="pt-2 border-t border-gray-200">
@@ -1375,29 +1752,20 @@ const MultiplatformPage = () => {
 		);
 	};
 
-	return (
-		<div className="p-16 max-w-7xl mx-auto space-y-6">
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">
-						Multi-Platform Performance Overview
-					</h1>
-					<p className="text-muted-foreground">
-						Comprehensive analytics across 6 streaming platforms
-					</p>
-				</div>
-				<div className="flex items-center space-x-4">
-					<select
-						value={selectedMonth}
-						onChange={(e) => setSelectedMonth(e.target.value)}
-						className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					>
-						<option value="202502">Feb 2025</option>
-						<option value="202501">Jan 2025</option>
-						<option value="202412">Dec 2024</option>
-					</select>
-				</div>
-			</div>
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6 pt-24">
+      <Header />
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Multi-Platform Performance Overview
+          </h1>
+          <p className="text-muted-foreground">
+            Comprehensive analytics across 6 streaming platforms
+          </p>
+        </div>
+      </div>
 
 			{/* Main Content */}
 			<div className="space-y-6">
