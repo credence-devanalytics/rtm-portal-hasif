@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   NavigationMenu,
@@ -14,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import MedinaLogo from "./MedinaLogo";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -40,6 +40,15 @@ export default function Header() {
     { name: "Contact Us", href: "#contact" },
     { name: "Login", href: "/auth/login" },
   ];
+
+  const pathname = usePathname();
+  console.log("Current pathname:", pathname);
+  const specialPaths = ["/auth", "/home"];
+  const renderHeader = !specialPaths.some(path => pathname.startsWith(path));
+
+  if (!renderHeader) {
+    return null;
+  }
 
   return (
     <header
