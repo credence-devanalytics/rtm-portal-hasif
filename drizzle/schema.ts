@@ -936,16 +936,6 @@ export const rtmklikDevice = pgTable(
 	]
 );
 
-export const marketingChannelByYear = pgTable("marketing_channel_byyear", {
-	id: serial().primaryKey().notNull(),
-	saluran: text(),
-	groupby: text(),
-	year: integer(),
-	value: doublePrecision(),
-	report_type: text("report_type"),
-	report_title: text("report_title"),
-});
-
 export const pberitaAudienceGender = pgTable(
 	"pberita_audience_gender",
 	{
@@ -1258,36 +1248,21 @@ export const pberitaAudienceAge = pgTable(
 	]
 );
 
-export const astroRateNReach = pgTable("astro_rate_n_reach", {
-	id: serial().primaryKey().notNull(),
-	txDate: date("tx_date"),
-	txYear: integer("tx_year"),
-	txMonth: integer("tx_month"),
-	channel: text(),
-	metricType: text("metric_type"),
-	value: integer(),
-});
-
-// RTMKlik Tables
-export const rtmklikLiveMalaysia = pgTable("rtmklik_live_malaysia", {
-	id: serial().primaryKey().notNull(),
-	date: date(),
-	location: varchar("location", { length: 255 }),
-	metric: varchar("metric", { length: 100 }),
-	value: doublePrecision(),
-});
-
-export const rtmklikRadioMalaysia = pgTable("rtmklik_radio_malaysia", {
-	id: serial().primaryKey().notNull(),
-	date: date(),
-	location: varchar("location", { length: 255 }),
-	metric: varchar("metric", { length: 100 }),
-	value: doublePrecision(),
-});
-
-export const rtmklikPopularPages = pgTable("rtmklik_popular_pages", {
-	id: serial().primaryKey().notNull(),
-	channel: varchar("channel", { length: 255 }),
-	metric: varchar("metric", { length: 100 }),
-	value: doublePrecision(),
-});
+export const unifiViewership = pgTable(
+	"unifi_viewership",
+	{
+		id: serial().primaryKey().notNull(),
+		viewershipMonthYear: text("viewership_month_year"),
+		channelName: text("channel_name"),
+		programName: text("program_name"),
+		programTime: text("program_time"),
+		programmeDate: date("programme_date"),
+		startTime: time("start_time"),
+		endTime: time("end_time"),
+		mau: integer(),
+		avgAccessDuration: interval("avg_access_duration"),
+		sheetName: text("sheet_name"),
+		filename: text(),
+		duration: interval(),
+	}
+);

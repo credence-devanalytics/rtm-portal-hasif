@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { marketingChannelByYear } from "@/lib/schema";
+import { marketingChannelByyear } from "../../../../drizzle/schema";
 import { eq, and, inArray } from "drizzle-orm";
 
 export async function GET() {
@@ -14,14 +14,14 @@ export async function GET() {
 		// Fetch historical data for 2022-2024
 		const historicalData = await db
 			.select()
-			.from(marketingChannelByYear)
+			.from(marketingChannelByyear)
 			.where(
 				and(
-					eq(marketingChannelByYear.report_title, reportTitle),
-					inArray(marketingChannelByYear.year, [2022, 2023, 2024])
+					eq(marketingChannelByyear.reportTitle, reportTitle),
+					inArray(marketingChannelByyear.year, [2022, 2023, 2024])
 				)
 			)
-			.orderBy(marketingChannelByYear.year);
+			.orderBy(marketingChannelByyear.year);
 
 		console.log("Historical data found:", historicalData.length, "records");
 

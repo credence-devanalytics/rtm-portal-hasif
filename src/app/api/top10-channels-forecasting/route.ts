@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { marketingChannelByYear } from "@/lib/schema";
+import { marketingChannelByyear } from "../../../../drizzle/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
 
 export async function GET(request: Request) {
@@ -21,14 +21,14 @@ export async function GET(request: Request) {
 		// Fetch all channel data for 2022-2024
 		const allChannelData = await db
 			.select()
-			.from(marketingChannelByYear)
+			.from(marketingChannelByyear)
 			.where(
 				and(
-					inArray(marketingChannelByYear.report_title, reportTitles),
-					inArray(marketingChannelByYear.year, [2022, 2023, 2024])
+					inArray(marketingChannelByyear.reportTitle, reportTitles),
+					inArray(marketingChannelByyear.year, [2022, 2023, 2024])
 				)
 			)
-			.orderBy(marketingChannelByYear.year);
+			.orderBy(marketingChannelByyear.year);
 
 		console.log("Channel data found:", allChannelData.length, "records");
 

@@ -1,22 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { eq } from "drizzle-orm";
-import { marketingChannelByyear as marketingChannelByYear } from "../../../../drizzle/schema";
+import { sql } from "drizzle-orm";
 
 export async function GET() {
 	try {
 		console.log("Marketing Table 2 API called");
 
-		const table2Data = await db
-			.select()
-			.from(marketingChannelByYear)
-			.where(eq(marketingChannelByYear.reportType, "Table 2"));
+		const result = await db.execute(sql`
+			SELECT * FROM marketing_channel_byyear WHERE report_type = 'Table 2'
+		`);
+		const table2Data = result.rows;
 
 		console.log("Table 2 data:", table2Data);
 
 		// Group data by channel and year
-		const channelData = {};
-		table2Data.forEach((item) => {
+		const channelData: Record<string, any> = {};
+		table2Data.forEach((item: any) => {
 			const channel = item.saluran;
 			if (!channelData[channel]) {
 				channelData[channel] = {};

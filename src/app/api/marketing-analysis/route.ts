@@ -1,64 +1,88 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../../index';
-import { marketingChannelByYear } from '../../../../drizzle/schema';
-import { eq, and } from 'drizzle-orm';
+import { db } from '@/index';
+import { sql } from 'drizzle-orm';
 
 export async function GET() {
 	try {
-		console.log("Marketing API called");
+		console.log("=== Marketing API called ===");
+		console.log("Database connection:", db ? "Connected" : "Not connected");
+		
+		// First, check what data exists in the table using raw SQL
+		let allData;
+		try {
+			const result = await db.execute(sql`
+				SELECT * FROM marketing_channel_byyear LIMIT 10
+			`);
+			allData = result.rows;
+			
+			console.log("Sample data from table:", JSON.stringify(allData, null, 2));
+			console.log("Total sample records:", allData.length);
+		} catch (dbError) {
+			console.error("Error fetching sample data:", dbError);
+			return NextResponse.json({
+				success: false,
+				error: "Database query failed",
+				details: dbError.message
+			}, { status: 500 });
+		}
+		
+		// Extract unique years and report types from sample data
+		const years = [...new Set(allData.map(item => item.year))];
+		const reportTypes = [...new Set(allData.map(item => item.report_type))];
+		
+		console.log("Years in sample data:", years);
+		console.log("Report types in sample data:", reportTypes);
 
-		// Fetch 2024 data from database
-		const currentYearData = await db
-			.select()
-			.from(marketingChannelByYear)
-			.where(
-				and(
-					eq(marketingChannelByYear.year, 2024),
-					eq(marketingChannelByYear.reportType, "Chart 1")
-				)
-			);
+		// Fetch 2024 data from database (only Table 1)
+		const result2024 = await db.execute(sql`
+			SELECT * FROM marketing_channel_byyear WHERE year = 2024 AND report_type = 'Table 1'
+		`);
+		const currentYearData = result2024.rows;
 
-		// Fetch 2023 data from database
-		const previousYearData = await db
-			.select()
-			.from(marketingChannelByYear)
-			.where(
-				and(
-					eq(marketingChannelByYear.year, 2023),
-					eq(marketingChannelByYear.reportType, "Chart 1")
-				)
-			);
+		console.log("2024 data count:", currentYearData.length);
+		console.log("2024 data sample:", currentYearData[0]);
 
-		// Fetch 2022 data from database
-		const year2022Data = await db
-			.select()
-			.from(marketingChannelByYear)
-			.where(
-				and(
-					eq(marketingChannelByYear.year, 2022),
-					eq(marketingChannelByYear.reportType, "Chart 1")
-				)
-			);
+		// Fetch 2023 data from database (only Table 1)
+		const result2023 = await db.execute(sql`
+			SELECT * FROM marketing_channel_byyear WHERE year = 2023 AND report_type = 'Table 1'
+		`);
+		const previousYearData = result2023.rows;
 
-		console.log("2024 data:", currentYearData);
-		console.log("2023 data:", previousYearData);
-		console.log("2022 data:", year2022Data);
+		console.log("2023 data count:", previousYearData.length);
+
+		// Fetch 2022 data from database (only Table 1)
+		const result2022 = await db.execute(sql`
+			SELECT * FROM marketing_channel_byyear WHERE year = 2022 AND report_type = 'Table 1'
+		`);
+		const year2022Data = result2022.rows;
+
+		console.log("2022 data count:", year2022Data.length);
+		
+		// If no 2024 data, return empty response
+		if (currentYearData.length === 0) {
+			console.log("No 2024 data found in database");
+			return NextResponse.json({
+				success: false,
+				error: "No data available for 2024",
+				data: null
+			});
+		}
 
     // Create a map for easy lookup of previous year data
-    const previousYearMap = {};
-    previousYearData.forEach(item => {
-      previousYearMap[item.saluran] = item.value || 0;
+    const previousYearMap: Record<string, number> = {};
+    previousYearData.forEach((item: any) => {
+      previousYearMap[item.saluran] = Number(item.value) || 0;
     });
 
     // Create a map for easy lookup of 2022 data
-    const year2022Map = {};
-    year2022Data.forEach(item => {
-      year2022Map[item.saluran] = item.value || 0;
+    const year2022Map: Record<string, number> = {};
+    year2022Data.forEach((item: any) => {
+      year2022Map[item.saluran] = Number(item.value) || 0;
     });
 
     // Calculate percentage change and prepare metrics
-    const saluranMetrics = currentYearData.map(item => {
-      const currentValue = item.value || 0;
+    const saluranMetrics = currentYearData.map((item: any) => {
+      const currentValue = Number(item.value) || 0;
       const previousValue = previousYearMap[item.saluran] || 0;
       const year2022Value = year2022Map[item.saluran] || 0;
       

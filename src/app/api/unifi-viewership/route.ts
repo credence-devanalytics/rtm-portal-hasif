@@ -12,28 +12,59 @@ function generateProgramBreakdown(data) {
   const programData = {};
   
   data.forEach(item => {
-    if (!programData[item.programName]) {
-      programData[item.programName] = {
-        programName: item.programName,
-        channelName: item.channelName,
+    const programName = item.programName || 'Unknown';
+    const channelName = item.channelName || 'Unknown';
+    const programmeDate = item.programmeDate || new Date().toISOString();
+    
+    if (!programData[programName]) {
+      programData[programName] = {
+        programName: programName,
+        channelName: channelName,
         totalMau: 0,
         episodeCount: 0,
         avgDuration: [],
-        latestDate: item.programmeDate
+        latestDate: programmeDate
       };
     }
-    programData[item.programName].totalMau += item.mau || 0;
-    programData[item.programName].episodeCount++;
+    programData[programName].totalMau += item.mau || 0;
+    programData[programName].episodeCount++;
     
     // Convert duration to minutes for averaging
+    // Duration comes as interval object: {hours: 2} or {minutes: 30} or {hours: 1, minutes: 30}
     if (item.duration) {
-      const durationParts = item.duration.toString().split(':');
-      const durationMinutes = parseInt(String(durationParts[0])) * 60 + parseInt(String(durationParts[1] || 0));
-      programData[item.programName].avgDuration.push(durationMinutes);
+      try {
+        let durationMinutes = 0;
+        
+        // Handle interval object from PostgreSQL
+        if (typeof item.duration === 'object') {
+          const dur = item.duration;
+          durationMinutes = (dur.years || 0) * 525600 +
+                           (dur.months || 0) * 43800 +
+                           (dur.days || 0) * 1440 +
+                           (dur.hours || 0) * 60 +
+                           (dur.minutes || 0) +
+                           (dur.seconds || 0) / 60;
+        } else {
+          // Fallback: parse as string "HH:MM:SS"
+          const durationStr = item.duration.toString().trim();
+          const durationParts = durationStr.split(':');
+          if (durationParts.length >= 2) {
+            const hours = parseInt(String(durationParts[0])) || 0;
+            const minutes = parseInt(String(durationParts[1])) || 0;
+            durationMinutes = hours * 60 + minutes;
+          }
+        }
+        
+        if (durationMinutes > 0) {
+          programData[programName].avgDuration.push(durationMinutes);
+        }
+      } catch (e) {
+        console.warn('Failed to parse duration:', item.duration, e);
+      }
     }
     
-    if (new Date(item.programmeDate) > new Date(programData[item.programName].latestDate)) {
-      programData[item.programName].latestDate = item.programmeDate;
+    if (new Date(programmeDate) > new Date(programData[programName].latestDate)) {
+      programData[programName].latestDate = programmeDate;
     }
   });
   
@@ -51,17 +82,20 @@ function generateChannelBreakdown(data) {
   const channelData = {};
   
   data.forEach(item => {
-    if (!channelData[item.channelName]) {
-      channelData[item.channelName] = {
-        channelName: item.channelName,
+    const channelName = item.channelName || 'Unknown';
+    const programName = item.programName || 'Unknown';
+    
+    if (!channelData[channelName]) {
+      channelData[channelName] = {
+        channelName: channelName,
         totalMau: 0,
         programCount: 0,
         uniquePrograms: new Set()
       };
     }
-    channelData[item.channelName].totalMau += item.mau || 0;
-    channelData[item.channelName].programCount++;
-    channelData[item.channelName].uniquePrograms.add(item.programName);
+    channelData[channelName].totalMau += item.mau || 0;
+    channelData[channelName].programCount++;
+    channelData[channelName].uniquePrograms.add(programName);
   });
   
   return Object.values(channelData).map(channel => ({
@@ -77,7 +111,15 @@ function generateMonthlyTrends(data) {
   const monthData = {};
   
   data.forEach(item => {
+    // Get monthYear from the data
     const monthYear = item.viewershipMonthYear;
+    
+    // Skip items without valid monthYear
+    if (!monthYear) {
+      console.warn('Skipping item with missing viewershipMonthYear:', item);
+      return;
+    }
+    
     if (!monthData[monthYear]) {
       monthData[monthYear] = {
         month: monthYear,
@@ -92,41 +134,49 @@ function generateMonthlyTrends(data) {
     monthData[monthYear].programCount++;
     
     // Separate MAU by channel
-    if (item.channelName === 'TV1') {
+    const channelName = item.channelName || '';
+    if (channelName === 'TV1') {
       monthData[monthYear].tv1Mau += item.mau || 0;
-    } else if (item.channelName === 'TV2') {
+    } else if (channelName === 'TV2') {
       monthData[monthYear].tv2Mau += item.mau || 0;
     }
   });
   
-  return Object.values(monthData).map(month => ({
-    ...(month as any),
-    totalMau: parseInt(String((month as any).totalMau)) || 0,
-    tv1Mau: parseInt(String((month as any).tv1Mau)) || 0,
-    tv2Mau: parseInt(String((month as any).tv2Mau)) || 0,
-    avgMau: Math.round((month as any).totalMau / (month as any).programCount),
-    displayMonth: `${(month as any).month.slice(0, 4)}-${(month as any).month.slice(4)}`
-  })).sort((a, b) => (a as any).month.localeCompare((b as any).month));
+  return Object.values(monthData)
+    .filter((month: any) => month.month)
+    .map(month => ({
+      ...(month as any),
+      totalMau: parseInt(String((month as any).totalMau)) || 0,
+      tv1Mau: parseInt(String((month as any).tv1Mau)) || 0,
+      tv2Mau: parseInt(String((month as any).tv2Mau)) || 0,
+      avgMau: Math.round((month as any).totalMau / (month as any).programCount),
+      displayMonth: `${(month as any).month.slice(0, 4)}-${(month as any).month.slice(4)}`
+    }))
+    .sort((a, b) => (a as any).month.localeCompare((b as any).month));
 }
 
 function generateTopPrograms(data, limit = 10) {
   const programData = {};
   
   data.forEach(item => {
-    if (!programData[item.programName]) {
-      programData[item.programName] = {
-        programName: item.programName,
-        channelName: item.channelName,
+    const programName = item.programName || 'Unknown';
+    const channelName = item.channelName || 'Unknown';
+    const programmeDate = item.programmeDate || new Date().toISOString();
+    
+    if (!programData[programName]) {
+      programData[programName] = {
+        programName: programName,
+        channelName: channelName,
         totalMau: 0,
         episodeCount: 0,
-        latestDate: item.programmeDate
+        latestDate: programmeDate
       };
     }
-    programData[item.programName].totalMau += item.mau || 0;
-    programData[item.programName].episodeCount++;
+    programData[programName].totalMau += item.mau || 0;
+    programData[programName].episodeCount++;
     
-    if (new Date(item.programmeDate) > new Date(programData[item.programName].latestDate)) {
-      programData[item.programName].latestDate = item.programmeDate;
+    if (new Date(programmeDate) > new Date(programData[programName].latestDate)) {
+      programData[programName].latestDate = programmeDate;
     }
   });
   
@@ -189,12 +239,18 @@ export async function GET(request: Request) {
 
     console.log('Fetching data from database with', whereConditions.length, 'conditions');
 
-    // Fetch data from the database
-    let query = db.select().from(unifiViewership);
-    if (whereConditions.length > 0) {
-      query = (query as any).where(and(...whereConditions));
+    let allData;
+    try {
+      // Fetch data from the database
+      let query = db.select().from(unifiViewership);
+      if (whereConditions.length > 0) {
+        query = (query as any).where(and(...whereConditions));
+      }
+      allData = await query;
+    } catch (dbError) {
+      console.error('Database query failed:', dbError);
+      throw new Error(`Database query error: ${dbError.message}`);
     }
-    const allData = await query;
     
     console.log('Fetched', allData.length, 'records from database');
 
@@ -261,7 +317,7 @@ export async function GET(request: Request) {
       data: paginatedData.map(item => ({
         ...item,
         mau: parseInt(String(item.mau)) || 0,
-        id: parseInt(String(item.id)) || 0
+        id: item.id || 0
       })),
       pagination: {
         page,

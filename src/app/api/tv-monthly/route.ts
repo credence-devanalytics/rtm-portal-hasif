@@ -1,25 +1,24 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { marketingChannelBymonth as marketingChannelByMonth } from "../../../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export async function GET() {
 	try {
 		console.log("TV Monthly Marketing API called");
 
-		// Fetch TV monthly data from database
-		const monthlyData = await db
-			.select()
-			.from(marketingChannelByMonth)
-			.where(eq(marketingChannelByMonth.reportType, "Chart 2"));
+		// Fetch TV monthly data from database using raw SQL
+		const result = await db.execute(sql`
+			SELECT * FROM marketing_channel_bymonth WHERE report_type = 'Chart 2'
+		`);
+		const monthlyData = result.rows;
 
 		console.log("Monthly TV data:", monthlyData);
 
 		// Group data by year and month
-		const processedData = {};
+		const processedData: Record<string, any> = {};
 
 		// Month order mapping for proper sorting
-		const monthOrder = {
+		const monthOrder: Record<string, number> = {
 			Januari: 1,
 			Februari: 2,
 			Mac: 3,
@@ -34,10 +33,10 @@ export async function GET() {
 			Disember: 12,
 		};
 
-		monthlyData.forEach((item) => {
+		monthlyData.forEach((item: any) => {
 			const year = item.year;
 			const month = item.month;
-			const value = parseFloat(item.value) || 0;
+			const value = parseFloat(String(item.value)) || 0;
 
 			if (!processedData[month]) {
 				processedData[month] = {

@@ -1,26 +1,25 @@
 import { db } from "@/index";
-import { eq } from "drizzle-orm";
-import { marketingChannelByyear as marketingChannelByYear } from "../../../../drizzle/schema";
+import { sql } from "drizzle-orm";
 
 export async function GET() {
 	try {
 		console.log("Radio Channel Table API called");
 
-		const radioChannelData = await db
-			.select()
-			.from(marketingChannelByYear)
-			.where(eq(marketingChannelByYear.reportType, "Table 4"));
+		const result = await db.execute(sql`
+			SELECT * FROM marketing_channel_byyear WHERE report_type = 'Table 4'
+		`);
+		const radioChannelData = result.rows;
 
 		console.log("Radio channel data count:", radioChannelData.length);
 
 		// Group data by channel group (groupby column) and then by channel name
-		const channelGroups = {};
+		const channelGroups: Record<string, any> = {};
 
-		radioChannelData.forEach((row) => {
+		radioChannelData.forEach((row: any) => {
 			const groupType = row.groupby;
 			const channelName = row.saluran;
 			const year = row.year;
-			const value = parseFloat(row.value) || 0;
+			const value = parseFloat(String(row.value)) || 0;
 
 			if (!channelGroups[groupType]) {
 				channelGroups[groupType] = {};
