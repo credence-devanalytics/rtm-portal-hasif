@@ -1,6 +1,5 @@
-import { pgTable, varchar, text, timestamp, doublePrecision, bigint, date, serial, integer } from "drizzle-orm/pg-core"
+import { pgTable, varchar, text, timestamp, doublePrecision, bigint, date, serial, integer, boolean } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
-
 
 
 export const mentionsClassify = pgTable("mentions_classify", {
@@ -336,4 +335,60 @@ export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
 	totalTokens: doublePrecision("total_tokens"),
 	downloaddate: date().default(sql`CURRENT_DATE`).notNull(),
 	idpk: serial().primaryKey().notNull(),
+});
+
+
+// BetterAuth expects these exact table names and structures + medina user excel sheet fields
+export const users = pgTable("user", {
+	id: text("id").primaryKey(),
+	name: text("name").notNull(),
+	email: text("email").notNull().unique(),
+	role: text("role").notNull().default("user"), 	// peranan dalam sistem
+	position: text("position"),  					// jawatan 
+	systemId: text("systemId"),  					// user ID based on excel sheet
+	taskRole: text("taskRole"), 					// peranan tugas
+	emailVerified: boolean("emailVerified"),
+	image: text("image"),
+	createdAt: timestamp("createdAt").notNull(),
+	updatedAt: timestamp("updatedAt").notNull(),
+});
+
+export const sessions = pgTable("session", {
+	id: text("id").primaryKey(),
+	expiresAt: timestamp("expiresAt").notNull(),
+	token: text("token").notNull().unique(),
+	createdAt: timestamp("createdAt").notNull(),
+	updatedAt: timestamp("updatedAt").notNull(),
+	ipAddress: text("ipAddress"),
+	userAgent: text("userAgent"),
+	userId: text("userId")
+		.notNull()
+		.references(() => users.id),
+});
+
+export const accounts = pgTable("account", {
+	id: text("id").primaryKey(),
+	accountId: text("accountId").notNull(),
+	providerId: text("providerId").notNull(),
+	userId: text("userId")
+		.notNull()
+		.references(() => users.id),
+	accessToken: text("accessToken"),
+	refreshToken: text("refreshToken"),
+	idToken: text("idToken"),
+	accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
+	refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
+	scope: text("scope"),
+	password: text("password"),
+	createdAt: timestamp("createdAt").notNull(),
+	updatedAt: timestamp("updatedAt").notNull(),
+});
+
+export const verificationTokens = pgTable("verification", {
+	id: text("id").primaryKey(),
+	identifier: text("identifier").notNull(),
+	value: text("value").notNull(),
+	expiresAt: timestamp("expiresAt").notNull(),
+	createdAt: timestamp("createdAt"),
+	updatedAt: timestamp("updatedAt"),
 });
