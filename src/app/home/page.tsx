@@ -1,23 +1,22 @@
 "use client";
 
-import Header from "@/components/Header";
 import MedinaLogo from "@/components/MedinaLogo";
 import Stats09 from "@/components/stats-3";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AuroraBackground } from "@/components/ui/shadcn-io/aurora-background";
-import { useState } from "react";
-import { ChartNoAxesCombined, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Bot, ChartNoAxesCombined, ExternalLink, MessagesSquare, Table, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import useMultiplatformData from "@/hooks/useMultiplatformData";
 
 const NavButtons = () => {
   const buttonData = [
-    { href: "/SocMedAcc", label: "SocMed RTM Accounts" },
-    { href: "/dashboard", label: "SocMed Public Sentiment" },
-    { href: "/Multiplatform", label: "Multiplatform" },
-    { href: "#KPI", label: "KPI" },
-    { href: "#ai", label: "AI Chat" },
-    { href: "https://app.determ.com/174980/feed/q/6746731", label: "Determ" },
+    { href: "/SocMedAcc", label: "SocMed RTM Accounts", icon: <MessagesSquare /> },
+    { href: "/dashboard", label: "SocMed Public Sentiment", icon: <ThumbsUp /> },
+    { href: "/Multiplatform", label: "Multiplatform", icon: <Tv /> },
+    { href: "/KPI", label: "KPI", icon: <ChartNoAxesCombined /> },
+    { href: "#ai", label: "AI Chat", icon: <Bot /> },
+    { href: "https://app.determ.com/174980/feed/q/6746731", label: "Determ", icon: <Table /> },
   ]
   return (
     <div className="flex flex-col gap-6 md:items-center md:justify-between pt-6">
@@ -33,9 +32,9 @@ const NavButtons = () => {
           <Button
             variant="default"
             size="lg"
-            className="w-full flex items-center  bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white font-semibold rounded-md text-md space-x-2 "
+            className="w-full flex items-center  bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white font-semibold rounded-md text-md space-x-2 px-4"
           >
-            <ChartNoAxesCombined />
+            {button.icon}
             <span>{button.label}</span>
             { button.label === "Determ" && <ExternalLink className="h-4 w-4 text-white" /> }
           </Button>
@@ -46,6 +45,9 @@ const NavButtons = () => {
   ) };
 
 const KPISection = () => {
+
+  // const multiplatformData = useMultiplatformData({ monthYear: null, channels: [], region: 'all' });
+  // console.log("Multiplatform Data in KPI Section:", multiplatformData);
 
   const KPIdata = [
     {"name": "Total Viewers for RTM Channels", "stat": 100000000, "limit": 115000000, "percentage": 80, platforms: [
@@ -101,9 +103,9 @@ const KPISection = () => {
                   <div className="">
                     {sortedPlatforms.map((platform) => (
                       <div key={platform.name} className="flex items-center justify-between py-1 gap-0">
-                        <Link href={platform.link} className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0`}>
+                        <Link href={platform.link} className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0 space-x-1`}>
                           <span className="">{platform.name}</span>
-                          <ExternalLink className="inline-block ml-1 mb-0.5 w-3 h-3 text-gray-400" />
+                          <ExternalLink className="inline-block ml-1 mb-0.5 w-3 h-3 text-gray-600" />
                         </Link>
                         <span className="text-sm font-semibold text-gray-900 ml-8 whitespace-nowrap">
                           {platform.stat.toLocaleString()}

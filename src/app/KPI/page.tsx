@@ -1316,9 +1316,9 @@ const KPISection = () => {
                   <div className="pl-3 pr-6">
                     {sortedPlatforms.map((platform) => (
                       <div key={platform.name} className="flex items-center justify-between py-1 gap-0">
-                        <Link href={platform.link} className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0`}>
+                        <Link href={platform.link} className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0 space-x-1`}>
                           <span className="">{platform.name}</span>
-                          <ExternalLink className="inline-block ml-1 mb-0.5 w-3 h-3 text-gray-400" />
+                          <ExternalLink className="inline-block ml-1 mb-0.5 w-3 h-3 text-gray-600" />
                         </Link>
                         <div className="flex flex-row">
                           <div className="text-sm font-semibold text-gray-900 ml-8 whitespace-nowrap justify-end">

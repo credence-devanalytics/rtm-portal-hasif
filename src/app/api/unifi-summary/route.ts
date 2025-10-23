@@ -64,7 +64,7 @@ export async function GET(request: Request) {
     
     const totalResultArray = await db.execute(countWithWhere);
     const totalResult = (totalResultArray as any)[0];
-    const total = parseInt(String(totalResult.total));
+    const total = parseInt(String(totalResult?.total));
 
     // Get paginated data
     const sortColumn = sql.identifier(sortBy);
@@ -196,6 +196,7 @@ export async function GET(request: Request) {
 
     const topPrograms = (await db.execute(topProgramsQuery)) as unknown as any[];
 
+    console.log(summaryData);
     // Format the response
     const response = {
       data: summaryData.map(item => ({
