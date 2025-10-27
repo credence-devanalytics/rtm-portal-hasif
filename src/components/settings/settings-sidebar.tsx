@@ -27,7 +27,7 @@ export function SettingsSidebar() {
   // Filter items based on user role
   const filteredItems = items.filter(item => {
     if (item.title === "Admin") {
-      return userData?.role === "admin"
+      return ["admin", "superadmin"].includes(userData?.role)
     }
     return true
   })

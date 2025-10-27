@@ -20,8 +20,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 export default function Header() {
   const pathname = usePathname();
   console.log("Current pathname:", pathname);
-  const specialPaths = ["/auth", "/home"]; // Paths where header not be rendered cosmetic
-  const renderHeader = !(specialPaths.some(path => pathname.startsWith(path)) || pathname === "/");
+  const specialPaths = ["/login"]; // Paths where header not be rendered cosmetic
+  const renderHeader = !specialPaths.some(path => pathname.startsWith(path));
 
   if (!renderHeader) {
     return null;
@@ -55,8 +55,7 @@ export default function Header() {
   const mainNavItems = [
     { name: "AI", href: "#" },
     { name: "Determ", href: "https://app.determ.com/174980/feed/q/6746731" },
-    { name: "Contact Us", href: "#contact" },
-    { name: "Login", href: "/login" },
+    { name: "Contact Us", href: "/contact" },
   ];
 
   // Reusable User Menu Component
@@ -68,6 +67,11 @@ export default function Header() {
     variant?: "default" | "floating" | "mobile" 
   }) {    
     const router = useRouter();
+
+    const handleSignOut = async () => {
+      await signOut();
+      router.push("/");
+    }
 
     // Truncate username based on variant
     const getDisplayName = (name: string) => {
@@ -125,7 +129,7 @@ export default function Header() {
               <DropdownMenuItem
                 key={item.name}
                 onClick={() => router.push(item.href)}
-                className="block select-none rounded-md p-2 no-underline outline-none transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 text-gray-900 text-sm font-medium leading-none"
+                className="cursor-pointer flex flex-row items-center space-x-2 select-none rounded-md p-2 no-underline outline-none transition-colors text-sm font-medium leading-none hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 text-gray-900"
             >
               {item.icon}
               {item.name}
@@ -134,8 +138,8 @@ export default function Header() {
           </>
           ))}
           <DropdownMenuItem
-            onClick={() => signOut({callbackUrl: "/"})}
-            className={`cursor-pointer flex flex-row items-center space-x-2 block select-none rounded-md p-2 no-underline outline-none transition-colors text-sm font-medium leading-none text-red-400 hover:text-red-400 focus:text-red-400 hover:bg-gray-100 focus:bg-gray-100`}
+            onClick={() => handleSignOut()}
+            className={`cursor-pointer flex flex-row items-center space-x-2 select-none rounded-md p-2 no-underline outline-none transition-colors text-sm font-medium leading-none text-red-400 hover:text-red-400 focus:text-red-400 hover:bg-gray-100 focus:bg-gray-100`}
           >
             <LogOut className="h-4 aspect-square mr-2" />
             Log Out

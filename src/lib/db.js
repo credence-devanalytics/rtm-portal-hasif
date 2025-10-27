@@ -56,5 +56,8 @@ export function getSql() {
 	return sql;
 }
 
-// For backward compatibility
-export { db as db, sql as sql };
+// Initialize immediately for Better Auth compatibility
+const { sql: initialSql, db: initialDb } = initializeDatabase();
+
+// Export the initialized instances
+export { initialDb as db, initialSql as sql };

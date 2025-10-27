@@ -10,7 +10,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (session) {
-            router.push("/settings/profile");
+            router.push("/settings/account");
         }
     }, [session]);
 

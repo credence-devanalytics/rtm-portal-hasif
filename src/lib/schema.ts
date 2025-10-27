@@ -461,11 +461,11 @@ export const rtmklikAge = pgTable(
 );
 
 // BetterAuth expects these exact table names and structures + medina user excel sheet fields
-export const users = pgTable("user", {
+export const users = pgTable("user_profile", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
 	email: text("email").notNull().unique(),
-	role: text("role").notNull().default("user"), 	// peranan dalam sistem
+	role: text("role").notNull().default("user"), 	// peranan dalam sistem, user|admin|superadmin
 	position: text("position"),  					// jawatan 
 	systemId: text("systemId"),  					// user ID based on excel sheet
 	taskRole: text("taskRole"), 					// peranan tugas
@@ -475,7 +475,7 @@ export const users = pgTable("user", {
 	updatedAt: timestamp("updatedAt").notNull(),
 });
 
-export const sessions = pgTable("session", {
+export const sessions = pgTable("user_session", {
 	id: text("id").primaryKey(),
 	expiresAt: timestamp("expiresAt").notNull(),
 	token: text("token").notNull().unique(),
@@ -488,7 +488,7 @@ export const sessions = pgTable("session", {
 		.references(() => users.id),
 });
 
-export const accounts = pgTable("account", {
+export const accounts = pgTable("user_account", {
 	id: text("id").primaryKey(),
 	accountId: text("accountId").notNull(),
 	providerId: text("providerId").notNull(),
@@ -506,11 +506,29 @@ export const accounts = pgTable("account", {
 	updatedAt: timestamp("updatedAt").notNull(),
 });
 
-export const verificationTokens = pgTable("verification", {
+export const verificationTokens = pgTable("user_verification", {
 	id: text("id").primaryKey(),
 	identifier: text("identifier").notNull(),
 	value: text("value").notNull(),
 	expiresAt: timestamp("expiresAt").notNull(),
 	createdAt: timestamp("createdAt"),
 	updatedAt: timestamp("updatedAt"),
+});
+
+export const userAccess = pgTable("user_access", {
+	id: serial().primaryKey().notNull(),
+	userId: text("userId")
+		.notNull()
+		.references(() => users.id),
+	socMedAcc: boolean('socmedAcc').notNull().default(false),
+	socMedSent: boolean('socmedSent').notNull().default(false),
+	rtmklik: boolean('rtmklik').notNull().default(false),
+	mytv: boolean('mytv').notNull().default(false),
+	astro: boolean('astro').notNull().default(false),
+	unifitv: boolean('unifitv').notNull().default(false),
+	wartaberita: boolean('wartaberita').notNull().default(false),
+	marketing: boolean('marketing').notNull().default(false), 
+	permission: text("permission").notNull(), // e.g., read, write, delete
+	createdAt: timestamp("createdAt").notNull(),
+	updatedAt: timestamp("updatedAt").notNull(),
 });

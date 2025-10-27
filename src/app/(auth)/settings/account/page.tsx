@@ -17,11 +17,11 @@ export default function AccountPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     if (isPending) {
-      return (
+        return (
         <div className="h-screen flex flex-col items-center justify-center">
-          <h1>Loading...</h1>
+            <h1>Loading...</h1>
         </div>
-      );
+        );
     }
 
     const handleAccountUpdate = async (e: React.FormEvent) => {
@@ -78,8 +78,8 @@ export default function AccountPage() {
         <div className="space-y-6 px-12">
             {/* Profile Header */}
             <div className="flex flex-col items-start">
-              <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-              <p className="text-gray-600">Manage your account information and security settings</p>
+                <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
+                <p className="text-gray-600">Manage your account information and security settings</p>
             </div>
 
             {/* Full Name Change Form */}
