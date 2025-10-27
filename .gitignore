@@ -13,6 +13,25 @@
 # testing
 /coverage
 
+/.specstory
+
+# test files
+test_*.js
+test_*.mjs
+test_*.ts
+test_*.jsx
+test_*.tsx
+check_*.js
+check_*.mjs
+check_*.ts
+check_*.jsx
+check_*.tsx
+step*.js
+step*.mjs
+step*.ts
+step*.jsx
+step*.tsx
+
 # next.js
 /.next/
 /out/
@@ -43,3 +62,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# markdown documentation files
+*.md
+*.MD

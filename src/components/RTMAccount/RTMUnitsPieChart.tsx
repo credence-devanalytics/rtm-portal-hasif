@@ -21,6 +21,9 @@ import {
 
 const RTMUnitsPieChart = ({
   data = [],
+  unitsData = null, // Database aggregation from API (accurate counts)
+  channelsData = null, // Channel breakdown from API
+  hasActiveFilters = false, // Whether data-limiting filters are active
   title = "RTM Units Posts Distribution",
   description = "Distribution of posts across RTM units",
   onFilterChange = null, // Prop for cross-filtering
@@ -135,6 +138,46 @@ const RTMUnitsPieChart = ({
   const { innerData, outerData, chartConfig, totalMentions } =
     React.useMemo(() => {
       /**
+       * Data Source Selection Strategy:
+       *
+       * 1. If data-limiting filters are active (sentiment, platform, category, author):
+       *    → Count from client-side filtered data (correct behavior)
+       *
+       * 2. If ONLY unit filter is active (user clicked on a unit tab):
+       *    → Use unitsData and channelsData from API, filtered by selected unit
+       *    → This gives accurate database counts for that specific unit
+       *
+       * 3. If NO filters at all:
+       *    → Use unitsData from API for accurate database counts
+       *    → Use channelsData from API for accurate channel breakdown
+       *
+       * This ensures:
+       * - Accurate totals when no filters are applied (Overall tab)
+       * - Accurate unit-specific counts from database when unit tab is selected
+       * - Correct filtered counts when other filters are active
+       */
+
+      // Check if we should use database aggregations
+      const hasUnitFilter =
+        activeFilters?.unit && activeFilters.unit !== "overall";
+
+      // Use API data when no data-limiting filters are active
+      // (unit filter alone doesn't count as data-limiting)
+      const useApiData = !hasActiveFilters && unitsData && unitsData.length > 0;
+
+      console.log("🔍 RTMUnitsPieChart - Data source decision:", {
+        useApiData,
+        hasActiveFilters,
+        hasUnitFilter,
+        hasUnitsData: !!unitsData,
+        unitsDataLength: unitsData?.length,
+        hasChannelsData: !!channelsData,
+        channelsDataLength: channelsData?.length,
+        clientDataLength: data?.length,
+        activeUnitFilter: activeFilters?.unit,
+      });
+
+      /**
        * Predefined color mapping for each unit - ensures consistent colors across filters
        *
        * Color Scheme:
@@ -174,6 +217,168 @@ const RTMUnitsPieChart = ({
         return fallbackColors[index % fallbackColors.length];
       };
 
+      // ========================================
+      // BRANCH 1: Use API Database Aggregations (All Units or Specific Unit)
+      // ========================================
+      if (useApiData) {
+        // Map unit filter value to database unit name
+        const unitMap = {
+          tv: "TV",
+          radio: "Radio",
+          berita: "News",
+          news: "News",
+          official: "Official",
+        };
+
+        const targetUnit = hasUnitFilter
+          ? unitMap[activeFilters.unit.toLowerCase()] || activeFilters.unit
+          : null;
+
+        if (targetUnit) {
+          console.log(
+            "✅ Using accurate API unitsData filtered by unit:",
+            targetUnit
+          );
+        } else {
+          console.log("✅ Using accurate API unitsData for all units");
+        }
+
+        // Step 1: Build unit counts from API unitsData (filter by unit if needed)
+        const unitCounts = {};
+        const unitChannelCounts = {};
+
+        unitsData
+          .filter((unitItem) => !targetUnit || unitItem.unit === targetUnit)
+          .forEach((unitItem) => {
+            const unit = unitItem.unit === "News" ? "Berita" : unitItem.unit;
+            unitCounts[unit] = unitItem.count;
+
+            // Initialize channel container for this unit
+            if (!unitChannelCounts[unit]) {
+              unitChannelCounts[unit] = {};
+            }
+          });
+
+        // Step 2: Build channel breakdown from API channelsData (filter by unit if needed)
+        if (channelsData && channelsData.length > 0) {
+          console.log(
+            "✅ Using accurate API channelsData for channel breakdown"
+          );
+
+          channelsData
+            .filter(
+              (channelItem) => !targetUnit || channelItem.unit === targetUnit
+            )
+            .forEach((channelItem) => {
+              const unit =
+                channelItem.unit === "News" ? "Berita" : channelItem.unit;
+              const channel = channelItem.channel;
+
+              if (!unitChannelCounts[unit]) {
+                unitChannelCounts[unit] = {};
+              }
+
+              unitChannelCounts[unit][channel] = channelItem.count;
+            });
+        }
+
+        console.log("📊 API-sourced unit counts:", unitCounts);
+        console.log("📊 API-sourced channel counts:", unitChannelCounts);
+
+        // Step 3: Create inner layer data (units) from API
+        const innerChartData = Object.entries(unitCounts)
+          .map(([unit, count], index) => ({
+            name: unit,
+            unit: unit,
+            mentions: count,
+            fill: getUnitColor(unit, index),
+            isFiltered: isUnitFiltered(unit),
+          }))
+          .sort((a, b) => (b as any).mentions - (a as any).mentions);
+
+        // Step 4: Create outer layer data (channels within units) from API
+        const outerChartData = [];
+        let totalMentionsCount = 0;
+
+        innerChartData.forEach((unitData) => {
+          const unitName = unitData.unit;
+          const unitChannels = unitChannelCounts[unitName] || {};
+          const baseColor = unitData.fill;
+          totalMentionsCount += Number(unitData.mentions) || 0;
+
+          // Get channels for this unit and sort by count
+          const channelsInUnit = Object.entries(unitChannels).sort(
+            (a, b) => (b as any)[1] - (a as any)[1]
+          );
+
+          // Generate shades for this unit's channels
+          const channelShades = generateShades(
+            baseColor,
+            channelsInUnit.length
+          );
+
+          channelsInUnit.forEach(
+            ([channelName, channelCount], channelIndex) => {
+              outerChartData.push({
+                name: channelName,
+                unit: unitName,
+                mentions: channelCount,
+                fill: channelShades[channelIndex],
+                percentage: (
+                  ((channelCount as number) / (unitData as any).mentions) *
+                  100
+                ).toFixed(1),
+                unitPercentage: (
+                  ((channelCount as number) / totalMentionsCount) *
+                  100
+                ).toFixed(1),
+              });
+            }
+          );
+        });
+
+        // Step 5: Create chart config
+        const config = {
+          mentions: {
+            label: "Mentions",
+          },
+        };
+
+        innerChartData.forEach((item) => {
+          const key = item.unit.toLowerCase().replace(/[^a-z0-9]/g, "");
+          config[key] = {
+            label: item.unit,
+            color: item.fill,
+          };
+        });
+
+        console.log(
+          "✅ Using API data - Inner data:",
+          innerChartData.length,
+          "units"
+        );
+        console.log(
+          "✅ Using API data - Outer data:",
+          outerChartData.length,
+          "channels"
+        );
+        console.log("✅ Using API data - Total mentions:", totalMentionsCount);
+
+        return {
+          innerData: innerChartData,
+          outerData: outerChartData,
+          chartConfig: config,
+          totalMentions: totalMentionsCount,
+        };
+      }
+
+      // ========================================
+      // BRANCH 2: Count from Client-Side Filtered Data
+      // ========================================
+      console.log(
+        "⚠️ Counting from client-side filtered data (filters are active)"
+      );
+
       if (!data || !Array.isArray(data) || data.length === 0) {
         return {
           innerData: [],
@@ -187,7 +392,7 @@ const RTMUnitsPieChart = ({
       console.log("Data sample:", data.slice(0, 3));
       console.log("Total data length:", data.length);
 
-      // Step 1: Count posts by unit and channel
+      // Step 1: Count posts by unit and channel from client data
       const unitCounts = {};
       const channelCounts = {};
       const unitChannelCounts = {};
@@ -326,7 +531,14 @@ const RTMUnitsPieChart = ({
         chartConfig: config,
         totalMentions: data.length,
       };
-    }, [data, isUnitFiltered]);
+    }, [
+      data,
+      unitsData,
+      channelsData,
+      hasActiveFilters,
+      activeFilters,
+      isUnitFiltered,
+    ]);
 
   // Unified tooltip that detects which layer is being hovered
   const UnifiedTooltip = ({ active, payload }: any) => {

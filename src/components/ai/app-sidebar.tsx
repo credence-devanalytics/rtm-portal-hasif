@@ -106,7 +106,11 @@ export function AppSidebar() {
 				<>
 					<SidebarMenuButton asChild>
 						<a href={`#chat-${chat.id}`}>
-							{chat.isFavourite ? <Star className="fill-yellow-500 text-yellow-500" /> : <MessageCircle />}
+							{chat.isFavourite ? (
+								<Star className="fill-yellow-500 text-yellow-500" />
+							) : (
+								<MessageCircle />
+							)}
 							<span>{chat.title}</span>
 						</a>
 					</SidebarMenuButton>
@@ -140,7 +144,7 @@ export function AppSidebar() {
 	);
 
 	return (
-		<Sidebar className="top-16 bottom-0 h-[calc(100vh-4rem)]">
+		<Sidebar className="top-16" data-sidebar="sticky">
 			<SidebarContent>
 				{favouriteChats.length > 0 && (
 					<SidebarGroup>

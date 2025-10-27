@@ -1,7 +1,7 @@
 // API to get channel group data for mentions_classify table
 // This endpoint specifically handles the new channelgroup column for radio stations
 
-import { db } from '../../../lib/db';
+import { getDb } from '../../../lib/db';
 import { mentionsClassify } from '@/lib/schema';
 import { sql, count, desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -28,7 +28,7 @@ export async function GET(request) {
     }
 
     // Query to get the channelgroup data as requested
-    const channelGroupData = await db
+    const channelGroupData = await getDb()
       .select({
         groupname: mentionsClassify.groupname,
         channel: mentionsClassify.channel,
@@ -41,7 +41,7 @@ export async function GET(request) {
       .orderBy(mentionsClassify.channelgroup, desc(count()));
 
     // Get summary statistics
-    const summary = await db
+    const summary = await getDb()
       .select({
         totalRecords: count(),
         uniqueGroups: sql`COUNT(DISTINCT ${mentionsClassify.groupname})`.as('uniqueGroups'),

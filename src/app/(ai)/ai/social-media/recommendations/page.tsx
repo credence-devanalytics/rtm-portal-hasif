@@ -88,7 +88,7 @@ export default function RecommendationPage() {
 	console.log("=====================");
 
 	return (
-		<div className="pt-18 px-4 max-w-7xl mx-auto">
+		<div className="pt-2 px-4 max-w-7xl mx-auto">
 			<div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 				{/* Sidebar - Filters */}
 				<div className="lg:col-span-1">
@@ -254,7 +254,8 @@ export default function RecommendationPage() {
 													) : recommendationsError ? (
 														<div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
 															<p className="text-sm text-red-600 dark:text-red-400">
-																Failed to load AI recommendations. Please try again.
+																Failed to load AI recommendations. Please try
+																again.
 															</p>
 														</div>
 													) : recommendationsData?.summary ? (
@@ -264,7 +265,10 @@ export default function RecommendationPage() {
 																	Performance Overview
 																</h4>
 																<p className="text-sm text-muted-foreground whitespace-pre-wrap">
-																	{recommendationsData.summary.performanceOverview}
+																	{
+																		recommendationsData.summary
+																			.performanceOverview
+																	}
 																</p>
 																<div className="mt-3 pt-3 border-t border-border">
 																	<p className="text-xs text-muted-foreground">
@@ -274,7 +278,9 @@ export default function RecommendationPage() {
 																	</p>
 																	<p className="text-xs text-muted-foreground">
 																		Reach:{" "}
-																		{formatNumber(metricsData?.metrics?.totalReach)}
+																		{formatNumber(
+																			metricsData?.metrics?.totalReach
+																		)}
 																	</p>
 																</div>
 															</div>
@@ -288,10 +294,12 @@ export default function RecommendationPage() {
 																		Time period: Last {filters.days} days
 																	</p>
 																	<p className="text-xs text-muted-foreground">
-																		Generated: {recommendationsData.meta?.generatedAt ?
-																			new Date(recommendationsData.meta.generatedAt).toLocaleDateString() :
-																			'Unknown'
-																		}
+																		Generated:{" "}
+																		{recommendationsData.meta?.generatedAt
+																			? new Date(
+																					recommendationsData.meta.generatedAt
+																			  ).toLocaleDateString()
+																			: "Unknown"}
 																	</p>
 																</div>
 															</div>
@@ -299,7 +307,8 @@ export default function RecommendationPage() {
 													) : (
 														<div className="p-4 bg-muted/50 rounded-lg">
 															<p className="text-sm text-muted-foreground">
-																No recommendations data available. Click the AI Recommendations tab to generate insights.
+																No recommendations data available. Click the AI
+																Recommendations tab to generate insights.
 															</p>
 														</div>
 													)}
@@ -345,9 +354,19 @@ export default function RecommendationPage() {
 																<div
 																	className="bg-green-500 h-2 rounded-full"
 																	style={{
-																		width: `${recommendationsData.sentiment.positive > 0 ?
-																			(recommendationsData.sentiment.positive /
-																				(recommendationsData.sentiment.positive + recommendationsData.sentiment.neutral + recommendationsData.sentiment.negative)) * 100 : 0}%`
+																		width: `${
+																			recommendationsData.sentiment.positive > 0
+																				? (recommendationsData.sentiment
+																						.positive /
+																						(recommendationsData.sentiment
+																							.positive +
+																							recommendationsData.sentiment
+																								.neutral +
+																							recommendationsData.sentiment
+																								.negative)) *
+																				  100
+																				: 0
+																		}%`,
 																	}}
 																></div>
 															</div>
@@ -368,9 +387,19 @@ export default function RecommendationPage() {
 																<div
 																	className="bg-gray-500 h-2 rounded-full"
 																	style={{
-																		width: `${recommendationsData.sentiment.neutral > 0 ?
-																			(recommendationsData.sentiment.neutral /
-																				(recommendationsData.sentiment.positive + recommendationsData.sentiment.neutral + recommendationsData.sentiment.negative)) * 100 : 0}%`
+																		width: `${
+																			recommendationsData.sentiment.neutral > 0
+																				? (recommendationsData.sentiment
+																						.neutral /
+																						(recommendationsData.sentiment
+																							.positive +
+																							recommendationsData.sentiment
+																								.neutral +
+																							recommendationsData.sentiment
+																								.negative)) *
+																				  100
+																				: 0
+																		}%`,
 																	}}
 																></div>
 															</div>
@@ -391,9 +420,19 @@ export default function RecommendationPage() {
 																<div
 																	className="bg-red-500 h-2 rounded-full"
 																	style={{
-																		width: `${recommendationsData.sentiment.negative > 0 ?
-																			(recommendationsData.sentiment.negative /
-																				(recommendationsData.sentiment.positive + recommendationsData.sentiment.neutral + recommendationsData.sentiment.negative)) * 100 : 0}%`
+																		width: `${
+																			recommendationsData.sentiment.negative > 0
+																				? (recommendationsData.sentiment
+																						.negative /
+																						(recommendationsData.sentiment
+																							.positive +
+																							recommendationsData.sentiment
+																								.neutral +
+																							recommendationsData.sentiment
+																								.negative)) *
+																				  100
+																				: 0
+																		}%`,
 																	}}
 																></div>
 															</div>
@@ -403,7 +442,9 @@ export default function RecommendationPage() {
 											) : (
 												<div className="p-4 bg-muted/50 rounded-lg">
 													<p className="text-sm text-muted-foreground">
-														No sentiment data available. Click the AI Recommendations tab to analyze sentiment distribution.
+														No sentiment data available. Click the AI
+														Recommendations tab to analyze sentiment
+														distribution.
 													</p>
 												</div>
 											)}
@@ -427,7 +468,8 @@ export default function RecommendationPage() {
 											) : recommendationsError ? (
 												<div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
 													<p className="text-sm text-red-600 dark:text-red-400">
-														Failed to load tone of voice analysis. Please try again.
+														Failed to load tone of voice analysis. Please try
+														again.
 													</p>
 												</div>
 											) : recommendationsData?.toneOfVoice ? (
@@ -437,7 +479,10 @@ export default function RecommendationPage() {
 															Communication Style
 														</h4>
 														<p className="text-sm text-muted-foreground whitespace-pre-wrap">
-															{recommendationsData.toneOfVoice.communicationStyle}
+															{
+																recommendationsData.toneOfVoice
+																	.communicationStyle
+															}
 														</p>
 													</div>
 													<div className="p-4 bg-muted/50 rounded-lg">
@@ -445,14 +490,19 @@ export default function RecommendationPage() {
 															Platform Adaptation
 														</h4>
 														<p className="text-sm text-muted-foreground whitespace-pre-wrap">
-															{recommendationsData.toneOfVoice.platformAdaptation}
+															{
+																recommendationsData.toneOfVoice
+																	.platformAdaptation
+															}
 														</p>
 													</div>
 												</div>
 											) : (
 												<div className="p-4 bg-muted/50 rounded-lg">
 													<p className="text-sm text-muted-foreground">
-														No tone of voice analysis available. Click the AI Recommendations tab to analyze communication patterns.
+														No tone of voice analysis available. Click the AI
+														Recommendations tab to analyze communication
+														patterns.
 													</p>
 												</div>
 											)}
@@ -486,7 +536,10 @@ export default function RecommendationPage() {
 															📊 Performance Highlights
 														</h4>
 														<p className="text-sm text-muted-foreground whitespace-pre-wrap">
-															{recommendationsData.keyInsights.performanceHighlights}
+															{
+																recommendationsData.keyInsights
+																	.performanceHighlights
+															}
 														</p>
 													</div>
 													<div className="p-4 bg-muted/50 rounded-lg">
@@ -494,7 +547,10 @@ export default function RecommendationPage() {
 															🎯 Strategic Recommendations
 														</h4>
 														<p className="text-sm text-muted-foreground whitespace-pre-wrap">
-															{recommendationsData.keyInsights.strategicRecommendations}
+															{
+																recommendationsData.keyInsights
+																	.strategicRecommendations
+															}
 														</p>
 													</div>
 													<div className="p-4 bg-muted/50 rounded-lg">
@@ -502,13 +558,22 @@ export default function RecommendationPage() {
 															🚀 Growth Opportunities
 														</h4>
 														<p className="text-sm text-muted-foreground whitespace-pre-wrap">
-															{recommendationsData.keyInsights.growthOpportunities}
+															{
+																recommendationsData.keyInsights
+																	.growthOpportunities
+															}
 														</p>
 													</div>
 													{recommendationsData?.meta && (
 														<div className="p-4 bg-muted/30 rounded-lg border">
 															<p className="text-xs text-muted-foreground">
-																Analysis based on {recommendationsData.meta.totalMentionsAnalyzed} mentions from {recommendationsData.meta.dataSource === 'database' ? 'live database' : 'sample data'}
+																Analysis based on{" "}
+																{recommendationsData.meta.totalMentionsAnalyzed}{" "}
+																mentions from{" "}
+																{recommendationsData.meta.dataSource ===
+																"database"
+																	? "live database"
+																	: "sample data"}
 															</p>
 														</div>
 													)}
@@ -516,7 +581,9 @@ export default function RecommendationPage() {
 											) : (
 												<div className="p-4 bg-muted/50 rounded-lg">
 													<p className="text-sm text-muted-foreground">
-														No insights available. Click the AI Recommendations tab to generate actionable insights based on your mentions data.
+														No insights available. Click the AI Recommendations
+														tab to generate actionable insights based on your
+														mentions data.
 													</p>
 												</div>
 											)}

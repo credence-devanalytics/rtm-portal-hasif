@@ -1,6 +1,17 @@
-import { pgTable, varchar, text, timestamp, doublePrecision, bigint, date, serial, integer, boolean } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
-
+import {
+	pgTable,
+	varchar,
+	text,
+	timestamp,
+	doublePrecision,
+	bigint,
+	date,
+	serial,
+	integer,
+	unique,
+	boolean,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const mentionsClassify = pgTable("mentions_classify", {
 	id: varchar(),
@@ -9,7 +20,7 @@ export const mentionsClassify = pgTable("mentions_classify", {
 	languages: text(),
 	from: text(),
 	author: text(),
-	inserttime: timestamp({ mode: 'string' }),
+	inserttime: timestamp({ mode: "string" }),
 	title: text(),
 	url: text(),
 	image: text(),
@@ -84,12 +95,17 @@ export const mentionsClassify = pgTable("mentions_classify", {
 	inputTokens: doublePrecision("input_tokens"),
 	outputTokens: doublePrecision("output_tokens"),
 	totalTokens: doublePrecision("total_tokens"),
-	downloaddate: date().default(sql`(CURRENT_DATE + '1 day'::interval)`).notNull(),
+	downloaddate: date()
+		.default(sql`(CURRENT_DATE + '1 day'::interval)`)
+		.notNull(),
 	idpk: serial().primaryKey().notNull(),
 });
 
 export const socialMediaData = pgTable("social_media_data", {
-	readableTime: timestamp("readable_time", { withTimezone: true, mode: 'string' }),
+	readableTime: timestamp("readable_time", {
+		withTimezone: true,
+		mode: "string",
+	}),
 	id: varchar(),
 	type: text(),
 	mention: text(),
@@ -180,7 +196,7 @@ export const mentions = pgTable("mentions", {
 	languages: text(),
 	from: text(),
 	author: text(),
-	inserttime: timestamp({ mode: 'string' }),
+	inserttime: timestamp({ mode: "string" }),
 	title: text(),
 	url: text(),
 	image: text(),
@@ -248,7 +264,9 @@ export const mentions = pgTable("mentions", {
 	redditcommentid: varchar(),
 	redditparentlinkid: varchar(),
 	insertdate: date(),
-	downloaddate: date().default(sql`(CURRENT_DATE + '1 day'::interval)`).notNull(),
+	downloaddate: date()
+		.default(sql`(CURRENT_DATE + '1 day'::interval)`)
+		.notNull(),
 });
 
 export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
@@ -258,7 +276,7 @@ export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
 	languages: text(),
 	from: text(),
 	author: text(),
-	inserttime: timestamp({ mode: 'string' }),
+	inserttime: timestamp({ mode: "string" }),
 	title: text(),
 	url: text(),
 	image: text(),
@@ -333,10 +351,114 @@ export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
 	inputTokens: doublePrecision("input_tokens"),
 	outputTokens: doublePrecision("output_tokens"),
 	totalTokens: doublePrecision("total_tokens"),
-	downloaddate: date().default(sql`CURRENT_DATE`).notNull(),
+	downloaddate: date()
+		.default(sql`CURRENT_DATE`)
+		.notNull(),
 	idpk: serial().primaryKey().notNull(),
 });
 
+export const marketingChannelByYear = pgTable("marketing_channel_byyear", {
+	id: serial().primaryKey().notNull(),
+	report_type: varchar("report_type"),
+	report_title: text("report_title"),
+	saluran: varchar(),
+	groupby: varchar(),
+	year: integer(),
+	value: varchar(),
+	insertdate: timestamp({ mode: "string" }),
+	updatedate: timestamp({ mode: "string" }),
+});
+
+export const marketingChannelByMonth = pgTable("marketing_channel_bymonth", {
+	id: serial().primaryKey().notNull(),
+	report_type: varchar("report_type"),
+	report_title: text("report_title"),
+	saluran: varchar(),
+	groupby: varchar(),
+	year: integer(),
+	month: varchar(),
+	value: varchar(),
+	insertdate: timestamp({ mode: "string" }),
+	updatedate: timestamp({ mode: "string" }),
+});
+
+export const pberitaAudienceGender = pgTable(
+	"pberita_audience_gender",
+	{
+		id: serial().primaryKey().notNull(),
+		usergender: text(),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_audience_gender_usergender_date_hour").on(
+			table.usergender,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const pberitaAudienceAge = pgTable(
+	"pberita_audience_age",
+	{
+		id: serial().primaryKey().notNull(),
+		useragebracket: text(),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_audience_age_useragebracket_date_hour").on(
+			table.useragebracket,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const rtmklikGender = pgTable(
+	"rtmklik_gender",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		gender: text(),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_gender_gender_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.gender,
+			table.metric
+		),
+	]
+);
+
+export const rtmklikAge = pgTable(
+	"rtmklik_age",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		age: text(),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_age_age_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.age,
+			table.metric
+		),
+	]
+);
 
 // BetterAuth expects these exact table names and structures + medina user excel sheet fields
 export const users = pgTable("user", {

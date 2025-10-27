@@ -5,10 +5,10 @@ export async function GET() {
     console.log('Testing database connection...');
     
     // First, let's check if we can import the database modules
-    let db, marketingChannelByYear;
+    let db, marketingChannelByyear;
     
     try {
-      const dbModule = await import('../../../index');
+      const dbModule = await import('@/index');
       db = dbModule.db;
       console.log('✓ Database module imported successfully');
     } catch (importError) {
@@ -22,7 +22,7 @@ export async function GET() {
 
     try {
       const schemaModule = await import('../../../../drizzle/schema');
-      marketingChannelByYear = schemaModule.marketingChannelByYear;
+      marketingChannelByyear = schemaModule.marketingChannelByyear;
       console.log('✓ Schema imported successfully');
     } catch (schemaError) {
       console.error('✗ Failed to import schema:', schemaError);
@@ -36,7 +36,7 @@ export async function GET() {
     // Test basic database connection
     try {
       console.log('Testing basic query...');
-      const testQuery = await db.select().from(marketingChannelByYear).limit(1);
+      const testQuery = await db.select().from(marketingChannelByyear).limit(1);
       console.log('✓ Basic database query successful');
       console.log('Sample data:', testQuery);
     } catch (queryError) {
@@ -51,7 +51,7 @@ export async function GET() {
     // Test specific table structure
     try {
       const { eq } = await import('drizzle-orm');
-      const tableTest = await db.select().from(marketingChannelByYear).where(eq(marketingChannelByYear.report_type, 'Chart 1')).limit(5);
+      const tableTest = await db.select().from(marketingChannelByyear).where(eq(marketingChannelByyear.reportType, 'Chart 1')).limit(5);
       console.log('✓ Table structure test successful');
       console.log('Chart 1 data sample:', tableTest);
       

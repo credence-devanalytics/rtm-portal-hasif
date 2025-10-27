@@ -43,6 +43,10 @@ const PortalBeritaPage = () => {
   const [audienceData, setAudienceData] = useState(null);
   const [ageData, setAgeData] = useState(null);
   const [genderData, setGenderData] = useState(null);
+  const [hourlyGenderData, setHourlyGenderData] = useState(null);
+  const [hourlyGenderDataPM, setHourlyGenderDataPM] = useState(null);
+  const [hourlyGenderDataCombined, setHourlyGenderDataCombined] =
+    useState(null);
   const [regionData, setRegionData] = useState(null);
   const [audienceDistributionData, setAudienceDistributionData] =
     useState(null);
@@ -126,6 +130,46 @@ const PortalBeritaPage = () => {
     };
 
     fetchGenderData();
+  }, []);
+
+  // Fetch hourly gender distribution data
+  useEffect(() => {
+    const fetchHourlyGenderData = async () => {
+      try {
+        const response = await fetch("/api/pb-gender-distribution?view=hourly");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Hourly Gender Distribution API Response:", data);
+        setHourlyGenderData(data);
+      } catch (error) {
+        console.error("Error fetching hourly gender data:", error);
+      }
+    };
+
+    fetchHourlyGenderData();
+  }, []);
+
+  // Fetch hourly gender distribution data (PM)
+  useEffect(() => {
+    const fetchHourlyGenderDataPM = async () => {
+      try {
+        const response = await fetch(
+          "/api/pb-gender-distribution?view=hourly-pm"
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Hourly Gender Distribution PM API Response:", data);
+        setHourlyGenderDataPM(data);
+      } catch (error) {
+        console.error("Error fetching hourly gender PM data:", error);
+      }
+    };
+
+    fetchHourlyGenderDataPM();
   }, []);
 
   // Fetch regional data
@@ -314,6 +358,55 @@ const PortalBeritaPage = () => {
       }));
   }, [genderData]);
 
+  // Process hourly gender chart data (12 AM - 11 AM)
+  const hourlyGenderChartData = useMemo(() => {
+    console.log("Processing hourly gender data:", hourlyGenderData);
+
+    if (!hourlyGenderData?.success || !hourlyGenderData?.data?.chartData) {
+      console.log("No hourly gender data available");
+      return [];
+    }
+
+    console.log("Hourly chart data:", hourlyGenderData.data.chartData);
+    return hourlyGenderData.data.chartData;
+  }, [hourlyGenderData]);
+
+  // Process hourly gender chart data (12 PM - 11 PM)
+  const hourlyGenderChartDataPM = useMemo(() => {
+    console.log("Processing hourly gender PM data:", hourlyGenderDataPM);
+
+    if (!hourlyGenderDataPM?.success || !hourlyGenderDataPM?.data?.chartData) {
+      console.log("No hourly gender PM data available");
+      return [];
+    }
+
+    console.log("Hourly PM chart data:", hourlyGenderDataPM.data.chartData);
+    return hourlyGenderDataPM.data.chartData;
+  }, [hourlyGenderDataPM]);
+
+  // Process combined hourly gender chart data (24 hours: 12 AM - 11 PM)
+  const hourlyGenderChartDataCombined = useMemo(() => {
+    console.log("Processing combined hourly gender data");
+
+    if (!hourlyGenderData?.success || !hourlyGenderDataPM?.success) {
+      console.log("Missing AM or PM data for combined chart");
+      return [];
+    }
+
+    const amData = hourlyGenderData.data?.chartData || [];
+    const pmData = hourlyGenderDataPM.data?.chartData || [];
+
+    if (amData.length === 0 || pmData.length === 0) {
+      console.log("No data available for combined chart");
+      return [];
+    }
+
+    // Combine AM (0-11) and PM (12-23) data
+    const combinedData = [...amData, ...pmData];
+    console.log("Combined hourly chart data:", combinedData);
+    return combinedData;
+  }, [hourlyGenderData, hourlyGenderDataPM]);
+
   // Process regional chart data
   const regionChartData = useMemo(() => {
     if (!regionData?.success || !regionData?.data?.chartData) {
@@ -427,9 +520,9 @@ const PortalBeritaPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50">
+      <div className="min-h-screen bg-white pt-20">
         {/* Header */}
-        <div className="bg-background/90 backdrop-blur-sm border-b border-border px-6 py-8 sticky top-0 z-50 shadow-sm">
+        <div className="bg-background/90 backdrop-blur-sm border-b border-border px-6 py-8 top-0 z-50 shadow-sm">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
               <div>
@@ -479,9 +572,9 @@ const PortalBeritaPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-white pt-20">
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-8 sticky top-0 z-50 shadow-sm">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-8 top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div>
@@ -804,56 +897,99 @@ const PortalBeritaPage = () => {
             </CardContent>
           </Card>
 
-          {/* Gender Distribution */}
+          {/* Gender Distribution by Hour (24-Hour Line Chart) */}
           <Card className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-                  <PieChart className="h-5 w-5" />
+                <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+                  <LineChart className="h-5 w-5" />
                 </div>
                 <div>
                   <CardTitle className="text-lg font-bold text-card-foreground">
-                    Gender Distribution
+                    Gender Distribution by Hour
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Audience breakdown by gender
+                    24-hour audience breakdown by gender (00:00 - 23:00)
                   </p>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <Pie
-                      data={genderChartData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      dataKey="activeUsers"
-                      label={({ gender, percentage }) =>
-                        `${gender}: ${percentage}%`
-                      }
-                      labelLine={false}
+                {hourlyGenderChartDataCombined &&
+                hourlyGenderChartDataCombined.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsLineChart
+                      data={hourlyGenderChartDataCombined}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
-                      {genderChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                      }}
-                      formatter={(value, name) => [
-                        value.toLocaleString(),
-                        "Active Users",
-                      ]}
-                    />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fontSize: 11, angle: -45, textAnchor: "end" }}
+                        stroke="#666"
+                        height={80}
+                        interval={0}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 12 }}
+                        stroke="#666"
+                        tickFormatter={(value) =>
+                          value >= 1000000
+                            ? `${(value / 1000000).toFixed(1)}M`
+                            : value >= 1000
+                            ? `${(value / 1000).toFixed(0)}K`
+                            : value.toString()
+                        }
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        }}
+                        formatter={(value, name) => [
+                          value.toLocaleString(),
+                          name,
+                        ]}
+                      />
+                      <Legend wrapperStyle={{ fontSize: "14px" }} />
+                      <Line
+                        type="linear"
+                        dataKey="female"
+                        name="Female"
+                        stroke="#ff69b4"
+                        strokeWidth={2}
+                        dot={{ fill: "#ff69b4", r: 2 }}
+                        activeDot={{ r: 4 }}
+                      />
+                      <Line
+                        type="linear"
+                        dataKey="male"
+                        name="Male"
+                        stroke="#4169e1"
+                        strokeWidth={2}
+                        dot={{ fill: "#4169e1", r: 2 }}
+                        activeDot={{ r: 4 }}
+                      />
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    <div className="text-center">
+                      <p className="text-lg font-semibold mb-2">
+                        No Hourly Data Available
+                      </p>
+                      <p className="text-sm">
+                        24-hour gender distribution data is not available yet.
+                      </p>
+                      <p className="text-xs mt-2">
+                        Check console for API response details.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -18,9 +18,15 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
-const MostPopularPosts = ({ data, onPostClick, activeFilters, isLoading }) => {
+const MostPopularPosts = ({
+  data,
+  onPostClick,
+  activeFilters,
+  isLoading,
+  onSortChange,
+  currentSort = "reach",
+}) => {
   const [showAll, setShowAll] = useState(false);
-  const [sortBy, setSortBy] = useState("reach"); // 'reach', 'interactions', 'date'
 
   // Debug logging with useEffect to track updates
   React.useEffect(() => {
@@ -29,12 +35,21 @@ const MostPopularPosts = ({ data, onPostClick, activeFilters, isLoading }) => {
       dataType: Array.isArray(data) ? "array" : typeof data,
       dataLength: data?.length,
       isLoading: isLoading,
+      currentSort: currentSort,
     });
 
     if (data && Array.isArray(data) && data.length > 0) {
       console.log("🎯 First post raw data:", data[0]);
     }
-  }, [data, isLoading]);
+  }, [data, isLoading, currentSort]);
+
+  // Handle sort change - trigger new database query
+  const handleSortChange = (newSort) => {
+    if (onSortChange) {
+      console.log("🔄 Triggering new database query with sort:", newSort);
+      onSortChange(newSort);
+    }
+  };
 
   // Handle the data structure - data should be the posts array directly
   const postsArray = Array.isArray(data) ? data : [];
@@ -82,12 +97,12 @@ const MostPopularPosts = ({ data, onPostClick, activeFilters, isLoading }) => {
     }
   };
 
-  // Prepare and sort posts data
+  // Prepare posts data (no client-side sorting - data comes pre-sorted from API)
   const processedData = React.useMemo(() => {
     if (!postsArray || postsArray.length === 0) return [];
 
-    let posts = postsArray.map((post) => {
-      // Ensure numeric values are properly converted and debug
+    return postsArray.map((post) => {
+      // Ensure numeric values are properly converted
       const reach = parseInt(post.reach) || 0;
       const likecount = parseInt(post.likecount) || 0;
       const sharecount = parseInt(post.sharecount) || 0;
@@ -117,24 +132,7 @@ const MostPopularPosts = ({ data, onPostClick, activeFilters, isLoading }) => {
           post.content || post.mention || post.title || "No content available",
       };
     });
-
-    // Sort based on selected criteria
-    switch (sortBy) {
-      case "reach":
-        posts = posts.sort((a, b) => (b.reach || 0) - (a.reach || 0));
-        break;
-      case "interactions":
-        posts = posts.sort((a, b) => b.totalInteractions - a.totalInteractions);
-        break;
-      case "date":
-        posts = posts.sort(
-          (a, b) => new Date(b.inserttime || 0) - new Date(a.inserttime || 0)
-        );
-        break;
-    }
-
-    return posts;
-  }, [postsArray, sortBy]);
+  }, [postsArray]); // Removed sortBy dependency since sorting is now done by API
 
   const displayedPosts = showAll ? processedData : processedData.slice(0, 5);
 
@@ -214,23 +212,23 @@ const MostPopularPosts = ({ data, onPostClick, activeFilters, isLoading }) => {
           </div>
           <div className="flex gap-2">
             <Button
-              variant={sortBy === "reach" ? "default" : "outline"}
+              variant={currentSort === "reach" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy("reach")}
+              onClick={() => handleSortChange("reach")}
             >
               By Reach
             </Button>
             <Button
-              variant={sortBy === "interactions" ? "default" : "outline"}
+              variant={currentSort === "interactions" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy("interactions")}
+              onClick={() => handleSortChange("interactions")}
             >
               By Engagement
             </Button>
             <Button
-              variant={sortBy === "date" ? "default" : "outline"}
+              variant={currentSort === "date" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSortBy("date")}
+              onClick={() => handleSortChange("date")}
             >
               By Date
             </Button>

@@ -7,7 +7,7 @@ import { DefaultChatTransport } from "ai";
 import { Header, Starters } from "@/components/ai/empty-state";
 import { conversationStarters } from "@/data/conversation-starters";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
-import { SocialMediaMessage } from "../../api/chat/social-media/route";
+import { SocialMediaMessage } from "../../../api/chat/social-media/route";
 import { CardUI } from "@/components/ai/card-ui";
 
 export default function AIPage() {
@@ -49,7 +49,7 @@ export default function AIPage() {
 			sidebar={true}
 			header={
 				<Header
-					title="Ask me anything about RTM"
+					title="Ask me anything about RTM Social Media"
 					description="Get insights about social media trends and conversations"
 				/>
 			}

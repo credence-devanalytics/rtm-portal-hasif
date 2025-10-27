@@ -3,6 +3,18 @@
 /* this is to disable dark mode */
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme inline {
+    --animate-aurora: aurora 60s linear infinite;
+    @keyframes aurora {
+      from {
+        background-position: 50% 50%, 50% 50%;
+      }
+      to {
+        background-position: 350% 50%, 350% 50%;
+      }
+    }
+  }
+
 @theme {
   --color-background: oklch(1 0 0);
   --color-foreground: oklch(0.2686 0 0);
@@ -23,6 +35,15 @@
   --color-input: oklch(0.9276 0.0058 264.5313);
   --color-ring: oklch(0.7686 0.1647 70.0804);
   --radius: 0.375rem;
+  --platform-facebook: #1877F2;
+  --platform-instagram: #E4405F;
+  --platform-twitter: #1DA1F2;
+  --platform-tiktok: #000000;
+  --platform-youtube: #FF0000;
+  --platform-linkedin: #0A66C2;
+  --platform-reddit: #FF4500;
+  --platform-unknown: #6B7280;
+  --platform-other: #9CA3AF;
 }
 
 @utility dark {
@@ -44,9 +65,22 @@
   --border: oklch(0.3715 0 0);
   --input: oklch(0.3715 0 0);
   --ring: oklch(0.7686 0.1647 70.0804);
+  --platform-facebook: #1877F2;
+  --platform-instagram: #E4405F;
+  --platform-twitter: #1DA1F2;
+  --platform-tiktok: #000000;
+  --platform-youtube: #FF0000;
+  --platform-linkedin: #0A66C2;
+  --platform-reddit: #FF4500;
+  --platform-unknown: #6B7280;
+  --platform-other: #9CA3AF;
 }
 
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+}
+
+.font-fredoka {
+  font-family: var(--font-fredoka), sans-serif;
 }
