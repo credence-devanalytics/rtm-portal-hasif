@@ -165,15 +165,15 @@ const ASTROPage = () => {
 
     // Convert to array and calculate averages
     const summaryArray = Object.values(channelMap).map((item) => {
-      const avgRatingValue = item.ratingCount > 0 
-        ? item.rating / item.ratingCount 
-        : 0;
-      
+      const avgRatingValue =
+        item.ratingCount > 0 ? item.rating / item.ratingCount : 0;
+
       // Use 3 decimal places if rating is below 2.0, otherwise use 1 decimal place
-      const avgRating = avgRatingValue < 2.0 
-        ? avgRatingValue.toFixed(3)
-        : avgRatingValue.toFixed(1);
-      
+      const avgRating =
+        avgRatingValue < 2.0
+          ? avgRatingValue.toFixed(3)
+          : avgRatingValue.toFixed(1);
+
       return {
         channel: item.channel,
         avgRating: avgRating,
