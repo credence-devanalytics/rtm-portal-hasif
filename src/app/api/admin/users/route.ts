@@ -114,63 +114,79 @@ export async function POST(request: Request) {
       return Response.json({ error: "User already exists" }, { status: 409 });
     }
 
-    // Create new user
-    const newUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const now = new Date();
-
-    const [createdUser] = await db.insert(users).values({
-      id: newUserId,
-      name,
-      email,
-      role,
-      emailVerified: false,
-      createdAt: now,
-      updatedAt: now
-    }).returning();
-
-    // Create user access permissions
-    if (permissions && permissions.length > 0) {
-      const permissionMapping: { [key: string]: string } = {
-        'SocMedAcc': 'socMedAcc',
-        'SocMedSent': 'socMedSent',
-        'RTMClick': 'rtmklik',
-        'MyTV': 'mytv',
-        'ASTRO': 'astro',
-        'UnifiTV': 'unifitv',
-        'Berita': 'wartaberita',
-        'Marketing': 'marketing'
-      };
-
-      const accessData: any = {
-        userId: newUserId,
-        socMedAcc: false,
-        socMedSent: false,
-        rtmklik: false,
-        mytv: false,
-        astro: false,
-        unifitv: false,
-        wartaberita: false,
-        marketing: false,
-        permission: 'read',
-        createdAt: now,
-        updatedAt: now
-      };
-
-      // Set permissions based on the provided array
-      permissions.forEach((permission: string) => {
-        const dbColumn = permissionMapping[permission];
-        if (dbColumn) {
-          accessData[dbColumn] = true;
-        }
+    // Create user with authentication credentials using Better Auth server-side API
+    const defaultPassword = "Medina25";
+    
+    try {
+      // Use Better Auth's server-side signup API
+      const signUpResult = await auth.api.signUpEmail({
+        body: {
+          email,
+          password: defaultPassword,
+          name,
+        },
       });
 
-      await db.insert(userAccess).values(accessData);
-    }
+      if (!signUpResult?.user) {
+        return Response.json({ error: "Failed to create user - no user returned" }, { status: 500 });
+      }
 
-    return Response.json({ 
-      message: 'User created successfully',
-      user: { ...createdUser, permissions: permissions || [] }
-    });
+      const createdUser = signUpResult.user;
+    
+      // Update the user role in the database (since Better Auth creates users with default role)
+      const [updatedUser] = await db.update(users)
+        .set({ role: role as any })
+        .where(eq(users.id, createdUser.id))
+        .returning();
+
+      // Create user access permissions
+      if (permissions && permissions.length > 0) {
+        const permissionMapping: { [key: string]: string } = {
+          'SocMedAcc': 'socMedAcc',
+          'SocMedSent': 'socMedSent',
+          'RTMClick': 'rtmklik',
+          'MyTV': 'mytv',
+          'ASTRO': 'astro',
+          'UnifiTV': 'unifitv',
+          'Berita': 'wartaberita',
+          'Marketing': 'marketing'
+        };
+
+        const accessData: any = {
+          userId: updatedUser.id,
+          socMedAcc: false,
+          socMedSent: false,
+          rtmklik: false,
+          mytv: false,
+          astro: false,
+          unifitv: false,
+          wartaberita: false,
+          marketing: false,
+          permission: 'read',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        // Set permissions based on the provided array
+        permissions.forEach((permission: string) => {
+          const dbColumn = permissionMapping[permission];
+          if (dbColumn) {
+            accessData[dbColumn] = true;
+          }
+        });
+
+        await db.insert(userAccess).values(accessData);
+      }
+
+      return Response.json({ 
+        message: `User created successfully with default password: ${defaultPassword}`,
+        user: { ...updatedUser, permissions: permissions || [] },
+        temporaryPassword: defaultPassword
+      });
+    } catch (authError) {
+      console.error('Error creating user with Better Auth:', authError);
+      return Response.json({ error: 'Failed to create user authentication' }, { status: 500 });
+    }
   } catch (error) {
     console.error('Error creating user:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });

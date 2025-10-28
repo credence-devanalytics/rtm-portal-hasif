@@ -119,7 +119,7 @@ export default function AccountPage() {
                     </div>
                     <Button 
                         type="submit" 
-                        disabled={isLoading || email === session?.user?.email}
+                        disabled={isLoading || (email === session?.user?.email && fullName === session?.user?.name)}
                     >
                         {isLoading ? "Updating..." : "Save"}
                     </Button>

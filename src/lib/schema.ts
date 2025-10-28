@@ -467,61 +467,61 @@ export const users = pgTable("user_profile", {
 	email: text("email").notNull().unique(),
 	role: text("role").notNull().default("user"), 	// peranan dalam sistem, user|admin|superadmin
 	position: text("position"),  					// jawatan 
-	systemId: text("systemId"),  					// user ID based on excel sheet
-	taskRole: text("taskRole"), 					// peranan tugas
-	emailVerified: boolean("emailVerified"),
+	systemId: text("systemid"),  					// user ID based on excel sheet
+	taskRole: text("taskrole"), 					// peranan tugas
+	emailVerified: boolean("emailverified"),
 	image: text("image"),
-	createdAt: timestamp("createdAt").notNull(),
-	updatedAt: timestamp("updatedAt").notNull(),
+	createdAt: timestamp("createdat").notNull(),
+	updatedAt: timestamp("updatedat").notNull(),
 });
 
 export const sessions = pgTable("user_session", {
 	id: text("id").primaryKey(),
-	expiresAt: timestamp("expiresAt").notNull(),
+	expiresAt: timestamp("expiresat").notNull(),
 	token: text("token").notNull().unique(),
-	createdAt: timestamp("createdAt").notNull(),
-	updatedAt: timestamp("updatedAt").notNull(),
-	ipAddress: text("ipAddress"),
-	userAgent: text("userAgent"),
-	userId: text("userId")
+	createdAt: timestamp("createdat").notNull(),
+	updatedAt: timestamp("updatedat").notNull(),
+	ipAddress: text("ipaddress"),
+	userAgent: text("useragent"),
+	userId: text("userid")
 		.notNull()
 		.references(() => users.id),
 });
 
 export const accounts = pgTable("user_account", {
 	id: text("id").primaryKey(),
-	accountId: text("accountId").notNull(),
-	providerId: text("providerId").notNull(),
-	userId: text("userId")
+	accountId: text("accountid").notNull(),
+	providerId: text("providerid").notNull(),
+	userId: text("userid")
 		.notNull()
 		.references(() => users.id),
-	accessToken: text("accessToken"),
-	refreshToken: text("refreshToken"),
-	idToken: text("idToken"),
-	accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
-	refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
+	accessToken: text("accesstoken"),
+	refreshToken: text("refreshtoken"),
+	idToken: text("idtoken"),
+	accessTokenExpiresAt: timestamp("accesstokenexpiresat"),
+	refreshTokenExpiresAt: timestamp("refreshtokenexpiresat"),
 	scope: text("scope"),
 	password: text("password"),
-	createdAt: timestamp("createdAt").notNull(),
-	updatedAt: timestamp("updatedAt").notNull(),
+	createdAt: timestamp("createdat").notNull(),
+	updatedAt: timestamp("updatedat").notNull(),
 });
 
 export const verificationTokens = pgTable("user_verification", {
 	id: text("id").primaryKey(),
 	identifier: text("identifier").notNull(),
 	value: text("value").notNull(),
-	expiresAt: timestamp("expiresAt").notNull(),
-	createdAt: timestamp("createdAt"),
-	updatedAt: timestamp("updatedAt"),
+	expiresAt: timestamp("expiresat").notNull(),
+	createdAt: timestamp("createdat"),
+	updatedAt: timestamp("updatedat"),
 });
 
 export const userAccess = pgTable("user_access", {
 	id: serial().primaryKey().notNull(),
-	userId: text("userId")
+	userId: text("userid")
 		.notNull()
 		.references(() => users.id),
-	socMedAcc: boolean('socmedAcc').notNull().default(false),
-	socMedSent: boolean('socmedSent').notNull().default(false),
+	socMedAcc: boolean('socmedacc').notNull().default(false),
+	socMedSent: boolean('socmedsent').notNull().default(false),
 	rtmklik: boolean('rtmklik').notNull().default(false),
 	mytv: boolean('mytv').notNull().default(false),
 	astro: boolean('astro').notNull().default(false),
@@ -529,6 +529,6 @@ export const userAccess = pgTable("user_access", {
 	wartaberita: boolean('wartaberita').notNull().default(false),
 	marketing: boolean('marketing').notNull().default(false), 
 	permission: text("permission").notNull(), // e.g., read, write, delete
-	createdAt: timestamp("createdAt").notNull(),
-	updatedAt: timestamp("updatedAt").notNull(),
+	createdAt: timestamp("createdat").notNull(),
+	updatedAt: timestamp("updatedat").notNull(),
 });

@@ -140,7 +140,7 @@ export default function HomePage() {
     <div className="max-w-8xl mx-auto space-y-6">
       <main className="relative h-screen">
         <section className="flex flex-col h-full pt-4 sm:pt-6 lg:pt-8 pb-8">
-            <div className="mx-auto w-full h-full flex flex-col">
+            <div className="mx-auto w-full h-full flex flex-col justify-start">
                 {/* Title Section - Max 50% height */}
                 <div className="flex flex-col justify-center items-center max-h-[30vh] flex-grow">
                     <MedinaLogo size="lg" className="transform -translate-x-24 items-end" />

@@ -11,7 +11,7 @@ import { Plus, Edit2, Trash2, Save, X, Users, Crown } from "lucide-react";
 type Role = "user" | "admin" | "superadmin";
 
 interface User {
-    id: string;
+    id?: string;
     name: string;
     email: string;
     role: Role;
@@ -61,6 +61,14 @@ export default function AdminPage() {
     }, []);
     
     console.log("User Data:", userData);
+
+    if (isLoading) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <p className="text-gray-600">Loading...</p>
+            </div>
+        );
+    }
     
     // Check if user is admin (after loading is complete)
     if (!["admin", "superadmin"].includes(userData?.role)) {
@@ -74,7 +82,6 @@ export default function AdminPage() {
 
     const addUser = () => {
         const newUser: User = {
-            id: `new-${Date.now()}`,
             name: "Full Name",
             email: "mail@example.com",
             role: "user",
@@ -146,7 +153,7 @@ export default function AdminPage() {
         try {
             setIsSaving(true);
             
-            const isNewUser = userId.startsWith('new-');
+            const isNewUser = userId === undefined;
             const url = '/api/admin/users';
             const method = isNewUser ? 'POST' : 'PUT';
             
@@ -175,6 +182,13 @@ export default function AdminPage() {
                             createdAt: new Date(data.user.createdAt)
                         } : user
                     ));
+                    
+                    // Show password information for new users
+                    if (data.temporaryPassword) {
+                        alert(`${data.message}\n\nTemporary Password: ${data.temporaryPassword}\n\nPlease save this password and share it with the user. They should change it after first login.`);
+                    } else {
+                        alert(data.message || 'User created successfully!');
+                    }
                 } else {
                     // Update existing user in local state
                     setUsers(users.map(user => 
@@ -188,11 +202,11 @@ export default function AdminPage() {
                             }
                             : user
                     ));
+                    alert(data.message || 'User updated successfully!');
                 }
                 
                 setEditingUserId(null);
                 setEditingUserData(null);
-                alert(data.message || 'User saved successfully!');
             } else {
                 const errorData = await response.json();
                 alert(errorData.error || 'Failed to save user');

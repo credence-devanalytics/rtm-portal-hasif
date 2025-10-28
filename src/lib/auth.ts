@@ -24,6 +24,11 @@ export const auth = betterAuth({
       verification: schema.verificationTokens,
     },
   }),
+  advanced: {
+    database: {
+      useNumberId: true,
+    },
+  },
 
   trustedOrigins: [
     process.env.CORS_ORIGIN || "",
@@ -35,8 +40,10 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false, // Disable email verification for now
   },
-  
-  secret: process.env.BETTER_AUTH_SECRET || "fallback-secret-key-for-development-only",
+
+  secret:
+    process.env.BETTER_AUTH_SECRET ||
+    "fallback-secret-key-for-development-only",
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
 });
 
