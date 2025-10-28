@@ -117,7 +117,7 @@ export default function TableauDashboard({ userId, currentUserId }: TableauDashb
         setAccNumDetails(accDetails);
 
         // Configure Tableau settings
-        const tableauServerUrl = process.env.NEXT_PUBLIC_TABLEAU_SERVER_URL || 'https://tfbi-tableau.tmone.com.my/';
+        const tableauServerUrl = process.env.TABLEAU_SERVER_URL || 'https://tfbi-tableau.tmone.com.my/';
         let tableauUsername = userData.username;
         let tableauPackage: string;
         let workbookView: string;

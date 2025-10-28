@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tableauServerUrl = process.env.NEXT_PUBLIC_TABLEAU_SERVER_URL || 'https://tfbi-tableau.tmone.com.my/';
+    const tableauServerUrl = process.env.TABLEAU_SERVER_URL || 'https://tfbi-tableau.tmone.com.my/';
     const trustedUrl = `${tableauServerUrl}trusted/`;
 
     // Make request to Tableau trusted ticket endpoint
