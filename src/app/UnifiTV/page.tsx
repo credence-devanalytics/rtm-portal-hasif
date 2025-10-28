@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
@@ -67,6 +67,32 @@ const UnifiTVPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+
+  // Calculate dynamic performance thresholds based on peak MAU
+  const performanceThresholds = useMemo(() => {
+    if (!data?.analytics?.programBreakdown?.length) {
+      return { high: 5000, medium: 2000 }; // Default fallback
+    }
+
+    // Find peak MAU from all programs
+    const peakMAU = Math.max(
+      ...data.analytics.programBreakdown.map((p) => p.avgMau || 0)
+    );
+
+    // Calculate thresholds:
+    // High: >= 70% of peak MAU
+    // Medium: >= 40% of peak MAU
+    // Low: < 40% of peak MAU
+    const highThreshold = Math.round(peakMAU * 0.7);
+    const mediumThreshold = Math.round(peakMAU * 0.4);
+
+    return {
+      high: highThreshold,
+      medium: mediumThreshold,
+      peak: peakMAU,
+    };
+  }, [data?.analytics?.programBreakdown]);
 
   // Box Plot Hook for Channel MAU Distribution
   const useChannelBoxPlot = useMemo(() => {
@@ -106,7 +132,7 @@ const UnifiTVPage = () => {
 
   // Filters State
   const [filters, setFilters] = useState({
-    monthYear: "202505",
+    monthYear: "202501",
     channel: "all",
     programName: "",
     dateFrom: "",
@@ -136,20 +162,20 @@ const UnifiTVPage = () => {
         if (value && value !== "all") params.append(key, value);
       });
 
-      // Also fetch all-time data for trends (without month filter)
-      const trendsParams = new URLSearchParams();
+      // Also fetch all-time data for trends and scatter plot (without month filter)
+      const allTimeParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (key !== "monthYear" && value && value !== "all") {
-          trendsParams.append(key, value);
+          allTimeParams.append(key, value);
         }
       });
 
-      const [response, trendsResponse] = await Promise.all([
+      const [response, allTimeResponse] = await Promise.all([
         fetch(`/api/unifi-viewership?${params}`),
-        fetch(`/api/unifi-viewership?${trendsParams}`),
+        fetch(`/api/unifi-viewership?${allTimeParams}`),
       ]);
 
-      if (!response.ok || !trendsResponse.ok) {
+      if (!response.ok || !allTimeResponse.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("API Error Response:", errorData);
         throw new Error(
@@ -160,19 +186,20 @@ const UnifiTVPage = () => {
       }
 
       const result = await response.json();
-      const trendsResult = await trendsResponse.json();
+      const allTimeResult = await allTimeResponse.json();
 
       // Check if we have valid data
       if (!result || !result.analytics) {
         throw new Error("Invalid data format received from API");
       }
 
-      // Combine the results - use filtered data for most charts, but all-time data for trends
+      // Combine the results - use filtered data for most charts, but all-time data for trends and scatter
       setData({
         ...result,
         analytics: {
           ...result.analytics,
-          monthlyTrends: trendsResult.analytics?.monthlyTrends || [], // Use unfiltered trends
+          monthlyTrends: allTimeResult.analytics?.monthlyTrends || [], // Use unfiltered trends
+          allTimePrograms: allTimeResult.analytics?.topPrograms || [], // All programs across all months for scatter plot
         },
       });
       setError(null);
@@ -203,7 +230,7 @@ const UnifiTVPage = () => {
 
   const resetFilters = () => {
     setFilters({
-      monthYear: "202505",
+      monthYear: "202501",
       channel: "all",
       programName: "",
       dateFrom: "",
@@ -601,42 +628,45 @@ const UnifiTVPage = () => {
               📺 {hoveredChannel.channel} Channel Performance
             </div>
 
-            {/* Main Story */}
+            {/* What This Means (Plain English) */}
             <div
               style={{
-                marginBottom: "12px",
+                marginBottom: "10px",
                 padding: "10px",
-                backgroundColor: "#f8fafc",
+                backgroundColor: "#f0f9ff",
                 borderRadius: "8px",
-                borderLeft: "4px solid #3b82f6",
+                borderLeft: "4px solid #0ea5e9",
               }}
             >
               <div
                 style={{
                   fontWeight: "600",
-                  color: "#1e40af",
+                  color: "#0c4a6e",
                   marginBottom: "6px",
+                  fontSize: "13px",
                 }}
               >
-                📊 What This Chart Shows:
+                📖 What This Shows:
               </div>
               <div
                 style={{
-                  color: "#374151",
-                  fontSize: "13px",
-                  lineHeight: "1.5",
+                  color: "#075985",
+                  fontSize: "12px",
+                  lineHeight: "1.6",
                 }}
               >
-                This box shows how many people watch {hoveredChannel.channel}{" "}
-                programs each month. Think of it like counting visitors to
-                different shops on your street.
+                This chart shows how popular different programs are on{" "}
+                {hoveredChannel.channel}. The <strong>box</strong> contains the
+                middle 50% of programs, the <strong>line in the box</strong> is
+                the typical program, and the <strong>whiskers</strong> (lines
+                extending out) show the range from least to most popular shows.
               </div>
             </div>
 
             {/* Performance Summary */}
             <div
               style={{
-                marginBottom: "12px",
+                marginBottom: "10px",
                 padding: "10px",
                 backgroundColor:
                   hoveredChannel.channel === "TV1" ? "#eff6ff" : "#ecfdf5",
@@ -647,75 +677,83 @@ const UnifiTVPage = () => {
                 style={{
                   fontWeight: "600",
                   color: "#374151",
-                  marginBottom: "6px",
+                  marginBottom: "8px",
+                  fontSize: "13px",
                 }}
               >
-                🎯 {hoveredChannel.channel} Performance Summary:
+                📊 Viewership Numbers (MAU):
               </div>
               <div
                 style={{
                   color: "#4b5563",
-                  fontSize: "13px",
-                  lineHeight: "1.4",
+                  fontSize: "12px",
+                  lineHeight: "1.8",
                 }}
               >
-                • <strong>Most Popular Show:</strong>{" "}
+                <strong>Best:</strong>{" "}
                 {hoveredChannel.max
                   ? Math.round(hoveredChannel.max).toLocaleString()
                   : "N/A"}{" "}
-                viewers
-                <br />• <strong>Typical Show:</strong>{" "}
+                <span style={{ color: "#9ca3af" }}>│</span>{" "}
+                <strong>Top 25%:</strong>{" "}
+                {hoveredChannel.q3
+                  ? Math.round(hoveredChannel.q3).toLocaleString()
+                  : "N/A"}{" "}
+                <span style={{ color: "#9ca3af" }}>│</span>{" "}
+                <strong>Typical:</strong>{" "}
                 {hoveredChannel.median
                   ? Math.round(hoveredChannel.median).toLocaleString()
-                  : "N/A"}{" "}
-                viewers
-                <br />• <strong>Overall Average:</strong>{" "}
+                  : "N/A"}
+                <br />
+                <strong>Average:</strong>{" "}
                 {hoveredChannel.average
                   ? Math.round(hoveredChannel.average).toLocaleString()
                   : "N/A"}{" "}
-                viewers
-                <br />• <strong>Least Popular:</strong>{" "}
+                <span style={{ color: "#9ca3af" }}>│</span>{" "}
+                <strong>Bottom 25%:</strong>{" "}
+                {hoveredChannel.q1
+                  ? Math.round(hoveredChannel.q1).toLocaleString()
+                  : "N/A"}{" "}
+                <span style={{ color: "#9ca3af" }}>│</span>{" "}
+                <strong>Lowest:</strong>{" "}
                 {hoveredChannel.min
                   ? Math.round(hoveredChannel.min).toLocaleString()
-                  : "N/A"}{" "}
-                viewers
+                  : "N/A"}
               </div>
             </div>
 
-            {/* Easy Explanation */}
+            {/* How to Read This Chart */}
             <div
               style={{
                 padding: "10px",
-                backgroundColor: "#fefce8",
+                backgroundColor: "#fef3c7",
                 borderRadius: "8px",
-                border: "1px solid #fbbf24",
+                borderLeft: "3px solid #f59e0b",
               }}
             >
               <div
                 style={{
                   fontWeight: "600",
                   color: "#92400e",
-                  marginBottom: "4px",
+                  marginBottom: "6px",
+                  fontSize: "13px",
                 }}
               >
-                💡 In Simple Terms:
+                📊 Understanding the Data:
               </div>
               <div
                 style={{
-                  color: "#78350f",
+                  color: "#92400e",
                   fontSize: "12px",
-                  lineHeight: "1.4",
+                  lineHeight: "1.6",
                 }}
               >
-                {hoveredChannel.channel === "TV1"
-                  ? "TV1 is like the main marketplace - it has a wide variety of shows that attract different numbers of people throughout the month."
-                  : "TV2 is like a specialty store - it focuses on specific content that appeals to particular audiences."}
                 {hoveredChannel.median && hoveredChannel.average && (
-                  <div style={{ marginTop: "6px" }}>
+                  <>
                     {hoveredChannel.median > hoveredChannel.average
-                      ? "📈 Most shows perform better than average - this is good consistency!"
-                      : "📊 A few very popular shows boost the overall performance."}
-                  </div>
+                      ? "The Typical program (median) is higher than the Average, meaning most programs perform consistently well, with fewer low-performing outliers affecting the average."
+                      : "The Average is higher than the Typical program (median), indicating a few high-performing programs are pulling the average up, while most programs have lower viewership."}
+                  </>
                 )}
               </div>
             </div>
@@ -737,7 +775,7 @@ const UnifiTVPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6 pt-10">
+    <div className="container mx-auto p-6 space-y-6 pt-16">
       {/* Header */}
       <div className="bg-card border-b border-border px-6 py-6 rounded-lg shadow-sm">
         <div className="flex justify-between items-center">
@@ -876,74 +914,98 @@ const UnifiTVPage = () => {
         {/* Hero Stats */}
         {data && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-card shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total MAU
-                </CardTitle>
-                <UsersIcon className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-2xl font-bold text-foreground">
-                  {data.summary.totalMau.toLocaleString()}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                  <ArrowUpIcon className="h-4 w-4 mr-1" />
-                  Active users this period
+            {/* TV1 Combined Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1 md:col-span-2">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-tv1.png"
+                      alt="TV1 Logo"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Active Users (Total MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-5xl font-bold text-blue-900">
+                        {(
+                          data.analytics.channelBreakdown?.find(
+                            (ch) => ch.channelName === "TV1"
+                          )?.totalMau || 0
+                        ).toLocaleString()}
+                      </div>
+                      <div className="text-base font-medium text-blue-700">
+                        Active Users
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-blue-300"></div>
+
+                    {/* Viewers (Programs) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-5xl font-bold text-blue-900">
+                        {data.analytics.topPrograms?.filter(
+                          (p) => p.channelName === "TV1"
+                        ).length || 0}
+                      </div>
+                      <div className="text-base font-medium text-blue-700">
+                        Programs
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Programs
-                </CardTitle>
-                <PlayCircleIcon className="h-5 w-5 text-accent" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-2xl font-bold text-foreground">
-                  {data.summary.totalPrograms}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                  <EyeIcon className="h-4 w-4 mr-1" />
-                  Unique programs aired
-                </div>
-              </CardContent>
-            </Card>
+            {/* TV2 Combined Card */}
+            <Card className="bg-white shadow-sm border-black col-span-1 md:col-span-2">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6">
+                  {/* Logo on the left */}
+                  <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <img
+                      src="/channel-logos/new-size-tv2.png"
+                      alt="TV2 Logo"
+                      className="h-40 w-40 object-contain"
+                    />
+                  </div>
 
-            <Card className="bg-white shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Avg MAU per Program
-                </CardTitle>
-                <BarChart3Icon className="h-5 w-5 text-cyan-600" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-2xl font-bold text-gray-900">
-                  {data.summary.avgMau.toLocaleString()}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-gray-600">
-                  <TrendingUpIcon className="h-4 w-4 mr-1" />
-                  Average engagement
-                </div>
-              </CardContent>
-            </Card>
+                  {/* Stats on the right */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    {/* Active Users (Total MAU) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-5xl font-bold text-orange-900">
+                        {(
+                          data.analytics.channelBreakdown?.find(
+                            (ch) => ch.channelName === "TV2"
+                          )?.totalMau || 0
+                        ).toLocaleString()}
+                      </div>
+                      <div className="text-base font-medium text-orange-700">
+                        Active Users
+                      </div>
+                    </div>
 
-            <Card className="bg-white shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Active Channels
-                </CardTitle>
-                <TvIcon className="h-5 w-5 text-blue-600" />
-              </CardHeader>
-              <CardContent className="">
-                <div className="text-2xl font-bold text-gray-900">
-                  {data.summary.totalChannels}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-gray-600">
-                  <ActivityIcon className="h-4 w-4 mr-1" />
-                  Broadcasting channels
+                    {/* Divider */}
+                    <div className="border-t border-orange-300"></div>
+
+                    {/* Viewers (Programs) */}
+                    <div className="space-y-1 text-center">
+                      <div className="text-5xl font-bold text-orange-900">
+                        {data.analytics.topPrograms?.filter(
+                          (p) => p.channelName === "TV2"
+                        ).length || 0}
+                      </div>
+                      <div className="text-base font-medium text-orange-700">
+                        Programs
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1008,13 +1070,31 @@ const UnifiTVPage = () => {
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                         }}
                       />
-                      <Bar
-                        dataKey="mau"
-                        fill="#10b981"
-                        radius={[0, 4, 4, 0]}
-                        stroke="#059669"
-                        strokeWidth={1}
-                      />
+                      <Bar dataKey="mau" radius={[0, 4, 4, 0]} strokeWidth={1}>
+                        {data.analytics.topPrograms
+                          .slice(0, 10)
+                          .map((entry, index) => {
+                            // Define channel colors
+                            const channelColors = {
+                              TV1: "#102D84",
+                              TV2: "#FE5400",
+                              OKEY: "#00C49F",
+                              "BERITA RTM": "#FF8042",
+                              "SUKAN RTM": "#8884D8",
+                              TV6: "#82CA9D",
+                              BERNAMA: "#FFC658",
+                            };
+                            const fillColor =
+                              channelColors[entry.channelName] || "#10b981";
+                            return (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={fillColor}
+                                stroke={fillColor}
+                              />
+                            );
+                          })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -1115,10 +1195,11 @@ const UnifiTVPage = () => {
                 <CardHeader className="">
                   <CardTitle className="flex items-center space-x-2">
                     <TvIcon className="h-5 w-5 text-chart-1" />
-                    <span>Channel Performance</span>
+                    <span>Program Duration vs MAU Analysis</span>
                   </CardTitle>
                   <CardDescription className="">
-                    MAU distribution by channel
+                    Relationship between average program duration and MAU
+                    performance
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="">
@@ -1126,22 +1207,29 @@ const UnifiTVPage = () => {
                     <ScatterChart
                       margin={{
                         top: 20,
-                        right: 20,
+                        right: 30,
                         bottom: 20,
                         left: 20,
                       }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
-                        type="category"
-                        dataKey="channelName"
-                        name="Channel"
-                        tick={{ fontSize: 12 }}
+                        type="number"
+                        dataKey="avgDuration"
+                        name="Avg Duration"
+                        unit=" min"
+                        label={{
+                          value: "Average Duration (minutes)",
+                          position: "insideBottom",
+                          offset: -10,
+                          fontSize: 12,
+                        }}
+                        tick={{ fontSize: 11 }}
                       />
                       <YAxis
                         type="number"
-                        dataKey="totalMau"
-                        name="Total MAU"
+                        dataKey="avgMau"
+                        name="Avg MAU"
                         tickFormatter={(value) => {
                           if (value >= 1000000)
                             return `${(Number(value) / 1000000).toFixed(1)}M`;
@@ -1149,19 +1237,25 @@ const UnifiTVPage = () => {
                             return `${Math.round(Number(value) / 1000)}K`;
                           return value.toString();
                         }}
+                        label={{
+                          value: "Average MAU",
+                          angle: -90,
+                          position: "insideLeft",
+                          fontSize: 12,
+                        }}
+                        tick={{ fontSize: 11 }}
                       />
-                      <ZAxis
-                        type="number"
-                        dataKey="totalMau"
-                        range={[100, 1000]}
-                      />
+                      <ZAxis range={[60, 400]} />
                       <Tooltip
+                        cursor={{ strokeDasharray: "3 3" }}
                         formatter={(value, name) => {
-                          if (name === "Total MAU") {
-                            return [value.toLocaleString(), "Total MAU"];
-                          }
+                          if (name === "Avg MAU")
+                            return [value.toLocaleString(), "Avg MAU"];
+                          if (name === "Avg Duration")
+                            return [value + " min", "Avg Duration"];
                           return [value, name];
                         }}
+                        labelFormatter={(label) => `Program: ${label}`}
                         contentStyle={{
                           backgroundColor: "rgba(255, 255, 255, 0.95)",
                           border: "none",
@@ -1169,19 +1263,43 @@ const UnifiTVPage = () => {
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                         }}
                       />
-                      <Legend />
+                      <Legend wrapperStyle={{ paddingTop: "10px" }} />
                       <Scatter
-                        name="Channel MAU"
-                        data={data.analytics.channelBreakdown}
-                        fill="#8884d8"
-                      >
-                        {data.analytics.channelBreakdown.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Scatter>
+                        name="TV1 Programs"
+                        data={(data.analytics.programBreakdown || [])
+                          .filter(
+                            (p) =>
+                              p.channelName === "TV1" &&
+                              p.avgDurationMinutes > 0
+                          )
+                          .map((program) => ({
+                            avgDuration: program.avgDurationMinutes || 0,
+                            avgMau: program.avgMau || 0,
+                            programName: program.programName,
+                            channelName: program.channelName,
+                            episodeCount: program.episodeCount || 0,
+                          }))}
+                        fill="#102D84"
+                        shape="circle"
+                      />
+                      <Scatter
+                        name="TV2 Programs"
+                        data={(data.analytics.programBreakdown || [])
+                          .filter(
+                            (p) =>
+                              p.channelName === "TV2" &&
+                              p.avgDurationMinutes > 0
+                          )
+                          .map((program) => ({
+                            avgDuration: program.avgDurationMinutes || 0,
+                            avgMau: program.avgMau || 0,
+                            programName: program.programName,
+                            channelName: program.channelName,
+                            episodeCount: program.episodeCount || 0,
+                          }))}
+                        fill="#FE5400"
+                        shape="circle"
+                      />
                     </ScatterChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -1282,7 +1400,19 @@ const UnifiTVPage = () => {
                           <div className="relative">
                             <InfoIcon
                               className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help"
-                              onMouseEnter={() => setShowInfoTooltip(true)}
+                              onMouseEnter={(e) => {
+                                setShowInfoTooltip(true);
+                                setTooltipPosition({
+                                  x: e.clientX,
+                                  y: e.clientY,
+                                });
+                              }}
+                              onMouseMove={(e) => {
+                                setTooltipPosition({
+                                  x: e.clientX,
+                                  y: e.clientY,
+                                });
+                              }}
                               onMouseLeave={() => setShowInfoTooltip(false)}
                             />
                             {showInfoTooltip && (
@@ -1290,8 +1420,8 @@ const UnifiTVPage = () => {
                                 className="fixed w-64 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl border border-gray-700 pointer-events-none"
                                 style={{
                                   zIndex: 99999,
-                                  top: "0px",
-                                  right: "20px",
+                                  left: `${tooltipPosition.x - 280}px`,
+                                  top: `${tooltipPosition.y - 100}px`,
                                 }}
                               >
                                 <div className="text-left">
@@ -1299,12 +1429,34 @@ const UnifiTVPage = () => {
                                     Performance Levels:
                                   </div>
                                   <div className="mb-1">
-                                    🟢 High: &gt; 5,000 MAU
+                                    🟢 High: ≥{" "}
+                                    {performanceThresholds.high.toLocaleString()}{" "}
+                                    MAU (
+                                    {Math.round(
+                                      (performanceThresholds.high /
+                                        performanceThresholds.peak) *
+                                        100
+                                    )}
+                                    % of peak)
                                   </div>
                                   <div className="mb-1">
-                                    🟡 Medium: 2,001 - 5,000 MAU
+                                    🟡 Medium:{" "}
+                                    {performanceThresholds.medium.toLocaleString()}{" "}
+                                    -{" "}
+                                    {(
+                                      performanceThresholds.high - 1
+                                    ).toLocaleString()}{" "}
+                                    MAU
                                   </div>
-                                  <div>🔴 Low: ≤ 2,000 MAU</div>
+                                  <div className="mb-1">
+                                    🔴 Low: &lt;{" "}
+                                    {performanceThresholds.medium.toLocaleString()}{" "}
+                                    MAU
+                                  </div>
+                                  <div className="mt-2 pt-2 border-t border-gray-600 text-gray-300">
+                                    Peak MAU:{" "}
+                                    {performanceThresholds.peak.toLocaleString()}
+                                  </div>
                                 </div>
                               </div>
                             )}
@@ -1349,16 +1501,20 @@ const UnifiTVPage = () => {
                               <Badge
                                 className=""
                                 variant={
-                                  (program.avgMau || 0) > 5000
+                                  (program.avgMau || 0) >=
+                                  performanceThresholds.high
                                     ? "default"
-                                    : (program.avgMau || 0) > 2000
+                                    : (program.avgMau || 0) >=
+                                      performanceThresholds.medium
                                     ? "secondary"
                                     : "outline"
                                 }
                               >
-                                {(program.avgMau || 0) > 5000
+                                {(program.avgMau || 0) >=
+                                performanceThresholds.high
                                   ? "High"
-                                  : (program.avgMau || 0) > 2000
+                                  : (program.avgMau || 0) >=
+                                    performanceThresholds.medium
                                   ? "Medium"
                                   : "Low"}
                               </Badge>

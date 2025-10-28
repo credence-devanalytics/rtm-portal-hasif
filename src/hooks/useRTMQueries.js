@@ -22,8 +22,11 @@ const fetchRTMMentions = async (filters) => {
     platform: filters.platform || '',
     unit: filters.unit || '',
     sentiment: filters.sentiment || '',
+    author: filters.author || '', // Add author parameter
     limit: '20000',
   });
+
+  console.log('🌐 Fetching RTM mentions with params:', Object.fromEntries(queryParams));
 
   const response = await fetch(`/api/mentions?${queryParams}`);
   if (!response.ok) throw new Error('Failed to fetch RTM mentions');

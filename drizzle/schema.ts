@@ -1,16 +1,73 @@
-import { pgTable, varchar, text, timestamp, doublePrecision, bigint, date, serial, integer, time, interval } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
+import {
+	pgTable,
+	unique,
+	serial,
+	varchar,
+	integer,
+	bigint,
+	text,
+	timestamp,
+	date,
+	doublePrecision,
+	numeric,
+	time,
+	interval,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
+export const mytvViewership = pgTable(
+	"mytv_viewership",
+	{
+		id: serial().primaryKey().notNull(),
+		region: varchar({ length: 100 }),
+		metric: varchar({ length: 100 }),
+		channel: varchar({ length: 50 }),
+		month: varchar({ length: 20 }),
+		year: integer(),
+		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+		viewers: bigint({ mode: "number" }),
+		pageNum: integer("page_num"),
+		tableIdx: integer("table_idx"),
+		pageTitle: text("page_title"),
+		insertedAt: timestamp("inserted_at", { mode: "string" }).defaultNow(),
+		updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
+	},
+	(table) => [
+		unique("uq_viewership").on(
+			table.region,
+			table.metric,
+			table.channel,
+			table.month,
+			table.year
+		),
+	]
+);
 
+export const pbAudienceGender = pgTable(
+	"pb_audience_gender",
+	{
+		id: serial().primaryKey().notNull(),
+		userGender: text(),
+		date: date(),
+		activeUsers: integer(),
+		newUsers: integer(),
+	},
+	(table) => [
+		unique("uq_audience_gender_userGender_date").on(
+			table.userGender,
+			table.date
+		),
+	]
+);
 
-export const mentionsClassify = pgTable("mentions_classify", {
+export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
 	id: varchar(),
 	type: text(),
 	mention: text(),
 	languages: text(),
 	from: text(),
 	author: text(),
-	inserttime: timestamp({ mode: 'string' }),
+	inserttime: timestamp({ mode: "string" }),
 	title: text(),
 	url: text(),
 	image: text(),
@@ -32,7 +89,6 @@ export const mentionsClassify = pgTable("mentions_classify", {
 	tagfeedlocations: text(),
 	keywordid: varchar(),
 	channel: text(),
-	channelgroup: text(),
 	groupid: varchar(),
 	groupname: text(),
 	channels: text(),
@@ -85,93 +141,327 @@ export const mentionsClassify = pgTable("mentions_classify", {
 	inputTokens: doublePrecision("input_tokens"),
 	outputTokens: doublePrecision("output_tokens"),
 	totalTokens: doublePrecision("total_tokens"),
-	downloaddate: date().default(sql`(CURRENT_DATE + '1 day'::interval)`).notNull(),
+	downloaddate: date()
+		.default(sql`CURRENT_DATE`)
+		.notNull(),
 	idpk: serial().primaryKey().notNull(),
 });
 
-export const socialMediaData = pgTable("social_media_data", {
-	readableTime: timestamp("readable_time", { withTimezone: true, mode: 'string' }),
+export const mytvAnalysis = pgTable(
+	"mytv_analysis",
+	{
+		id: serial().primaryKey().notNull(),
+		region: varchar({ length: 100 }),
+		metric: varchar({ length: 100 }),
+		channel: varchar({ length: 50 }),
+		value: numeric({ precision: 10, scale: 2 }),
+		year: integer(),
+		pageNum: integer("page_num"),
+		tableIdx: integer("table_idx"),
+		pageTitle: text("page_title"),
+		insertedAt: timestamp("inserted_at", { mode: "string" }).defaultNow(),
+		updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
+	},
+	(table) => [
+		unique("uq_analysis").on(
+			table.region,
+			table.metric,
+			table.channel,
+			table.year
+		),
+	]
+);
+
+export const mentionsClassify = pgTable("mentions_classify", {
 	id: varchar(),
 	type: text(),
 	mention: text(),
 	languages: text(),
 	from: text(),
 	author: text(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	inserttime: bigint({ mode: "number" }),
+	inserttime: timestamp({ mode: "string" }),
 	title: text(),
 	url: text(),
 	image: text(),
-	photo: text(),
-	originalphoto: text(),
-	photos: text(),
-	originalphotos: text(),
 	reach: doublePrecision(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	databaseinserttime: bigint({ mode: "number" }),
 	keywords: text(),
 	locations: text(),
 	autosentiment: text(),
-	sourcereach: doublePrecision(),
 	interaction: doublePrecision(),
-	influencescore: doublePrecision(),
-	followerscount: integer(),
-	score: integer(),
-	facebookpageid: varchar(),
-	likecount: integer(),
-	lovecount: integer(),
-	wowcount: integer(),
-	hahacount: integer(),
-	sadcount: integer(),
-	angrycount: integer(),
-	totalreactionscount: integer(),
-	commentcount: integer(),
-	sharecount: integer(),
-	mediatype: text(),
+	score: doublePrecision(),
+	youtubechannelid: varchar(),
+	viewcount: doublePrecision(),
+	likecount: doublePrecision(),
+	commentcount: doublePrecision(),
 	fullmention: text(),
+	description: text(),
+	duration: doublePrecision(),
 	tagfeedlocations: text(),
-	engagementrate: doublePrecision(),
 	keywordid: varchar(),
-	keywordname: text(),
+	channel: text(),
 	groupid: varchar(),
 	groupname: text(),
-	keywordnames: text(),
-	authorgender: text(),
-	twitterprofileid: varchar(),
-	favoritecount: integer(),
-	retweetcount: integer(),
-	replycount: integer(),
-	quotecount: integer(),
-	twitterhandle: text(),
-	tweettype: text(),
+	channels: text(),
+	sourcereach: doublePrecision(),
+	influencescore: doublePrecision(),
+	photo: text(),
+	originalphoto: text(),
+	photos: text(),
+	originalphotos: text(),
 	virality: doublePrecision(),
 	domain: text(),
-	description: text(),
+	sharecount: doublePrecision(),
+	engagementrate: doublePrecision(),
+	followerscount: doublePrecision(),
+	facebookpageid: varchar(),
+	lovecount: doublePrecision(),
+	wowcount: doublePrecision(),
+	hahacount: doublePrecision(),
+	sadcount: doublePrecision(),
+	angrycount: doublePrecision(),
+	totalreactionscount: doublePrecision(),
+	mediatype: text(),
+	authorgender: text(),
+	twitterprofileid: varchar(),
+	favoritecount: doublePrecision(),
+	retweetcount: doublePrecision(),
+	replycount: doublePrecision(),
+	quotecount: doublePrecision(),
+	twitterhandle: text(),
+	tweettype: text(),
 	instagramprofileid: varchar(),
 	instagramprofilename: text(),
 	instagrampostid: varchar(),
 	posttype: text(),
-	viewcount: integer(),
-	youtubechannelid: varchar(),
-	duration: doublePrecision(),
 	tiktokid: varchar(),
-	diggcount: integer(),
-	playcount: integer(),
+	diggcount: doublePrecision(),
+	playcount: doublePrecision(),
 	videodurationseconds: doublePrecision(),
-	authorfollowercount: integer(),
+	authorfollowercount: doublePrecision(),
 	subreddit: text(),
 	reddittype: text(),
 	redditfullname: text(),
 	redditscore: doublePrecision(),
 	redditcommentid: varchar(),
 	redditparentlinkid: varchar(),
-	tweetsourcename: text(),
-	tweetsourceurl: text(),
-	category: text(),
-	subCategory: text("sub_category"),
-	sentiment: text(),
-	inputTokens: varchar("input_tokens"),
-	outputTokens: varchar("output_tokens"),
+	insertdate: date(),
+	topic: varchar(),
+	confidence: doublePrecision(),
+	sentiment: varchar(),
+	inputTokens: doublePrecision("input_tokens"),
+	outputTokens: doublePrecision("output_tokens"),
+	totalTokens: doublePrecision("total_tokens"),
+	downloaddate: date()
+		.default(sql`(CURRENT_DATE + '1 day'::interval)`)
+		.notNull(),
+	idpk: serial().primaryKey().notNull(),
+	channelgroup: text(),
+});
+
+export const pbAudienceAge = pgTable(
+	"pb_audience_age",
+	{
+		id: serial().primaryKey().notNull(),
+		userAgeBracket: text(),
+		date: date(),
+		activeUsers: integer(),
+		newUsers: integer(),
+	},
+	(table) => [
+		unique("uq_audience_age_userAgeBracket_date").on(
+			table.userAgeBracket,
+			table.date
+		),
+	]
+);
+
+export const pbFirstUserSource = pgTable(
+	"pb_first_user_source",
+	{
+		id: serial().primaryKey().notNull(),
+		mainSource: text("main_source"),
+		date: date(),
+		activeUsers: integer(),
+	},
+	(table) => [
+		unique("uq_first_user_source_main_source_date").on(
+			table.mainSource,
+			table.date
+		),
+	]
+);
+
+export const testMention = pgTable(
+	"test_mention",
+	{
+		id: serial().primaryKey().notNull(),
+		mid: text(),
+		type: text(),
+		mention: text(),
+		languages: text(),
+		from: text(),
+		author: text(),
+		insertTime: timestamp({ mode: "string" }),
+		title: text(),
+		url: text(),
+		image: text(),
+		reach: doublePrecision(),
+		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+		databaseInsertTime: bigint({ mode: "number" }),
+		keywords: text(),
+		locations: text(),
+		autoSentiment: text(),
+		interaction: integer(),
+		score: doublePrecision(),
+		youtubeChannelId: text(),
+		viewCount: doublePrecision(),
+		likeCount: doublePrecision(),
+		commentCount: doublePrecision(),
+		fullMention: text(),
+		description: text(),
+		duration: text(),
+		tagFeedLocations: text(),
+		keywordId: text(),
+		keywordName: text(),
+		groupId: text(),
+		groupName: text(),
+		keywordNames: text(),
+		sourceReach: doublePrecision(),
+		influenceScore: doublePrecision(),
+		photo: text(),
+		originalPhoto: text(),
+		photos: text(),
+		originalPhotos: text(),
+		virality: text(),
+		domain: text(),
+		shareCount: doublePrecision(),
+		engagementRate: integer(),
+		followersCount: doublePrecision(),
+		facebookPageId: text(),
+		loveCount: integer(),
+		wowCount: integer(),
+		hahaCount: integer(),
+		sadCount: integer(),
+		angryCount: integer(),
+		totalReactionsCount: integer(),
+		mediaType: text(),
+		authorGender: text(),
+		twitterProfileId: text(),
+		favoriteCount: text(),
+		retweetCount: text(),
+		replyCount: text(),
+		quoteCount: text(),
+		twitterHandle: text(),
+		tweetType: text(),
+		instagramProfileId: text(),
+		instagramProfileName: text(),
+		instagramPostId: text(),
+		postType: text(),
+		tiktokId: text(),
+		diggCount: text(),
+		playCount: text(),
+		videoDurationSeconds: text(),
+		authorFollowerCount: doublePrecision(),
+		subreddit: text(),
+		redditType: text(),
+		redditFullname: text(),
+		redditScore: text(),
+		redditCommentId: text(),
+		redditParentLinkId: text(),
+		insertDate: date(),
+	},
+	(table) => [
+		unique("uq_test_mention_mid_type_from_author_insertTime_title").on(
+			table.mid,
+			table.type,
+			table.from,
+			table.author,
+			table.insertTime,
+			table.title
+		),
+	]
+);
+
+export const mentionsBackup = pgTable("mentions_backup", {
+	id: varchar(),
+	type: text(),
+	mention: text(),
+	languages: text(),
+	from: text(),
+	author: text(),
+	inserttime: timestamp({ mode: "string" }),
+	title: text(),
+	url: text(),
+	image: text(),
+	reach: doublePrecision(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	databaseinserttime: bigint({ mode: "number" }),
+	keywords: text(),
+	locations: text(),
+	autosentiment: text(),
+	interaction: doublePrecision(),
+	score: doublePrecision(),
+	youtubechannelid: varchar(),
+	viewcount: doublePrecision(),
+	likecount: doublePrecision(),
+	commentcount: doublePrecision(),
+	fullmention: text(),
+	description: text(),
+	duration: doublePrecision(),
+	tagfeedlocations: text(),
+	keywordid: varchar(),
+	keywordname: text(),
+	groupid: varchar(),
+	groupname: text(),
+	keywordnames: text(),
+	sourcereach: doublePrecision(),
+	influencescore: doublePrecision(),
+	photo: text(),
+	originalphoto: text(),
+	photos: text(),
+	originalphotos: text(),
+	virality: doublePrecision(),
+	domain: text(),
+	sharecount: doublePrecision(),
+	engagementrate: doublePrecision(),
+	followerscount: doublePrecision(),
+	facebookpageid: varchar(),
+	lovecount: doublePrecision(),
+	wowcount: doublePrecision(),
+	hahacount: doublePrecision(),
+	sadcount: doublePrecision(),
+	angrycount: doublePrecision(),
+	totalreactionscount: doublePrecision(),
+	mediatype: text(),
+	authorgender: text(),
+	twitterprofileid: varchar(),
+	favoritecount: doublePrecision(),
+	retweetcount: doublePrecision(),
+	replycount: doublePrecision(),
+	quotecount: doublePrecision(),
+	twitterhandle: text(),
+	tweettype: text(),
+	instagramprofileid: varchar(),
+	instagramprofilename: text(),
+	instagrampostid: varchar(),
+	posttype: text(),
+	tiktokid: varchar(),
+	diggcount: doublePrecision(),
+	playcount: doublePrecision(),
+	videodurationseconds: doublePrecision(),
+	authorfollowercount: doublePrecision(),
+	subreddit: text(),
+	reddittype: text(),
+	redditfullname: text(),
+	redditscore: doublePrecision(),
+	redditcommentid: varchar(),
+	redditparentlinkid: varchar(),
+	insertdate: date(),
+	downloaddate: date()
+		.default(sql`(CURRENT_DATE + '1 day'::interval)`)
+		.notNull(),
 });
 
 export const mentions = pgTable("mentions", {
@@ -181,13 +471,12 @@ export const mentions = pgTable("mentions", {
 	languages: text(),
 	from: text(),
 	author: text(),
-	inserttime: timestamp({ mode: 'string' }),
+	inserttime: timestamp({ mode: "string" }),
 	title: text(),
 	url: text(),
 	image: text(),
 	reach: doublePrecision(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	databaseinserttime: bigint({ mode: "number" }),
+	databaseinserttime: timestamp({ withTimezone: true, mode: "string" }),
 	keywords: text(),
 	locations: text(),
 	autosentiment: text(),
@@ -249,17 +538,231 @@ export const mentions = pgTable("mentions", {
 	redditcommentid: varchar(),
 	redditparentlinkid: varchar(),
 	insertdate: date(),
-	downloaddate: date().default(sql`(CURRENT_DATE + '1 day'::interval)`).notNull(),
+	downloaddate: date()
+		.default(sql`(CURRENT_DATE + '1 day'::interval)`)
+		.notNull(),
 });
 
-export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
+export const test2Mention = pgTable(
+	"test2_mention",
+	{
+		id: serial().primaryKey().notNull(),
+		mid: text(),
+		type: text(),
+		mention: text(),
+		languages: text(),
+		from: text(),
+		author: text(),
+		insertTime: timestamp({ mode: "string" }),
+		title: text(),
+		url: text(),
+		image: text(),
+		reach: doublePrecision(),
+		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+		databaseInsertTime: bigint({ mode: "number" }),
+		keywords: text(),
+		locations: text(),
+		autoSentiment: text(),
+		interaction: integer(),
+		score: doublePrecision(),
+		youtubeChannelId: text(),
+		viewCount: doublePrecision(),
+		likeCount: doublePrecision(),
+		commentCount: doublePrecision(),
+		fullMention: text(),
+		description: text(),
+		duration: text(),
+		tagFeedLocations: text(),
+		keywordId: text(),
+		keywordName: text(),
+		groupId: text(),
+		groupName: text(),
+		keywordNames: text(),
+		sourceReach: doublePrecision(),
+		influenceScore: doublePrecision(),
+		photo: text(),
+		originalPhoto: text(),
+		photos: text(),
+		originalPhotos: text(),
+		virality: text(),
+		domain: text(),
+		shareCount: doublePrecision(),
+		engagementRate: integer(),
+		followersCount: doublePrecision(),
+		facebookPageId: text(),
+		loveCount: integer(),
+		wowCount: integer(),
+		hahaCount: integer(),
+		sadCount: integer(),
+		angryCount: integer(),
+		totalReactionsCount: integer(),
+		mediaType: text(),
+		authorGender: text(),
+		twitterProfileId: text(),
+		favoriteCount: text(),
+		retweetCount: text(),
+		replyCount: text(),
+		quoteCount: text(),
+		twitterHandle: text(),
+		tweetType: text(),
+		instagramProfileId: text(),
+		instagramProfileName: text(),
+		instagramPostId: text(),
+		postType: text(),
+		tiktokId: text(),
+		diggCount: text(),
+		playCount: text(),
+		videoDurationSeconds: text(),
+		authorFollowerCount: doublePrecision(),
+		subreddit: text(),
+		redditType: text(),
+		redditFullname: text(),
+		redditScore: text(),
+		redditCommentId: text(),
+		redditParentLinkId: text(),
+		insertDate: date(),
+	},
+	(table) => [
+		unique("uq_test2_mention_mid_type_from_author_insertTime_title").on(
+			table.mid,
+			table.type,
+			table.from,
+			table.author,
+			table.insertTime,
+			table.title
+		),
+	]
+);
+
+export const rtmklikLiveMalaysia = pgTable(
+	"rtmklik_live_malaysia",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		location: text(),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_live_malaysia_location_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.location,
+			table.metric
+		),
+	]
+);
+
+export const rtmklikGender = pgTable(
+	"rtmklik_gender",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		gender: text(),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_gender_gender_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.gender,
+			table.metric
+		),
+	]
+);
+
+export const pbAudienceRegion = pgTable(
+	"pb_audience_region",
+	{
+		id: serial().primaryKey().notNull(),
+		region: text(),
+		date: date(),
+		activeUsers: integer(),
+		newUsers: integer(),
+	},
+	(table) => [
+		unique("uq_audience_region_region_date").on(table.region, table.date),
+	]
+);
+
+export const pbAudienceRegionGender = pgTable(
+	"pb_audience_region_gender",
+	{
+		id: serial().primaryKey().notNull(),
+		region: text(),
+		usergender: text(),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_audience_region_gender_region_usergender_date_hour").on(
+			table.region,
+			table.usergender,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const marketingChannelByyear = pgTable(
+	"marketing_channel_byyear",
+	{
+		id: serial().primaryKey().notNull(),
+		reportType: text("report_type"),
+		reportTitle: text("report_title"),
+		saluran: text(),
+		groupby: text(),
+		year: integer(),
+		value: numeric(),
+		insertdate: timestamp({ mode: "string" }),
+		updatedate: timestamp({ mode: "string" }),
+	},
+	(table) => [
+		unique("marketing_channel_byyear_report_title_saluran_year_key").on(
+			table.reportTitle,
+			table.saluran,
+			table.year
+		),
+	]
+);
+
+export const marketingChannelBymonth = pgTable(
+	"marketing_channel_bymonth",
+	{
+		id: serial().primaryKey().notNull(),
+		reportType: text("report_type"),
+		reportTitle: text("report_title"),
+		saluran: text(),
+		groupby: text(),
+		year: integer(),
+		month: text(),
+		value: numeric(),
+		insertdate: timestamp({ mode: "string" }),
+		updatedate: timestamp({ mode: "string" }),
+	},
+	(table) => [
+		unique("marketing_channel_bymonth_report_title_saluran_year_month_key").on(
+			table.reportTitle,
+			table.saluran,
+			table.year,
+			table.month
+		),
+	]
+);
+
+export const mentionsClassifyCopy = pgTable("mentions_classify_copy", {
 	id: varchar(),
 	type: text(),
 	mention: text(),
 	languages: text(),
 	from: text(),
 	author: text(),
-	inserttime: timestamp({ mode: 'string' }),
+	inserttime: timestamp({ mode: "string" }),
 	title: text(),
 	url: text(),
 	image: text(),
@@ -281,7 +784,6 @@ export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
 	tagfeedlocations: text(),
 	keywordid: varchar(),
 	channel: text(),
-	channelgroup: text(),
 	groupid: varchar(),
 	groupname: text(),
 	channels: text(),
@@ -334,139 +836,433 @@ export const mentionsClassifyPublic = pgTable("mentions_classify_public", {
 	inputTokens: doublePrecision("input_tokens"),
 	outputTokens: doublePrecision("output_tokens"),
 	totalTokens: doublePrecision("total_tokens"),
-	downloaddate: date().default(sql`CURRENT_DATE`).notNull(),
+	downloaddate: date()
+		.default(sql`(CURRENT_DATE + '1 day'::interval)`)
+		.notNull(),
 	idpk: serial().primaryKey().notNull(),
+	channelgroup: text(),
 });
 
-export const unifiViewership = pgTable("unifi_viewership", {
-	id: serial().primaryKey().notNull(),
-	viewershipMonthYear: text("viewership_month_year"),
-	channelName: text("channel_name"),
-	programName: text("program_name"),
-	programTime: text("program_time"),
-	programmeDate: date("programme_date"),
-	startTime: time("start_time"),
-	endTime: time("end_time"),
-	mau: integer(),
-	avgAccessDuration: interval("avg_access_duration"),
-	sheetName: text("sheet_name"),
-	filename: text(),
-	duration: interval(),
-});
+export const pbAudience = pgTable(
+	"pb_audience",
+	{
+		id: serial().primaryKey().notNull(),
+		audienceName: text(),
+		date: date(),
+		totalUsers: integer(),
+		newUsers: integer(),
+	},
+	(table) => [
+		unique("uq_audience_audienceName_date").on(table.audienceName, table.date),
+	]
+);
 
-export const mytvAnalysis = pgTable("mytv_analysis", {
-	pk: serial().primaryKey().notNull(),
-	channel: varchar(),
-	metric: varchar(),
-	value: doublePrecision(),
-	region: varchar(),
-	year: integer(),
-	page_num: integer(),
-	table_idx: integer(),
-});
+export const pbFirstUser = pgTable(
+	"pb_first_user",
+	{
+		id: serial().primaryKey().notNull(),
+		firstUserPrimaryChannelGroup: text(),
+		date: date(),
+		totalUsers: integer(),
+		newUsers: integer(),
+		returningUsers: integer(),
+	},
+	(table) => [
+		unique("uq_first_user_firstUserPrimaryChannelGroup_date").on(
+			table.firstUserPrimaryChannelGroup,
+			table.date
+		),
+	]
+);
 
-export const mytvViewership = pgTable("mytv_viewership", {
-	id: serial().primaryKey().notNull(),
-	region: varchar({ length: 100 }),
-	metric: varchar({ length: 100 }),
-	channel: varchar({ length: 50 }),
-	month: varchar({ length: 20 }),
-	year: integer(),
-	viewers: bigint({ mode: "number" }),
-	page_num: integer(),
-	table_idx: integer(),
-	page_title: text(),
-	inserted_at: timestamp({ mode: 'string' }).defaultNow(),
-	updated_at: timestamp({ mode: 'string' }).defaultNow(),
-});
+export const pbPopularPages = pgTable(
+	"pb_popular_pages",
+	{
+		id: serial().primaryKey().notNull(),
+		unifiedScreenClass: text(),
+		date: date(),
+		screenPageViews: integer(),
+		activeUsers: integer(),
+	},
+	(table) => [
+		unique("uq_popular_pages_unifiedScreenClass_date").on(
+			table.unifiedScreenClass,
+			table.date
+		),
+	]
+);
 
-export const marketingChannelByYear = pgTable("marketing_channel_byyear", {
-	id: serial().primaryKey().notNull(),
-	report_type: varchar("report_type"),
-	report_title: text("report_title"),
-	saluran: varchar(),
-	groupby: varchar(),
-	year: integer(),
-	value: varchar(),
-	insertdate: timestamp({ mode: 'string' }),
-	updatedate: timestamp({ mode: 'string' }),
-});
+export const astroRateNReach = pgTable(
+	"astro_rate_n_reach",
+	{
+		id: serial().primaryKey().notNull(),
+		txDate: date("tx_date"),
+		txYear: integer("tx_year"),
+		txMonth: integer("tx_month"),
+		channel: text(),
+		metricType: text("metric_type"),
+		value: doublePrecision(),
+	},
+	(table) => [
+		unique(
+			"uq_astro_rate_n_reach_tx_date_tx_year_tx_month_channel_metric_t"
+		).on(
+			table.txDate,
+			table.txYear,
+			table.txMonth,
+			table.channel,
+			table.metricType
+		),
+	]
+);
 
-export const marketingChannelByMonth = pgTable("marketing_channel_bymonth", {
-	id: serial().primaryKey().notNull(),
-	report_type: varchar("report_type"),
-	report_title: text("report_title"),
-	saluran: varchar(),
-	groupby: varchar(),
-	year: integer(),
-	month: varchar(),
-	value: varchar(),
-	insertdate: timestamp({ mode: 'string' }),
-	updatedate: timestamp({ mode: 'string' }),
-});
+export const rtmklikDevice = pgTable(
+	"rtmklik_device",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		deviceCategory: text("device_category"),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_device_device_category_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.deviceCategory,
+			table.metric
+		),
+	]
+);
 
-// Portal Berita Tables
-export const pbAudience = pgTable("pb_audience", {
-	id: serial().primaryKey().notNull(),
-	audienceName: varchar("audienceName", { length: 255 }),
-	date: date(),
-	totalUsers: integer("totalUsers"),
-	newUsers: integer("newUsers"),
-});
+export const pberitaAudienceGender = pgTable(
+	"pberita_audience_gender",
+	{
+		id: serial().primaryKey().notNull(),
+		usergender: text(),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_audience_gender_usergender_date_hour").on(
+			table.usergender,
+			table.date,
+			table.hour
+		),
+	]
+);
 
-export const pbAudienceAge = pgTable("pb_audience_age", {
-	id: serial().primaryKey().notNull(),
-	userAgeBracket: varchar("userAgeBracket", { length: 50 }),
-	date: date(),
-	activeUsers: integer("activeUsers"),
-	newUsers: integer("newUsers"),
-});
+export const test1Mention = pgTable(
+	"test1_mention",
+	{
+		id: serial().primaryKey().notNull(),
+		mid: text(),
+		type: text(),
+		mention: text(),
+		languages: text(),
+		from: text(),
+		author: text(),
+		insertTime: timestamp({ mode: "string" }),
+		title: text(),
+		url: text(),
+		image: text(),
+		reach: doublePrecision(),
+		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+		databaseInsertTime: bigint({ mode: "number" }),
+		keywords: text(),
+		locations: text(),
+		autoSentiment: text(),
+		interaction: integer(),
+		score: doublePrecision(),
+		youtubeChannelId: text(),
+		viewCount: doublePrecision(),
+		likeCount: doublePrecision(),
+		commentCount: doublePrecision(),
+		fullMention: text(),
+		description: text(),
+		duration: text(),
+		tagFeedLocations: text(),
+		keywordId: text(),
+		keywordName: text(),
+		groupId: text(),
+		groupName: text(),
+		keywordNames: text(),
+		sourceReach: doublePrecision(),
+		influenceScore: doublePrecision(),
+		photo: text(),
+		originalPhoto: text(),
+		photos: text(),
+		originalPhotos: text(),
+		virality: text(),
+		domain: text(),
+		shareCount: doublePrecision(),
+		engagementRate: integer(),
+		followersCount: doublePrecision(),
+		facebookPageId: text(),
+		loveCount: integer(),
+		wowCount: integer(),
+		hahaCount: integer(),
+		sadCount: integer(),
+		angryCount: integer(),
+		totalReactionsCount: integer(),
+		mediaType: text(),
+		authorGender: text(),
+		twitterProfileId: text(),
+		favoriteCount: text(),
+		retweetCount: text(),
+		replyCount: text(),
+		quoteCount: text(),
+		twitterHandle: text(),
+		tweetType: text(),
+		instagramProfileId: text(),
+		instagramProfileName: text(),
+		instagramPostId: text(),
+		postType: text(),
+		tiktokId: text(),
+		diggCount: text(),
+		playCount: text(),
+		videoDurationSeconds: text(),
+		authorFollowerCount: doublePrecision(),
+		subreddit: text(),
+		redditType: text(),
+		redditFullname: text(),
+		redditScore: text(),
+		redditCommentId: text(),
+		redditParentLinkId: text(),
+		insertDate: date(),
+	},
+	(table) => [
+		unique("uq_test1_mention_mid_type_from_author_insertTime_title").on(
+			table.mid,
+			table.type,
+			table.from,
+			table.author,
+			table.insertTime,
+			table.title
+		),
+	]
+);
 
-export const pbAudienceGender = pgTable("pb_audience_gender", {
-	id: serial().primaryKey().notNull(),
-	userGender: varchar("userGender", { length: 20 }),
-	date: date(),
-	activeUsers: integer("activeUsers"),
-	newUsers: integer("newUsers"),
-});
+export const unifiSummary = pgTable(
+	"unifi_summary",
+	{
+		id: serial().primaryKey().notNull(),
+		tier: text(),
+		genre: text(),
+		mauTotal: integer("mau_total"),
+		durationTotalHour: integer("duration_total_hour"),
+		durationLive: integer("duration_live"),
+		durationOnDemand: text("duration_on_demand"),
+		frequencyTotalAccessTime: integer("frequency_total_access_time"),
+		frequencyLive: integer("frequency_live"),
+		frequencyOnDemand: text("frequency_on_demand"),
+		programmeName: text("programme_name"),
+		txYear: text("tx_year"),
+		txMonth: text("tx_month"),
+	},
+	(table) => [
+		unique("uq_unifi_summary_programme_name_tx_year_tx_month_tier_genre").on(
+			table.tier,
+			table.genre,
+			table.programmeName,
+			table.txYear,
+			table.txMonth
+		),
+	]
+);
 
-export const pbAudienceRegion = pgTable("pb_audience_region", {
-	id: serial().primaryKey().notNull(),
-	region: varchar("region", { length: 255 }),
-	date: date(),
-	activeUsers: integer("activeUsers"),
-	newUsers: integer("newUsers"),
-});
+export const rtmklikAge = pgTable(
+	"rtmklik_age",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		age: text(),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_age_age_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.age,
+			table.metric
+		),
+	]
+);
 
-export const pbAudienceRegionGender = pgTable("pb_audience_region_gender", {
-	id: serial().primaryKey().notNull(),
-	region: varchar("region", { length: 255 }),
-	userGender: varchar("userGender", { length: 20 }),
-	date: date(),
-	activeUsers: integer("activeUsers"),
-	newUsers: integer("newUsers"),
-});
+export const rtmklikBrowser = pgTable(
+	"rtmklik_browser",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		deviceBrowser: text("device_browser"),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_browser_device_browser_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.deviceBrowser,
+			table.metric
+		),
+	]
+);
 
-export const pbFirstUser = pgTable("pb_first_user", {
-	id: serial().primaryKey().notNull(),
-	firstUserPrimaryChannelGroup: varchar("firstUserPrimaryChannelGroup", { length: 255 }),
-	date: date(),
-	totalUsers: integer("totalUsers"),
-	newUsers: integer("newUsers"),
-	returningUsers: integer("returningUsers"),
-});
+export const rtmklikRegion = pgTable(
+	"rtmklik_region",
+	{
+		id: serial().primaryKey().notNull(),
+		date: date(),
+		hour: text(),
+		location: text(),
+		metric: text(),
+		value: integer(),
+	},
+	(table) => [
+		unique("uq_rtmklik_region_location_hour_date_metric").on(
+			table.date,
+			table.hour,
+			table.location,
+			table.metric
+		),
+	]
+);
 
-export const pbFirstUserSource = pgTable("pb_first_user_source", {
-	id: serial().primaryKey().notNull(),
-	mainSource: varchar("main_source", { length: 255 }),
-	date: date(),
-	activeUsers: integer("activeUsers"),
-});
+export const pberitaPopularPages = pgTable(
+	"pberita_popular_pages",
+	{
+		id: serial().primaryKey().notNull(),
+		unifiedscreenclass: text(),
+		date: date(),
+		hour: text(),
+		screenpageviews: integer(),
+		activeusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_popular_pages_unifiedscreenclass_date_hour").on(
+			table.unifiedscreenclass,
+			table.date,
+			table.hour
+		),
+	]
+);
 
-export const pbPopularPages = pgTable("pb_popular_pages", {
-	id: serial().primaryKey().notNull(),
-	unifiedScreenClass: text("unifiedScreenClass"),
-	date: date(),
-	screenPageViews: integer("screenPageViews"),
-	activeUsers: integer("activeUsers"),
-});
+export const pberitaAudienceRegion = pgTable(
+	"pberita_audience_region",
+	{
+		id: serial().primaryKey().notNull(),
+		region: text(),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_audience_region_region_date_hour").on(
+			table.region,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const pberitaAudience = pgTable(
+	"pberita_audience",
+	{
+		id: serial().primaryKey().notNull(),
+		audiencename: text(),
+		date: date(),
+		hour: text(),
+		totalusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_audience_audiencename_date_hour").on(
+			table.audiencename,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const pberitaFirstUser = pgTable(
+	"pberita_first_user",
+	{
+		id: serial().primaryKey().notNull(),
+		firstuserprimarychannelgroup: text(),
+		date: date(),
+		hour: text(),
+		totalusers: integer(),
+		newusers: integer(),
+		returningusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_first_user_firstuserprimarychannelgroup_date_hour").on(
+			table.firstuserprimarychannelgroup,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const pberitaFirstUserSource = pgTable(
+	"pberita_first_user_source",
+	{
+		id: serial().primaryKey().notNull(),
+		mainSource: text("main_source"),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_first_user_source_main_source_date_hour").on(
+			table.mainSource,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const pberitaAudienceAge = pgTable(
+	"pberita_audience_age",
+	{
+		id: serial().primaryKey().notNull(),
+		useragebracket: text(),
+		date: date(),
+		hour: text(),
+		activeusers: integer(),
+		newusers: integer(),
+	},
+	(table) => [
+		unique("uq_pberita_audience_age_useragebracket_date_hour").on(
+			table.useragebracket,
+			table.date,
+			table.hour
+		),
+	]
+);
+
+export const unifiViewership = pgTable(
+	"unifi_viewership",
+	{
+		id: serial().primaryKey().notNull(),
+		viewershipMonthYear: text("viewership_month_year"),
+		channelName: text("channel_name"),
+		programName: text("program_name"),
+		programTime: text("program_time"),
+		programmeDate: date("programme_date"),
+		startTime: time("start_time"),
+		endTime: time("end_time"),
+		mau: integer(),
+		avgAccessDuration: interval("avg_access_duration"),
+		sheetName: text("sheet_name"),
+		filename: text(),
+		duration: interval(),
+	}
+);

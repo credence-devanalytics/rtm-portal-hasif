@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -11,27 +11,150 @@ import {
 } from "recharts";
 import { TrendingUp, Filter, X, BarChart3 } from "lucide-react";
 
-const EngagementRateChart = ({ data = [], onFilterChange }) => {
+const EngagementRateChart = ({
+  data = [],
+  platformsData,
+  platformByUnitData,
+  hasActiveFilters,
+  activeFilters: globalFilters,
+  onFilterChange,
+}) => {
   const [activeFilters, setActiveFilters] = useState([]);
   const [hoveredPlatform, setHoveredPlatform] = useState(null);
 
-  // Platform colors mapping with actual color values
+  // Sync with global platform filter
+  useEffect(() => {
+    if (globalFilters?.platform) {
+      setActiveFilters([globalFilters.platform]);
+    } else {
+      setActiveFilters([]);
+    }
+  }, [globalFilters?.platform]);
+
+  // Platform colors mapping with official brand colors
   const platformColors = {
-    Facebook: "#1877F2",
-    Instagram: "#E4405F",
-    Twitter: "#1DA1F2",
-    TikTok: "#000000",
-    YouTube: "#FF0000",
-    LinkedIn: "#0A66C2",
-    Reddit: "#FF4500",
-    Web: "#10B981",
-    Unknown: "#6B7280",
-    Other: "#9CA3AF",
+    Facebook: "#1877F2", // Facebook blue
+    Instagram: "#E4405F", // Instagram gradient pink
+    Twitter: "#1DA1F2", // Twitter blue (X)
+    TikTok: "#000000", // TikTok black
+    YouTube: "#FF0000", // YouTube red
+    LinkedIn: "#0A66C2", // LinkedIn blue
+    Reddit: "#FF4500", // Reddit orange-red
+    Web: "#10B981", // Green for web
+    Other: "#94A3B8", // Slate gray
+    Unknown: "#64748B", // Darker slate
+  };
+
+  // Helper to get color with case-insensitive lookup
+  const getColorForPlatform = (platform) => {
+    if (!platform) return platformColors.Other;
+
+    // Try exact match first
+    if (platformColors[platform]) return platformColors[platform];
+
+    // Try case-insensitive match
+    const key = Object.keys(platformColors).find(
+      (k) => k.toLowerCase() === platform.toLowerCase()
+    );
+
+    return key ? platformColors[key] : platformColors.Other;
   };
 
   // Memoized data processing for performance
   const processedData = useMemo(() => {
+    // Check if unit filter is active
+    const hasUnitFilter =
+      globalFilters?.unit && globalFilters.unit !== "overall";
+    const currentUnit = globalFilters?.unit;
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📊 ENGAGEMENT RATE CHART - Data Processing");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("1. hasActiveFilters:", hasActiveFilters);
+    console.log("2. hasUnitFilter:", hasUnitFilter);
+    console.log("3. currentUnit:", currentUnit);
+    console.log("4. platformByUnitData available:", !!platformByUnitData);
+
+    // Use platformByUnitData when unit filter is active
+    if (hasUnitFilter && platformByUnitData && platformByUnitData.length > 0) {
+      console.log("5. Using platformByUnitData (filtered by unit in API)");
+
+      // Map unit filter to actual unit name in data
+      let unitName = currentUnit;
+      if (currentUnit === "berita") unitName = "News";
+      else if (currentUnit === "radio") unitName = "Radio";
+      else if (currentUnit === "tv") unitName = "TV";
+      else if (currentUnit === "official") unitName = "Official";
+
+      console.log("6. Filtering for unit:", unitName);
+
+      // Filter platformByUnitData for the selected unit
+      const filtered = platformByUnitData.filter(
+        (p: any) => p.unit === unitName
+      );
+      console.log("7. Filtered platforms:", filtered.length);
+      console.log("8. Sample data:", filtered.slice(0, 3));
+
+      const result = filtered
+        .map((p: any) => ({
+          platform: p.platform,
+          avgEngagementRate: Number(p.avgEngagementRate?.toFixed(2)) || 0,
+          mentionCount: p.count,
+          totalReach: p.totalReach,
+          totalInteractions: p.totalInteractions,
+          color: getColorForPlatform(p.platform),
+        }))
+        .sort((a, b) => b.avgEngagementRate - a.avgEngagementRate);
+
+      console.log("9. Final processed data count:", result.length);
+      console.log("10. Final processed data with values:");
+      result.forEach((r, i) => {
+        console.log(
+          `    ${i + 1}. ${r.platform}: ${r.avgEngagementRate}% (${
+            r.mentionCount
+          } mentions)`
+        );
+      });
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+      return result;
+    }
+
+    // Use accurate platformsData from API ONLY when:
+    // 1. No client-side filters are active (hasActiveFilters = false)
+    // 2. No unit filter is active
+    // 3. platformsData is available
+    if (
+      !hasActiveFilters &&
+      !hasUnitFilter &&
+      platformsData &&
+      platformsData.length > 0
+    ) {
+      console.log(
+        "5. Using accurate platformsData from API (no filters):",
+        platformsData.length
+      );
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+      return platformsData
+        .map((p: any) => ({
+          platform: p.platform,
+          avgEngagementRate: Number(p.avgEngagementRate?.toFixed(2)) || 0,
+          mentionCount: p.count,
+          totalReach: p.totalReach,
+          totalInteractions: p.totalInteractions,
+          color: getColorForPlatform(p.platform),
+        }))
+        .sort((a, b) => b.avgEngagementRate - a.avgEngagementRate);
+    }
+
+    // Fallback to calculating from filtered data
     if (!data || data.length === 0) return [];
+
+    console.log(
+      "5. Calculating from filtered data (client-side):",
+      data.length
+    );
+    console.log("   - This happens when client-side filters are active");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     // Group by platform and calculate average engagement rate
     const platformGroups = data.reduce((acc, item) => {
@@ -69,48 +192,62 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
         mentionCount: group.totalMentions,
         totalReach: group.totalReach,
         totalInteractions: group.totalInteractions,
-        color: platformColors[group.platform] || platformColors.Other,
+        color: getColorForPlatform(group.platform),
       }))
       .sort((a, b) => b.avgEngagementRate - a.avgEngagementRate); // Sort by engagement rate descending
 
     return result;
-  }, [data, platformColors]);
+  }, [
+    data,
+    platformsData,
+    platformByUnitData,
+    hasActiveFilters,
+    globalFilters?.unit,
+  ]);
 
   // Handle platform click for filtering
   const handlePlatformClick = (platformData) => {
     if (!onFilterChange) return;
 
     const platform = platformData.platform;
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🎨 ENGAGEMENT RATE CHART - Platform Click");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("1. Clicked platform:", platform);
+    console.log("2. Current activeFilters:", activeFilters);
+
+    // Toggle filter behavior: clicking the same platform clears it
     const isActive = activeFilters.includes(platform);
 
     let newFilters;
     if (isActive) {
       // Remove filter
       newFilters = activeFilters.filter((f) => f !== platform);
+      console.log("3. Action: REMOVE filter");
     } else {
-      // Add filter
-      newFilters = [...activeFilters, platform];
+      // Add filter (replace existing, not multi-select)
+      newFilters = [platform]; // Only one platform at a time
+      console.log("3. Action: ADD filter");
     }
 
+    console.log("4. New activeFilters:", newFilters);
     setActiveFilters(newFilters);
 
-    // Trigger parent filter change
-    onFilterChange({
-      type: "platform",
-      value: newFilters,
-      action: isActive ? "remove" : "add",
-    });
+    // Call parent with the correct signature: (filterType, filterValue)
+    // If removing, pass the platform to toggle it off
+    // If adding, pass the platform to toggle it on
+    console.log("5. Calling onFilterChange('platform', '" + platform + "')");
+    onFilterChange("platform", platform);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
   };
 
   // Clear all filters
   const clearFilters = () => {
     setActiveFilters([]);
     if (onFilterChange) {
-      onFilterChange({
-        type: "platform",
-        value: [],
-        action: "clear",
-      });
+      // Clear the platform filter by setting it to null
+      onFilterChange("platform", null);
     }
   };
 
@@ -132,25 +269,25 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
           <div className="flex justify-between">
             <span className="text-gray-600">Avg. Engagement Rate:</span>
             <span className="font-medium text-gray-900">
-              {data.avgEngagementRate}%
+              {data.avgEngagementRate || 0}%
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Total Mentions:</span>
             <span className="font-medium text-gray-900">
-              {data.mentionCount.toLocaleString()}
+              {(data.mentionCount || 0).toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Total Reach:</span>
             <span className="font-medium text-gray-900">
-              {data.totalReach.toLocaleString()}
+              {(data.totalReach || 0).toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Total Interactions:</span>
             <span className="font-medium text-gray-900">
-              {data.totalInteractions.toLocaleString()}
+              {(data.totalInteractions || 0).toLocaleString()}
             </span>
           </div>
         </div>
@@ -171,6 +308,10 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
 
   // Empty state
   if (data.length === 0 || processedData.length === 0) {
+    console.log("⚠️ EMPTY STATE TRIGGERED");
+    console.log("   - data.length:", data.length);
+    console.log("   - processedData.length:", processedData.length);
+
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center gap-3 mb-4">
@@ -189,6 +330,10 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
       </div>
     );
   }
+
+  console.log("✅ RENDERING CHART");
+  console.log("   - processedData.length:", processedData.length);
+  console.log("   - processedData:", processedData);
 
   return (
     <div className="bg-white rounded-lg p-6">
@@ -300,8 +445,7 @@ const EngagementRateChart = ({ data = [], onFilterChange }) => {
                 <div
                   className="w-2 h-2 rounded-full"
                   style={{
-                    backgroundColor:
-                      platformColors[filter] || platformColors.Other,
+                    backgroundColor: getColorForPlatform(filter),
                   }}
                 />
                 {filter}

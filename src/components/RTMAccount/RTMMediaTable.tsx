@@ -6,17 +6,81 @@ import {
   MessageSquare,
   ChevronDown,
   ChevronUp,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 const RTMMediaTable = ({
   data = [],
   selectedTab = "overall",
   onFilterChange,
+  unitsData = null,
+  channelsData = null,
+  hasActiveFilters = false,
 }) => {
   // State to track the current active tab from RTMTabs
   const [currentTab, setCurrentTab] = useState("overall");
   // State to track whether to show all radio channels or just top 5
   const [showAllRadioChannels, setShowAllRadioChannels] = useState(false);
+  // State to track sorting
+  const [sortBy, setSortBy] = useState(null); // 'posts', 'reach', 'interactions', 'groupname'
+  const [sortOrder, setSortOrder] = useState("desc"); // 'asc' or 'desc'
+
+  // Radio channel groups mapping
+  const radioChannelGroups = {
+    "STESEN DAERAH": [
+      "LIMBANGfm",
+      "SABAH Vfm",
+      "WAIfm (BIDAYUH)",
+      "SIBUfm",
+      "REDfm",
+      "SANDAKANfm",
+      "TAWAUfm",
+      "BINTULUfm",
+      "SRI AMANfm",
+      "KENINGAUfm",
+      "MIRIfm",
+    ],
+    "STESEN IBU PEJABAT": [
+      "MINNALfm",
+      "NASIONALfm",
+      "TRAXXfm",
+      "ASYIKfm",
+      "Aifm",
+      "RADIO KLASIK",
+      "SPPR",
+    ],
+    "STESEN NEGERI": [
+      "KLfm",
+      "SELANGORfm",
+      "MELAKAfm",
+      "PERAKfm",
+      "TERENGGANUfm",
+      "MUTIARAfm",
+      "PERLISfm",
+      "LABUANfm",
+      "KEDAHfm",
+      "NEGERIfm",
+      "JOHORfm",
+      "PAHANGfm",
+      "SABAHfm",
+      "KELANTANfm",
+      "SARAWAKfm",
+      "LANGKAWIfm",
+    ],
+  };
+
+  // Function to get the group name for a radio channel
+  const getRadioChannelGroup = (channelName) => {
+    for (const [groupName, channels] of Object.entries(radioChannelGroups)) {
+      if (channels.includes(channelName)) {
+        return groupName;
+      }
+    }
+    return null;
+  };
+
   // Channel mapping based on your requirements
   const channelMapping = {
     Berita: ["Berita BES"],
@@ -66,51 +130,175 @@ const RTMMediaTable = ({
     if (selectedTab !== "radio") {
       setShowAllRadioChannels(false);
     }
+    // Reset sorting when tab changes
+    setSortBy(null);
+    setSortOrder("desc");
   }, [selectedTab]);
+
+  // Handle sorting
+  const handleSort = (sortType) => {
+    if (sortBy === sortType) {
+      // Toggle sort order if clicking the same column
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Set new sort column and default to descending
+      setSortBy(sortType);
+      setSortOrder("desc");
+    }
+  };
 
   // Process data based on current tab
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
 
+    let result = [];
+
     if (currentTab === "overall") {
-      // Show unit-level data (Official Account, TV, Berita, Radio)
-      const units = ["Official", "TV", "Berita", "Radio"];
+      // Debug logging
+      console.log("🔍 RTMMediaTable Debug:", {
+        hasActiveFilters,
+        unitsData,
+        dataLength: data.length,
+        currentTab,
+      });
 
-      return units.map((unit) => {
-        let filteredData = [];
+      // Use accurate database unit counts when available and no filters active
+      if (!hasActiveFilters && unitsData && unitsData.length > 0) {
+        // Map unit names to display names
+        const unitDisplayNames = {
+          Official: "Official",
+          TV: "TV",
+          News: "Berita",
+          Radio: "Radio",
+          Other: "Other",
+        };
 
-        if (unit === "Official") {
-          filteredData = data.filter(
-            (item) => item.unit === "Official" || item.author === "RTM"
+        console.log("✅ Using database units data:", unitsData);
+
+        result = unitsData.map((unit) => ({
+          name: unitDisplayNames[unit.unit] || unit.unit,
+          unit: unit.unit,
+          totalPosts: unit.count,
+          totalReach: unit.totalReach,
+          totalInteractions: unit.totalInteractions,
+          overallTotal: unit.count + unit.totalReach + unit.totalInteractions,
+          data: [], // No detailed data for database aggregates
+          isFromDatabase: true, // Flag to indicate this is accurate DB data
+        }));
+
+        // Sort units in a preferred order
+        const unitOrder = ["Official", "TV", "News", "Radio", "Other"];
+        result.sort((a, b) => {
+          const indexA = unitOrder.indexOf(a.unit);
+          const indexB = unitOrder.indexOf(b.unit);
+          return (
+            (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB)
           );
-        } else if (unit === "TV") {
-          filteredData = data.filter((item) => item.unit === "TV");
-        } else if (unit === "Berita") {
-          filteredData = data.filter((item) => item.unit === "News");
-        } else if (unit === "Radio") {
-          filteredData = data.filter((item) => item.unit === "Radio");
+        });
+
+        if (process.env.NODE_ENV === "development") {
+          console.log("✅ Using accurate database unit counts:", result);
+        }
+      } else {
+        // Fall back to client-side calculation when filters are active
+        // Show unit-level data - Get all unique units from data
+        const unitCounts = {};
+        data.forEach((item) => {
+          const unitName = item.unit || "Other";
+          if (!unitCounts[unitName]) {
+            unitCounts[unitName] = 0;
+          }
+          unitCounts[unitName]++;
+        });
+
+        // Debug: Check for all units
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "📊 Client-side unit calculation (filtered data):",
+            unitCounts
+          );
+          console.log("📊 Total records:", data.length);
         }
 
-        const totalPosts = filteredData.length;
-        const totalReach = filteredData.reduce(
-          (sum, item) => sum + (item.reach || 0),
-          0
-        );
-        const totalInteractions = filteredData.reduce(
-          (sum, item) => sum + (item.interactions || 0),
-          0
-        );
-        const overallTotal = totalPosts + totalReach + totalInteractions;
-
-        return {
-          name: unit,
-          totalPosts,
-          totalReach,
-          totalInteractions,
-          overallTotal,
-          data: filteredData,
+        // Map unit names to display names
+        const unitDisplayNames = {
+          Official: "Official",
+          TV: "TV",
+          News: "Berita",
+          Radio: "Radio",
+          Other: "Other",
         };
-      });
+
+        // Get all unique units that exist in the data
+        const unitsInData = Object.keys(unitCounts);
+
+        result = unitsInData.map((unit) => {
+          // Filter data by unit
+          let filteredData = data.filter((item) => {
+            const itemUnit = item.unit || "Other";
+            return itemUnit === unit;
+          });
+
+          const totalPosts = filteredData.length;
+          const totalReach = filteredData.reduce(
+            (sum, item) => sum + (item.reach || 0),
+            0
+          );
+          const totalInteractions = filteredData.reduce(
+            (sum, item) => sum + (item.interactions || 0),
+            0
+          );
+          const overallTotal = totalPosts + totalReach + totalInteractions;
+
+          // Debug logging for unit-level aggregation
+          if (process.env.NODE_ENV === "development") {
+            console.log(`📊 Overall - ${unit}:`, {
+              posts: totalPosts,
+              reach: totalReach,
+              interactions: totalInteractions,
+              uniqueAuthors: new Set(filteredData.map((d) => d.author)).size,
+            });
+          }
+
+          return {
+            name: unitDisplayNames[unit] || unit,
+            unit: unit, // Keep original unit for reference
+            totalPosts,
+            totalReach,
+            totalInteractions,
+            overallTotal,
+            data: filteredData,
+          };
+        });
+
+        // Sort units in a preferred order
+        const unitOrder = ["Official", "TV", "News", "Radio", "Other"];
+        result.sort((a, b) => {
+          const indexA = unitOrder.indexOf(a.unit);
+          const indexB = unitOrder.indexOf(b.unit);
+          return (
+            (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB)
+          );
+        });
+
+        // Debug: Verify total categorized
+        if (process.env.NODE_ENV === "development") {
+          const totalCategorized = result.reduce(
+            (sum, unit) => sum + unit.totalPosts,
+            0
+          );
+          console.log(
+            `✅ Categorized: ${totalCategorized} out of ${data.length} records`
+          );
+          if (totalCategorized !== data.length) {
+            console.warn(
+              `⚠️ Mismatch: ${
+                data.length - totalCategorized
+              } records not categorized`
+            );
+          }
+        }
+      }
     } else {
       // Show channel-level data based on selected tab
       let channels = [];
@@ -137,55 +325,176 @@ const RTMMediaTable = ({
           return [];
       }
 
-      // For radio channels, limit to top 5 unless showing all
-      const channelsToProcess =
-        currentTab === "radio" && !showAllRadioChannels
-          ? channels.slice(0, 5)
-          : channels;
+      // Debug logging
+      console.log("🔍 Channel Data Debug:", {
+        currentTab,
+        unitFilter,
+        hasActiveFilters,
+        channelsData,
+        channelsDataLength: channelsData?.length,
+        dataLength: data.length,
+        willUseDatabase:
+          !hasActiveFilters && channelsData && channelsData.length > 0,
+      });
 
-      return channelsToProcess.map((channel) => {
-        // Filter data by unit and try to match channel name in author or other fields
-        const filteredData = data.filter((item) => {
-          if (currentTab === "official") {
-            return item.unit === unitFilter || item.author === channel;
-          }
-          return (
-            item.unit === unitFilter &&
-            (item.author?.includes(channel) ||
-              item.mentionSnippet?.includes(channel) ||
-              item.author === channel)
-          );
+      // Use accurate database channel counts when available and no filters active
+      if (!hasActiveFilters && channelsData && channelsData.length > 0) {
+        // Filter channelsData for the current unit
+        const unitChannels = channelsData.filter(
+          (ch) => ch.unit === unitFilter
+        );
+
+        console.log("✅ Using database channels data:", {
+          unitFilter,
+          unitChannels,
         });
 
-        const totalPosts = filteredData.length;
-        const totalReach = filteredData.reduce(
-          (sum, item) => sum + (item.reach || 0),
-          0
-        );
-        const totalInteractions = filteredData.reduce(
-          (sum, item) => sum + (item.interactions || 0),
-          0
-        );
-        const overallTotal = totalPosts + totalReach + totalInteractions;
+        // Map the database channel data to our expected format
+        result = unitChannels.map((channelData) => ({
+          name: (channelData.channel || "").trim(), // Trim whitespace
+          totalPosts: channelData.count,
+          totalReach: channelData.totalReach,
+          totalInteractions: channelData.totalInteractions,
+          overallTotal:
+            channelData.count +
+            channelData.totalReach +
+            channelData.totalInteractions,
+          data: [], // No detailed data for database aggregates
+          isFromDatabase: true, // Flag to indicate this is accurate DB data
+          groupName:
+            currentTab === "radio"
+              ? getRadioChannelGroup((channelData.channel || "").trim())
+              : null,
+        }));
 
-        return {
-          name: channel,
-          totalPosts,
-          totalReach,
-          totalInteractions,
-          overallTotal,
-          data: filteredData,
-        };
+        if (process.env.NODE_ENV === "development") {
+          console.log("✅ Using accurate database channel counts:", result);
+        }
+      } else {
+        // Fall back to client-side calculation when filters are active
+        console.log("⚠️ Using client-side channel calculation (filtered)");
+
+        result = channels.map((channel) => {
+          // Filter data by unit and match channel name more precisely
+          const filteredData = data.filter((item) => {
+            if (currentTab === "official") {
+              return item.unit === unitFilter || item.author === channel;
+            }
+
+            // More precise matching logic to avoid false positives
+            if (item.unit !== unitFilter) {
+              return false;
+            }
+
+            // Exact match first (most accurate)
+            if (item.author === channel || item.channel === channel) {
+              return true;
+            }
+
+            // Check if author contains the channel name as a separate word
+            // This prevents "TV1" from matching "TV10" or "TV11"
+            const authorLower = (item.author || "").toLowerCase();
+            const channelLower = channel.toLowerCase();
+
+            // Use word boundaries for more precise matching
+            const regex = new RegExp(
+              `\\b${channelLower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+              "i"
+            );
+
+            return regex.test(authorLower);
+          });
+
+          const totalPosts = filteredData.length;
+          const totalReach = filteredData.reduce(
+            (sum, item) => sum + (item.reach || 0),
+            0
+          );
+          const totalInteractions = filteredData.reduce(
+            (sum, item) => sum + (item.interactions || 0),
+            0
+          );
+          const overallTotal = totalPosts + totalReach + totalInteractions;
+
+          // Debug logging for verification
+          if (
+            filteredData.length > 0 &&
+            process.env.NODE_ENV === "development"
+          ) {
+            console.log(`📊 ${currentTab} - ${channel}:`, {
+              posts: totalPosts,
+              reach: totalReach,
+              interactions: totalInteractions,
+              sampleAuthors: filteredData.slice(0, 3).map((d) => d.author),
+            });
+          }
+
+          return {
+            name: channel,
+            totalPosts,
+            totalReach,
+            totalInteractions,
+            overallTotal,
+            data: filteredData,
+            groupName:
+              currentTab === "radio" ? getRadioChannelGroup(channel) : null,
+          };
+        });
+      }
+    }
+
+    // Apply sorting
+    if (sortBy && result.length > 0) {
+      result.sort((a, b) => {
+        let compareValue = 0;
+
+        switch (sortBy) {
+          case "posts":
+            compareValue = a.totalPosts - b.totalPosts;
+            break;
+          case "reach":
+            compareValue = a.totalReach - b.totalReach;
+            break;
+          case "interactions":
+            compareValue = a.totalInteractions - b.totalInteractions;
+            break;
+          case "groupname":
+            // Sort by group name (only for radio channels)
+            if (a.groupName && b.groupName) {
+              compareValue = a.groupName.localeCompare(b.groupName);
+            } else if (a.groupName) {
+              compareValue = -1;
+            } else if (b.groupName) {
+              compareValue = 1;
+            }
+            break;
+          default:
+            compareValue = 0;
+        }
+
+        return sortOrder === "asc" ? compareValue : -compareValue;
       });
     }
+
+    // For radio channels, limit to top 5 unless showing all (after sorting)
+    if (currentTab === "radio" && !showAllRadioChannels && result.length > 5) {
+      result = result.slice(0, 5);
+    }
+
+    return result;
   }, [
     data,
     currentTab,
     showAllRadioChannels,
+    sortBy,
+    sortOrder,
     channelMapping.Official,
     channelMapping.TV,
     channelMapping.Berita,
     channelMapping.Radio,
+    unitsData,
+    channelsData,
+    hasActiveFilters,
   ]);
 
   // Handle row click for filtering
@@ -269,57 +578,139 @@ const RTMMediaTable = ({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 w-1/4">
-                {getHeaderTitle()}
+                <div className="flex items-center gap-2">
+                  {getHeaderTitle()}
+                  {currentTab === "radio" && (
+                    <button
+                      onClick={() => handleSort("groupname")}
+                      className="ml-2 p-1 hover:bg-gray-200 rounded transition-colors"
+                      title="Sort by Group Name"
+                    >
+                      {sortBy === "groupname" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="h-4 w-4 text-gray-700" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4 text-gray-700" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  )}
+                </div>
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
-                <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => handleSort("posts")}
+                  className="flex items-center justify-center gap-2 w-full hover:bg-gray-100 rounded py-1 transition-colors"
+                  title="Sort by Total Posts"
+                >
                   <MessageSquare className="h-4 w-4 text-blue-600" />
                   Total Posts
-                </div>
+                  {sortBy === "posts" ? (
+                    sortOrder === "asc" ? (
+                      <ArrowUp className="h-4 w-4 text-gray-700" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4 text-gray-700" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
-                <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => handleSort("reach")}
+                  className="flex items-center justify-center gap-2 w-full hover:bg-gray-100 rounded py-1 transition-colors"
+                  title="Sort by Total Reach"
+                >
                   <Users className="h-4 w-4 text-green-600" />
                   Total Reach
-                </div>
+                  {sortBy === "reach" ? (
+                    sortOrder === "asc" ? (
+                      <ArrowUp className="h-4 w-4 text-gray-700" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4 text-gray-700" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
-                <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => handleSort("interactions")}
+                  className="flex items-center justify-center gap-2 w-full hover:bg-gray-100 rounded py-1 transition-colors"
+                  title="Sort by Total Interactions"
+                >
                   <TrendingUp className="h-4 w-4 text-purple-600" />
                   Total Interactions
-                </div>
+                  {sortBy === "interactions" ? (
+                    sortOrder === "asc" ? (
+                      <ArrowUp className="h-4 w-4 text-gray-700" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4 text-gray-700" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {processedData.map((row, index) => (
-              <tr
-                key={row.name}
-                className="hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => handleRowClick(row)}
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <div className="font-medium text-gray-900">{row.name}</div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="text-sm font-medium text-gray-900">
-                    {formatNumber(row.totalPosts)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="text-sm font-medium text-green-600">
-                    {formatNumber(row.totalReach)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="text-sm font-medium text-purple-600">
-                    {formatNumber(row.totalInteractions)}
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {processedData.map((row, index) => {
+              const isRadioChannel = currentTab === "radio";
+              const radioGroup = isRadioChannel
+                ? getRadioChannelGroup(row.name)
+                : null;
+
+              return (
+                <tr
+                  key={row.name}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => handleRowClick(row)}
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-gray-900">
+                        {row.name}
+                      </div>
+                      {radioGroup && (
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            radioGroup === "STESEN IBU PEJABAT"
+                              ? "bg-blue-100 text-blue-800"
+                              : radioGroup === "STESEN NEGERI"
+                              ? "bg-green-100 text-green-800"
+                              : radioGroup === "STESEN DAERAH"
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-orange-100 text-orange-800"
+                          }`}
+                        >
+                          {radioGroup}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-sm font-medium text-gray-900">
+                      {formatNumber(row.totalPosts)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-sm font-medium text-green-600">
+                      {formatNumber(row.totalReach)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="text-sm font-medium text-purple-600">
+                      {formatNumber(row.totalInteractions)}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {/* Empty placeholder rows to maintain consistent height */}
             {Array.from({
               length: Math.max(
