@@ -62,7 +62,7 @@ export function TableauEmbedComponent({
       height={height}
       width={width}
     >
-      <TableauEmbed url={url} sheetName={sheetName} />
+      <TableauEmbed src={url} />
     </EmbedComponent>
   );
 }

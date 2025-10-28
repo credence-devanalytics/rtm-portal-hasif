@@ -6,7 +6,7 @@ const useTrustedTableau = (username: string) => {
 	useEffect(() => {
 		const fetchTicket = async () => {
 			try {
-				const response = await fetch("/api/getTableauTicket", {
+				const response = await fetch("/api/tableau/get-tableau-ticket", {
 					method: "POST",
 				});
 

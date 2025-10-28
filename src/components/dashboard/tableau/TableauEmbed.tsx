@@ -37,17 +37,18 @@ function TableauEmbed({
 	}, [src, height, width, hideTabs, hideToolbar, device]);
 
 	return (
-		<>
-			<Script
-				type="module"
-				src={`${process.env.TABLEAU_SERVER_URL}/javascripts/api/tableau.embedding.3.latest.min.js`}
-				strategy="lazyOnload"
-			/>
-			<div ref={vizRef}>
-				{/* @ts-ignore */}
-				<tableau-viz id="tableauViz"></tableau-viz>
-			</div>
-		</>
-	);
+    <>
+      <Script
+        type="module"
+        // src={`${process.env.TABLEAU_SERVER_URL}/javascripts/api/tableau.embedding.3.latest.min.js`}
+        src="https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"
+        strategy="lazyOnload"
+      />
+      <div ref={vizRef}>
+        {/* @ts-ignore */}
+        <tableau-viz id="tableauViz"></tableau-viz>
+      </div>
+    </>
+  );
 }
 export default TableauEmbed;
