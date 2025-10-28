@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { pbAudience } from "../../../../drizzle/schema";
+import { pberitaAudience } from "../../../../drizzle/schema";
 import { sql, ne } from "drizzle-orm";
 
 export async function GET() {
@@ -10,13 +10,13 @@ export async function GET() {
 		// Fetch audience distribution data, excluding 'All Users'
 		const audienceDistribution = await db
 			.select({
-				audienceName: pbAudience.audienceName,
-				totalUsers: sql`SUM(${pbAudience.totalUsers})`.as("totalUsers"),
+				audienceName: pberitaAudience.audiencename,
+				totalUsers: sql`SUM(${pberitaAudience.totalusers})`.as("totalUsers"),
 			})
-			.from(pbAudience)
-			.where(ne(pbAudience.audienceName, "All Users"))
-			.groupBy(pbAudience.audienceName)
-			.orderBy(sql`SUM(${pbAudience.totalUsers}) DESC`);
+			.from(pberitaAudience)
+			.where(ne(pberitaAudience.audiencename, "All Users"))
+			.groupBy(pberitaAudience.audiencename)
+			.orderBy(sql`SUM(${pberitaAudience.totalusers}) DESC`);
 
 		console.log("PB Audience Distribution data:", audienceDistribution);
 
@@ -35,7 +35,7 @@ export async function GET() {
 		const chartData = audienceDistribution
 			.filter((item) => item.totalUsers > 0) // Only include segments with users
 			.map((item, index) => ({
-				audienceName: item.audienceName,
+				audienceName: item.audiencename,
 				totalUsers: parseInt(item.totalUsers) || 0,
 				fill: colors[index % colors.length],
 				percentage: 0, // Will be calculated below
@@ -70,8 +70,8 @@ export async function GET() {
 					totalSegments,
 					totalUsers: totalAllSegments,
 					largestSegment: {
-						name: largestSegment.audienceName,
-						users: largestSegment.totalUsers,
+						name: largestSegment.audiencename,
+						users: largestSegment.totalusers,
 						percentage: largestSegment.percentage,
 					},
 					avgUsersPerSegment,
@@ -94,3 +94,6 @@ export async function GET() {
 		);
 	}
 }
+
+
+

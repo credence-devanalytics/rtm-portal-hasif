@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { pbPopularPages } from "../../../../drizzle/schema";
+import { pberitaPopularPages } from "../../../../drizzle/schema";
 import { sql } from "drizzle-orm";
 
 export async function GET(request) {
@@ -15,15 +15,15 @@ export async function GET(request) {
 		// Fetch popular pages data
 		const popularPages = await db
 			.select({
-				unifiedScreenClass: pbPopularPages.unifiedScreenClass,
-				screenPageViews: sql`SUM(${pbPopularPages.screenPageViews})`.as(
+				unifiedScreenClass: pberitaPopularPages.unifiedscreenclass,
+				screenPageViews: sql`SUM(${pberitaPopularPages.screenpageviews})`.as(
 					"screenPageViews"
 				),
-				activeUsers: sql`SUM(${pbPopularPages.activeUsers})`.as("activeUsers"),
+				activeUsers: sql`SUM(${pberitaPopularPages.activeusers})`.as("activeUsers"),
 			})
-			.from(pbPopularPages)
-			.groupBy(pbPopularPages.unifiedScreenClass)
-			.orderBy(sql`SUM(${pbPopularPages.screenPageViews}) DESC`)
+			.from(pberitaPopularPages)
+			.groupBy(pberitaPopularPages.unifiedscreenclass)
+			.orderBy(sql`SUM(${pberitaPopularPages.screenpageviews}) DESC`)
 			.limit(limitNum);
 
 		console.log("PB Popular Pages data:", popularPages);
@@ -91,3 +91,6 @@ export async function GET(request) {
 		);
 	}
 }
+
+
+

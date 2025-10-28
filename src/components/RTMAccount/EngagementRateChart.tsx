@@ -137,10 +137,13 @@ const EngagementRateChart = ({
       return platformsData
         .map((p: any) => ({
           platform: p.platform,
-          avgEngagementRate: Number(p.avgEngagementRate?.toFixed(2)) || 0,
-          mentionCount: p.count,
-          totalReach: p.totalReach,
-          totalInteractions: p.totalInteractions,
+          // Handle both old field names (avgEngagementRate) and new field names (engagement_rate_pct)
+          avgEngagementRate: Number(
+            (p.avgEngagementRate || p.engagement_rate_pct || 0).toFixed(2)
+          ),
+          mentionCount: p.count || p.mentions_count || 0,
+          totalReach: p.totalReach || p.total_reach || 0,
+          totalInteractions: p.totalInteractions || p.total_interactions || 0,
           color: getColorForPlatform(p.platform),
         }))
         .sort((a, b) => b.avgEngagementRate - a.avgEngagementRate);

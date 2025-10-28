@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import {
-	pbAudience,
-	pbAudienceRegion,
-	pbFirstUser,
-	pbFirstUserSource,
+	pberitaAudience,
+	pberitaAudienceRegion,
+	pberitaFirstUser,
+	pberitaFirstUserSource,
 } from "../../../../drizzle/schema";
 import { sql, eq } from "drizzle-orm";
 
@@ -15,35 +15,38 @@ export async function GET() {
     // Get the latest date from pb_audience table
     const latestDateResult = await db
       .select({
-        maxDate: sql`MAX(${pbAudience.date})`.as('maxDate')
+        maxDate: sql`MAX(${pberitaAudience.date})`.as('maxDate')
       })
-      .from(pbAudience);
+      .from(pberitaAudience);
 
+    console.log('Latest date result:', latestDateResult);
     const latestDate = latestDateResult[0]?.maxDate || null;
     
     // 1. Total Audience - Sum totalUsers where audienceName = "All Users"
     const totalAudienceResult = await db
       .select({
-        totalUsers: sql`SUM(${pbAudience.totalUsers})`.as('totalUsers')
+        totalUsers: sql`SUM(${pberitaAudience.totalusers})`.as('totalUsers')
       })
-      .from(pbAudience)
-      .where(eq(pbAudience.audienceName, 'All Users'));
+      .from(pberitaAudience)
+      .where(eq(pberitaAudience.audiencename, 'All Users'));
 
+    console.log('Total audience result:', totalAudienceResult);
 		const totalAudience = parseInt(totalAudienceResult[0]?.totalUsers) || 0;
 
 		// 2. Top Region - Most active users by region
 		const topRegionResult = await db
 			.select({
-				region: pbAudienceRegion.region,
-				totalActiveUsers: sql`SUM(${pbAudienceRegion.activeUsers})`.as(
+				region: pberitaAudienceRegion.region,
+				totalActiveUsers: sql`SUM(${pberitaAudienceRegion.activeusers})`.as(
 					"totalActiveUsers"
 				),
 			})
-			.from(pbAudienceRegion)
-			.groupBy(pbAudienceRegion.region)
-			.orderBy(sql`SUM(${pbAudienceRegion.activeUsers}) DESC`)
+			.from(pberitaAudienceRegion)
+			.groupBy(pberitaAudienceRegion.region)
+			.orderBy(sql`SUM(${pberitaAudienceRegion.activeusers}) DESC`)
 			.limit(1);
 
+		console.log('Top region result:', topRegionResult);
 		// Clean up region name
 		let cleanRegionName = "No data";
 		let regionUsers = 0;
@@ -68,12 +71,12 @@ export async function GET() {
 		// 3. Top Traffic Source - Top firstUserPrimaryChannelGroup
 		const topTrafficSourceResult = await db
 			.select({
-				channelGroup: pbFirstUser.firstUserPrimaryChannelGroup,
-				totalUsers: sql`SUM(${pbFirstUser.totalUsers})`.as("totalUsers"),
+				channelGroup: pberitaFirstUser.firstuserprimarychannelgroup,
+				totalUsers: sql`SUM(${pberitaFirstUser.totalusers})`.as("totalUsers"),
 			})
-			.from(pbFirstUser)
-			.groupBy(pbFirstUser.firstUserPrimaryChannelGroup)
-			.orderBy(sql`SUM(${pbFirstUser.totalUsers}) DESC`)
+			.from(pberitaFirstUser)
+			.groupBy(pberitaFirstUser.firstuserprimarychannelgroup)
+			.orderBy(sql`SUM(${pberitaFirstUser.totalusers}) DESC`)
 			.limit(1);
 
 		const topTrafficSource = topTrafficSourceResult[0]
@@ -86,14 +89,14 @@ export async function GET() {
 		// 4. Top External Source - Top main_source
 		const topExternalSourceResult = await db
 			.select({
-				mainSource: pbFirstUserSource.mainSource,
-				totalActiveUsers: sql`SUM(${pbFirstUserSource.activeUsers})`.as(
+				mainSource: pberitaFirstUserSource.mainSource,
+				totalActiveUsers: sql`SUM(${pberitaFirstUserSource.activeusers})`.as(
 					"totalActiveUsers"
 				),
 			})
-			.from(pbFirstUserSource)
-			.groupBy(pbFirstUserSource.mainSource)
-			.orderBy(sql`SUM(${pbFirstUserSource.activeUsers}) DESC`)
+			.from(pberitaFirstUserSource)
+			.groupBy(pberitaFirstUserSource.mainSource)
+			.orderBy(sql`SUM(${pberitaFirstUserSource.activeusers}) DESC`)
 			.limit(1);
 
 		const topExternalSource = topExternalSourceResult[0]
@@ -161,3 +164,6 @@ export async function GET() {
     );
   }
 }
+
+
+

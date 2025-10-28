@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { pbAudience } from "../../../../drizzle/schema";
+import { pberitaAudience } from "../../../../drizzle/schema";
 import { desc, sql } from "drizzle-orm";
 
 export async function GET() {
@@ -10,8 +10,8 @@ export async function GET() {
 		// Fetch audience data from database
 		const audienceData = await db
 			.select()
-			.from(pbAudience)
-			.orderBy(desc(pbAudience.date));
+			.from(pberitaAudience)
+			.orderBy(desc(pberitaAudience.date));
 
 		console.log("PB Audience data:", audienceData);
 
@@ -72,3 +72,6 @@ export async function GET() {
 		);
 	}
 }
+
+
+

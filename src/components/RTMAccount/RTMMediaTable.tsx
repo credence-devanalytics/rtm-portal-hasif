@@ -149,7 +149,16 @@ const RTMMediaTable = ({
 
   // Process data based on current tab
   const processedData = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    // Allow processing if we have unitsData, channelsData, or regular data
+    const hasAnyData =
+      (unitsData && unitsData.data && unitsData.data.length > 0) ||
+      (channelsData && channelsData.data && channelsData.data.length > 0) ||
+      (data && data.length > 0);
+
+    if (!hasAnyData) {
+      console.log("⚠️ No data available for processing");
+      return [];
+    }
 
     let result = [];
 
@@ -158,49 +167,35 @@ const RTMMediaTable = ({
       console.log("🔍 RTMMediaTable Debug:", {
         hasActiveFilters,
         unitsData,
+        unitsDataLength: unitsData?.data?.length,
         dataLength: data.length,
         currentTab,
       });
 
-      // Use accurate database unit counts when available and no filters active
-      if (!hasActiveFilters && unitsData && unitsData.length > 0) {
-        // Map unit names to display names
-        const unitDisplayNames = {
-          Official: "Official",
-          TV: "TV",
-          News: "Berita",
-          Radio: "Radio",
-          Other: "Other",
-        };
+      // ALWAYS use database unit counts - the API already handles filtering
+      if (unitsData && unitsData.data && unitsData.data.length > 0) {
+        console.log(
+          "✅ Using database units data (respects all filters):",
+          unitsData.data
+        );
 
-        console.log("✅ Using database units data:", unitsData);
-
-        result = unitsData.map((unit) => ({
-          name: unitDisplayNames[unit.unit] || unit.unit,
-          unit: unit.unit,
-          totalPosts: unit.count,
+        result = unitsData.data.map((unit) => ({
+          name: unit.name, // Use the name from API (already formatted)
+          unit: unit.name,
+          totalPosts: unit.totalPosts,
           totalReach: unit.totalReach,
-          totalInteractions: unit.totalInteractions,
-          overallTotal: unit.count + unit.totalReach + unit.totalInteractions,
+          totalInteractions: unit.totalEngagement, // Map totalEngagement to totalInteractions
+          overallTotal:
+            unit.totalPosts + unit.totalReach + unit.totalEngagement,
           data: [], // No detailed data for database aggregates
           isFromDatabase: true, // Flag to indicate this is accurate DB data
         }));
-
-        // Sort units in a preferred order
-        const unitOrder = ["Official", "TV", "News", "Radio", "Other"];
-        result.sort((a, b) => {
-          const indexA = unitOrder.indexOf(a.unit);
-          const indexB = unitOrder.indexOf(b.unit);
-          return (
-            (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB)
-          );
-        });
 
         if (process.env.NODE_ENV === "development") {
           console.log("✅ Using accurate database unit counts:", result);
         }
       } else {
-        // Fall back to client-side calculation when filters are active
+        // Only as fallback: if API data not available, try client-side calculation
         // Show unit-level data - Get all unique units from data
         const unitCounts = {};
         data.forEach((item) => {
@@ -331,39 +326,34 @@ const RTMMediaTable = ({
         unitFilter,
         hasActiveFilters,
         channelsData,
-        channelsDataLength: channelsData?.length,
+        channelsDataLength: channelsData?.data?.length,
         dataLength: data.length,
         willUseDatabase:
-          !hasActiveFilters && channelsData && channelsData.length > 0,
+          channelsData && channelsData.data && channelsData.data.length > 0,
       });
 
-      // Use accurate database channel counts when available and no filters active
-      if (!hasActiveFilters && channelsData && channelsData.length > 0) {
-        // Filter channelsData for the current unit
-        const unitChannels = channelsData.filter(
-          (ch) => ch.unit === unitFilter
+      // ALWAYS use database channel counts - the API already handles filtering
+      if (channelsData && channelsData.data && channelsData.data.length > 0) {
+        console.log(
+          "✅ Using database channels data (respects all filters):",
+          channelsData.data
         );
 
-        console.log("✅ Using database channels data:", {
-          unitFilter,
-          unitChannels,
-        });
-
         // Map the database channel data to our expected format
-        result = unitChannels.map((channelData) => ({
-          name: (channelData.channel || "").trim(), // Trim whitespace
-          totalPosts: channelData.count,
+        result = channelsData.data.map((channelData) => ({
+          name: (channelData.name || "").trim(), // Use name from API
+          totalPosts: channelData.totalPosts,
           totalReach: channelData.totalReach,
-          totalInteractions: channelData.totalInteractions,
+          totalInteractions: channelData.totalEngagement, // Map totalEngagement to totalInteractions
           overallTotal:
-            channelData.count +
+            channelData.totalPosts +
             channelData.totalReach +
-            channelData.totalInteractions,
+            channelData.totalEngagement,
           data: [], // No detailed data for database aggregates
           isFromDatabase: true, // Flag to indicate this is accurate DB data
           groupName:
             currentTab === "radio"
-              ? getRadioChannelGroup((channelData.channel || "").trim())
+              ? getRadioChannelGroup((channelData.name || "").trim())
               : null,
         }));
 
@@ -371,8 +361,10 @@ const RTMMediaTable = ({
           console.log("✅ Using accurate database channel counts:", result);
         }
       } else {
-        // Fall back to client-side calculation when filters are active
-        console.log("⚠️ Using client-side channel calculation (filtered)");
+        // Only as fallback: if API data not available, try client-side calculation
+        console.log(
+          "⚠️ Using client-side channel calculation (API data not available)"
+        );
 
         result = channels.map((channel) => {
           // Filter data by unit and match channel name more precisely
@@ -517,16 +509,28 @@ const RTMMediaTable = ({
 
   // Format large numbers
   const formatNumber = (num) => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M";
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + "K";
+    // Handle undefined, null, or non-numeric values
+    if (num === undefined || num === null || isNaN(num)) {
+      return "0";
     }
-    return num.toLocaleString();
+
+    const numValue = Number(num);
+
+    if (numValue >= 1000000) {
+      return (numValue / 1000000).toFixed(1) + "M";
+    } else if (numValue >= 1000) {
+      return (numValue / 1000).toFixed(1) + "K";
+    }
+    return numValue.toLocaleString();
   };
 
-  // Loading state
-  if (!data || data.length === 0) {
+  // Loading state - check if we have unitsData or channelsData available
+  const hasData =
+    unitsData?.data?.length > 0 ||
+    channelsData?.data?.length > 0 ||
+    (data && data.length > 0);
+
+  if (!hasData) {
     return (
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center gap-2 mb-6">
@@ -620,13 +624,13 @@ const RTMMediaTable = ({
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
                 <button
-                  onClick={() => handleSort("reach")}
+                  onClick={() => handleSort("interactions")}
                   className="flex items-center justify-center gap-2 w-full hover:bg-gray-100 rounded py-1 transition-colors"
-                  title="Sort by Total Reach"
+                  title="Sort by Total Engagement"
                 >
-                  <Users className="h-4 w-4 text-green-600" />
-                  Total Reach
-                  {sortBy === "reach" ? (
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                  Total Engagement
+                  {sortBy === "interactions" ? (
                     sortOrder === "asc" ? (
                       <ArrowUp className="h-4 w-4 text-gray-700" />
                     ) : (
@@ -639,13 +643,13 @@ const RTMMediaTable = ({
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 w-1/5">
                 <button
-                  onClick={() => handleSort("interactions")}
+                  onClick={() => handleSort("reach")}
                   className="flex items-center justify-center gap-2 w-full hover:bg-gray-100 rounded py-1 transition-colors"
-                  title="Sort by Total Interactions"
+                  title="Sort by Total Reach"
                 >
-                  <TrendingUp className="h-4 w-4 text-purple-600" />
-                  Total Interactions
-                  {sortBy === "interactions" ? (
+                  <Users className="h-4 w-4 text-green-600" />
+                  Total Reach
+                  {sortBy === "reach" ? (
                     sortOrder === "asc" ? (
                       <ArrowUp className="h-4 w-4 text-gray-700" />
                     ) : (
@@ -699,13 +703,13 @@ const RTMMediaTable = ({
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <div className="text-sm font-medium text-green-600">
-                      {formatNumber(row.totalReach)}
+                    <div className="text-sm font-medium text-purple-600">
+                      {formatNumber(row.totalInteractions)}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <div className="text-sm font-medium text-purple-600">
-                      {formatNumber(row.totalInteractions)}
+                    <div className="text-sm font-medium text-green-600">
+                      {formatNumber(row.totalReach)}
                     </div>
                   </td>
                 </tr>
@@ -744,17 +748,17 @@ const RTMMediaTable = ({
                     processedData.reduce((sum, row) => sum + row.totalPosts, 0)
                   )}
                 </td>
-                <td className="px-6 py-4 text-center font-bold text-green-600">
-                  {formatNumber(
-                    processedData.reduce((sum, row) => sum + row.totalReach, 0)
-                  )}
-                </td>
                 <td className="px-6 py-4 text-center font-bold text-purple-600">
                   {formatNumber(
                     processedData.reduce(
                       (sum, row) => sum + row.totalInteractions,
                       0
                     )
+                  )}
+                </td>
+                <td className="px-6 py-4 text-center font-bold text-green-600">
+                  {formatNumber(
+                    processedData.reduce((sum, row) => sum + row.totalReach, 0)
                   )}
                 </td>
               </tr>
