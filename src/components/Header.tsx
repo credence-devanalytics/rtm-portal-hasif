@@ -21,7 +21,7 @@ export default function Header() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const hideHeaderPaths = ["/login","/change-password"]; // Paths where header not be rendered cosmetic
+  const hideHeaderPaths = ["/login","/change-password","/contact"]; // Paths where header not be rendered cosmetic
   const hideHeader = pathname === "/" ? !session : hideHeaderPaths.some(path => pathname.startsWith(path));
   
   const specialPaths = ["/settings", "/"];
