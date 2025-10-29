@@ -2,8 +2,12 @@ import React from "react";
 import { AuroraBackground } from "@/components/ui/shadcn-io/aurora-background";
 import { Button } from "@/components/ui/button";
 import MedinaLogo from "@/components/MedinaLogo";
+import { Router } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Hero() {
+	const router = useRouter();
+
 	return (
 		<AuroraBackground>
 			{/* Content overlay */}
@@ -29,6 +33,7 @@ export default function Hero() {
 								variant="default"
 								size="lg"
 								className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-semibold rounded-lg text-md inline-flex items-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-orange-500/25 animate-fade-in-up animation-delay-600 shine-hover"
+								onClick={() => router.push("/login")}
 							>
 								<span>Get Started</span>
 								<svg

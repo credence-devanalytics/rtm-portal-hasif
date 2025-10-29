@@ -8,6 +8,55 @@
       "when": 1754378309691,
       "tag": "0000_calm_raider",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1761119853149,
+      "tag": "0001_outstanding_phil_sheldon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761211484203,
+      "tag": "0002_blushing_tigra",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761211837222,
+      "tag": "0003_sad_miss_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1761534577538,
+      "tag": "0004_fast_kate_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1761538977865,
+      "tag": "0005_tough_supernaut",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1761556586962,
+      "tag": "0006_late_bloodscream",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1761645851242,
+      "tag": "0007_rich_vanisher",
+      "breakpoints": true
     }
   ]
 }
