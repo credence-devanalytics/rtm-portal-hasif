@@ -13,7 +13,11 @@ export async function GET() {
 
 		// Fetch historical data for 2022-2024
 		const historicalData = await db
-			.select()
+			.select({
+				saluran: marketingChannelByyear.saluran,
+				year: marketingChannelByyear.year,
+				value: marketingChannelByyear.value,
+			})
 			.from(marketingChannelByyear)
 			.where(
 				and(
