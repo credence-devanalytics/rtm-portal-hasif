@@ -236,6 +236,12 @@ export default function AdminPage() {
         });
     };
 
+    const canDeleteUser = (user: User) => {
+        if (user.role === "superadmin") return false;
+        if (userData?.role === "admin" && user.role === "admin") return false;
+        return true;
+    };
+
     return (
         <div className="space-y-6 px-12">
             {/* Admin Header */}
@@ -440,7 +446,7 @@ export default function AdminPage() {
                                         >
                                             <Edit2 className="w-4 h-4" />
                                         </Button>
-                                        {!isCurrentUser && (
+                                        {!isCurrentUser && canDeleteUser(user) && (
                                             <Button
                                                 onClick={() => deleteUser(user.id)}
                                                 size="sm"
