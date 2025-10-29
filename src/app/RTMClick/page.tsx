@@ -31,12 +31,12 @@ const tableauDashboardData = [
 ];
 
 function TableauEmbedWithTicket({ src }: { src: string }) {
-    // const ticket = useTrustedTableau("User1");
+    const ticket = useTrustedTableau("User1");
 
     return (
         <TableauEmbed
-            // src={`${process.env.TABLEAU_SERVER_URL}/trusted/${ticket}/views/${src}`}
-            src={src}
+            src={`${process.env.TABLEAU_SERVER_URL}/trusted/${ticket}/views/${src}`}
+            // src={src}
             height="600px"
             width="100%"
             hideTabs={true}
