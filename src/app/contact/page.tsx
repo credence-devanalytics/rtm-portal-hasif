@@ -17,18 +17,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AuroraBackground } from "@/components/ui/shadcn-io/aurora-background"
+import MedinaLogo from "@/components/MedinaLogo"
 
-export default function ContactPage() {
-  const [contactReason, setContactReason] = useState("")
-  const [fullName, setFullName] = useState("")
-  const [email, setEmail] = useState("")
-  const [dashboard, setDashboard] = useState("")
-  const [comments, setComments] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
-
-  function ContactForm({
+function ContactForm({
     className,
     contactReason,
     setContactReason,
@@ -44,8 +36,10 @@ export default function ContactPage() {
     setLoading,
     error,
     setError,
-    ...props
-  }) {  
+  ...props
+}) {
+    const router = useRouter()
+    
     const handleSubmit = async (e) => {
       e.preventDefault()
       setLoading(true)
@@ -157,17 +151,15 @@ export default function ContactPage() {
                   </Button>
                 </Field>
                 <FieldDescription className="text-center">
-                  We'll get back to you as soon as possible
+                  Looking to log in? <a href="/login" className="hover:underline">Go to Login</a>
                 </FieldDescription>
               </FieldGroup>
             </form>
             <div className="bg-muted relative hidden md:block overflow-hidden">
-            <img
-              src="/images/credenceoffice.jpg"
-              alt="Image"
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[800px] object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
+              <AuroraBackground className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[800px] object-cover dark:brightness-[0.2] dark:grayscale items-center justify-center">
+                <MedinaLogo className="-translate-x-16"/>
+              </AuroraBackground>
+            </div>
           </CardContent>
         </Card>
         <FieldDescription className="px-6 text-center">
@@ -177,6 +169,15 @@ export default function ContactPage() {
       </div>
     )
   }
+
+export default function ContactPage() {
+  const [contactReason, setContactReason] = useState("")
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [dashboard, setDashboard] = useState("")
+  const [comments, setComments] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
