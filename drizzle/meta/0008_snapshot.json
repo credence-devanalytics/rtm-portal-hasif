@@ -1,0 +1,2805 @@
+{
+  "id": "cfa02394-d577-46ef-b6c6-8885a3a7e221",
+  "prevId": "194ec039-875e-4b39-9bb6-c856e5bf4738",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.user_account": {
+      "name": "user_account",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "accountid": {
+          "name": "accountid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerid": {
+          "name": "providerid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userid": {
+          "name": "userid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accesstoken": {
+          "name": "accesstoken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refreshtoken": {
+          "name": "refreshtoken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idtoken": {
+          "name": "idtoken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accesstokenexpiresat": {
+          "name": "accesstokenexpiresat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refreshtokenexpiresat": {
+          "name": "refreshtokenexpiresat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedat": {
+          "name": "updatedat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_account_userid_user_profile_id_fk": {
+          "name": "user_account_userid_user_profile_id_fk",
+          "tableFrom": "user_account",
+          "tableTo": "user_profile",
+          "columnsFrom": [
+            "userid"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.marketing_channel_bymonth": {
+      "name": "marketing_channel_bymonth",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "report_type": {
+          "name": "report_type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "report_title": {
+          "name": "report_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "saluran": {
+          "name": "saluran",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupby": {
+          "name": "groupby",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "month": {
+          "name": "month",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "name": "value",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insertdate": {
+          "name": "insertdate",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updatedate": {
+          "name": "updatedate",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.marketing_channel_byyear": {
+      "name": "marketing_channel_byyear",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "report_type": {
+          "name": "report_type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "report_title": {
+          "name": "report_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "saluran": {
+          "name": "saluran",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupby": {
+          "name": "groupby",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "name": "value",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insertdate": {
+          "name": "insertdate",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updatedate": {
+          "name": "updatedate",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mentions": {
+      "name": "mentions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mention": {
+          "name": "mention",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "languages": {
+          "name": "languages",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from": {
+          "name": "from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inserttime": {
+          "name": "inserttime",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reach": {
+          "name": "reach",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "databaseinserttime": {
+          "name": "databaseinserttime",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywords": {
+          "name": "keywords",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "locations": {
+          "name": "locations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "autosentiment": {
+          "name": "autosentiment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interaction": {
+          "name": "interaction",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score": {
+          "name": "score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "youtubechannelid": {
+          "name": "youtubechannelid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "viewcount": {
+          "name": "viewcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "likecount": {
+          "name": "likecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commentcount": {
+          "name": "commentcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fullmention": {
+          "name": "fullmention",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tagfeedlocations": {
+          "name": "tagfeedlocations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywordid": {
+          "name": "keywordid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywordname": {
+          "name": "keywordname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupid": {
+          "name": "groupid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupname": {
+          "name": "groupname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywordnames": {
+          "name": "keywordnames",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sourcereach": {
+          "name": "sourcereach",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "influencescore": {
+          "name": "influencescore",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo": {
+          "name": "photo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalphoto": {
+          "name": "originalphoto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photos": {
+          "name": "photos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalphotos": {
+          "name": "originalphotos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "virality": {
+          "name": "virality",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "domain": {
+          "name": "domain",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sharecount": {
+          "name": "sharecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "engagementrate": {
+          "name": "engagementrate",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followerscount": {
+          "name": "followerscount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "facebookpageid": {
+          "name": "facebookpageid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lovecount": {
+          "name": "lovecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wowcount": {
+          "name": "wowcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hahacount": {
+          "name": "hahacount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sadcount": {
+          "name": "sadcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "angrycount": {
+          "name": "angrycount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "totalreactionscount": {
+          "name": "totalreactionscount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mediatype": {
+          "name": "mediatype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authorgender": {
+          "name": "authorgender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twitterprofileid": {
+          "name": "twitterprofileid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favoritecount": {
+          "name": "favoritecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retweetcount": {
+          "name": "retweetcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replycount": {
+          "name": "replycount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quotecount": {
+          "name": "quotecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twitterhandle": {
+          "name": "twitterhandle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tweettype": {
+          "name": "tweettype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagramprofileid": {
+          "name": "instagramprofileid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagramprofilename": {
+          "name": "instagramprofilename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagrampostid": {
+          "name": "instagrampostid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "posttype": {
+          "name": "posttype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tiktokid": {
+          "name": "tiktokid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diggcount": {
+          "name": "diggcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "playcount": {
+          "name": "playcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "videodurationseconds": {
+          "name": "videodurationseconds",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authorfollowercount": {
+          "name": "authorfollowercount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subreddit": {
+          "name": "subreddit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reddittype": {
+          "name": "reddittype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditfullname": {
+          "name": "redditfullname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditscore": {
+          "name": "redditscore",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditcommentid": {
+          "name": "redditcommentid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditparentlinkid": {
+          "name": "redditparentlinkid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insertdate": {
+          "name": "insertdate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "downloaddate": {
+          "name": "downloaddate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "(CURRENT_DATE + '1 day'::interval)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mentions_classify": {
+      "name": "mentions_classify",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mention": {
+          "name": "mention",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "languages": {
+          "name": "languages",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from": {
+          "name": "from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inserttime": {
+          "name": "inserttime",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reach": {
+          "name": "reach",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "databaseinserttime": {
+          "name": "databaseinserttime",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywords": {
+          "name": "keywords",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "locations": {
+          "name": "locations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "autosentiment": {
+          "name": "autosentiment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interaction": {
+          "name": "interaction",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score": {
+          "name": "score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "youtubechannelid": {
+          "name": "youtubechannelid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "viewcount": {
+          "name": "viewcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "likecount": {
+          "name": "likecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commentcount": {
+          "name": "commentcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fullmention": {
+          "name": "fullmention",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tagfeedlocations": {
+          "name": "tagfeedlocations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywordid": {
+          "name": "keywordid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channelgroup": {
+          "name": "channelgroup",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupid": {
+          "name": "groupid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupname": {
+          "name": "groupname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channels": {
+          "name": "channels",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sourcereach": {
+          "name": "sourcereach",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "influencescore": {
+          "name": "influencescore",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo": {
+          "name": "photo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalphoto": {
+          "name": "originalphoto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photos": {
+          "name": "photos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalphotos": {
+          "name": "originalphotos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "virality": {
+          "name": "virality",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "domain": {
+          "name": "domain",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sharecount": {
+          "name": "sharecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "engagementrate": {
+          "name": "engagementrate",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followerscount": {
+          "name": "followerscount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "facebookpageid": {
+          "name": "facebookpageid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lovecount": {
+          "name": "lovecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wowcount": {
+          "name": "wowcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hahacount": {
+          "name": "hahacount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sadcount": {
+          "name": "sadcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "angrycount": {
+          "name": "angrycount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "totalreactionscount": {
+          "name": "totalreactionscount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mediatype": {
+          "name": "mediatype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authorgender": {
+          "name": "authorgender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twitterprofileid": {
+          "name": "twitterprofileid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favoritecount": {
+          "name": "favoritecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retweetcount": {
+          "name": "retweetcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replycount": {
+          "name": "replycount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quotecount": {
+          "name": "quotecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twitterhandle": {
+          "name": "twitterhandle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tweettype": {
+          "name": "tweettype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagramprofileid": {
+          "name": "instagramprofileid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagramprofilename": {
+          "name": "instagramprofilename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagrampostid": {
+          "name": "instagrampostid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "posttype": {
+          "name": "posttype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tiktokid": {
+          "name": "tiktokid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diggcount": {
+          "name": "diggcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "playcount": {
+          "name": "playcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "videodurationseconds": {
+          "name": "videodurationseconds",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authorfollowercount": {
+          "name": "authorfollowercount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subreddit": {
+          "name": "subreddit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reddittype": {
+          "name": "reddittype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditfullname": {
+          "name": "redditfullname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditscore": {
+          "name": "redditscore",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditcommentid": {
+          "name": "redditcommentid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditparentlinkid": {
+          "name": "redditparentlinkid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insertdate": {
+          "name": "insertdate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "topic": {
+          "name": "topic",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sentiment": {
+          "name": "sentiment",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "input_tokens": {
+          "name": "input_tokens",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "output_tokens": {
+          "name": "output_tokens",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_tokens": {
+          "name": "total_tokens",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "downloaddate": {
+          "name": "downloaddate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "(CURRENT_DATE + '1 day'::interval)"
+        },
+        "idpk": {
+          "name": "idpk",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mentions_classify_public": {
+      "name": "mentions_classify_public",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mention": {
+          "name": "mention",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "languages": {
+          "name": "languages",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from": {
+          "name": "from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inserttime": {
+          "name": "inserttime",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reach": {
+          "name": "reach",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "databaseinserttime": {
+          "name": "databaseinserttime",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywords": {
+          "name": "keywords",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "locations": {
+          "name": "locations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "autosentiment": {
+          "name": "autosentiment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interaction": {
+          "name": "interaction",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score": {
+          "name": "score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "youtubechannelid": {
+          "name": "youtubechannelid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "viewcount": {
+          "name": "viewcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "likecount": {
+          "name": "likecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commentcount": {
+          "name": "commentcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fullmention": {
+          "name": "fullmention",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tagfeedlocations": {
+          "name": "tagfeedlocations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywordid": {
+          "name": "keywordid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channelgroup": {
+          "name": "channelgroup",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupid": {
+          "name": "groupid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupname": {
+          "name": "groupname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channels": {
+          "name": "channels",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sourcereach": {
+          "name": "sourcereach",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "influencescore": {
+          "name": "influencescore",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo": {
+          "name": "photo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalphoto": {
+          "name": "originalphoto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photos": {
+          "name": "photos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalphotos": {
+          "name": "originalphotos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "virality": {
+          "name": "virality",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "domain": {
+          "name": "domain",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sharecount": {
+          "name": "sharecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "engagementrate": {
+          "name": "engagementrate",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followerscount": {
+          "name": "followerscount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "facebookpageid": {
+          "name": "facebookpageid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lovecount": {
+          "name": "lovecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wowcount": {
+          "name": "wowcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hahacount": {
+          "name": "hahacount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sadcount": {
+          "name": "sadcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "angrycount": {
+          "name": "angrycount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "totalreactionscount": {
+          "name": "totalreactionscount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mediatype": {
+          "name": "mediatype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authorgender": {
+          "name": "authorgender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twitterprofileid": {
+          "name": "twitterprofileid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favoritecount": {
+          "name": "favoritecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retweetcount": {
+          "name": "retweetcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replycount": {
+          "name": "replycount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quotecount": {
+          "name": "quotecount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twitterhandle": {
+          "name": "twitterhandle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tweettype": {
+          "name": "tweettype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagramprofileid": {
+          "name": "instagramprofileid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagramprofilename": {
+          "name": "instagramprofilename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagrampostid": {
+          "name": "instagrampostid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "posttype": {
+          "name": "posttype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tiktokid": {
+          "name": "tiktokid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diggcount": {
+          "name": "diggcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "playcount": {
+          "name": "playcount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "videodurationseconds": {
+          "name": "videodurationseconds",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authorfollowercount": {
+          "name": "authorfollowercount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subreddit": {
+          "name": "subreddit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reddittype": {
+          "name": "reddittype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditfullname": {
+          "name": "redditfullname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditscore": {
+          "name": "redditscore",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditcommentid": {
+          "name": "redditcommentid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditparentlinkid": {
+          "name": "redditparentlinkid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insertdate": {
+          "name": "insertdate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "topic": {
+          "name": "topic",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sentiment": {
+          "name": "sentiment",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "input_tokens": {
+          "name": "input_tokens",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "output_tokens": {
+          "name": "output_tokens",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_tokens": {
+          "name": "total_tokens",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "downloaddate": {
+          "name": "downloaddate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_DATE"
+        },
+        "idpk": {
+          "name": "idpk",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pberita_audience_age": {
+      "name": "pberita_audience_age",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "useragebracket": {
+          "name": "useragebracket",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hour": {
+          "name": "hour",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activeusers": {
+          "name": "activeusers",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "newusers": {
+          "name": "newusers",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_pberita_audience_age_useragebracket_date_hour": {
+          "name": "uq_pberita_audience_age_useragebracket_date_hour",
+          "nullsNotDistinct": false,
+          "columns": [
+            "useragebracket",
+            "date",
+            "hour"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pberita_audience_gender": {
+      "name": "pberita_audience_gender",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "usergender": {
+          "name": "usergender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hour": {
+          "name": "hour",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activeusers": {
+          "name": "activeusers",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "newusers": {
+          "name": "newusers",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_pberita_audience_gender_usergender_date_hour": {
+          "name": "uq_pberita_audience_gender_usergender_date_hour",
+          "nullsNotDistinct": false,
+          "columns": [
+            "usergender",
+            "date",
+            "hour"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rtmklik_age": {
+      "name": "rtmklik_age",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hour": {
+          "name": "hour",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "age": {
+          "name": "age",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metric": {
+          "name": "metric",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "name": "value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_rtmklik_age_age_hour_date_metric": {
+          "name": "uq_rtmklik_age_age_hour_date_metric",
+          "nullsNotDistinct": false,
+          "columns": [
+            "date",
+            "hour",
+            "age",
+            "metric"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rtmklik_gender": {
+      "name": "rtmklik_gender",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hour": {
+          "name": "hour",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gender": {
+          "name": "gender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metric": {
+          "name": "metric",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "name": "value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_rtmklik_gender_gender_hour_date_metric": {
+          "name": "uq_rtmklik_gender_gender_hour_date_metric",
+          "nullsNotDistinct": false,
+          "columns": [
+            "date",
+            "hour",
+            "gender",
+            "metric"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_session": {
+      "name": "user_session",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "expiresat": {
+          "name": "expiresat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedat": {
+          "name": "updatedat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ipaddress": {
+          "name": "ipaddress",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "useragent": {
+          "name": "useragent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userid": {
+          "name": "userid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_session_userid_user_profile_id_fk": {
+          "name": "user_session_userid_user_profile_id_fk",
+          "tableFrom": "user_session",
+          "tableTo": "user_profile",
+          "columnsFrom": [
+            "userid"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_session_token_unique": {
+          "name": "user_session_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.social_media_data": {
+      "name": "social_media_data",
+      "schema": "",
+      "columns": {
+        "readable_time": {
+          "name": "readable_time",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mention": {
+          "name": "mention",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "languages": {
+          "name": "languages",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from": {
+          "name": "from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inserttime": {
+          "name": "inserttime",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo": {
+          "name": "photo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalphoto": {
+          "name": "originalphoto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photos": {
+          "name": "photos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalphotos": {
+          "name": "originalphotos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reach": {
+          "name": "reach",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "databaseinserttime": {
+          "name": "databaseinserttime",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywords": {
+          "name": "keywords",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "locations": {
+          "name": "locations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "autosentiment": {
+          "name": "autosentiment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sourcereach": {
+          "name": "sourcereach",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interaction": {
+          "name": "interaction",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "influencescore": {
+          "name": "influencescore",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followerscount": {
+          "name": "followerscount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score": {
+          "name": "score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "facebookpageid": {
+          "name": "facebookpageid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "likecount": {
+          "name": "likecount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lovecount": {
+          "name": "lovecount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wowcount": {
+          "name": "wowcount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hahacount": {
+          "name": "hahacount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sadcount": {
+          "name": "sadcount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "angrycount": {
+          "name": "angrycount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "totalreactionscount": {
+          "name": "totalreactionscount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commentcount": {
+          "name": "commentcount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sharecount": {
+          "name": "sharecount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mediatype": {
+          "name": "mediatype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fullmention": {
+          "name": "fullmention",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tagfeedlocations": {
+          "name": "tagfeedlocations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "engagementrate": {
+          "name": "engagementrate",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywordid": {
+          "name": "keywordid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywordname": {
+          "name": "keywordname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupid": {
+          "name": "groupid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "groupname": {
+          "name": "groupname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywordnames": {
+          "name": "keywordnames",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authorgender": {
+          "name": "authorgender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twitterprofileid": {
+          "name": "twitterprofileid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favoritecount": {
+          "name": "favoritecount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retweetcount": {
+          "name": "retweetcount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replycount": {
+          "name": "replycount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quotecount": {
+          "name": "quotecount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twitterhandle": {
+          "name": "twitterhandle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tweettype": {
+          "name": "tweettype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "virality": {
+          "name": "virality",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "domain": {
+          "name": "domain",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagramprofileid": {
+          "name": "instagramprofileid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagramprofilename": {
+          "name": "instagramprofilename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagrampostid": {
+          "name": "instagrampostid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "posttype": {
+          "name": "posttype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "viewcount": {
+          "name": "viewcount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "youtubechannelid": {
+          "name": "youtubechannelid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tiktokid": {
+          "name": "tiktokid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diggcount": {
+          "name": "diggcount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "playcount": {
+          "name": "playcount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "videodurationseconds": {
+          "name": "videodurationseconds",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authorfollowercount": {
+          "name": "authorfollowercount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subreddit": {
+          "name": "subreddit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reddittype": {
+          "name": "reddittype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditfullname": {
+          "name": "redditfullname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditscore": {
+          "name": "redditscore",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditcommentid": {
+          "name": "redditcommentid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redditparentlinkid": {
+          "name": "redditparentlinkid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tweetsourcename": {
+          "name": "tweetsourcename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tweetsourceurl": {
+          "name": "tweetsourceurl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sub_category": {
+          "name": "sub_category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sentiment": {
+          "name": "sentiment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "input_tokens": {
+          "name": "input_tokens",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "output_tokens": {
+          "name": "output_tokens",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_access": {
+      "name": "user_access",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userid": {
+          "name": "userid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "socmedacc": {
+          "name": "socmedacc",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "socmedsent": {
+          "name": "socmedsent",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "rtmklik": {
+          "name": "rtmklik",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "mytv": {
+          "name": "mytv",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "astro": {
+          "name": "astro",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "unifitv": {
+          "name": "unifitv",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "wartaberita": {
+          "name": "wartaberita",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "marketing": {
+          "name": "marketing",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "permission": {
+          "name": "permission",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedat": {
+          "name": "updatedat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_access_userid_user_profile_id_fk": {
+          "name": "user_access_userid_user_profile_id_fk",
+          "tableFrom": "user_access",
+          "tableTo": "user_profile",
+          "columnsFrom": [
+            "userid"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_profile": {
+      "name": "user_profile",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
+        "position": {
+          "name": "position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "systemid": {
+          "name": "systemid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "taskrole": {
+          "name": "taskrole",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "emailverified": {
+          "name": "emailverified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedat": {
+          "name": "updatedat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_profile_email_unique": {
+          "name": "user_profile_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_verification": {
+      "name": "user_verification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expiresat": {
+          "name": "expiresat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updatedat": {
+          "name": "updatedat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

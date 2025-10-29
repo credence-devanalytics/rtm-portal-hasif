@@ -21,6 +21,10 @@ test_*.mjs
 test_*.ts
 test_*.jsx
 test_*.tsx
+test_*.html
+test_*.sql
+/public/test_*.html
+/*.html
 check_*.js
 check_*.mjs
 check_*.ts

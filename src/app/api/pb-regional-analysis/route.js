@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import {
-	pbAudienceRegion,
-	pbAudienceRegionGender,
+	pberitaAudienceRegion,
+	pberitaAudienceRegionGender,
 } from "../../../../drizzle/schema";
 import { sql } from "drizzle-orm";
 
@@ -17,20 +17,20 @@ export async function GET(request) {
 			// Combined region and gender analysis
 			const regionGenderData = await db
 				.select({
-					region: pbAudienceRegionGender.region,
-					userGender: pbAudienceRegionGender.userGender,
-					totalActiveUsers: sql`SUM(${pbAudienceRegionGender.activeUsers})`.as(
+					region: pberitaAudienceRegionGender.region,
+					userGender: pberitaAudienceRegionGender.usergender,
+					totalActiveUsers: sql`SUM(${pberitaAudienceRegionGender.activeusers})`.as(
 						"totalActiveUsers"
 					),
-					totalNewUsers: sql`SUM(${pbAudienceRegionGender.newUsers})`.as(
+					totalNewUsers: sql`SUM(${pberitaAudienceRegionGender.newusers})`.as(
 						"totalNewUsers"
 					),
 					recordCount: sql`COUNT(*)`.as("recordCount"),
 				})
-				.from(pbAudienceRegionGender)
+				.from(pberitaAudienceRegionGender)
 				.groupBy(
-					pbAudienceRegionGender.region,
-					pbAudienceRegionGender.userGender
+					pberitaAudienceRegionGender.region,
+					pberitaAudienceRegionGender.usergender
 				);
 
 			console.log("PB Region-Gender data:", regionGenderData);
@@ -66,17 +66,17 @@ export async function GET(request) {
 		// Regular region analysis
 		const regionData = await db
 			.select({
-				region: pbAudienceRegion.region,
-				totalActiveUsers: sql`SUM(${pbAudienceRegion.activeUsers})`.as(
+				region: pberitaAudienceRegion.region,
+				totalActiveUsers: sql`SUM(${pberitaAudienceRegion.activeusers})`.as(
 					"totalActiveUsers"
 				),
-				totalNewUsers: sql`SUM(${pbAudienceRegion.newUsers})`.as(
+				totalNewUsers: sql`SUM(${pberitaAudienceRegion.newusers})`.as(
 					"totalNewUsers"
 				),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
 			})
-			.from(pbAudienceRegion)
-			.groupBy(pbAudienceRegion.region);
+			.from(pberitaAudienceRegion)
+			.groupBy(pberitaAudienceRegion.region);
 
 		console.log("PB Region data:", regionData);
 
@@ -102,7 +102,7 @@ export async function GET(request) {
 		});
 
 		// Sort by active users descending
-		chartData.sort((a, b) => b.activeUsers - a.activeUsers);
+		chartData.sort((a, b) => b.activeusers - a.activeusers);
 
 		// Find top regions
 		const topRegion = chartData[0] || {};
@@ -119,12 +119,12 @@ export async function GET(request) {
 						0
 					),
 					topRegion: topRegion.region || "N/A",
-					topRegionUsers: topRegion.activeUsers || 0,
+					topRegionUsers: topRegion.activeusers || 0,
 					topRegionPercentage: topRegion.percentage || 0,
 					regionCount: chartData.length,
 					topRegions: topRegions.map((r) => ({
 						region: r.region,
-						users: r.activeUsers,
+						users: r.activeusers,
 						percentage: r.percentage,
 					})),
 				},
@@ -146,3 +146,6 @@ export async function GET(request) {
 		);
 	}
 }
+
+
+

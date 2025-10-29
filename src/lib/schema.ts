@@ -465,14 +465,16 @@ export const users = pgTable("user_profile", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
 	email: text("email").notNull().unique(),
-	role: text("role").notNull().default("user"), 	// peranan dalam sistem, user|admin|superadmin
-	position: text("position"),  					// jawatan 
-	systemId: text("systemid"),  					// user ID based on excel sheet
-	taskRole: text("taskrole"), 					// peranan tugas
+	role: text("role").notNull().default("user"), 			// peranan dalam sistem, user|admin|superadmin
+	position: text("position"),  							// jawatan 
+	systemId: text("systemid"),  							// user ID based on excel sheet
+	taskRole: text("taskrole"), 							// peranan tugas
 	emailVerified: boolean("emailverified"),
 	image: text("image"),
 	createdAt: timestamp("createdat").notNull(),
 	updatedAt: timestamp("updatedat").notNull(),
+	status: text("status").notNull().default("pending"), 	// pending | active | new | disabled
+
 });
 
 export const sessions = pgTable("user_session", {

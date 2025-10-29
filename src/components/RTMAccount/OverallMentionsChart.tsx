@@ -15,10 +15,42 @@ import {
 
 // Using the same sentimentTrend data source from your original component
 
-const OverallMentionsChart = ({ mentionsOverTime }) => {
+const OverallMentionsChart = ({
+  mentionsOverTime,
+  onFilterChange = null,
+  activeFilters = {} as any,
+}) => {
   if (!mentionsOverTime || mentionsOverTime.length === 0) {
     return <div>No data available</div>;
   }
+
+  // Handle platform filter on legend click
+  const handleLegendClick = (data: any) => {
+    if (onFilterChange) {
+      const platformName = data.value;
+      // Map display name to actual platform value
+      const platformMap: any = {
+        Facebook: "Facebook",
+        Instagram: "Instagram",
+        Twitter: "Twitter",
+        TikTok: "TikTok",
+        YouTube: "YouTube",
+        Reddit: "Reddit",
+        LinkedIn: "LinkedIn",
+      };
+
+      const actualPlatform = platformMap[platformName] || platformName;
+
+      // Toggle filter - if already filtered by this platform, clear it
+      if (
+        activeFilters.platform?.toLowerCase() === actualPlatform.toLowerCase()
+      ) {
+        onFilterChange("platform", null);
+      } else {
+        onFilterChange("platform", actualPlatform);
+      }
+    }
+  };
   // Calculate total mentions for each date
   const overallData = mentionsOverTime.map((day) => {
     const total =

@@ -29,12 +29,32 @@ export default function AccountPage() {
         setIsLoading(true);
         
         try {
-            // TODO: Implement full name change API call
-            console.log("Changing full name to:", fullName);
-            alert("Full name change functionality to be implemented");
+            const response = await fetch('/api/user/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: fullName,
+                    email: email
+                })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert('Profile updated successfully!');
+                // Update local session data if needed
+                if (session?.user) {
+                    session.user.name = data.user.name;
+                    session.user.email = data.user.email;
+                }
+            } else {
+                alert(data.error || 'Failed to update profile');
+            }
         } catch (error) {
-            console.error("Error changing full name:", error);
-            alert("Error changing full name. Please try again.");
+            console.error("Error updating profile:", error);
+            alert("Error updating profile. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -56,12 +76,27 @@ export default function AccountPage() {
         setIsLoading(true);
         
         try {
-            // TODO: Implement password change API call
-            console.log("Changing password");
-            alert("Password change functionality to be implemented");
-            setCurrentPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
+            const response = await fetch('/api/user/password', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newPassword
+                })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert('Password updated successfully!');
+                setCurrentPassword("");
+                setNewPassword("");
+                setConfirmPassword("");
+            } else {
+                alert(data.error || 'Failed to update password');
+            }
         } catch (error) {
             console.error("Error changing password:", error);
             alert("Error changing password. Please try again.");

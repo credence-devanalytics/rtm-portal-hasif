@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { pbAudienceAge } from "../../../../drizzle/schema";
+import { pberitaAudienceAge } from "../../../../drizzle/schema";
 import { sql } from "drizzle-orm";
 
 export async function GET() {
@@ -10,15 +10,15 @@ export async function GET() {
 		// Fetch age demographics data and group by age bracket
 		const ageData = await db
 			.select({
-				userAgeBracket: pbAudienceAge.userAgeBracket,
-				totalActiveUsers: sql`SUM(${pbAudienceAge.activeUsers})`.as(
+				userAgeBracket: pberitaAudienceAge.useragebracket,
+				totalActiveUsers: sql`SUM(${pberitaAudienceAge.activeusers})`.as(
 					"totalActiveUsers"
 				),
-				totalNewUsers: sql`SUM(${pbAudienceAge.newUsers})`.as("totalNewUsers"),
+				totalNewUsers: sql`SUM(${pberitaAudienceAge.newusers})`.as("totalNewUsers"),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
 			})
-			.from(pbAudienceAge)
-			.groupBy(pbAudienceAge.userAgeBracket);
+			.from(pberitaAudienceAge)
+			.groupBy(pberitaAudienceAge.useragebracket);
 
 		console.log("PB Age data:", ageData);
 
@@ -58,7 +58,7 @@ export async function GET() {
 
 		// Find dominant age group
 		const dominantAgeGroup = chartData.reduce(
-			(max, item) => (item.activeUsers > max.activeUsers ? item : max),
+			(max, item) => (item.activeUsers > max.activeusers ? item : max),
 			chartData[0] || {}
 		);
 
@@ -93,3 +93,6 @@ export async function GET() {
 		);
 	}
 }
+
+
+
