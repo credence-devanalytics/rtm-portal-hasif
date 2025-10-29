@@ -29,8 +29,6 @@ export const mytvViewership = pgTable(
 		pageNum: integer("page_num"),
 		tableIdx: integer("table_idx"),
 		pageTitle: text("page_title"),
-		insertedAt: timestamp("inserted_at", { mode: "string" }).defaultNow(),
-		updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
 	},
 	(table) => [
 		unique("uq_viewership").on(

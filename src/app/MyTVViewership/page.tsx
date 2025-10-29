@@ -69,6 +69,13 @@ const MyTVViewershipPage = () => {
 		sortOrder: "desc",
 	});
 
+	// Pagination State
+	const [currentPage, setCurrentPage] = useState(1);
+	const [itemsPerPage] = useState(50); // Match the API default limit
+
+	// Ref for scrolling to table
+	const tableRef = React.useRef<HTMLDivElement>(null);
+
 	// Available options for filters
 	const availableChannels = [
 		"TV1",
@@ -90,6 +97,10 @@ const MyTVViewershipPage = () => {
 			Object.entries(filters).forEach(([key, value]) => {
 				if (value && value !== "all") params.append(key, value);
 			});
+			
+			// Add pagination parameters
+			params.append("page", currentPage.toString());
+			params.append("limit", itemsPerPage.toString());
 
 			const response = await fetch(`/api/mytv-viewership?${params}`);
 
@@ -106,12 +117,19 @@ const MyTVViewershipPage = () => {
 		} finally {
 			setLoading(false);
 		}
-	}, [filters]);
+	}, [filters, currentPage, itemsPerPage]);
 
 	// Initial data fetch
 	useEffect(() => {
 		fetchData();
 	}, [fetchData]);
+
+	// Scroll to table when page changes (after data loads)
+	useEffect(() => {
+		if (!loading && currentPage > 1 && tableRef.current) {
+			tableRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}
+	}, [loading, currentPage]);
 
 	// Handle filter changes
 	const handleFilterChange = (filterType, value) => {
@@ -119,6 +137,7 @@ const MyTVViewershipPage = () => {
 			...prev,
 			[filterType]: value,
 		}));
+		setCurrentPage(1); // Reset to first page when filters change
 	};
 
 	const applyFilters = () => {
@@ -133,6 +152,24 @@ const MyTVViewershipPage = () => {
 			sortBy: "viewers",
 			sortOrder: "desc",
 		});
+		setCurrentPage(1); // Reset to first page
+	};
+
+	// Pagination handlers
+	const handleNextPage = () => {
+		if (data?.pagination?.hasNext) {
+			setCurrentPage((prev) => prev + 1);
+		}
+	};
+
+	const handlePreviousPage = () => {
+		if (data?.pagination?.hasPrev) {
+			setCurrentPage((prev) => prev - 1);
+		}
+	};
+
+	const handlePageChange = (newPage: number) => {
+		setCurrentPage(newPage);
 	};
 
 	// Format number utility
@@ -392,7 +429,7 @@ const MyTVViewershipPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
                     {/* Logo on the left */}
-                    <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <div className="shrink-0 pl-6 pr-4 py-1">
                       <img
                         src="/channel-logos/new-size-tv1.png"
                         alt="TV1 Logo"
@@ -442,7 +479,7 @@ const MyTVViewershipPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
                     {/* Logo on the left */}
-                    <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <div className="shrink-0 pl-6 pr-4 py-1">
                       <img
                         src="/channel-logos/new-size-tv2.png"
                         alt="TV2 Logo"
@@ -492,7 +529,7 @@ const MyTVViewershipPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
                     {/* Logo on the left */}
-                    <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <div className="shrink-0 pl-6 pr-4 py-1">
                       <img
                         src="/channel-logos/new-size-tv6.png"
                         alt="TV6 Logo"
@@ -542,7 +579,7 @@ const MyTVViewershipPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
                     {/* Logo on the left */}
-                    <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <div className="shrink-0 pl-6 pr-4 py-1">
                       <img
                         src="/channel-logos/new-size-okey tv.png"
                         alt="OKEY Logo"
@@ -592,7 +629,7 @@ const MyTVViewershipPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
                     {/* Logo on the left */}
-                    <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <div className="shrink-0 pl-6 pr-4 py-1">
                       <img
                         src="/channel-logos/new-size-sukan rtm.png"
                         alt="SUKAN RTM Logo"
@@ -642,7 +679,7 @@ const MyTVViewershipPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
                     {/* Logo on the left */}
-                    <div className="flex-shrink-0 pl-6 pr-4 py-1">
+                    <div className="shrink-0 pl-6 pr-4 py-1">
                       <img
                         src="/channel-logos/new-size-berita rtm.png"
                         alt="BERITA RTM Logo"
@@ -896,7 +933,7 @@ const MyTVViewershipPage = () => {
 			</div>
 
 			{/* Data Table */}
-			<div className="grid gap-6 lg:grid-cols-1">
+			<div className="grid gap-6 lg:grid-cols-1" ref={tableRef}>
 				{data && (
 					<Card className="">
 						<CardHeader className="">
@@ -957,18 +994,30 @@ const MyTVViewershipPage = () => {
 							{data.pagination && (
 								<div className="mt-4 flex items-center justify-between text-sm text-gray-600">
 									<span>
-										Showing {data.pagination.page} of{" "}
-										{data.pagination.totalPages} pages ({data.pagination.total}{" "}
+										Showing page {data.pagination.page} of{" "}
+										{data.pagination.totalPages} ({data.pagination.total}{" "}
 										total records)
 									</span>
 									<div className="flex space-x-2">
 										{data.pagination.hasPrev && (
-											<Button variant="outline" size="sm" className="">
+											<Button
+												variant="outline"
+												size="sm"
+												className=""
+												onClick={handlePreviousPage}
+												disabled={loading}
+											>
 												Previous
 											</Button>
 										)}
 										{data.pagination.hasNext && (
-											<Button variant="outline" size="sm" className="">
+											<Button
+												variant="outline"
+												size="sm"
+												className=""
+												onClick={handleNextPage}
+												disabled={loading}
+											>
 												Next
 											</Button>
 										)}
