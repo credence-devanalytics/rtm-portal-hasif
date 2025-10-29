@@ -41,9 +41,9 @@ const PlatformMentionsChart = ({
 
   // Process the daily channel data to get top channels by total posts
   const processedData = useMemo(() => {
-    // Check if author/channel filter is active (for cross-filtering)
-    const hasAuthorFilter =
-      (activeFilters as any)?.author && (activeFilters as any).author !== "";
+    // Check if channel filter is active (for cross-filtering)
+    const hasChannelFilter =
+      (activeFilters as any)?.channel && (activeFilters as any).channel !== "";
 
     // Use API data if available
     if (dailyChannelData && dailyChannelData.length > 0) {
@@ -55,6 +55,12 @@ const PlatformMentionsChart = ({
         return acc;
       }, {} as Record<string, number>);
 
+      // Calculate grand total (all channels, all posts in filtered data)
+      const grandTotal = Object.values(channelTotals).reduce(
+        (sum: number, count) => sum + Number(count),
+        0
+      );
+
       // Sort by total and get top N
       let topChannels = Object.entries(channelTotals)
         .sort(([, a], [, b]) => (b as number) - (a as number))
@@ -64,20 +70,24 @@ const PlatformMentionsChart = ({
           posts: total,
         }));
 
-      // If author filter is active, only show that channel
-      if (hasAuthorFilter) {
-        const targetAuthor = (activeFilters as any).author;
+      // If channel filter is active, only show that channel
+      if (hasChannelFilter) {
+        const targetChannel = (activeFilters as any).channel;
         topChannels = topChannels.filter(
-          (item) => item.channel === targetAuthor
+          (item) => item.channel === targetChannel
         );
       }
 
-      return { data: topChannels, channels: topChannels.map((c) => c.channel) };
+      return { 
+        data: topChannels, 
+        channels: topChannels.map((c) => c.channel),
+        grandTotal, // Include grand total for display
+      };
     }
 
     // Fallback: process from raw filtered data
     if (!data || data.length === 0) {
-      return { data: [], channels: [] };
+      return { data: [], channels: [], grandTotal: 0 };
     }
 
     // Count by channel
@@ -86,6 +96,12 @@ const PlatformMentionsChart = ({
       if (!item.channel) return;
       channelTotals[item.channel] = (channelTotals[item.channel] || 0) + 1;
     });
+
+    // Calculate grand total
+    const grandTotal = Object.values(channelTotals).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
     // Get top channels
     let topChannels = Object.entries(channelTotals)
@@ -96,16 +112,22 @@ const PlatformMentionsChart = ({
         posts: total,
       }));
 
-    // Filter by author if needed
-    if (hasAuthorFilter) {
-      const targetAuthor = (activeFilters as any).author;
-      topChannels = topChannels.filter((item) => item.channel === targetAuthor);
+    // Filter by channel if needed
+    if (hasChannelFilter) {
+      const targetChannel = (activeFilters as any).channel;
+      topChannels = topChannels.filter(
+        (item) => item.channel === targetChannel
+      );
     }
 
-    return { data: topChannels, channels: topChannels.map((c) => c.channel) };
+    return { 
+      data: topChannels, 
+      channels: topChannels.map((c) => c.channel),
+      grandTotal,
+    };
   }, [data, dailyChannelData, activeFilters, showTop]);
 
-  const { data: chartData, channels } = processedData;
+  const { data: chartData, channels, grandTotal } = processedData;
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -128,7 +150,7 @@ const PlatformMentionsChart = ({
   // Handle bar click for cross-filtering
   const handleBarClick = (data: any) => {
     if (onFilterChange && data?.channel) {
-      onFilterChange("author", data.channel);
+      onFilterChange("channel", data.channel);
     }
   };
 
@@ -167,11 +189,6 @@ const PlatformMentionsChart = ({
     );
   }
 
-  const totalMentions = chartData.reduce(
-    (sum, item) => sum + (item.posts as number),
-    0
-  );
-
   return (
     <div className="bg-white h-[600px] flex flex-col">
       {/* Header */}
@@ -182,9 +199,26 @@ const PlatformMentionsChart = ({
               Top Channels by Posts
             </h2>
             <span className="text-xs text-gray-500">
-              {totalMentions.toLocaleString()} total
+              {(grandTotal || 0).toLocaleString()} total
             </span>
           </div>
+
+          {/* Active filters display */}
+          {((activeFilters as any)?.platform || (activeFilters as any)?.channel) && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-600">Filtered by:</span>
+              {(activeFilters as any)?.platform && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs font-medium">
+                  Platform: {(activeFilters as any).platform}
+                </span>
+              )}
+              {(activeFilters as any)?.channel && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-medium">
+                  Channel: {(activeFilters as any).channel}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Controls */}
           <div className="flex space-x-2">

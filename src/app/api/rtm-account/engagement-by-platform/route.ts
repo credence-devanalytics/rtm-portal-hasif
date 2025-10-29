@@ -26,14 +26,14 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate");
     const platformFilter = searchParams.get("platform");
     const typeFilter = searchParams.get("type");
-    const authorFilter = searchParams.get("author");
+  const channelFilter = searchParams.get("channel");
 
     console.log("[Engagement By Platform API] Request params:", {
       startDate,
       endDate,
       platformFilter,
       typeFilter,
-      authorFilter,
+      channelFilter,
     });
 
     // Build WHERE conditions
@@ -56,9 +56,10 @@ export async function GET(request: NextRequest) {
       whereConditions.push(sql`${mentionsClassify.type} = ${typeFilter}`);
     }
 
-    // Author/Channel filter (for cross-filtering)
-    if (authorFilter) {
-      whereConditions.push(sql`${mentionsClassify.author} = ${authorFilter}`);
+    // Channel filter (for cross-filtering, case-insensitive, partial match)
+    if (channelFilter) {
+      // Use ILIKE for case-insensitive partial match on channel only
+      whereConditions.push(sql`${mentionsClassify.channel} ILIKE ${`%${channelFilter}%`}`);
     }
 
     console.log("[Engagement By Platform API] Executing Drizzle query...");
@@ -133,7 +134,7 @@ export async function GET(request: NextRequest) {
             endDate,
             platform: platformFilter,
             type: typeFilter,
-            author: authorFilter,
+            channel: channelFilter,
           },
         },
       },

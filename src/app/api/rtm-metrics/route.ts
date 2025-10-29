@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 		fromDate: searchParams.get("from") || "",
 		toDate: searchParams.get("to") || "",
 		platform: searchParams.get("platform") || "",
-		author: searchParams.get("author") || "",
+		channel: searchParams.get("channel") || "",
 		unit: searchParams.get("unit") || "",
 	};
 

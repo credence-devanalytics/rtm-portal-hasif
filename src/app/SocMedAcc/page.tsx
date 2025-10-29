@@ -173,7 +173,7 @@ const RTMDashboard = () => {
     platform: null,
     category: null,
     unit: null,
-    author: null,
+    channel: null,
   });
 
   // Build filter object for metrics API
@@ -184,14 +184,14 @@ const RTMDashboard = () => {
       platform:
         globalFilters.platform ||
         (selectedPlatform !== "all" ? selectedPlatform : ""),
-      author: globalFilters.author || "",
+      channel: globalFilters.channel || "",
       unit: activeTab === "overall" ? "" : activeTab, // Add unit filter based on active tab
     };
   }, [
     selectedDateRange,
     selectedPlatform,
     globalFilters.platform,
-    globalFilters.author,
+    globalFilters.channel,
     activeTab,
   ]);
 
@@ -217,14 +217,14 @@ const RTMDashboard = () => {
       platform:
         globalFilters.platform ||
         (selectedPlatform !== "all" ? selectedPlatform : ""),
-      author: globalFilters.author || "",
+      channel: globalFilters.channel || "",
       unit: activeTab === "overall" ? "" : activeTab, // Empty string for overall view
     };
   }, [
     selectedDateRange,
     selectedPlatform,
     globalFilters.platform,
-    globalFilters.author,
+    globalFilters.channel,
     activeTab,
   ]);
 
@@ -270,7 +270,7 @@ const RTMDashboard = () => {
     from: selectedDateRange.from.toISOString(),
     to: selectedDateRange.to.toISOString(),
     platform: globalFilters.platform || "",
-    author: globalFilters.author || "",
+    channel: globalFilters.channel || "",
   });
 
   // Extract engagement data
@@ -300,14 +300,14 @@ const RTMDashboard = () => {
       platform:
         globalFilters.platform ||
         (selectedPlatform !== "all" ? selectedPlatform : ""),
-      author: globalFilters.author || "",
+      channel: globalFilters.channel || "",
       unit: activeTab === "overall" ? "" : activeTab, // Filter by active tab
     };
   }, [
     selectedDateRange.from,
     selectedDateRange.to,
     globalFilters.platform,
-    globalFilters.author,
+    globalFilters.channel,
     selectedPlatform,
     activeTab, // Add activeTab to dependencies
   ]);
@@ -348,10 +348,10 @@ const RTMDashboard = () => {
       days: daysDiff.toString(),
       from: selectedDateRange.from.toISOString(),
       to: selectedDateRange.to.toISOString(),
-      platform: selectedPlatform !== "all" ? selectedPlatform : "",
-      author: globalFilters.author || "",
+      platform: globalFilters.platform || (selectedPlatform !== "all" ? selectedPlatform : ""),
+      channel: globalFilters.channel || "",
     };
-  }, [selectedDateRange, selectedPlatform, globalFilters.author]);
+  }, [selectedDateRange, selectedPlatform, globalFilters.platform, globalFilters.channel]);
 
   // Fetch dashboard data (mentions, authors, dailyChannelData, etc.)
   useEffect(() => {
@@ -364,7 +364,7 @@ const RTMDashboard = () => {
           from: queryFilters.from,
           to: queryFilters.to,
           platform: queryFilters.platform,
-          author: queryFilters.author,
+          channel: queryFilters.channel,
         });
 
         const response = await fetch(`/api/mentions?${params}`);
@@ -394,7 +394,7 @@ const RTMDashboard = () => {
     queryFilters.from,
     queryFilters.to,
     queryFilters.platform,
-    queryFilters.author,
+    queryFilters.channel,
   ]);
 
   // ============================================
@@ -602,15 +602,23 @@ const RTMDashboard = () => {
 
       if (globalFilters.category && item.category !== globalFilters.category)
         return false;
-      if (globalFilters.author && item.author !== globalFilters.author) {
-        // Debug author filtering
-        if (transformed.indexOf(item) < 5) {
-          // Only log first 5 to avoid spam
-          console.log(
-            `   ❌ Author mismatch: "${item.author}" !== "${globalFilters.author}"`
-          );
+      if (globalFilters.channel) {
+        const filterChannel = globalFilters.channel.toLowerCase();
+        const itemChannel = item.channel ? item.channel.toLowerCase() : "";
+        const itemAuthor = item.author ? item.author.toLowerCase() : "";
+        if (
+          !itemChannel.includes(filterChannel) &&
+          !itemAuthor.includes(filterChannel)
+        ) {
+          // Debug channel filtering
+          if (transformed.indexOf(item) < 5) {
+            // Only log first 5 to avoid spam
+            console.log(
+              `   ❌ Channel mismatch: neither "${item.channel}" nor "${item.author}" includes "${globalFilters.channel}"`
+            );
+          }
+          return false;
         }
-        return false;
       }
 
       return true;
@@ -638,15 +646,15 @@ const RTMDashboard = () => {
         "4. ⚠️ NO MATCHES! All unique authors in data:",
         uniqueAuthors
       );
-      console.log("5. Looking for:", globalFilters.author);
+      console.log("5. Looking for:", globalFilters.channel);
       console.log(
         "6. Does data contain this author?",
-        uniqueAuthors.includes(globalFilters.author)
+        uniqueAuthors.includes(globalFilters.channel)
       );
 
       // Check for similar author names
-      if (globalFilters.author) {
-        const searchTerm = globalFilters.author.toLowerCase().split(" ")[0];
+      if (globalFilters.channel) {
+        const searchTerm = globalFilters.channel.toLowerCase().split(" ")[0];
         const similar = uniqueAuthors.filter(
           (a) => a && String(a).toLowerCase().includes(searchTerm)
         );
@@ -735,7 +743,7 @@ const RTMDashboard = () => {
       platform: null,
       category: null,
       unit: null,
-      author: null,
+      channel: null,
     });
     setActiveTab("overall");
   };
@@ -1241,7 +1249,6 @@ const RTMDashboard = () => {
                 platformsData={platformsData}
                 platformByUnitData={platformByUnitData}
                 channelsData={channelsData}
-                hasActiveFilters={hasActiveFilters}
                 onFilterChange={handleGlobalFilterChange}
                 activeFilters={globalFilters}
               />
@@ -1251,7 +1258,6 @@ const RTMDashboard = () => {
                 data={filteredData}
                 unitsData={unitsChannelsData?.units}
                 channelsData={unitsChannelsData?.channels}
-                hasActiveFilters={hasActiveFilters}
                 onFilterChange={handleGlobalFilterChange}
                 activeFilters={globalFilters}
                 setActiveTab={setActiveTab}
@@ -1277,7 +1283,6 @@ const RTMDashboard = () => {
                 authorsData={authorsData}
                 channelsData={oldChannelsData}
                 dailyChannelData={dailyChannelData}
-                hasActiveFilters={hasActiveFilters}
                 activeFilters={globalFilters}
                 onFilterChange={handleGlobalFilterChange}
               />
@@ -1287,7 +1292,6 @@ const RTMDashboard = () => {
                 data={filteredData}
                 platformsData={engagementPlatformsData}
                 platformByUnitData={platformByUnitData}
-                hasActiveFilters={hasActiveFilters}
                 activeFilters={globalFilters}
                 onFilterChange={handleGlobalFilterChange}
               />

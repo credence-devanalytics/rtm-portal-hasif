@@ -4,7 +4,7 @@ interface RTMMetricsFilters {
 	from: string;
 	to: string;
 	platform?: string;
-	author?: string;
+	channel?: string;
 	unit?: string;
 }
 
@@ -34,7 +34,7 @@ export const useRTMMetrics = (filters: RTMMetricsFilters) => {
 					from: filters.from || "",
 					to: filters.to || "",
 					platform: filters.platform || "",
-					author: filters.author || "",
+					channel: filters.channel || "",
 					unit: filters.unit || "",
 				});
 
@@ -60,7 +60,7 @@ export const useRTMMetrics = (filters: RTMMetricsFilters) => {
 		};
 
 		fetchMetrics();
-	}, [filters.from, filters.to, filters.platform, filters.author, filters.unit]);
+	}, [filters.from, filters.to, filters.platform, filters.channel, filters.unit]);
 
 	const refetch = () => {
 		setIsLoading(true);
@@ -72,7 +72,7 @@ export const useRTMMetrics = (filters: RTMMetricsFilters) => {
 					from: filters.from || "",
 					to: filters.to || "",
 					platform: filters.platform || "",
-					author: filters.author || "",
+					channel: filters.channel || "",
 					unit: filters.unit || "",
 				});
 

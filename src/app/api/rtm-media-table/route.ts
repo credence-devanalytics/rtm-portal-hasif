@@ -12,10 +12,10 @@ export async function GET(request: Request) {
 		const fromDate = searchParams.get("from") || "";
 		const toDate = searchParams.get("to") || "";
 		const platform = searchParams.get("platform") || "";
-		const author = searchParams.get("author") || "";
+		const channel = searchParams.get("channel") || "";
 		const unit = searchParams.get("unit") || "";
 
-		console.log("📊 RTM Media Table API called with filters:", { fromDate, toDate, platform, author, unit });
+		console.log("📊 RTM Media Table API called with filters:", { fromDate, toDate, platform, channel, unit });
 
 		// Build where conditions manually for better control
 		const whereConditions = [];
@@ -36,10 +36,10 @@ export async function GET(request: Request) {
 			);
 		}
 
-		// Author filtering (optional)
-		if (author && author !== "" && author !== "all") {
+		// Channel filtering (optional) - use ILIKE for case-insensitive partial match
+		if (channel && channel !== "" && channel !== "all") {
 			whereConditions.push(
-				sql`LOWER(${mentionsClassify.author}) LIKE ${`%${author.toLowerCase()}%`}`
+				sql`${mentionsClassify.channel} ILIKE ${`%${channel}%`}`
 			);
 		}
 
@@ -98,7 +98,7 @@ export async function GET(request: Request) {
 				unit,
 				meta: {
 					queryDate: new Date().toISOString(),
-					filters: { fromDate, toDate, platform, author, unit },
+					filters: { fromDate, toDate, platform, channel, unit },
 				},
 			});
 		} else {
@@ -158,7 +158,7 @@ export async function GET(request: Request) {
 				unit: null,
 				meta: {
 					queryDate: new Date().toISOString(),
-					filters: { fromDate, toDate, platform, author },
+					filters: { fromDate, toDate, platform, channel },
 				},
 			});
 		}

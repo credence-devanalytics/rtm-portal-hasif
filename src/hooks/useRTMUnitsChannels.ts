@@ -4,7 +4,7 @@ interface RTMUnitsChannelsFilters {
 	from: string;
 	to: string;
 	platform?: string;
-	author?: string;
+	channel?: string;
 	unit?: string; // Add unit filter
 }
 
@@ -37,7 +37,7 @@ const fetchUnitsChannels = async (filters: RTMUnitsChannelsFilters): Promise<RTM
 		from: filters.from || "",
 		to: filters.to || "",
 		platform: filters.platform || "",
-		author: filters.author || "",
+		channel: filters.channel || "",
 		unit: filters.unit || "", // Add unit parameter
 	});
 

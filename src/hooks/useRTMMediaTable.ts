@@ -4,7 +4,7 @@ interface RTMMediaTableFilters {
 	from: string;
 	to: string;
 	platform?: string;
-	author?: string;
+	channel?: string;
 	unit?: string;
 }
 
@@ -27,7 +27,7 @@ const fetchMediaTable = async (filters: RTMMediaTableFilters): Promise<RTMMediaT
 		from: filters.from || "",
 		to: filters.to || "",
 		platform: filters.platform || "",
-		author: filters.author || "",
+		channel: filters.channel || "",
 		unit: filters.unit || "",
 	});
 
