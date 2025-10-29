@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
   
   // If accessing an auth route (login/register) and has session
   if (authRoutes.includes(pathname) && sessionToken) {
-    return NextResponse.redirect(new URL("/home", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // For change-password, allow if has session (client-side will handle status check)
