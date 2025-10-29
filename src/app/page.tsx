@@ -4,7 +4,7 @@ import MedinaLogo from "@/components/MedinaLogo";
 import Stats09 from "@/components/stats-3";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AuroraBackground } from "@/components/ui/shadcn-io/aurora-background";
-import { Bot, ChartNoAxesCombined, ExternalLink, MessagesSquare, Table, ThumbsUp, Tv } from "lucide-react";
+import { Bot, ChartNoAxesCombined, ExternalLink, Mail, MessagesSquare, Sparkles, Table, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import useMultiplatformData from "@/hooks/useMultiplatformData";
@@ -47,8 +47,10 @@ const NavButtons = () => {
     { href: "/dashboard", label: "SocMed Public Sentiment", icon: <ThumbsUp /> },
     { href: "/Multiplatform", label: "Multiplatform", icon: <Tv /> },
     { href: "/KPI", label: "KPI", icon: <ChartNoAxesCombined /> },
-    { href: "#ai", label: "AI Chat", icon: <Bot /> },
+    { href: "/ai/marketing/chat", label: "Marketing AI", icon: <Sparkles /> },
+    { href: "/ai/social-media/chat", label: "Social Media AI", icon: <Sparkles /> },
     { href: "https://app.determ.com/174980/feed/q/6746731", label: "Determ", icon: <Table /> },
+    { href: "/contact", label: "Contact Us", icon: <Mail /> },
   ]
   return (
     <div className="flex flex-col items-center w-full max-w-6xl mx-auto">
@@ -57,7 +59,7 @@ const NavButtons = () => {
           Quick Links
         </h1>
       </div>
-      <div className="grid grid-cols-3 gap-4 w-fit">
+      <div className="grid grid-cols-4 gap-4 w-fit">
         { buttonData.map((button, index) => (
           <Link key={index} href={button.href} className="w-full">
             <Button
