@@ -44,6 +44,7 @@ import { useRTMMediaTable } from "@/hooks/useRTMMediaTable";
 import { useRTMPlatforms } from "@/hooks/useRTMPlatforms";
 import { useRTMUnitsChannels } from "@/hooks/useRTMUnitsChannels";
 import { useEngagementByPlatform } from "@/hooks/useEngagementByPlatform";
+import { useRTMTimeline } from "@/hooks/useRTMTimeline";
 
 // Import components
 import SentimentBarChart from "@/components/SentimentBarChart";
@@ -326,6 +327,49 @@ const RTMDashboard = () => {
     unitsCount: unitsChannelsData?.units?.data?.length,
     channelsCount: unitsChannelsData?.channels?.data?.length,
     filters: unitsChannelsFilters,
+  });
+
+  // Build filter object for Timeline API (charts + popular mentions)
+  const timelineFilters = useMemo(() => {
+    return {
+      from: selectedDateRange.from.toISOString(),
+      to: selectedDateRange.to.toISOString(),
+      platform:
+        globalFilters.platform ||
+        (selectedPlatform !== "all" ? selectedPlatform : ""),
+      channel: globalFilters.channel || "",
+      unit: activeTab === "overall" ? "" : activeTab,
+    };
+  }, [
+    selectedDateRange.from,
+    selectedDateRange.to,
+    globalFilters.platform,
+    globalFilters.channel,
+    selectedPlatform,
+    activeTab,
+  ]);
+
+  // Fetch RTM Timeline data (all timeline charts + popular mentions in one request)
+  const {
+    data: rtmTimelineData,
+    isLoading: isLoadingTimeline,
+    error: timelineError,
+    refetch: refetchTimeline,
+  } = useRTMTimeline(timelineFilters);
+
+  // Extract timeline data
+  const mentionsOverTimeData = rtmTimelineData?.mentionsOverTime || [];
+  const engagementOverTimeData = rtmTimelineData?.engagementOverTime || [];
+  const classificationData = rtmTimelineData?.classificationData || [];
+  const popularMentionsData = rtmTimelineData?.popularMentions || [];
+
+  console.log("📊 Timeline Data State:", {
+    isLoadingTimeline,
+    hasTimelineData: !!rtmTimelineData,
+    mentionsOverTime: mentionsOverTimeData.length,
+    engagementOverTime: engagementOverTimeData.length,
+    classifications: classificationData.length,
+    topMentions: popularMentionsData.length,
   });
 
   // ============================================
@@ -673,41 +717,6 @@ const RTMDashboard = () => {
     return { transformedData: transformed, filteredData: filtered };
   }, [rawMentionsData, globalFilters]);
 
-  // Create mentions over time data
-  const mentionsOverTime = useMemo(() => {
-    const groupedByDate = {};
-
-    filteredData.forEach((item) => {
-      // Skip items without required fields
-      if (!item.date || !item.platform) return;
-
-      const date = item.date;
-      if (!groupedByDate[date]) {
-        groupedByDate[date] = {
-          date,
-          facebook: 0,
-          instagram: 0,
-          twitter: 0,
-          tiktok: 0,
-          youtube: 0,
-          reddit: 0,
-          linkedin: 0,
-        };
-      }
-
-      const platformKey = item.platform.toLowerCase();
-      if (groupedByDate[date][platformKey] !== undefined) {
-        groupedByDate[date][platformKey]++;
-      }
-    });
-
-    return Object.values(groupedByDate).sort(
-      (a, b) =>
-        new Date((a as any).date).getTime() -
-        new Date((b as any).date).getTime()
-    );
-  }, [filteredData]);
-
   // Filter handlers with debouncing for better performance
   const handleGlobalFilterChange = (filterType, filterValue) => {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -764,6 +773,10 @@ const RTMDashboard = () => {
     // Refresh metrics and media table
     refetchMetrics();
     refetchMediaTable();
+    refetchPlatforms();
+    refetchEngagement();
+    refetchUnitsChannels();
+    refetchTimeline();
     // TODO: Add refresh for other data when implemented
   };
 
@@ -1309,42 +1322,128 @@ const RTMDashboard = () => {
 
       {/* Timeline Charts */}
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingTimeline ? (
           <SkeletonCard className="h-96" />
+        ) : timelineError && !rtmTimelineData ? (
+          <Card className="">
+            <CardContent className="pt-6">
+              <div className="text-center text-red-500">
+                <p>Error loading timeline data: {timelineError.message}</p>
+                <Button
+                  onClick={() => refetchTimeline()}
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="">
-            <OverallMentionsChart mentionsOverTime={mentionsOverTime} />
+            <OverallMentionsChart
+              mentionsOverTime={mentionsOverTimeData}
+              onFilterChange={handleGlobalFilterChange}
+              activeFilters={globalFilters}
+            />
           </Card>
         )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingTimeline ? (
           <SkeletonCard className="h-96" />
+        ) : timelineError && !rtmTimelineData ? (
+          <Card className="">
+            <CardContent className="pt-6">
+              <div className="text-center text-red-500">
+                <p>Error loading engagement data: {timelineError.message}</p>
+                <Button
+                  onClick={() => refetchTimeline()}
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="">
-            <EngagementOverTimeChart data={filteredData} />
+            <EngagementOverTimeChart
+              data={engagementOverTimeData}
+              onFilterChange={handleGlobalFilterChange}
+              activeFilters={globalFilters}
+            />
           </Card>
         )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingTimeline ? (
           <SkeletonCard className="h-96" />
+        ) : timelineError && !rtmTimelineData ? (
+          <Card className="">
+            <CardContent className="pt-6">
+              <div className="text-center text-red-500">
+                <p>
+                  Error loading classification data: {timelineError.message}
+                </p>
+                <Button
+                  onClick={() => refetchTimeline()}
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="">
-            <ClassificationMentionsChart data={filteredData} />
+            <ClassificationMentionsChart
+              data={classificationData}
+              onFilterChange={handleGlobalFilterChange}
+              activeFilters={globalFilters}
+            />
           </Card>
         )}
       </div>
 
       {/* Popular Mentions Table */}
       <div className="grid gap-6 lg:grid-cols-1">
-        {isLoading ? (
+        {isLoadingTimeline ? (
           <SkeletonCard className="h-96" />
+        ) : timelineError && !rtmTimelineData ? (
+          <Card className="">
+            <CardContent className="pt-6">
+              <div className="text-center text-red-500">
+                <p>Error loading popular mentions: {timelineError.message}</p>
+                <Button
+                  onClick={() => refetchTimeline()}
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="">
-            <PopularMentionsTable data={filteredData} />
+            <PopularMentionsTable
+              data={popularMentionsData}
+              onFilterChange={handleGlobalFilterChange}
+              activeFilters={globalFilters}
+            />
           </Card>
         )}
       </div>

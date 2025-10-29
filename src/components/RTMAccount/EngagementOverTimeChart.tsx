@@ -11,13 +11,59 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const EngagementOverTimeChart = ({ data }) => {
+const EngagementOverTimeChart = ({
+  data,
+  onFilterChange = null,
+  activeFilters = {} as any,
+}) => {
   // Create engagement data grouped by date with proper reach and interaction calculation
   const createEngagementOverTime = (transformedData) => {
     if (!transformedData || transformedData.length === 0) {
       return [];
     }
 
+    // Check if data is already in the correct format (from API)
+    const isPreProcessed =
+      transformedData.length > 0 &&
+      transformedData[0].hasOwnProperty("reach") &&
+      transformedData[0].hasOwnProperty("posts") &&
+      transformedData[0].hasOwnProperty("interactions") &&
+      !transformedData[0].hasOwnProperty("id"); // Distinguish from raw mention data
+
+    if (isPreProcessed) {
+      // Data is already processed from API
+      console.log("📊 Using pre-processed engagement data from API");
+
+      // Find max values for normalization
+      const maxReach = Math.max(...transformedData.map((d) => d.reach));
+      const maxInteractions = Math.max(
+        ...transformedData.map((d) => d.interactions)
+      );
+      const totalReach = transformedData.reduce((sum, d) => sum + d.reach, 0);
+      const totalInteractions = transformedData.reduce(
+        (sum, d) => sum + d.interactions,
+        0
+      );
+
+      // Normalize reach and interactions to percentage
+      return transformedData.map((day) => ({
+        ...day,
+        reachPercentage: maxReach > 0 ? (day.reach / maxReach) * 100 : 0,
+        interactionsPercentage:
+          maxInteractions > 0 ? (day.interactions / maxInteractions) * 100 : 0,
+        reachDistribution: totalReach > 0 ? (day.reach / totalReach) * 100 : 0,
+        interactionsDistribution:
+          totalInteractions > 0
+            ? (day.interactions / totalInteractions) * 100
+            : 0,
+        // Keep original values for tooltip
+        reachOriginal: day.reach,
+        interactionsOriginal: day.interactions,
+      }));
+    }
+
+    // Legacy: Process raw mention data
+    console.log("📊 Processing raw engagement data (legacy mode)");
     const groupedByDate = {};
 
     transformedData.forEach((item) => {
@@ -68,18 +114,11 @@ const EngagementOverTimeChart = ({ data }) => {
 
     const rawData = Object.values(groupedByDate)
       .map((day: any) => {
-        // Calculate engagement rate: (interactions / reach) * 100
-        const engagementRate =
-          day.totalReachUsed > 0
-            ? (day.totalInteractions / day.totalReachUsed) * 100
-            : 0;
-
         return {
           date: day.date,
           reach: day.totalReachUsed,
           posts: day.postsCount,
           interactions: day.totalInteractions,
-          engagementRate: engagementRate,
         };
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -87,18 +126,26 @@ const EngagementOverTimeChart = ({ data }) => {
     // Find max values for normalization
     const maxReach = Math.max(...rawData.map((d) => d.reach));
     const maxInteractions = Math.max(...rawData.map((d) => d.interactions));
-    const maxEngagementRate = Math.max(...rawData.map((d) => d.engagementRate));
+    const totalReach = rawData.reduce((sum, d) => sum + d.reach, 0);
+    const totalInteractions = rawData.reduce(
+      (sum, d) => sum + d.interactions,
+      0
+    );
 
-    // Normalize reach and interactions to 0-100 scale for visualization
+    // Normalize reach and interactions to percentage
     return rawData.map((day) => ({
       ...day,
-      reachNormalized: maxReach > 0 ? (day.reach / maxReach) * 100 : 0,
-      interactionsNormalized:
+      reachPercentage: maxReach > 0 ? (day.reach / maxReach) * 100 : 0,
+      interactionsPercentage:
         maxInteractions > 0 ? (day.interactions / maxInteractions) * 100 : 0,
+      reachDistribution: totalReach > 0 ? (day.reach / totalReach) * 100 : 0,
+      interactionsDistribution:
+        totalInteractions > 0
+          ? (day.interactions / totalInteractions) * 100
+          : 0,
       // Keep original values for tooltip
       reachOriginal: day.reach,
       interactionsOriginal: day.interactions,
-      engagementRateOriginal: day.engagementRate,
     }));
   };
 
@@ -193,19 +240,21 @@ const EngagementOverTimeChart = ({ data }) => {
             let displayValue = entry.value;
             let suffix = "";
 
-            // Show original values for reach and interactions
-            if (entry.dataKey === "reachNormalized") {
+            // Show original values and percentages for reach and interactions
+            if (entry.dataKey === "reachPercentage") {
               const originalReach = entry.payload.reachOriginal;
-              displayValue = originalReach?.toLocaleString();
-              suffix = " (reach)";
-            } else if (entry.dataKey === "interactionsNormalized") {
+              const percentage = entry.value;
+              displayValue = `${originalReach?.toLocaleString()} (${percentage?.toFixed(
+                1
+              )}%)`;
+              suffix = "";
+            } else if (entry.dataKey === "interactionsPercentage") {
               const originalInteractions = entry.payload.interactionsOriginal;
-              displayValue = originalInteractions?.toLocaleString();
-              suffix = " (interactions)";
-            } else if (entry.dataKey === "engagementRate") {
-              const originalRate = entry.payload.engagementRateOriginal;
-              displayValue = originalRate?.toFixed(2);
-              suffix = "% (engagement rate)";
+              const percentage = entry.value;
+              displayValue = `${originalInteractions?.toLocaleString()} (${percentage?.toFixed(
+                1
+              )}%)`;
+              suffix = "";
             } else if (entry.dataKey === "posts") {
               displayValue = entry.value?.toLocaleString();
               suffix = " posts";
@@ -224,7 +273,8 @@ const EngagementOverTimeChart = ({ data }) => {
           })}
           <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
             <p>
-              * Reach and interactions are shown as relative trends (0-100%)
+              * Percentages show relative value compared to peak day (100% =
+              highest value)
             </p>
           </div>
         </div>
@@ -243,8 +293,6 @@ const EngagementOverTimeChart = ({ data }) => {
     (sum, day) => sum + day.interactionsOriginal,
     0
   );
-  const avgEngagementRate =
-    totalReach > 0 ? (totalInteractions / totalReach) * 100 : 0;
 
   return (
     <div className="w-full">
@@ -254,13 +302,12 @@ const EngagementOverTimeChart = ({ data }) => {
             Engagement Over Time
           </h2>
           <p className="text-gray-600">
-            Daily posts count with reach, interactions, and engagement rate
-            trends
+            Daily posts count with reach and interactions trends
           </p>
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
             <div className="text-2xl font-bold text-blue-800">
               {Math.round(
@@ -283,12 +330,6 @@ const EngagementOverTimeChart = ({ data }) => {
               ).toLocaleString()}
             </div>
             <div className="text-sm text-green-800">Avg Daily Interactions</div>
-          </div>
-          <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">
-              {avgEngagementRate.toFixed(2)}%
-            </div>
-            <div className="text-sm text-purple-800">Avg Engagement Rate</div>
           </div>
         </div>
 
@@ -344,23 +385,6 @@ const EngagementOverTimeChart = ({ data }) => {
                 }}
                 tickFormatter={(value) => `${value}%`}
               />
-              {/* Second Right Y-axis for Engagement Rate */}
-              <YAxis
-                yAxisId="engagementRate"
-                tick={{ fontSize: 12 }}
-                orientation="right"
-                label={{
-                  value: "Engagement Rate (%)",
-                  angle: 90,
-                  position: "outside",
-                  style: {
-                    textAnchor: "middle",
-                    fill: "#9333EA",
-                    fontSize: "12px",
-                  },
-                }}
-                tickFormatter={(value) => `${value.toFixed(1)}%`}
-              />
               <Tooltip
                 content={
                   <CustomTooltip
@@ -381,41 +405,28 @@ const EngagementOverTimeChart = ({ data }) => {
                 fillOpacity={0.8}
               />
 
-              {/* Line Chart for Normalized Reach */}
+              {/* Line Chart for Reach Percentage */}
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="reachNormalized"
+                dataKey="reachPercentage"
                 stroke="#ff9705"
                 strokeWidth={2}
-                name="Reach Trend"
+                name="Reach %"
                 dot={{ fill: "#ff9705", strokeWidth: 2, r: 3 }}
                 activeDot={{ r: 5, stroke: "#ff9705", strokeWidth: 2 }}
               />
 
-              {/* Line Chart for Normalized Interactions */}
+              {/* Line Chart for Interactions Percentage */}
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="interactionsNormalized"
+                dataKey="interactionsPercentage"
                 stroke="#28a745"
                 strokeWidth={2}
-                name="Interactions Trend"
+                name="Interactions %"
                 dot={{ fill: "#28a745", strokeWidth: 2, r: 3 }}
                 activeDot={{ r: 5, stroke: "#10B981", strokeWidth: 2 }}
-              />
-
-              {/* Line Chart for Engagement Rate */}
-              <Line
-                yAxisId="engagementRate"
-                type="monotone"
-                dataKey="engagementRate"
-                stroke="#9333EA"
-                strokeWidth={3}
-                strokeDasharray="5 5"
-                name="Engagement Rate"
-                dot={{ fill: "#9333EA", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#9333EA", strokeWidth: 2 }}
               />
             </ComposedChart>
           </ResponsiveContainer>
@@ -425,11 +436,10 @@ const EngagementOverTimeChart = ({ data }) => {
         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
           <p className="text-sm text-gray-600">
             <strong>Chart Explanation:</strong> Posts are shown as absolute
-            counts (blue bars, left axis). Reach and interactions trends are
-            normalized to 0-100% relative scale (solid lines, right axis) to
-            compare their patterns over time. Engagement rate (dashed purple
-            line) shows the actual percentage of interactions relative to reach.
-            Hover over data points to see original values.
+            counts (blue bars, left axis). Reach and interactions are shown as
+            percentages relative to their peak values (orange and green lines,
+            right axis). 100% represents the day with the highest
+            reach/interactions. Hover over data points to see actual numbers.
           </p>
         </div>
 

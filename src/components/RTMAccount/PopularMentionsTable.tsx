@@ -8,7 +8,11 @@ import {
   MessageCircle,
 } from "lucide-react";
 
-const PopularMentionsTable = ({ data = [] }) => {
+const PopularMentionsTable = ({
+  data = [],
+  onFilterChange = null,
+  activeFilters = {} as any,
+}) => {
   // Simple deduplication based on id only, with fallback
   const topMentions = React.useMemo(() => {
     if (!Array.isArray(data) || data.length === 0) return [];
@@ -23,6 +27,21 @@ const PopularMentionsTable = ({ data = [] }) => {
       .sort((a, b) => (b?.reach || 0) - (a?.reach || 0))
       .slice(0, 10);
   }, [data]);
+
+  // Handle row click for cross-filtering
+  const handleRowClick = (mention: any) => {
+    if (onFilterChange && mention) {
+      // Filter by channel/author
+      if (mention.channel) {
+        // Toggle filter - if already filtered by this channel, clear it
+        if (activeFilters.channel === mention.channel) {
+          onFilterChange("channel", null);
+        } else {
+          onFilterChange("channel", mention.channel);
+        }
+      }
+    }
+  };
 
   // Early return if no data
   if (topMentions.length === 0) {
@@ -129,11 +148,18 @@ const PopularMentionsTable = ({ data = [] }) => {
     <div className="w-full p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Most Popular Posts
+          Most Popular Mentions
         </h2>
         <p className="text-gray-600">
-          Most impactful posts ranked by their reach
+          Most impactful mentions ranked by their reach
         </p>
+        {onFilterChange && activeFilters.channel && (
+          <div className="mt-3">
+            <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+              Filtered by channel: {activeFilters.channel}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -167,22 +193,33 @@ const PopularMentionsTable = ({ data = [] }) => {
                 bg: "bg-gray-50",
               };
               const { date, time } = formatDateTime(
-                mention.datetime || mention.date
+                mention.insertdate || mention.datetime || mention.date
               );
 
               return (
                 <tr
                   key={`mention-${index}-${mention?.id || Math.random()}`}
-                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                  className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                    onFilterChange ? "cursor-pointer" : ""
+                  } ${
+                    activeFilters.channel === mention?.channel
+                      ? "bg-blue-50"
+                      : ""
+                  }`}
+                  onClick={() => handleRowClick(mention)}
                 >
                   {/* Post Column */}
                   <td className="p-4 max-w-xs">
                     <div className="space-y-2">
                       <p className="text-sm text-gray-800 leading-relaxed">
-                        {truncateText(mention?.mentionSnippet)}
+                        {truncateText(
+                          mention?.mention ||
+                            mention?.mentionSnippet ||
+                            mention?.title
+                        )}
                       </p>
                       <a
-                        href={mention?.postUrl || "#"}
+                        href={mention?.url || mention?.postUrl || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -246,9 +283,18 @@ const PopularMentionsTable = ({ data = [] }) => {
                         </span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        ❤️ {formatNumber(mention?.likeCount)} • 🔄{" "}
-                        {formatNumber(mention?.shareCount)} • 💬{" "}
-                        {formatNumber(mention?.commentCount)}
+                        ❤️{" "}
+                        {formatNumber(
+                          mention?.likecount || mention?.likeCount || 0
+                        )}{" "}
+                        • 🔄{" "}
+                        {formatNumber(
+                          mention?.sharecount || mention?.shareCount || 0
+                        )}{" "}
+                        • 💬{" "}
+                        {formatNumber(
+                          mention?.commentcount || mention?.commentCount || 0
+                        )}
                       </div>
                     </div>
                   </td>
@@ -257,10 +303,10 @@ const PopularMentionsTable = ({ data = [] }) => {
                   <td className="p-4 text-center">
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium border ${getCategoryStyle(
-                        mention?.category
+                        mention?.topic || mention?.category
                       )}`}
                     >
-                      {mention?.category || "Unknown"}
+                      {mention?.topic || mention?.category || "Unknown"}
                     </span>
                   </td>
                 </tr>
