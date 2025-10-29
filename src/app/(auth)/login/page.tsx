@@ -13,7 +13,7 @@ export default function LoginPage() {
   const { data: session, isPending } = useSession()
 
   if (session && !isPending) {
-    router.push("/home")
+    router.push("/")
     return (
       <div>Redirecting...</div>
     )
@@ -33,7 +33,12 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error.message || "Invalid email or password")
       } else {
-        router.push("/home") // Redirect to home page
+        // Check if user status is 'new' and redirect to change-password
+        if (result.data?.user && (result.data.user as any).status === "new") {
+          router.push("/change-password")
+        } else {
+          router.push("/")
+        }
       }
     } catch (err) {
       setError("Invalid email or password: " + (err instanceof Error ? err.message : String(err)))
