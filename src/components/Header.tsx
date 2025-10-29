@@ -19,18 +19,21 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 
 export default function Header() {
   const pathname = usePathname();
-  console.log("Current pathname:", pathname);
-  const specialPaths = ["/login"]; // Paths where header not be rendered cosmetic
-  const renderHeader = !specialPaths.some(path => pathname.startsWith(path));
 
-  if (!renderHeader) {
+  const hideHeaderPaths = ["/login"]; // Paths where header not be rendered cosmetic
+  const hideHeader = hideHeaderPaths.some(path => pathname.startsWith(path));
+
+  if (hideHeader) {
     return null;
   }
+  
+  const specialPaths = ["/settings", "/home"];
+  const hideHeaderItems = specialPaths.some(path => pathname.startsWith(path));
 
   const { data: session } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -40,23 +43,6 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const dashboardItems = [
-    { name: "SocMed RTM Account", href: "/SocMedAcc" },
-    { name: "SocMed Public Sentiment", href: "/dashboard" },
-    { name: "Multiplatform", href: "/Multiplatform" },
-    { name: "Key Performance Index", href: "/KPI" },
-  ];
-
-  const aiItems = [
-    { name: "Social Media", href: "/ai/social-media/chat" },
-    { name: "Marketing", href: "/ai/marketing/chat" },
-  ];
-
-  const mainNavItems = [
-    { name: "AI", href: "#" },
-    { name: "Determ", href: "https://app.determ.com/174980/feed/q/6746731" },
-    { name: "Contact Us", href: "/contact" },
-  ];
 
   // Reusable User Menu Component
   function UserMenu({ 
@@ -149,6 +135,82 @@ export default function Header() {
     );
   }
 
+  if (hideHeaderItems) {
+    return (
+      <header
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+          scrolled
+            ? "bg-white/30 backdrop-blur-xl border border-gray-200/30 shadow-lg"
+            : "bg-white/15 backdrop-blur-xl border border-gray-200/20 shadow-md"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link href="/home" className="flex-shrink-0">
+              <div className="flex-shrink-0">
+                {pathname !== "/home" ? (
+                  <MedinaLogo size="sm" />
+                ) : (
+                  <div className="w-10 h-10" />
+                )}
+              </div>
+            </Link>
+            
+            {/* Desktop Navigation */}
+            <NavigationMenu className="hidden md:flex">
+              <NavigationMenuList className="space-x-1">
+                <NavigationMenuItem>
+                  <UserMenu session={session} variant="floating" />
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+
+            {/* Mobile menu */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-900 hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900"
+                >
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="right"
+                className="w-[300px] sm:w-[400px] bg-white/40 backdrop-blur-xl border-gray-200/40 shadow-lg"
+              >
+                <nav className="flex flex-col gap-4 mt-8">
+                  <UserMenu session={session} variant="mobile" />
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </header>
+    )
+  }
+
+  const dashboardItems = [
+    { name: "SocMed RTM Account", href: "/SocMedAcc" },
+    { name: "SocMed Public Sentiment", href: "/dashboard" },
+    { name: "Multiplatform", href: "/Multiplatform" },
+    { name: "Key Performance Index", href: "/KPI" },
+  ];
+
+  const aiItems = [
+    { name: "Social Media", href: "/ai/social-media/chat" },
+    { name: "Marketing", href: "/ai/marketing/chat" },
+  ];
+
+  const mainNavItems = [
+    { name: "AI", href: "#" },
+    { name: "Determ", href: "https://app.determ.com/174980/feed/q/6746731" },
+    { name: "Contact Us", href: "/contact" },
+  ];
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
@@ -160,13 +222,15 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
-            {pathname !== "/" ? (
-              <MedinaLogo size="sm" />
-            ) : (
-              <div className="w-10 h-10" />
-            )}
-          </div>
+          <Link href="/home" className="flex-shrink-0">
+            <div className="flex-shrink-0">
+              {pathname !== "/" ? (
+                <MedinaLogo size="sm" />
+              ) : (
+                <div className="w-10 h-10" />
+              )}
+            </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <NavigationMenu className="hidden md:flex">
@@ -174,7 +238,7 @@ export default function Header() {
               {/* Home */}
               <NavigationMenuItem>
                 <NavigationMenuLink
-                  href="/"
+                  href="/home"
                   className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/20 data-[state=open]:bg-white/20 drop-shadow-sm"
                 >
                   Home

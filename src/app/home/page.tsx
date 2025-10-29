@@ -19,25 +19,24 @@ const NavButtons = () => {
     { href: "https://app.determ.com/174980/feed/q/6746731", label: "Determ", icon: <Table /> },
   ]
   return (
-    <div className="flex flex-col gap-6 md:items-center md:justify-between pt-6">
-      <div className="text-center w-full">
-        <h1 className="text-2xl font-bold tracking-tight w-full">
+    <div className="flex flex-col items-center w-full max-w-6xl mx-auto">
+      <div className="text-center w-full mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">
           Quick Links
         </h1>
       </div>
-      <div className="grid grid-cols-3 justify-center gap-4">
-        {/* CTA Button */}
+      <div className="grid grid-cols-3 gap-4 w-fit">
         { buttonData.map((button, index) => (
-          <Link href={button.href}>
-          <Button
-            variant="default"
-            size="lg"
-            className="w-full flex items-center  bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white font-semibold rounded-md text-md space-x-2 px-4"
-          >
-            {button.icon}
-            <span>{button.label}</span>
-            { button.label === "Determ" && <ExternalLink className="h-4 w-4 text-white" /> }
-          </Button>
+          <Link key={index} href={button.href} className="w-full">
+            <Button
+              variant="default"
+              size="lg"
+              className="w-full h-auto flex items-center justify-center bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white font-semibold rounded-md py-3 px-4 gap-2 text-sm"
+            >
+              <span className="flex-shrink-0">{button.icon}</span>
+              <span className="text-center leading-tight">{button.label}</span>
+              { button.label === "Determ" && <ExternalLink className="h-4 w-4 text-white flex-shrink-0" /> }
+            </Button>
           </Link>
         ))}
       </div>
@@ -71,18 +70,18 @@ const KPISection = () => {
     const sortedPlatforms = [...item.platforms].sort((a, b) => b.stat - a.stat);
 
     return (
-      <Card className="p-6 bg-transparent border-none shadow-none w-full gap-0">
+      <Card className="p-4 sm:p-6 bg-transparent border-none shadow-none w-full">
         {/* Header */}
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-gray-900 text-center">
+        <CardHeader className="px-0">
+          <CardTitle className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 text-center leading-tight">
             {item.name}
           </CardTitle>
         </CardHeader>
         
         <CardContent className="p-0">
-          <div className="grid grid-cols-2 gap-6 w-full">
-            {/* Left side - Main KPI using Stats09 */}
-            <div className="w-full">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 sm:gap-6 w-full">
+            {/* Main KPI using Stats09 */}
+            <div className="w-full order-1">
               <Stats09 
                 name={item.name}
                 stat={item.stat}
@@ -91,28 +90,29 @@ const KPISection = () => {
               />
             </div>
 
-            {/* Right side - Platform breakdown */}
-            <div className="w-full">
-              <Card className="h-full w-full gap-2">
-                <CardHeader className="pb-0">
-                  <CardTitle className="text-sm font-medium text-gray-600 p-0">
+            {/* Platform breakdown */}
+            <div className="w-full order-2">
+              <Card className="h-full w-full">
+                <CardHeader className="">
+                  <CardTitle className="text-sm sm:text-base font-medium text-gray-600">
                     {item.name.includes('Viewers') ? 'Viewers by Platform' : 'Listeners by Platform'}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="">
-                    {sortedPlatforms.map((platform) => (
-                      <div key={platform.name} className="flex items-center justify-between py-1 gap-0">
-                        <Link href={platform.link} className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0 space-x-1`}>
-                          <span className="">{platform.name}</span>
-                          <ExternalLink className="inline-block ml-1 mb-0.5 w-3 h-3 text-gray-600" />
-                        </Link>
-                        <span className="text-sm font-semibold text-gray-900 ml-8 whitespace-nowrap">
-                          {platform.stat.toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                <CardContent className="pt-0 space-y-2">
+                  {sortedPlatforms.map((platform) => (
+                    <div key={platform.name} className="flex items-center justify-between">
+                      <Link 
+                        href={platform.link} 
+                        className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 sm:px-3 flex-shrink-0 flex items-center gap-1 text-xs sm:text-sm hover:bg-${platform.color}-200 transition-colors`}
+                      >
+                        <span className="truncate">{platform.name}</span>
+                        <ExternalLink className="w-3 h-3 text-gray-600 flex-shrink-0" />
+                      </Link>
+                      <span className="text-xs sm:text-sm font-semibold text-gray-900 whitespace-nowrap">
+                        {platform.stat.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             </div>
@@ -123,8 +123,8 @@ const KPISection = () => {
   };
 
   return (
-    <section id="KPI" className="w-full mx-auto px-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <section id="KPI" className="w-full max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 xl:gap-6 2xl:gap-8">
         {KPIdata.map((item, index) => (
           <KPICard key={item.name} item={item} index={index}/>
         ))}
@@ -137,26 +137,27 @@ export default function HomePage() {
     return (
     <>
     <AuroraBackground>
-    <div className="max-w-8xl mx-auto space-y-6">
-      <main className="relative h-screen">
-        <section className="flex flex-col h-full pt-4 sm:pt-6 lg:pt-8 pb-8">
-            <div className="mx-auto w-full h-full flex flex-col justify-start">
-                {/* Title Section - Max 50% height */}
-                <div className="flex flex-col justify-center items-center max-h-[30vh] flex-grow">
-                    <MedinaLogo size="lg" className="transform -translate-x-24 items-end" />
-                    <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold animate-fade-in-up text-black text-center items-start flex-grow">
-                        Media Data Insight and Analytics
-                    </h2>
-                </div>
-                {/* Buttons Section - Grows with content */}
-                <div className="flex-1 flex flex-col gap-6 items-center justify-center min-h-0">
-                    <NavButtons />
-                    <KPISection />
-                </div>
+      <div className="min-h-screen overflow-auto w-full">
+        <main className="relative w-full">
+          <section className="flex flex-col pt-16 pb-8">
+            <div className="max-w-8xl mx-auto px-4 w-full flex flex-col">
+              {/* Title Section with dynamic spacing */}
+              <div className="flex flex-col justify-center items-center mb-4 sm:mb-6 lg:mb-8 xl:mb-10">
+                <MedinaLogo size="lg" className="transform -translate-x-24" />
+                <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold animate-fade-in-up text-black text-center">
+                  Media Data Insight and Analytics
+                </h2>
+              </div>
+              
+              {/* Content Section with reduced spacing */}
+              <div className="flex flex-col space-y-4">
+                <NavButtons />
+                <KPISection />
+              </div>
             </div>
-        </section>
-      </main>
-    </div>
+          </section>
+        </main>
+      </div>
     </AuroraBackground>
     </>
     )
