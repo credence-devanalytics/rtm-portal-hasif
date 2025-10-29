@@ -21,14 +21,23 @@ import {
 
 const RTMUnitsPieChart = ({
   data = [],
-  unitsData = null, // Database aggregation from API (accurate counts)
-  channelsData = null, // Channel breakdown from API
+  unitsData = null, // Database aggregation from API: { data: [], total: number }
+  channelsData = null, // Channel breakdown from API: { data: [], total: number }
   hasActiveFilters = false, // Whether data-limiting filters are active
   title = "RTM Units Posts Distribution",
   description = "Distribution of posts across RTM units",
   onFilterChange = null, // Prop for cross-filtering
   activeFilters = {}, // New prop to receive active filters from parent
+  setActiveTab = null, // Prop to update the active tab (same behavior as clicking tabs)
+  activeTab = "overall", // Current active tab to check for toggle behavior
 }: any) => {
+  // Debug: Log when component renders and what activeFilters it receives
+  console.log("🔄 RTMUnitsPieChart RENDER - activeFilters:", activeFilters);
+  console.log(
+    "🔄 RTMUnitsPieChart RENDER - onFilterChange exists:",
+    !!onFilterChange
+  );
+
   // Function to transform unit names
   const transformUnitName = (unit) => {
     if (unit === "News") {
@@ -43,42 +52,95 @@ const RTMUnitsPieChart = ({
     const unitLower = unit.toLowerCase();
 
     // Map display names to filter values expected by parent
-    if (unitLower === "berita" || unitLower === "news") return "berita";
-    if (unitLower === "tv") return "tv";
-    if (unitLower === "radio") return "radio";
-    if (unitLower === "official") return "official";
+    // Use partial matching to handle database values like "BERITA RTM", "Radio stations", "TV channels"
+    if (unitLower.includes("berita") || unitLower.includes("news"))
+      return "berita";
+    if (unitLower.includes("tv")) return "tv";
+    if (unitLower.includes("radio")) return "radio";
+    if (unitLower.includes("official")) return "official";
 
     // Default: return lowercase version
     return unitLower;
   };
 
-  // Handle click on pie slices
+  // Handle click on pie slices (same behavior as clicking tabs)
   const handlePieClick = (data, index, event) => {
-    if (onFilterChange && data && data.payload) {
+    console.log("🎯 Pie clicked! Data:", data, "Payload:", data?.payload);
+    if (data && data.payload) {
       // In Recharts, the actual data is in the payload property
       const unitValue = data.payload.unit;
       const filterValue = unitToFilterValue(unitValue);
+
       console.log(
         "Pie click - Unit value:",
         unitValue,
         "-> Filter:",
-        filterValue
-      ); // Debug log
-      onFilterChange("unit", filterValue);
+        filterValue,
+        "Current activeTab:",
+        activeTab
+      );
+
+      // Toggle behavior: if clicking the same unit, reset to "overall"
+      const isAlreadyActive = activeTab === filterValue;
+      const newTabValue = isAlreadyActive ? "overall" : filterValue;
+      const newFilterValue = isAlreadyActive ? null : filterValue;
+
+      console.log(
+        isAlreadyActive
+          ? "Toggle off - resetting to overall"
+          : "Activating filter:",
+        newTabValue
+      );
+
+      // Update active tab (same as clicking tab button)
+      if (setActiveTab) {
+        console.log("Setting active tab to:", newTabValue);
+        setActiveTab(newTabValue);
+      }
+
+      // Update global filter (same as tab's onFilterChange)
+      if (onFilterChange) {
+        console.log("Calling onFilterChange with:", "unit", newFilterValue);
+        onFilterChange("unit", newFilterValue);
+      }
+    } else {
+      console.warn("⚠️ Cannot filter - missing data");
     }
   };
 
-  // Handle click on summary stat cards
+  // Handle click on summary stat cards (toggle behavior - clicking same unit resets to overall)
   const handleStatCardClick = (unit) => {
+    const filterValue = unitToFilterValue(unit);
+    console.log(
+      "Stat card click - Unit value:",
+      unit,
+      "-> Filter:",
+      filterValue,
+      "Current activeTab:",
+      activeTab
+    ); // Debug log
+
+    // Toggle behavior: if clicking the same unit, reset to "overall"
+    const isAlreadyActive = activeTab === filterValue;
+    const newTabValue = isAlreadyActive ? "overall" : filterValue;
+    const newFilterValue = isAlreadyActive ? null : filterValue;
+
+    console.log(
+      isAlreadyActive
+        ? "Toggle off - resetting to overall"
+        : "Activating filter:",
+      newTabValue
+    );
+
+    // Update active tab (same as clicking tab button)
+    if (setActiveTab) {
+      console.log("Setting active tab to:", newTabValue);
+      setActiveTab(newTabValue);
+    }
+
+    // Update global filter (same as tab's onFilterChange)
     if (onFilterChange) {
-      const filterValue = unitToFilterValue(unit);
-      console.log(
-        "Stat card click - Unit value:",
-        unit,
-        "-> Filter:",
-        filterValue
-      ); // Debug log
-      onFilterChange("unit", filterValue);
+      onFilterChange("unit", newFilterValue);
     }
   };
 
@@ -112,7 +174,14 @@ const RTMUnitsPieChart = ({
       else if (unitLower === "radio") filterValue = "radio";
       else if (unitLower === "official") filterValue = "official";
 
-      return activeFilters?.unit === filterValue;
+      const isFiltered = activeFilters?.unit === filterValue;
+      console.log(`🔍 isUnitFiltered("${unit}"):`, {
+        unitLower,
+        filterValue,
+        activeFilterUnit: activeFilters?.unit,
+        isFiltered,
+      });
+      return isFiltered;
     },
     [activeFilters?.unit]
   );
@@ -138,64 +207,69 @@ const RTMUnitsPieChart = ({
   const { innerData, outerData, chartConfig, totalMentions } =
     React.useMemo(() => {
       /**
-       * Data Source Selection Strategy:
+       * ✅ API-FIRST FILTERING STRATEGY
        *
-       * 1. If data-limiting filters are active (sentiment, platform, category, author):
-       *    → Count from client-side filtered data (correct behavior)
+       * Following the cross-filtering template:
+       * - ALWAYS use API data (unitsData & channelsData)
+       * - The API already respects all filters (platform, author, etc.)
+       * - DO NOT switch to client-side data based on hasActiveFilters
+       * - Client-side data is usually empty (we don't load all mentions)
        *
-       * 2. If ONLY unit filter is active (user clicked on a unit tab):
-       *    → Use unitsData and channelsData from API, filtered by selected unit
-       *    → This gives accurate database counts for that specific unit
-       *
-       * 3. If NO filters at all:
-       *    → Use unitsData from API for accurate database counts
-       *    → Use channelsData from API for accurate channel breakdown
-       *
-       * This ensures:
-       * - Accurate totals when no filters are applied (Overall tab)
-       * - Accurate unit-specific counts from database when unit tab is selected
-       * - Correct filtered counts when other filters are active
+       * The backend handles filtering via SQL queries with WHERE clauses
+       * based on filter parameters passed to the API hooks.
        */
 
-      // Check if we should use database aggregations
-      const hasUnitFilter =
-        activeFilters?.unit && activeFilters.unit !== "overall";
-
-      // Use API data when no data-limiting filters are active
-      // (unit filter alone doesn't count as data-limiting)
-      const useApiData = !hasActiveFilters && unitsData && unitsData.length > 0;
+      // ✅ ALWAYS use API data - it's already filtered by the backend
+      const useApiData =
+        unitsData && unitsData.data && unitsData.data.length > 0;
 
       console.log("🔍 RTMUnitsPieChart - Data source decision:", {
         useApiData,
         hasActiveFilters,
-        hasUnitFilter,
         hasUnitsData: !!unitsData,
-        unitsDataLength: unitsData?.length,
+        unitsDataLength: unitsData?.data?.length,
         hasChannelsData: !!channelsData,
-        channelsDataLength: channelsData?.length,
+        channelsDataLength: channelsData?.data?.length,
         clientDataLength: data?.length,
-        activeUnitFilter: activeFilters?.unit,
+        activeFilters,
       });
-
       /**
        * Predefined color mapping for each unit - ensures consistent colors across filters
        *
-       * Color Scheme:
-       * 🔵 TV        → Blue-purple (#4E5899)
-       * 🟢 Berita    → Green (#28a745)
+       * Original Color Scheme:
+       * 🟢 TV        → Green (#28a745)
+       * 🔵 Berita    → Blue-purple (#4E5899)
        * 🟠 Radio     → Orange (#ff9705)
-       * 🟣 Official  → Purple (#6f42c1)
+       * 🔴 Official  → Red (#dc3545)
        * 🟧 Other     → Orange variant (#fd7e14)
        * 🔷 Default   → Teal (#20c997)
        */
       const unitColorMap = {
-        TV: "#28a745", // Blue-purple for TV
-        Berita: "#4E5899", // Green for Berita/News
-        News: "#28a745", // Green for News (alias)
-        Radio: "#ff9705", // Orange for Radio
-        Official: "#dc3545", // Purple for Official
-        Other: "#fd7e14", // Orange variant for Other
-        Default: "#20c997", // Teal for Default
+        // TV variations
+        TV: "#28a745",
+        tv: "#28a745",
+
+        // Berita/News variations
+        Berita: "#4E5899",
+        berita: "#4E5899",
+        News: "#4E5899",
+        news: "#4E5899",
+
+        // Radio variations
+        Radio: "#ff9705",
+        radio: "#ff9705",
+
+        // Official variations
+        Official: "#dc3545",
+        official: "#dc3545",
+
+        // Other variations
+        Other: "#fd7e14",
+        other: "#fd7e14",
+
+        // Default
+        Default: "#20c997",
+        default: "#20c997",
       };
 
       // Fallback colors for any unexpected units
@@ -207,79 +281,81 @@ const RTMUnitsPieChart = ({
         "#6c757d", // Gray
       ];
 
-      // Function to get color for a unit
+      // Function to get color for a unit with partial matching
       const getUnitColor = (unit, index = 0) => {
-        // First check the predefined map
-        if (unitColorMap[unit]) {
-          return unitColorMap[unit];
+        if (!unit) return fallbackColors[index % fallbackColors.length];
+
+        const unitLower = unit.toLowerCase();
+
+        // First try: exact match (case-insensitive)
+        const exactMatch = Object.keys(unitColorMap).find(
+          (key) => key.toLowerCase() === unitLower
+        );
+
+        if (exactMatch && unitColorMap[exactMatch]) {
+          console.log(
+            `🎨 Exact match for "${unit}": ${unitColorMap[exactMatch]}`
+          );
+          return unitColorMap[exactMatch];
         }
+
+        // Second try: partial match (check if database value contains color map key)
+        // e.g., "BERITA RTM" contains "berita", "Radio stations" contains "radio"
+        const partialMatch = Object.keys(unitColorMap).find((key) =>
+          unitLower.includes(key.toLowerCase())
+        );
+
+        if (partialMatch && unitColorMap[partialMatch]) {
+          console.log(
+            `🎨 Partial match for "${unit}" (contains "${partialMatch}"): ${unitColorMap[partialMatch]}`
+          );
+          return unitColorMap[partialMatch];
+        }
+
         // Use fallback colors with modulo for unexpected units
+        console.warn(
+          `⚠️ No color match for unit "${unit}", using fallback color`
+        );
         return fallbackColors[index % fallbackColors.length];
       };
 
       // ========================================
-      // BRANCH 1: Use API Database Aggregations (All Units or Specific Unit)
+      // BRANCH 1: Use API Database Aggregations (✅ ALWAYS)
       // ========================================
       if (useApiData) {
-        // Map unit filter value to database unit name
-        const unitMap = {
-          tv: "TV",
-          radio: "Radio",
-          berita: "News",
-          news: "News",
-          official: "Official",
-        };
+        console.log("✅ Using accurate API unitsData (respects all filters)");
 
-        const targetUnit = hasUnitFilter
-          ? unitMap[activeFilters.unit.toLowerCase()] || activeFilters.unit
-          : null;
-
-        if (targetUnit) {
-          console.log(
-            "✅ Using accurate API unitsData filtered by unit:",
-            targetUnit
-          );
-        } else {
-          console.log("✅ Using accurate API unitsData for all units");
-        }
-
-        // Step 1: Build unit counts from API unitsData (filter by unit if needed)
+        // Step 1: Build unit counts from API unitsData
         const unitCounts = {};
         const unitChannelCounts = {};
 
-        unitsData
-          .filter((unitItem) => !targetUnit || unitItem.unit === targetUnit)
-          .forEach((unitItem) => {
-            const unit = unitItem.unit === "News" ? "Berita" : unitItem.unit;
-            unitCounts[unit] = unitItem.count;
+        unitsData.data.forEach((unitItem) => {
+          const unit = unitItem.name === "News" ? "Berita" : unitItem.name;
+          unitCounts[unit] = unitItem.totalPosts;
 
-            // Initialize channel container for this unit
-            if (!unitChannelCounts[unit]) {
-              unitChannelCounts[unit] = {};
-            }
-          });
+          // Initialize channel container for this unit
+          if (!unitChannelCounts[unit]) {
+            unitChannelCounts[unit] = {};
+          }
+        });
 
-        // Step 2: Build channel breakdown from API channelsData (filter by unit if needed)
-        if (channelsData && channelsData.length > 0) {
+        // Step 2: Build channel breakdown from API channelsData
+        if (channelsData && channelsData.data && channelsData.data.length > 0) {
           console.log(
             "✅ Using accurate API channelsData for channel breakdown"
           );
 
-          channelsData
-            .filter(
-              (channelItem) => !targetUnit || channelItem.unit === targetUnit
-            )
-            .forEach((channelItem) => {
-              const unit =
-                channelItem.unit === "News" ? "Berita" : channelItem.unit;
-              const channel = channelItem.channel;
+          channelsData.data.forEach((channelItem) => {
+            const unit =
+              channelItem.unit === "News" ? "Berita" : channelItem.unit;
+            const channel = channelItem.name;
 
-              if (!unitChannelCounts[unit]) {
-                unitChannelCounts[unit] = {};
-              }
+            if (!unitChannelCounts[unit]) {
+              unitChannelCounts[unit] = {};
+            }
 
-              unitChannelCounts[unit][channel] = channelItem.count;
-            });
+            unitChannelCounts[unit][channel] = channelItem.totalPosts;
+          });
         }
 
         console.log("📊 API-sourced unit counts:", unitCounts);
@@ -570,6 +646,11 @@ const RTMUnitsPieChart = ({
             <p className="text-sm text-blue-600 font-medium">
               📊 Posts: {data.mentions.toLocaleString()}
             </p>
+            {onFilterChange && (
+              <p className="text-xs text-gray-400 mt-2 italic border-t pt-1">
+                💡 Click to filter by {data.unit}
+              </p>
+            )}
           </div>
         </div>
       );
@@ -591,30 +672,31 @@ const RTMUnitsPieChart = ({
             <p className="text-sm text-blue-600 font-medium">
               📊 Posts: {data.mentions.toLocaleString()}
             </p>
+            {onFilterChange && (
+              <p className="text-xs text-gray-400 mt-2 italic border-t pt-1">
+                💡 Click to filter by this unit
+              </p>
+            )}
           </div>
         </div>
       );
     }
   };
 
-  // Loading state
-  if (!data) {
-    return (
-      <Card className="flex flex-col">
-        <CardContent className="">
-          <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <p className="text-gray-600 text-sm">Loading chart data...</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Loading state - check if we have any data source available
+  const hasApiData = unitsData?.data && unitsData.data.length > 0;
+  const hasClientData = data && Array.isArray(data) && data.length > 0;
 
-  // Empty state
-  if (!Array.isArray(data) || data.length === 0) {
+  console.log("🎯 RTMUnitsPieChart Render Check:", {
+    hasApiData,
+    hasClientData,
+    unitsDataLength: unitsData?.data?.length,
+    clientDataLength: data?.length,
+    innerDataLength: innerData?.length,
+    outerDataLength: outerData?.length,
+  });
+
+  if (!hasApiData && !hasClientData) {
     return (
       <Card className="flex flex-col">
         <CardHeader className="items-center pb-0">
@@ -625,14 +707,9 @@ const RTMUnitsPieChart = ({
         </CardHeader>
         <CardContent className="">
           <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <AlertCircle className="h-12 w-12 text-gray-400" />
-              <div>
-                <p className="text-gray-900 font-medium">No data available</p>
-                <p className="text-gray-500 text-sm">
-                  There are no mentions to display in the chart.
-                </p>
-              </div>
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <p className="text-gray-600 text-sm">Loading chart data...</p>
             </div>
           </div>
         </CardContent>
@@ -828,7 +905,7 @@ const RTMUnitsPieChart = ({
                 style={getFilteredStyle(item.unit)}
               >
                 <div
-                  className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-200 ${
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 transition-all duration-200 ${
                     isFiltered ? "ring-2 ring-blue-400" : ""
                   }`}
                   style={{ backgroundColor: color }}

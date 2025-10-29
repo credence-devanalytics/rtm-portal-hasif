@@ -10,10 +10,26 @@ import {
 } from "recharts";
 import { Tag, Search } from "lucide-react";
 
-const ClassificationMentionsChart = ({ data = [] }) => {
+const ClassificationMentionsChart = ({
+  data = [],
+  onFilterChange = null,
+  activeFilters = {} as any,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("count"); // 'count' or 'alphabetical'
   const [showTop, setShowTop] = useState(20); // Show top N classifications
+
+  // Handle category click for cross-filtering
+  const handleBarClick = (data: any) => {
+    if (onFilterChange && data && data.category) {
+      // Toggle filter - if already filtered by this category, clear it
+      if (activeFilters.category === data.category) {
+        onFilterChange("category", null);
+      } else {
+        onFilterChange("category", data.category);
+      }
+    }
+  };
 
   // Process the data to count mentions per category
   const processedData = useMemo(() => {
@@ -22,24 +38,43 @@ const ClassificationMentionsChart = ({ data = [] }) => {
     }
 
     try {
-      // Count mentions by category
-      const categoryCounts = data.reduce((acc, item) => {
-        if (item && item.category) {
-          const category = item.category.trim();
-          acc[category] = (acc[category] || 0) + 1;
-        }
-        return acc;
-      }, {});
+      // Check if data is already in the correct format (from API)
+      const isPreProcessed =
+        data.length > 0 &&
+        data[0].hasOwnProperty("category") &&
+        data[0].hasOwnProperty("count") &&
+        !data[0].hasOwnProperty("id"); // Distinguish from raw mention data
 
-      // Convert to array format for recharts
-      let chartData = Object.entries(categoryCounts).map(
-        ([category, count]) => ({
+      let chartData;
+
+      if (isPreProcessed) {
+        // Data is already processed from API - just format it
+        chartData = data.map((item) => ({
+          category: item.category,
+          count: item.count,
+          displayName:
+            item.category.length > 15
+              ? item.category.substring(0, 12) + "..."
+              : item.category,
+        }));
+      } else {
+        // Legacy: Count mentions by category from raw data
+        const categoryCounts = data.reduce((acc, item) => {
+          if (item && item.category) {
+            const category = item.category.trim();
+            acc[category] = (acc[category] || 0) + 1;
+          }
+          return acc;
+        }, {});
+
+        // Convert to array format for recharts
+        chartData = Object.entries(categoryCounts).map(([category, count]) => ({
           category,
           count,
           displayName:
             category.length > 15 ? category.substring(0, 12) + "..." : category,
-        })
-      );
+        }));
+      }
 
       // Filter by search term
       if (searchTerm) {
@@ -274,10 +309,20 @@ const ClassificationMentionsChart = ({ data = [] }) => {
                 fill="#4E5899"
                 name="Mentions"
                 radius={[4, 4, 0, 0]}
+                onClick={handleBarClick}
+                cursor={onFilterChange ? "pointer" : "default"}
               />
             </BarChart>
           </ResponsiveContainer>
         </div>
+
+        {onFilterChange && activeFilters.category && (
+          <div className="mt-4 text-center pb-4">
+            <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+              Filtered by category: {activeFilters.category}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Summary Stats */}

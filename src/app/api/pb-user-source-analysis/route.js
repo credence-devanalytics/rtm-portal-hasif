@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { pbFirstUserSource } from "../../../../drizzle/schema";
+import { pberitaFirstUserSource } from "../../../../drizzle/schema";
 import { sql } from "drizzle-orm";
 
 export async function GET(request) {
@@ -15,18 +15,18 @@ export async function GET(request) {
 		// Fetch user source data and group by main source
 		const userSourceData = await db
 			.select({
-				mainSource: pbFirstUserSource.mainSource,
-				totalActiveUsers: sql`SUM(${pbFirstUserSource.activeUsers})`.as(
+				mainSource: pberitaFirstUserSource.mainSource,
+				totalActiveUsers: sql`SUM(${pberitaFirstUserSource.activeusers})`.as(
 					"totalActiveUsers"
 				),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
-				avgDailyUsers: sql`AVG(${pbFirstUserSource.activeUsers})`.as(
+				avgDailyUsers: sql`AVG(${pberitaFirstUserSource.activeusers})`.as(
 					"avgDailyUsers"
 				),
 			})
-			.from(pbFirstUserSource)
-			.groupBy(pbFirstUserSource.mainSource)
-			.orderBy(sql`SUM(${pbFirstUserSource.activeUsers}) DESC`)
+			.from(pberitaFirstUserSource)
+			.groupBy(pberitaFirstUserSource.mainSource)
+			.orderBy(sql`SUM(${pberitaFirstUserSource.activeusers}) DESC`)
 			.limit(limitNum);
 
 		console.log("PB User Source data:", userSourceData);
@@ -72,7 +72,7 @@ export async function GET(request) {
 					totalActiveUsers: totalUsers,
 					topSource: {
 						name: topSource.sourceName,
-						users: topSource.activeUsers,
+						users: topSource.activeusers,
 						percentage: topSource.percentage,
 					},
 					limit: limitNum,
@@ -95,3 +95,6 @@ export async function GET(request) {
 		);
 	}
 }
+
+
+

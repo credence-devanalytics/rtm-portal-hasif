@@ -11,13 +11,59 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const EngagementOverTimeChart = ({ data }) => {
-  // Create engagement data grouped by date
+const EngagementOverTimeChart = ({
+  data,
+  onFilterChange = null,
+  activeFilters = {} as any,
+}) => {
+  // Create engagement data grouped by date with proper reach and interaction calculation
   const createEngagementOverTime = (transformedData) => {
     if (!transformedData || transformedData.length === 0) {
       return [];
     }
 
+    // Check if data is already in the correct format (from API)
+    const isPreProcessed =
+      transformedData.length > 0 &&
+      transformedData[0].hasOwnProperty("reach") &&
+      transformedData[0].hasOwnProperty("posts") &&
+      transformedData[0].hasOwnProperty("interactions") &&
+      !transformedData[0].hasOwnProperty("id"); // Distinguish from raw mention data
+
+    if (isPreProcessed) {
+      // Data is already processed from API
+      console.log("📊 Using pre-processed engagement data from API");
+
+      // Find max values for normalization
+      const maxReach = Math.max(...transformedData.map((d) => d.reach));
+      const maxInteractions = Math.max(
+        ...transformedData.map((d) => d.interactions)
+      );
+      const totalReach = transformedData.reduce((sum, d) => sum + d.reach, 0);
+      const totalInteractions = transformedData.reduce(
+        (sum, d) => sum + d.interactions,
+        0
+      );
+
+      // Normalize reach and interactions to percentage
+      return transformedData.map((day) => ({
+        ...day,
+        reachPercentage: maxReach > 0 ? (day.reach / maxReach) * 100 : 0,
+        interactionsPercentage:
+          maxInteractions > 0 ? (day.interactions / maxInteractions) * 100 : 0,
+        reachDistribution: totalReach > 0 ? (day.reach / totalReach) * 100 : 0,
+        interactionsDistribution:
+          totalInteractions > 0
+            ? (day.interactions / totalInteractions) * 100
+            : 0,
+        // Keep original values for tooltip
+        reachOriginal: day.reach,
+        interactionsOriginal: day.interactions,
+      }));
+    }
+
+    // Legacy: Process raw mention data
+    console.log("📊 Processing raw engagement data (legacy mode)");
     const groupedByDate = {};
 
     transformedData.forEach((item) => {
@@ -25,44 +71,81 @@ const EngagementOverTimeChart = ({ data }) => {
       if (!groupedByDate[date]) {
         groupedByDate[date] = {
           date,
-          totalReach: 0,
+          totalReachUsed: 0,
           postsCount: 0,
-          totalEngagement: 0,
+          totalInteractions: 0,
         };
       }
 
-      groupedByDate[date].totalReach += item.reach || 0;
+      // Calculate reach_used: prefer reach, then viewcount, then followerscount, then sourcereach
+      // Use NULLIF logic - only use non-zero values
+      const reachUsed =
+        (item.reach && Number(item.reach) !== 0 ? Number(item.reach) : null) ||
+        (item.viewcount && Number(item.viewcount) !== 0
+          ? Number(item.viewcount)
+          : null) ||
+        (item.followerscount && Number(item.followerscount) !== 0
+          ? Number(item.followerscount)
+          : null) ||
+        (item.sourcereach && Number(item.sourcereach) !== 0
+          ? Number(item.sourcereach)
+          : null) ||
+        0;
+
+      // Calculate interactions: prefer interaction, then totalreactionscount, then sum of engagement fields
+      const interactions =
+        (item.interaction && Number(item.interaction) !== 0
+          ? Number(item.interaction)
+          : null) ||
+        (item.totalreactionscount && Number(item.totalreactionscount) !== 0
+          ? Number(item.totalreactionscount)
+          : null) ||
+        Number(item.likecount || 0) +
+          Number(item.commentcount || 0) +
+          Number(item.sharecount || 0) +
+          Number(item.playcount || 0) +
+          Number(item.replycount || 0) +
+          Number(item.retweetcount || 0);
+
+      groupedByDate[date].totalReachUsed += reachUsed;
       groupedByDate[date].postsCount += 1; // Count each mention/post
-      groupedByDate[date].totalEngagement +=
-        item.interactions ||
-        (item.likecount || 0) +
-          (item.sharecount || 0) +
-          (item.commentcount || 0) +
-          (item.viewcount || 0);
+      groupedByDate[date].totalInteractions += interactions;
     });
 
     const rawData = Object.values(groupedByDate)
-      .map((day: any) => ({
-        date: day.date,
-        reach: day.totalReach,
-        posts: day.postsCount,
-        engagement: day.totalEngagement,
-      }))
+      .map((day: any) => {
+        return {
+          date: day.date,
+          reach: day.totalReachUsed,
+          posts: day.postsCount,
+          interactions: day.totalInteractions,
+        };
+      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // Find max values for normalization
     const maxReach = Math.max(...rawData.map((d) => d.reach));
-    const maxEngagement = Math.max(...rawData.map((d) => d.engagement));
+    const maxInteractions = Math.max(...rawData.map((d) => d.interactions));
+    const totalReach = rawData.reduce((sum, d) => sum + d.reach, 0);
+    const totalInteractions = rawData.reduce(
+      (sum, d) => sum + d.interactions,
+      0
+    );
 
-    // Normalize reach and engagement to 0-100 scale
+    // Normalize reach and interactions to percentage
     return rawData.map((day) => ({
       ...day,
-      reachNormalized: maxReach > 0 ? (day.reach / maxReach) * 100 : 0,
-      engagementNormalized:
-        maxEngagement > 0 ? (day.engagement / maxEngagement) * 100 : 0,
+      reachPercentage: maxReach > 0 ? (day.reach / maxReach) * 100 : 0,
+      interactionsPercentage:
+        maxInteractions > 0 ? (day.interactions / maxInteractions) * 100 : 0,
+      reachDistribution: totalReach > 0 ? (day.reach / totalReach) * 100 : 0,
+      interactionsDistribution:
+        totalInteractions > 0
+          ? (day.interactions / totalInteractions) * 100
+          : 0,
       // Keep original values for tooltip
       reachOriginal: day.reach,
-      engagementOriginal: day.engagement,
+      interactionsOriginal: day.interactions,
     }));
   };
 
@@ -75,6 +158,45 @@ const EngagementOverTimeChart = ({ data }) => {
     engagementData?.slice(0, 2)
   );
 
+  // Debug: Check for data with actual reach/interactions
+  if (data && data.length > 0) {
+    const sampleWithData = data.find(
+      (item) =>
+        (item.reach && Number(item.reach) > 0) ||
+        (item.viewcount && Number(item.viewcount) > 0) ||
+        (item.interaction && Number(item.interaction) > 0) ||
+        (item.likecount && Number(item.likecount) > 0)
+    );
+    console.log(
+      "EngagementOverTimeChart - Sample with engagement data:",
+      sampleWithData
+    );
+
+    // Count how many items have reach data
+    const withReach = data.filter(
+      (item) =>
+        (item.reach && Number(item.reach) > 0) ||
+        (item.viewcount && Number(item.viewcount) > 0) ||
+        (item.followerscount && Number(item.followerscount) > 0) ||
+        (item.sourcereach && Number(item.sourcereach) > 0)
+    ).length;
+
+    const withInteractions = data.filter(
+      (item) =>
+        (item.interaction && Number(item.interaction) > 0) ||
+        (item.totalreactionscount && Number(item.totalreactionscount) > 0) ||
+        (item.likecount && Number(item.likecount) > 0) ||
+        (item.commentcount && Number(item.commentcount) > 0)
+    ).length;
+
+    console.log(
+      `EngagementOverTimeChart - Items with reach: ${withReach}/${data.length}`
+    );
+    console.log(
+      `EngagementOverTimeChart - Items with interactions: ${withInteractions}/${data.length}`
+    );
+  }
+
   // Safety check
   if (!engagementData || engagementData.length === 0) {
     return (
@@ -84,6 +206,18 @@ const EngagementOverTimeChart = ({ data }) => {
             Engagement Over Time
           </h2>
           <p className="text-gray-600 mb-6">No engagement data available</p>
+          {data && data.length > 0 && (
+            <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded border border-amber-200">
+              <p>
+                <strong>Note:</strong> {data.length} posts found, but no
+                engagement metrics (reach/interactions) available.
+              </p>
+              <p className="mt-1 text-xs">
+                Check if the data source includes fields like: reach, viewcount,
+                interaction, likecount, etc.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -106,15 +240,21 @@ const EngagementOverTimeChart = ({ data }) => {
             let displayValue = entry.value;
             let suffix = "";
 
-            // Show original values for reach and engagement
-            if (entry.dataKey === "reachNormalized") {
+            // Show original values and percentages for reach and interactions
+            if (entry.dataKey === "reachPercentage") {
               const originalReach = entry.payload.reachOriginal;
-              displayValue = originalReach?.toLocaleString();
-              suffix = " (reach)";
-            } else if (entry.dataKey === "engagementNormalized") {
-              const originalEngagement = entry.payload.engagementOriginal;
-              displayValue = originalEngagement?.toLocaleString();
-              suffix = " (engagement)";
+              const percentage = entry.value;
+              displayValue = `${originalReach?.toLocaleString()} (${percentage?.toFixed(
+                1
+              )}%)`;
+              suffix = "";
+            } else if (entry.dataKey === "interactionsPercentage") {
+              const originalInteractions = entry.payload.interactionsOriginal;
+              const percentage = entry.value;
+              displayValue = `${originalInteractions?.toLocaleString()} (${percentage?.toFixed(
+                1
+              )}%)`;
+              suffix = "";
             } else if (entry.dataKey === "posts") {
               displayValue = entry.value?.toLocaleString();
               suffix = " posts";
@@ -132,7 +272,10 @@ const EngagementOverTimeChart = ({ data }) => {
             );
           })}
           <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
-            <p>* Reach and engagement are shown as relative trends (0-100%)</p>
+            <p>
+              * Percentages show relative value compared to peak day (100% =
+              highest value)
+            </p>
           </div>
         </div>
       );
@@ -146,8 +289,8 @@ const EngagementOverTimeChart = ({ data }) => {
     (sum, day) => sum + day.reachOriginal,
     0
   );
-  const totalEngagement = engagementData.reduce(
-    (sum, day) => sum + day.engagementOriginal,
+  const totalInteractions = engagementData.reduce(
+    (sum, day) => sum + day.interactionsOriginal,
     0
   );
 
@@ -159,8 +302,7 @@ const EngagementOverTimeChart = ({ data }) => {
             Engagement Over Time
           </h2>
           <p className="text-gray-600">
-            Daily posts count with normalized reach and engagement trends
-            (0-100% relative scale)
+            Daily posts count with reach and interactions trends
           </p>
         </div>
 
@@ -173,9 +315,7 @@ const EngagementOverTimeChart = ({ data }) => {
                   engagementData.length
               ).toLocaleString()}
             </div>
-            <div className="text-sm text-blue-600">
-              Avg Daily Posts/Mentions
-            </div>
+            <div className="text-sm text-blue-600">Avg Daily Posts</div>
           </div>
           <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
             <div className="text-2xl font-bold text-orange-600">
@@ -186,15 +326,15 @@ const EngagementOverTimeChart = ({ data }) => {
           <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
             <div className="text-2xl font-bold text-green-600">
               {Math.round(
-                totalEngagement / engagementData.length
+                totalInteractions / engagementData.length
               ).toLocaleString()}
             </div>
-            <div className="text-sm text-green-800">Avg Daily Engagement</div>
+            <div className="text-sm text-green-800">Avg Daily Interactions</div>
           </div>
         </div>
 
         <div className="w-full">
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={280}>
             <ComposedChart
               data={engagementData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -227,7 +367,7 @@ const EngagementOverTimeChart = ({ data }) => {
                   },
                 }}
               />
-              {/* Right Y-axis for Normalized Reach & Engagement */}
+              {/* Right Y-axis for Normalized Trends */}
               <YAxis
                 yAxisId="right"
                 tick={{ fontSize: 12 }}
@@ -256,37 +396,37 @@ const EngagementOverTimeChart = ({ data }) => {
               />
               <Legend wrapperStyle={{ paddingTop: "20px" }} />
 
-              {/* Bar Chart for Posts/Mentions */}
+              {/* Bar Chart for Posts */}
               <Bar
                 yAxisId="left"
                 dataKey="posts"
                 fill="#4E5899"
-                name="Posts/Mentions"
+                name="Posts"
                 fillOpacity={0.8}
               />
 
-              {/* Line Chart for Normalized Reach */}
+              {/* Line Chart for Reach Percentage */}
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="reachNormalized"
+                dataKey="reachPercentage"
                 stroke="#ff9705"
-                strokeWidth={3}
-                name="Reach Trend"
-                dot={{ fill: "#ff9705", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#ff9705", strokeWidth: 2 }}
+                strokeWidth={2}
+                name="Reach %"
+                dot={{ fill: "#ff9705", strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5, stroke: "#ff9705", strokeWidth: 2 }}
               />
 
-              {/* Line Chart for Normalized Engagement */}
+              {/* Line Chart for Interactions Percentage */}
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="engagementNormalized"
+                dataKey="interactionsPercentage"
                 stroke="#28a745"
-                strokeWidth={3}
-                name="Engagement Trend"
-                dot={{ fill: "#28a745", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#10B981", strokeWidth: 2 }}
+                strokeWidth={2}
+                name="Interactions %"
+                dot={{ fill: "#28a745", strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5, stroke: "#10B981", strokeWidth: 2 }}
               />
             </ComposedChart>
           </ResponsiveContainer>
@@ -296,10 +436,10 @@ const EngagementOverTimeChart = ({ data }) => {
         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
           <p className="text-sm text-gray-600">
             <strong>Chart Explanation:</strong> Posts are shown as absolute
-            counts (blue bars, left axis). Reach and engagement trends are
-            normalized to 0-100% relative scale (lines, right axis) to compare
-            their patterns over time. Hover over data points to see original
-            values.
+            counts (blue bars, left axis). Reach and interactions are shown as
+            percentages relative to their peak values (orange and green lines,
+            right axis). 100% represents the day with the highest
+            reach/interactions. Hover over data points to see actual numbers.
           </p>
         </div>
 

@@ -35,6 +35,7 @@ export async function GET(request: Request) {
 					unitBreakdown,
 					channelBreakdown,
 					authorBreakdown,
+					dailyChannelBreakdown,
 				] = await Promise.all([
 					// 1. Get limited raw mentions data (for tables)
 					db
@@ -272,6 +273,28 @@ export async function GET(request: Request) {
 							END`
 						)
 						.orderBy(desc(count())),
+
+					// 13. Get daily channel breakdown (for Channel Posts time series chart)
+					db
+						.select({
+							date: sql`DATE(${mentionsClassify.inserttime})`.as("date"),
+							channel: mentionsClassify.channel,
+							count: count(),
+							totalReach: sum(mentionsClassify.reach),
+							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
+						})
+						.from(mentionsClassify)
+						.where(
+							and(
+								...whereConditions,
+								sql`${mentionsClassify.channel} IS NOT NULL AND ${mentionsClassify.channel} != ''`
+							)
+						)
+						.groupBy(
+							sql`DATE(${mentionsClassify.inserttime})`,
+							mentionsClassify.channel
+						)
+						.orderBy(sql`DATE(${mentionsClassify.inserttime})`),
 				]);
 
 			const response = {
@@ -361,6 +384,15 @@ export async function GET(request: Request) {
 						count: Number(a.count) || 0,
 						totalReach: Number(a.totalReach) || 0,
 						totalInteractions: Number(a.totalInteractions) || 0,
+					})),
+
+					// Daily channel breakdown (for Channel Posts time series chart)
+					dailyChannelData: dailyChannelBreakdown.map((d) => ({
+						date: d.date,
+						channel: d.channel,
+						count: Number(d.count) || 0,
+						totalReach: Number(d.totalReach) || 0,
+						totalInteractions: Number(d.totalInteractions) || 0,
 					})),
 
 					// Top performing content
