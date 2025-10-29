@@ -201,13 +201,13 @@ export async function GET(request: Request) {
     try {
       channelBreakdown = generateChannelBreakdown(filteredData);
       
-      // Fetch total viewers for year 2024 from mytv_v2_viewership table
+      // Fetch total viewers for year 2024 from mytv_viewership table
       try {
         const viewerCounts = await db.execute(sql`
           SELECT 
             channel,
             SUM(viewers) AS total_viewers
-          FROM mytv_v2_viewership
+          FROM mytv_viewership
           WHERE year = 2024
             AND channel ILIKE ANY (ARRAY[
               '%TV1%',
@@ -241,11 +241,11 @@ export async function GET(request: Request) {
         // Continue with calculated totals from filtered data
       }
       
-      // Fetch program counts from mytv_v2_top_programs table
+      // Fetch program counts from mytv_top_programs table
       try {
         const programCounts = await db.execute(sql`
           SELECT count(*) as program_count, channel
-          FROM mytv_v2_top_programs
+          FROM mytv_top_programs
           WHERE channel ILIKE ANY (ARRAY[
             '%TV1%',
             '%TV2%',
@@ -308,11 +308,9 @@ export async function GET(request: Request) {
         year: parseInt(String(item.year)) || 0,
         viewers: parseInt(String(item.viewers)) || 0,
         metric: item.metric || 'N/A',
-        page_num: parseInt(String(item.page_num)) || 0,
-        table_idx: parseInt(String(item.table_idx)) || 0,
-        page_title: item.page_title || null,
-        inserted_at: item.inserted_at || null,
-        updated_at: item.updated_at || null
+        page_num: parseInt(String(item.pageNum)) || 0,
+        table_idx: parseInt(String(item.tableIdx)) || 0,
+        page_title: item.pageTitle || null,
       })),
       pagination: {
         page,

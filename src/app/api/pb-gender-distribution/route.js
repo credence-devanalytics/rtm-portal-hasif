@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { pberitaAudienceGender } from "../../../../drizzle/schema";
 import { sql } from "drizzle-orm";
@@ -113,7 +113,7 @@ export async function GET(request) {
 		});
 
 		const dominantGender = chartData.reduce(
-			(max, item) => (item.activeUsers > max.activeusers ? item : max),
+			(max, item) => (item.activeUsers > max.activeUsers ? item : max),
 			chartData[0] || {}
 		);
 
@@ -124,7 +124,7 @@ export async function GET(request) {
 				summary: {
 					totalUsers,
 					totalNewUsers: chartData.reduce(
-						(sum, item) => sum + item.newusers,
+						(sum, item) => sum + item.newUsers,
 						0
 					),
 					dominantGender: dominantGender.gender || "N/A",
@@ -155,3 +155,6 @@ export async function GET(request) {
 		);
 	}
 }
+
+
+

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import {
-	pbAudience,
-	pbAudienceAge,
-	pbAudienceGender,
-	pbAudienceRegion,
-	pbFirstUser,
-	pbFirstUserSource,
+	pberitaAudience,
+	pberitaAudienceAge,
+	pberitaAudienceGender,
+	pberitaAudienceRegion,
+	pberitaFirstUser,
+	pberitaFirstUserSource,
 } from "../../../../drizzle/schema";
 import { sql, eq, and, gte, lte } from "drizzle-orm";
 
@@ -54,11 +54,11 @@ export async function GET(request) {
 async function getOverviewAnalysis(startDate, endDate) {
 	const [audienceData, ageData, genderData, regionData, sourceData] =
 		await Promise.all([
-			db.select().from(pbAudience),
-			db.select().from(pbAudienceAge),
-			db.select().from(pbAudienceGender),
-			db.select().from(pbAudienceRegion),
-			db.select().from(pbFirstUserSource),
+			db.select().from(pberitaAudience),
+			db.select().from(pberitaAudienceAge),
+			db.select().from(pberitaAudienceGender),
+			db.select().from(pberitaAudienceRegion),
+			db.select().from(pberitaFirstUserSource),
 		]);
 
 	// Calculate summary metrics
@@ -126,8 +126,8 @@ async function getRegionAgeAnalysis(startDate, endDate) {
 	// This would require joining data by date to correlate region and age
 	// For now, we'll provide separate summaries
 	const [regionData, ageData] = await Promise.all([
-		db.select().from(pbAudienceRegion),
-		db.select().from(pbAudienceAge),
+		db.select().from(pberitaAudienceRegion),
+		db.select().from(pberitaAudienceAge),
 	]);
 
 	// Group by region
@@ -137,8 +137,8 @@ async function getRegionAgeAnalysis(startDate, endDate) {
 		if (!regionSummary[key]) {
 			regionSummary[key] = { activeUsers: 0, newUsers: 0, dates: new Set() };
 		}
-		regionSummary[key].activeUsers += item.activeUsers || 0;
-		regionSummary[key].newUsers += item.newUsers || 0;
+		regionSummary[key].activeusers += item.activeUsers || 0;
+		regionSummary[key].newusers += item.newUsers || 0;
 		regionSummary[key].dates.add(item.date);
 	});
 
@@ -149,8 +149,8 @@ async function getRegionAgeAnalysis(startDate, endDate) {
 		if (!ageSummary[key]) {
 			ageSummary[key] = { activeUsers: 0, newUsers: 0, dates: new Set() };
 		}
-		ageSummary[key].activeUsers += item.activeUsers || 0;
-		ageSummary[key].newUsers += item.newUsers || 0;
+		ageSummary[key].activeusers += item.activeUsers || 0;
+		ageSummary[key].newusers += item.newUsers || 0;
 		ageSummary[key].dates.add(item.date);
 	});
 
@@ -159,14 +159,14 @@ async function getRegionAgeAnalysis(startDate, endDate) {
 		data: {
 			regionSummary: Object.entries(regionSummary).map(([region, data]) => ({
 				region,
-				activeUsers: data.activeUsers,
-				newUsers: data.newUsers,
+				activeUsers: data.activeusers,
+				newUsers: data.newusers,
 				dateCount: data.dates.size,
 			})),
 			ageSummary: Object.entries(ageSummary).map(([age, data]) => ({
 				ageBracket: age,
-				activeUsers: data.activeUsers,
-				newUsers: data.newUsers,
+				activeUsers: data.activeusers,
+				newUsers: data.newusers,
 				dateCount: data.dates.size,
 			})),
 			analysisType: "region-age",
@@ -178,8 +178,8 @@ async function getRegionAgeAnalysis(startDate, endDate) {
 // Gender and Source correlation analysis
 async function getGenderSourceAnalysis(startDate, endDate) {
 	const [genderData, sourceData] = await Promise.all([
-		db.select().from(pbAudienceGender),
-		db.select().from(pbFirstUserSource),
+		db.select().from(pberitaAudienceGender),
+		db.select().from(pberitaFirstUserSource),
 	]);
 
 	// Process gender data
@@ -189,18 +189,18 @@ async function getGenderSourceAnalysis(startDate, endDate) {
 		if (!genderSummary[key]) {
 			genderSummary[key] = { activeUsers: 0, newUsers: 0 };
 		}
-		genderSummary[key].activeUsers += item.activeUsers || 0;
-		genderSummary[key].newUsers += item.newUsers || 0;
+		genderSummary[key].activeusers += item.activeUsers || 0;
+		genderSummary[key].newusers += item.newUsers || 0;
 	});
 
 	// Process source data
 	const sourceSummary = {};
 	sourceData.forEach((item) => {
-		const key = item.mainSource;
+		const key = item.main_source;
 		if (!sourceSummary[key]) {
 			sourceSummary[key] = { activeUsers: 0 };
 		}
-		sourceSummary[key].activeUsers += item.activeUsers || 0;
+		sourceSummary[key].activeusers += item.activeUsers || 0;
 	});
 
 	return NextResponse.json({
@@ -208,12 +208,12 @@ async function getGenderSourceAnalysis(startDate, endDate) {
 		data: {
 			genderBreakdown: Object.entries(genderSummary).map(([gender, data]) => ({
 				gender,
-				activeUsers: data.activeUsers,
-				newUsers: data.newUsers,
+				activeUsers: data.activeusers,
+				newUsers: data.newusers,
 			})),
 			sourceBreakdown: Object.entries(sourceSummary).map(([source, data]) => ({
 				source,
-				activeUsers: data.activeUsers,
+				activeUsers: data.activeusers,
 			})),
 			analysisType: "gender-source",
 			dateRange: { startDate, endDate },
@@ -223,7 +223,7 @@ async function getGenderSourceAnalysis(startDate, endDate) {
 
 // Daily trends analysis
 async function getDailyTrendsAnalysis(startDate, endDate) {
-	const audienceData = await db.select().from(pbAudience);
+	const audienceData = await db.select().from(pberitaAudience);
 
 	// Group by date
 	const dailyTrends = {};
@@ -237,10 +237,10 @@ async function getDailyTrendsAnalysis(startDate, endDate) {
 				returningUsers: 0,
 			};
 		}
-		dailyTrends[date].totalUsers += item.totalUsers || 0;
-		dailyTrends[date].newUsers += item.newUsers || 0;
-		dailyTrends[date].returningUsers =
-			dailyTrends[date].totalUsers - dailyTrends[date].newUsers;
+		dailyTrends[date].totalusers += item.totalUsers || 0;
+		dailyTrends[date].newusers += item.newUsers || 0;
+		dailyTrends[date].returningusers =
+			dailyTrends[date].totalusers - dailyTrends[date].newusers;
 	});
 
 	const chartData = Object.values(dailyTrends).sort(
@@ -273,3 +273,6 @@ async function getDailyTrendsAnalysis(startDate, endDate) {
 		},
 	});
 }
+
+
+

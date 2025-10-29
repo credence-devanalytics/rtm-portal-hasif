@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 			.from(marketingChannelByyear)
 			.where(
 				and(
-					inArray(marketingChannelByyear.reportTitle, reportTitles),
+					// inArray(marketingChannelByyear.reportTitle, reportTitles),
 					inArray(marketingChannelByyear.year, [2022, 2023, 2024])
 				)
 			)

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import {
   PieChart,
   Pie,
@@ -10,133 +10,80 @@ import {
 
 const PlatformDonutChart = ({
   data,
-  platformsData,
-  platformByUnitData, // New prop for unit-specific platform distribution
-  hasActiveFilters,
+  platformsData, // API data for platforms
   onFilterChange,
   activeFilters = {},
-  channelsData, // Add channelsData prop for unit-specific filtering
 }: any) => {
-  // Normalize platform names to match color keys
-  const normalizePlatformName = (platform: string): string => {
-    const normalized = platform.toLowerCase();
-    const platformMap = {
-      facebook: "Facebook",
-      instagram: "Instagram",
-      twitter: "Twitter",
-      tiktok: "TikTok",
-      youtube: "YouTube",
-      linkedin: "LinkedIn",
-      reddit: "Reddit",
-      web: "Other",
-      other: "Other",
-    };
-    return platformMap[normalized] || "Unknown";
-  };
+  console.log("🔍 PlatformDonutChart - Props received:");
+  console.log("   - data:", data);
+  console.log("   - data length:", data?.length);
+  console.log("   - platformsData:", platformsData);
+  console.log("   - platformsData length:", platformsData?.length);
+  console.log("   - activeFilters:", activeFilters);
+  console.log("   - onFilterChange:", typeof onFilterChange);
 
-  // ALWAYS count accurately based on available data source
-  // Priority: 1) Database aggregations (when available), 2) Client-side counting (when filtered)
-  const platformCounts = useMemo(() => {
-    // Check if we have data-limiting filters (not including unit filter)
-    const hasDataLimitingFilters =
-      activeFilters?.sentiment ||
-      activeFilters?.platform ||
-      activeFilters?.category ||
-      activeFilters?.author;
+  // ALWAYS use platformsData from API - it automatically respects filters
+  // The API handles filtering, so we don't need to switch data sources
+  let platformCounts = {};
 
-    // If we have data-limiting filters, must count from client-side filtered data
-    if (hasDataLimitingFilters) {
-      console.log(
-        "⚠️ PlatformDonutChart: Using client-side counts (data-limiting filters active)"
-      );
-      console.log("   - Data length:", data.length);
-      console.log("   - Active filters:", activeFilters);
-
-      return data.reduce((acc, item) => {
-        const platform = normalizePlatformName(item.platform || "unknown");
+  if (platformsData && platformsData.length > 0) {
+    // Use API platformsData - it already respects any active filters
+    console.log("✅ Using platformsData from API (respects all filters)");
+    platformCounts = platformsData.reduce((acc, item) => {
+      const platform = item.platform || "Unknown";
+      acc[platform] = Number(item.count);
+      return acc;
+    }, {});
+  } else {
+    // Only as last resort: if platformsData is not available
+    console.log("⚠️ platformsData not available, trying data array");
+    if (data && data.length > 0) {
+      platformCounts = data.reduce((acc, item) => {
+        const platform = item.platform || "Unknown";
         acc[platform] = (acc[platform] || 0) + 1;
         return acc;
       }, {});
     }
+  }
 
-    // Check if we have a unit filter (tab selection)
-    const unitFilter = activeFilters?.unit;
+  console.log("📊 Platform Counts:", platformCounts);
 
-    // If unit filter is active and we have platformByUnit data from API, use that for accuracy!
-    if (
-      unitFilter &&
-      unitFilter !== "overall" &&
-      platformByUnitData &&
-      platformByUnitData.length > 0
-    ) {
-      console.log(
-        "✅ PlatformDonutChart: Using database platformByUnit aggregation for unit:",
-        unitFilter
-      );
+  // Calculate total
+  const totalMentions = Object.values(platformCounts).reduce(
+    (sum: number, count) => sum + Number(count),
+    0
+  ) as number;
 
-      // Map unit filter value to database unit name
-      const unitMap = {
-        tv: "TV",
-        radio: "Radio",
-        berita: "News",
-        news: "News",
-        official: "Official",
-      };
+  console.log("💯 Total Mentions:", totalMentions);
 
-      const targetUnit = unitMap[unitFilter.toLowerCase()] || unitFilter;
-      console.log("   - Target unit:", targetUnit);
+  // Safety check - show empty state if no data at all
+  if (totalMentions === 0) {
+    console.warn("⚠️ No platform data available");
+    return (
+      <div className="w-full p-6 bg-white">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Sources Distribution - Posts
+          </h2>
+          <p className="text-gray-600">
+            Share of conversations by platform to gauge where your topic is
+            being discussed most
+          </p>
+        </div>
+        <div className="w-full h-[450px] flex items-center justify-center">
+          <div className="text-center text-gray-400">
+            <p className="text-lg">No data available</p>
+            <p className="text-sm mt-2">
+              data.length = {data?.length || 0}, platformsData.length ={" "}
+              {platformsData?.length || 0}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-      // Filter platformByUnit data for the current unit
-      const unitPlatforms = platformByUnitData.filter(
-        (p) => p.unit === targetUnit
-      );
-
-      console.log("   - Unit platforms found:", unitPlatforms.length);
-      console.log("   - Unit platforms data:", unitPlatforms);
-
-      // Convert to counts object
-      return unitPlatforms.reduce((acc, item) => {
-        const platform = normalizePlatformName(item.platform);
-        acc[platform] = Number(item.count);
-        return acc;
-      }, {});
-    }
-
-    // No filters at all - use database platform aggregations for maximum accuracy
-    if (platformsData && platformsData.length > 0) {
-      console.log(
-        "✅ PlatformDonutChart: Using database platform aggregations (no filters)"
-      );
-      console.log("   - Platforms data:", platformsData);
-
-      return platformsData.reduce((acc, item) => {
-        const platform = normalizePlatformName(item.platform);
-        acc[platform] = Number(item.count);
-        return acc;
-      }, {});
-    }
-
-    // Fallback: count from whatever data we have
-    console.log("⚠️ PlatformDonutChart: Fallback to client-side counting");
-    return data.reduce((acc, item) => {
-      const platform = normalizePlatformName(item.platform || "unknown");
-      acc[platform] = (acc[platform] || 0) + 1;
-      return acc;
-    }, {});
-  }, [data, platformsData, platformByUnitData, channelsData, activeFilters]);
-
-  console.log("Platform Counts:", platformCounts);
-
-  // Calculate total from actual platform counts, not data.length
-  const totalMentions = useMemo(() => {
-    const total = Object.values(platformCounts).reduce(
-      (sum: number, count) => sum + Number(count),
-      0
-    ) as number;
-    return total;
-  }, [platformCounts]) as number;
-
-  console.log("Total Mentions for percentage calculation:", totalMentions);
+  // Count mentions by platform
 
   // Convert to chart data format
   // Sort the chartData after creating it
@@ -144,52 +91,64 @@ const PlatformDonutChart = ({
     .map(([platform, count]) => ({
       name: platform,
       value: count,
-      percentage:
-        totalMentions > 0
-          ? (((count as number) / totalMentions) * 100).toFixed(1)
-          : "0.0",
+      percentage: (((count as number) / totalMentions) * 100).toFixed(1),
     }))
     .sort((a, b) => Number(b.value) - Number(a.value)); // Sort by value descending
 
+  console.log("📈 Chart Data:", chartData);
+
   // Platform colors - using actual color values
   const platformColors = {
-    Facebook: "#1877F2", // Facebook blue
-    Instagram: "#E4405F", // Instagram gradient pink
-    Twitter: "#1DA1F2", // Twitter blue
-    TikTok: "#000000", // TikTok black
-    YouTube: "#FF0000", // YouTube red
-    LinkedIn: "#0A66C2", // LinkedIn blue
-    Reddit: "#FF4500", // Reddit orange
-    Other: "#94A3B8", // Slate gray
-    Unknown: "#64748B", // Darker slate
+    facebook: "#1877F2", // Facebook blue
+    instagram: "#E4405F", // Instagram gradient pink
+    twitter: "#1DA1F2", // Twitter blue
+    tiktok: "#000000", // TikTok black
+    youtube: "#FF0000", // YouTube red
+    linkedin: "#0A66C2", // LinkedIn blue
+    reddit: "#FF4500", // Reddit orange
+    other: "#94A3B8", // Slate gray
+    web: "#64748B", // Darker slate
   };
 
-  // Get color for platform or use a default
+  // Get color for platform or use a default (case-insensitive matching)
   const getColor = (platform, index) => {
-    const color = platformColors[platform];
+    const normalizedPlatform = platform?.toLowerCase() || "unknown";
+    const color = platformColors[normalizedPlatform];
     if (color) {
-      console.log(`🎨 Platform "${platform}" -> Color: ${color}`);
+      console.log(
+        `🎨 Platform "${platform}" (normalized: "${normalizedPlatform}") -> Color: ${color}`
+      );
       return color;
     }
-    console.warn(
-      `⚠️ No color defined for platform: "${platform}", using fallback`
-    );
+    console.warn(`⚠️ No color for platform: "${platform}", using fallback`);
     return `hsl(${index * 45}, 70%, 50%)`;
   };
 
   // Handle pie slice click for cross-filtering
   const handlePieSliceClick = (data, index) => {
     if (onFilterChange && data && data.name) {
-      console.log("🖱️ Platform clicked:", data.name);
-      onFilterChange("platform", data.name);
+      const platformName = data.name;
+      console.log("🖱️ Platform clicked:", platformName);
+      console.log("   Current filter:", activeFilters?.platform);
+      console.log("   Is same?:", activeFilters?.platform === platformName);
+
+      // Call the parent's filter change handler
+      // The parent will handle the toggle logic
+      onFilterChange("platform", platformName);
     }
   };
 
   // Handle legend click for cross-filtering
   const handleLegendClick = (value, entry) => {
     if (onFilterChange && entry && entry.payload) {
-      console.log("🖱️ Legend clicked:", entry.payload.name);
-      onFilterChange("platform", entry.payload.name);
+      const platformName = entry.payload.name;
+      console.log("🖱️ Legend clicked:", platformName);
+      console.log("   Current filter:", activeFilters?.platform);
+      console.log("   Is same?:", activeFilters?.platform === platformName);
+
+      // Call the parent's filter change handler
+      // The parent will handle the toggle logic
+      onFilterChange("platform", platformName);
     }
   };
 
@@ -282,6 +241,12 @@ const PlatformDonutChart = ({
     );
   };
 
+  console.log(
+    "🎨 Rendering PlatformDonutChart with",
+    chartData.length,
+    "slices"
+  );
+
   return (
     <div className="w-full p-6 bg-white">
       <div className="mb-6">
@@ -295,41 +260,57 @@ const PlatformDonutChart = ({
       </div>
 
       <div className="w-full">
-        <ResponsiveContainer width="100%" height={450}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={renderLabel}
-              outerRadius={140}
-              innerRadius={0}
-              fill="#8884d8"
-              dataKey="value"
-              paddingAngle={2}
-              cursor={onFilterChange ? "pointer" : "default"}
-              onClick={handlePieSliceClick}
-            >
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={getColor(entry.name, index)}
-                  fillOpacity={getFilteredOpacity(entry.name)}
-                  className={
-                    onFilterChange
-                      ? "hover:opacity-80 transition-all duration-200"
-                      : ""
-                  }
-                />
-              ))}
-            </Pie>
-            <Legend content={<CustomLegend />} />
-            <Tooltip
-              content={<CustomTooltip active={undefined} payload={undefined} />}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        {chartData.length === 0 ? (
+          <div className="h-[450px] flex items-center justify-center">
+            <p className="text-gray-400">No platform data to display</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={450}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderLabel}
+                outerRadius={140}
+                innerRadius={0}
+                fill="#8884d8"
+                dataKey="value"
+                paddingAngle={2}
+                cursor={onFilterChange ? "pointer" : "default"}
+                onClick={handlePieSliceClick}
+              >
+                {chartData.map((entry, index) => {
+                  console.log(
+                    `🎨 Rendering Cell ${index}:`,
+                    entry.name,
+                    entry.value,
+                    getColor(entry.name, index)
+                  );
+                  return (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={getColor(entry.name, index)}
+                      fillOpacity={getFilteredOpacity(entry.name)}
+                      className={
+                        onFilterChange
+                          ? "hover:opacity-80 transition-all duration-200"
+                          : ""
+                      }
+                    />
+                  );
+                })}
+              </Pie>
+              <Legend content={<CustomLegend />} />
+              <Tooltip
+                content={
+                  <CustomTooltip active={undefined} payload={undefined} />
+                }
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* Clickable hint */}
@@ -345,24 +326,6 @@ const PlatformDonutChart = ({
           </p>
         </div>
       )}
-
-      {/* Summary stats */}
-      {/* <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {chartData.map((item, index) => (
-          <div
-            key={item.name}
-            className="text-center p-3 bg-gray-50 rounded-lg"
-          >
-            <div
-              className="w-4 h-4 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: getColor(item.name, index) }}
-            ></div>
-            <p className="text-sm font-semibold text-gray-800">{item.name}</p>
-            <p className="text-lg font-bold text-gray-900">{item.value}</p>
-            <p className="text-xs text-gray-500">{item.percentage}%</p>
-          </div>
-        ))}
-      </div> */}
     </div>
   );
 };

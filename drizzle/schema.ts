@@ -29,8 +29,6 @@ export const mytvViewership = pgTable(
 		pageNum: integer("page_num"),
 		tableIdx: integer("table_idx"),
 		pageTitle: text("page_title"),
-		insertedAt: timestamp("inserted_at", { mode: "string" }).defaultNow(),
-		updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
 	},
 	(table) => [
 		unique("uq_viewership").on(
@@ -39,23 +37,6 @@ export const mytvViewership = pgTable(
 			table.channel,
 			table.month,
 			table.year
-		),
-	]
-);
-
-export const pbAudienceGender = pgTable(
-	"pb_audience_gender",
-	{
-		id: serial().primaryKey().notNull(),
-		userGender: text(),
-		date: date(),
-		activeUsers: integer(),
-		newUsers: integer(),
-	},
-	(table) => [
-		unique("uq_audience_gender_userGender_date").on(
-			table.userGender,
-			table.date
 		),
 	]
 );
@@ -259,39 +240,6 @@ export const mentionsClassify = pgTable("mentions_classify", {
 	idpk: serial().primaryKey().notNull(),
 	channelgroup: text(),
 });
-
-export const pbAudienceAge = pgTable(
-	"pb_audience_age",
-	{
-		id: serial().primaryKey().notNull(),
-		userAgeBracket: text(),
-		date: date(),
-		activeUsers: integer(),
-		newUsers: integer(),
-	},
-	(table) => [
-		unique("uq_audience_age_userAgeBracket_date").on(
-			table.userAgeBracket,
-			table.date
-		),
-	]
-);
-
-export const pbFirstUserSource = pgTable(
-	"pb_first_user_source",
-	{
-		id: serial().primaryKey().notNull(),
-		mainSource: text("main_source"),
-		date: date(),
-		activeUsers: integer(),
-	},
-	(table) => [
-		unique("uq_first_user_source_main_source_date").on(
-			table.mainSource,
-			table.date
-		),
-	]
-);
 
 export const testMention = pgTable(
 	"test_mention",
@@ -674,22 +622,8 @@ export const rtmklikGender = pgTable(
 	]
 );
 
-export const pbAudienceRegion = pgTable(
-	"pb_audience_region",
-	{
-		id: serial().primaryKey().notNull(),
-		region: text(),
-		date: date(),
-		activeUsers: integer(),
-		newUsers: integer(),
-	},
-	(table) => [
-		unique("uq_audience_region_region_date").on(table.region, table.date),
-	]
-);
-
-export const pbAudienceRegionGender = pgTable(
-	"pb_audience_region_gender",
+export const pberitaAudienceRegionGender = pgTable(
+	"pberita_audience_region_gender",
 	{
 		id: serial().primaryKey().notNull(),
 		region: text(),
@@ -842,55 +776,6 @@ export const mentionsClassifyCopy = pgTable("mentions_classify_copy", {
 	idpk: serial().primaryKey().notNull(),
 	channelgroup: text(),
 });
-
-export const pbAudience = pgTable(
-	"pb_audience",
-	{
-		id: serial().primaryKey().notNull(),
-		audienceName: text(),
-		date: date(),
-		totalUsers: integer(),
-		newUsers: integer(),
-	},
-	(table) => [
-		unique("uq_audience_audienceName_date").on(table.audienceName, table.date),
-	]
-);
-
-export const pbFirstUser = pgTable(
-	"pb_first_user",
-	{
-		id: serial().primaryKey().notNull(),
-		firstUserPrimaryChannelGroup: text(),
-		date: date(),
-		totalUsers: integer(),
-		newUsers: integer(),
-		returningUsers: integer(),
-	},
-	(table) => [
-		unique("uq_first_user_firstUserPrimaryChannelGroup_date").on(
-			table.firstUserPrimaryChannelGroup,
-			table.date
-		),
-	]
-);
-
-export const pbPopularPages = pgTable(
-	"pb_popular_pages",
-	{
-		id: serial().primaryKey().notNull(),
-		unifiedScreenClass: text(),
-		date: date(),
-		screenPageViews: integer(),
-		activeUsers: integer(),
-	},
-	(table) => [
-		unique("uq_popular_pages_unifiedScreenClass_date").on(
-			table.unifiedScreenClass,
-			table.date
-		),
-	]
-);
 
 export const astroRateNReach = pgTable(
 	"astro_rate_n_reach",
