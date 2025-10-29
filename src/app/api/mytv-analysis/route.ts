@@ -12,15 +12,15 @@ export async function GET(request: Request) {
   try {
     console.log('Fetching MyTV data from database...');
 
-    // Get the latest date from mytv_viewership table
-    const latestDateResult = await db
+    // Get the latest year from mytv_viewership table
+    const latestYearResult = await db
       .select({
-        maxDate: sql`MAX(${mytvViewership.updatedAt})`.as('maxDate')
+        maxYear: sql`MAX(${mytvViewership.year})`.as('maxYear')
       })
       .from(mytvViewership);
 
-    const latestDate = latestDateResult[0]?.maxDate || null;
-    console.log('Latest date:', latestDate);
+    const latestYear = latestYearResult[0]?.maxYear || null;
+    console.log('Latest year:', latestYear);
 
     // Calculate total viewers across all channels
     const totalViewersResult = await db
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
       success: true,
       channelMetrics: channelMetricsWithPercentage,
       totalViewers: totalViewers,
-      latestDate: latestDate,
+      latestYear: latestYear,
       meta: {
         queryType: 'mytv_analysis_database',
         timestamp: new Date().toISOString(),

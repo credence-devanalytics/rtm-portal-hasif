@@ -256,9 +256,9 @@ export function buildWhereConditions(filters, schema) {
   
   console.log('🔧 buildWhereConditions called with:', {
     filters,
-    hasAuthor: !!filters.author,
-    authorValue: filters.author,
-    authorType: typeof filters.author
+    hasChannel: !!filters.channel,
+    channelValue: filters.channel,
+    channelType: typeof filters.channel
   });
   
   let whereConditions = [];
@@ -298,18 +298,18 @@ export function buildWhereConditions(filters, schema) {
     );
   }
   
-  // Author/Channel filtering (for cross-filtering by channel)
+  // Channel filtering (for cross-filtering by channel)
   // Filter by 'channel' field which contains channel names
-  if (filters.author && filters.author !== '' && filters.author !== 'all') {
+  if (filters.channel && filters.channel !== '' && filters.channel !== 'all') {
     console.log('🔍 Building channel WHERE clause:', {
-      filterValue: filters.author,
-      filterType: typeof filters.author,
-      filterLength: filters.author.length
+      filterValue: filters.channel,
+      filterType: typeof filters.channel,
+      filterLength: filters.channel.length
     });
     
-    // Filter by channel field (exact match, case-insensitive)
+    // Filter by channel field using ILIKE for case-insensitive partial match
     whereConditions.push(
-      sql`LOWER(${schema.channel}) = LOWER(${filters.author})`
+      sql`${schema.channel} ILIKE ${`%${filters.channel}%`}`
     );
   }
   

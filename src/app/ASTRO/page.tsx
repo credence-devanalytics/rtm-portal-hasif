@@ -51,7 +51,7 @@ const ASTROPage = () => {
 
   // Filters State
   const [filters, setFilters] = useState({
-    year: "2024",
+    year: "2025",
     channel: "all",
     metricType: "all",
   });
@@ -64,6 +64,10 @@ const ASTROPage = () => {
     "BERITA RTM": "/channel-logos/new-size-berita rtm.png",
     "SUKAN RTM": "/channel-logos/new-size-sukan rtm.png",
     TV6: "/channel-logos/new-size-tv6.png",
+    AsyikFM: "/multiplatform-logos/new-size-asyikfm.png",
+    TraxxFM: "/multiplatform-logos/new-size-traxxfm.png",
+    MinnalFM: "/multiplatform-logos/new-size-minnalfm.png",
+    AiFM: "/multiplatform-logos/new-size-aifm.png",
   };
 
   // Channel colors for line chart
@@ -76,6 +80,11 @@ const ASTROPage = () => {
     "SUKAN RTM": "#9FA1A3",
     TV6: "#EA1F7D",
     BERNAMA: "#1F2023",
+    // Radio brands
+    AsyikFM: "#6C2870",
+    TraxxFM: "#E63265",
+    MinnalFM: "#7E3683",
+    AiFM: "#ED232A",
   };
 
   // Fetch data function
@@ -118,8 +127,8 @@ const ASTROPage = () => {
 
   // Process channel summary for cards
   const processChannelSummary = (rawData) => {
-    // Channels to exclude
-    const excludedChannels = ["AsyikFM", "AiFM", "TraxxFM", "MinnalFM"];
+    // No channels to exclude - show all channels including FM stations
+    const excludedChannels = [];
 
     // Group by channel
     const channelMap = {};
@@ -155,16 +164,24 @@ const ASTROPage = () => {
     });
 
     // Convert to array and calculate averages
-    const summaryArray = Object.values(channelMap).map((item) => ({
-      channel: item.channel,
-      avgRating:
-        item.ratingCount > 0
-          ? (item.rating / item.ratingCount).toFixed(1)
-          : "0.0",
-      totalReach: item.reach.toLocaleString(),
-      totalReachRaw: item.reach,
-      logo: channelLogos[item.channel] || null,
-    }));
+    const summaryArray = Object.values(channelMap).map((item) => {
+      const avgRatingValue =
+        item.ratingCount > 0 ? item.rating / item.ratingCount : 0;
+
+      // Use 3 decimal places if rating is below 2.0, otherwise use 1 decimal place
+      const avgRating =
+        avgRatingValue < 2.0
+          ? avgRatingValue.toFixed(3)
+          : avgRatingValue.toFixed(1);
+
+      return {
+        channel: item.channel,
+        avgRating: avgRating,
+        totalReach: item.reach.toLocaleString(),
+        totalReachRaw: item.reach,
+        logo: channelLogos[item.channel] || null,
+      };
+    });
 
     // Sort by total reach (descending)
     summaryArray.sort((a, b) => b.totalReachRaw - a.totalReachRaw);
@@ -193,13 +210,22 @@ const ASTROPage = () => {
       12: "December",
     };
 
-    // Filter only reach data for tx_year = 2024
+    // Filter only reach data - use selected year from filters or show all years
     // DO NOT exclude any channels - show all channels in the chart
     const reachData = rawData.filter((record) => {
       const metricType = record.metricType || record.metric_type;
       const txYear = record.txYear || record.tx_year;
 
-      return metricType === "reach" && (txYear === 2024 || txYear === "2024");
+      // If "all" is selected or no year filter, show all years
+      if (filters.year === "all") {
+        return metricType === "reach";
+      }
+
+      // Otherwise filter by selected year
+      return (
+        metricType === "reach" &&
+        (txYear === parseInt(filters.year) || txYear === filters.year)
+      );
     });
 
     console.log("Filtered reach data:", reachData);
@@ -260,12 +286,21 @@ const ASTROPage = () => {
       12: "December",
     };
 
-    // Filter only rating data for tx_year = 2024
+    // Filter only rating data - use selected year from filters or show all years
     const ratingData = rawData.filter((record) => {
       const metricType = record.metricType || record.metric_type;
       const txYear = record.txYear || record.tx_year;
 
-      return metricType === "rating" && (txYear === 2024 || txYear === "2024");
+      // If "all" is selected or no year filter, show all years
+      if (filters.year === "all") {
+        return metricType === "rating";
+      }
+
+      // Otherwise filter by selected year
+      return (
+        metricType === "rating" &&
+        (txYear === parseInt(filters.year) || txYear === filters.year)
+      );
     });
 
     console.log("Filtered rating data:", ratingData);
@@ -387,9 +422,7 @@ const ASTROPage = () => {
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Years</SelectItem>
                     <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2023">2023</SelectItem>
                     <SelectItem value="2025">2025</SelectItem>
                   </SelectContent>
                 </Select>
@@ -488,7 +521,7 @@ const ASTROPage = () => {
                       {/* Left Side: Channel Logo */}
                       <div className="flex-shrink-0">
                         {channel.logo ? (
-                          <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                          <div className="w-32 h-32 relative rounded-lg overflow-hidden flex items-center justify-center">
                             <Image
                               src={channel.logo}
                               alt={channel.channel}
@@ -518,7 +551,7 @@ const ASTROPage = () => {
                             className="text-sm font-medium"
                             style={{ color: "#00B4D8" }}
                           >
-                            Active Users
+                            Active Users (Reach)
                           </div>
                         </div>
 
@@ -537,7 +570,7 @@ const ASTROPage = () => {
                             className="text-sm font-medium"
                             style={{ color: "#E63946" }}
                           >
-                            Programs
+                            Average Rating
                           </div>
                         </div>
                       </div>
@@ -624,7 +657,7 @@ const ASTROPage = () => {
                     {/* Dynamically render lines only for channels with data */}
                     {reachOverTime.length > 0 &&
                       Object.keys(reachOverTime[0])
-                        .filter((key) => key !== "month")
+                        .filter((key) => key !== "month" && key !== "monthNum")
                         .map((channel) => (
                           <Line
                             key={channel}

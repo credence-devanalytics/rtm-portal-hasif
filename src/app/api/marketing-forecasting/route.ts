@@ -9,11 +9,15 @@ export async function GET() {
 
 		// Filter by the exact report title for Chart 1 data
 		const reportTitle =
-			"PERBANDINGAN PENDAPATAN TV, BES & RADIO BAGI TARIKH SEMASA (1 JANUARI – 31 DISEMBER)";
+			"PERBANDINGAN PENDAPATAN TV, BES & RADIO BAGI TARIKH SEMASA (1 JANUARI – 31 DISEMBER) [LAPORAN_PENDAPATAN_BAHAGIAN_PEMASARAN_SEHINGGA_31.12.2024.doc]";
 
 		// Fetch historical data for 2022-2024
 		const historicalData = await db
-			.select()
+			.select({
+				saluran: marketingChannelByyear.saluran,
+				year: marketingChannelByyear.year,
+				value: marketingChannelByyear.value,
+			})
 			.from(marketingChannelByyear)
 			.where(
 				and(

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { pbPopularPages } from "../../../../drizzle/schema";
+import { pberitaPopularPages } from "../../../../drizzle/schema";
 import { sql } from "drizzle-orm";
 
 export async function GET() {
@@ -10,23 +10,23 @@ export async function GET() {
 		// Fetch popular pages data and group by page
 		const popularPagesData = await db
 			.select({
-				pageName: pbPopularPages.unifiedScreenClass,
-				totalPageViews: sql`SUM(${pbPopularPages.screenPageViews})`.as(
+				pageName: pberitaPopularPages.unifiedscreenclass,
+				totalPageViews: sql`SUM(${pberitaPopularPages.screenpageviews})`.as(
 					"totalPageViews"
 				),
-				totalActiveUsers: sql`SUM(${pbPopularPages.activeUsers})`.as(
+				totalActiveUsers: sql`SUM(${pberitaPopularPages.activeusers})`.as(
 					"totalActiveUsers"
 				),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
-				avgPageViews: sql`AVG(${pbPopularPages.screenPageViews})`.as(
+				avgPageViews: sql`AVG(${pberitaPopularPages.screenpageviews})`.as(
 					"avgPageViews"
 				),
-				avgActiveUsers: sql`AVG(${pbPopularPages.activeUsers})`.as(
+				avgActiveUsers: sql`AVG(${pberitaPopularPages.activeusers})`.as(
 					"avgActiveUsers"
 				),
 			})
-			.from(pbPopularPages)
-			.groupBy(pbPopularPages.unifiedScreenClass);
+			.from(pberitaPopularPages)
+			.groupBy(pberitaPopularPages.unifiedscreenclass);
 
 		console.log("PB Popular Pages data:", popularPagesData);
 
@@ -133,3 +133,6 @@ export async function GET() {
 		);
 	}
 }
+
+
+

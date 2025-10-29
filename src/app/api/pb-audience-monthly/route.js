@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { pbAudience } from "../../../../drizzle/schema";
+import { pberitaAudience } from "../../../../drizzle/schema";
 import { asc, sql, gte, and, lte } from "drizzle-orm";
 
 export async function GET() {
@@ -10,25 +10,25 @@ export async function GET() {
 		// Fetch 2025 data only and aggregate by month using SQL
 		const monthlyData = await db
 			.select({
-				month: sql`EXTRACT(MONTH FROM ${pbAudience.date})`.as("month"),
-				year: sql`EXTRACT(YEAR FROM ${pbAudience.date})`.as("year"),
-				totalUsers: sql`SUM(${pbAudience.totalUsers})`.as("totalUsers"),
-				newUsers: sql`SUM(${pbAudience.newUsers})`.as("newUsers"),
+				month: sql`EXTRACT(MONTH FROM ${pberitaAudience.date})`.as("month"),
+				year: sql`EXTRACT(YEAR FROM ${pberitaAudience.date})`.as("year"),
+				totalUsers: sql`SUM(${pberitaAudience.totalusers})`.as("totalUsers"),
+				newUsers: sql`SUM(${pberitaAudience.newusers})`.as("newUsers"),
 			})
-			.from(pbAudience)
+			.from(pberitaAudience)
 			.where(
 				and(
-					gte(pbAudience.date, "2025-01-01"),
-					lte(pbAudience.date, "2025-12-31")
+					gte(pberitaAudience.date, "2025-01-01"),
+					lte(pberitaAudience.date, "2025-12-31")
 				)
 			)
 			.groupBy(
-				sql`EXTRACT(YEAR FROM ${pbAudience.date})`,
-				sql`EXTRACT(MONTH FROM ${pbAudience.date})`
+				sql`EXTRACT(YEAR FROM ${pberitaAudience.date})`,
+				sql`EXTRACT(MONTH FROM ${pberitaAudience.date})`
 			)
 			.orderBy(
-				sql`EXTRACT(YEAR FROM ${pbAudience.date})`,
-				sql`EXTRACT(MONTH FROM ${pbAudience.date})`
+				sql`EXTRACT(YEAR FROM ${pberitaAudience.date})`,
+				sql`EXTRACT(MONTH FROM ${pberitaAudience.date})`
 			);
 
 		console.log("Monthly aggregated data:", monthlyData);
@@ -80,3 +80,6 @@ export async function GET() {
 		);
 	}
 }
+
+
+

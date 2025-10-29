@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
-import { pbFirstUser } from "../../../../drizzle/schema";
+import { pberitaFirstUser } from "../../../../drizzle/schema";
 import { sql } from "drizzle-orm";
 
 export async function GET() {
@@ -10,16 +10,16 @@ export async function GET() {
 		// Fetch first user data and group by channel group
 		const firstUserData = await db
 			.select({
-				channelGroup: pbFirstUser.firstUserPrimaryChannelGroup,
-				totalUsers: sql`SUM(${pbFirstUser.totalUsers})`.as("totalUsers"),
-				totalNewUsers: sql`SUM(${pbFirstUser.newUsers})`.as("totalNewUsers"),
-				totalReturningUsers: sql`SUM(${pbFirstUser.returningUsers})`.as(
+				channelGroup: pberitaFirstUser.firstuserprimarychannelgroup,
+				totalUsers: sql`SUM(${pberitaFirstUser.totalusers})`.as("totalUsers"),
+				totalNewUsers: sql`SUM(${pberitaFirstUser.newusers})`.as("totalNewUsers"),
+				totalReturningUsers: sql`SUM(${pberitaFirstUser.returningusers})`.as(
 					"totalReturningUsers"
 				),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
 			})
-			.from(pbFirstUser)
-			.groupBy(pbFirstUser.firstUserPrimaryChannelGroup);
+			.from(pberitaFirstUser)
+			.groupBy(pberitaFirstUser.firstuserprimarychannelgroup);
 
 		console.log("PB First User data:", firstUserData);
 
@@ -51,7 +51,7 @@ export async function GET() {
 		});
 
 		// Sort by total users descending
-		chartData.sort((a, b) => b.totalUsers - a.totalUsers);
+		chartData.sort((a, b) => b.totalusers - a.totalusers);
 
 		// Find top channel group
 		const topChannelGroup = chartData[0] || {};
@@ -71,7 +71,7 @@ export async function GET() {
 						0
 					),
 					topChannelGroup: topChannelGroup.channelGroup || "N/A",
-					topChannelUsers: topChannelGroup.totalUsers || 0,
+					topChannelUsers: topChannelGroup.totalusers || 0,
 					topChannelPercentage: topChannelGroup.percentage || 0,
 					channelGroupCount: chartData.length,
 					avgNewUserRate:
@@ -101,3 +101,6 @@ export async function GET() {
 		);
 	}
 }
+
+
+
