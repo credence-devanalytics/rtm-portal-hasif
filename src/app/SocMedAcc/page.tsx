@@ -348,10 +348,17 @@ const RTMDashboard = () => {
       days: daysDiff.toString(),
       from: selectedDateRange.from.toISOString(),
       to: selectedDateRange.to.toISOString(),
-      platform: globalFilters.platform || (selectedPlatform !== "all" ? selectedPlatform : ""),
+      platform:
+        globalFilters.platform ||
+        (selectedPlatform !== "all" ? selectedPlatform : ""),
       channel: globalFilters.channel || "",
     };
-  }, [selectedDateRange, selectedPlatform, globalFilters.platform, globalFilters.channel]);
+  }, [
+    selectedDateRange,
+    selectedPlatform,
+    globalFilters.platform,
+    globalFilters.channel,
+  ]);
 
   // Fetch dashboard data (mentions, authors, dailyChannelData, etc.)
   useEffect(() => {

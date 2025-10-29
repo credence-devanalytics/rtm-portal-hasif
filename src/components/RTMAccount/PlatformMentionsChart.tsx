@@ -78,8 +78,8 @@ const PlatformMentionsChart = ({
         );
       }
 
-      return { 
-        data: topChannels, 
+      return {
+        data: topChannels,
         channels: topChannels.map((c) => c.channel),
         grandTotal, // Include grand total for display
       };
@@ -120,8 +120,8 @@ const PlatformMentionsChart = ({
       );
     }
 
-    return { 
-      data: topChannels, 
+    return {
+      data: topChannels,
       channels: topChannels.map((c) => c.channel),
       grandTotal,
     };
@@ -204,7 +204,8 @@ const PlatformMentionsChart = ({
           </div>
 
           {/* Active filters display */}
-          {((activeFilters as any)?.platform || (activeFilters as any)?.channel) && (
+          {((activeFilters as any)?.platform ||
+            (activeFilters as any)?.channel) && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-gray-600">Filtered by:</span>
               {(activeFilters as any)?.platform && (
