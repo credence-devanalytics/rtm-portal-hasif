@@ -115,7 +115,7 @@ export async function POST(request: Request) {
     }
 
     // Create user with authentication credentials using Better Auth server-side API
-    const defaultPassword = "Medina25";
+    const defaultPassword = email;
     
     try {
       // Use Better Auth's server-side signup API
