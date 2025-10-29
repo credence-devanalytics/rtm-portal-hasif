@@ -75,15 +75,15 @@ export function LoginForm({
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                Have a problem? <a href="#">Contact us</a>
+                Have a problem? <a href="/contact">Contact us</a>
               </FieldDescription>
             </FieldGroup>
           </form>
-          <div className="bg-muted relative hidden md:block">
+          <div className="bg-muted relative hidden md:block overflow-hidden">
             <img
               src="/images/credenceoffice.jpg"
               alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[800px] object-cover dark:brightness-[0.2] dark:grayscale"
             />
           </div>
         </CardContent>

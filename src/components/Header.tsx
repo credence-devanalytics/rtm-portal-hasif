@@ -20,7 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 export default function Header() {
   const pathname = usePathname();
 
-  const hideHeaderPaths = ["/login"]; // Paths where header not be rendered cosmetic
+  const hideHeaderPaths = ["/login","/contact"]; // Paths where header not be rendered cosmetic
   const hideHeader = hideHeaderPaths.some(path => pathname.startsWith(path));
 
   if (hideHeader) {
