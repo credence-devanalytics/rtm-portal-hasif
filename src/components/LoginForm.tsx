@@ -9,6 +9,8 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import MedinaLogo from "./MedinaLogo"
+import { AuroraBackground } from "./ui/shadcn-io/aurora-background"
 
 export function LoginForm({
   className,
@@ -75,16 +77,14 @@ export function LoginForm({
                 </Button>
               </Field>
               <FieldDescription className="text-center">
-                Have a problem? <a href="#">Contact us</a>
+                Have a problem? <a href="/contact">Contact us</a>
               </FieldDescription>
             </FieldGroup>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/images/credenceoffice.jpg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
+          <div className="bg-muted relative hidden md:block overflow-hidden">
+            <AuroraBackground className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[800px] object-cover dark:brightness-[0.2] dark:grayscale items-center justify-center">
+              <MedinaLogo className="-translate-x-16"/>
+            </AuroraBackground>
           </div>
         </CardContent>
       </Card>
