@@ -11,6 +11,7 @@ const useTrustedTableau = (username: string) => {
 				});
 
 				const data = await response.json();
+				console.log("useTrustedTableau response data:", data);
 
 				if (response.ok) {
 					console.log("Generated Ticket:", data.ticket);
@@ -24,7 +25,9 @@ const useTrustedTableau = (username: string) => {
 		};
 
 		fetchTicket();
-	}, [username]);
+	}, []);
+	
+	console.log("useTrustedTableau ticket:", ticket);
 
 	return ticket;
 };

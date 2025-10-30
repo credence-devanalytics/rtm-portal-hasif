@@ -5,7 +5,7 @@ export async function POST(request: Request) {
 		const response = await fetch(`${process.env.TABLEAU_SERVER_URL}/trusted`, {
 			method: "POST",
 			body: new URLSearchParams({
-				username: "User1",
+				username: "dataops",
 				server: process.env.TABLEAU_SERVER_URL,
 				client_ip: "",
 				target_site: "",
@@ -17,11 +17,12 @@ export async function POST(request: Request) {
 		});
 
 		const ticketText = await response.text();
+		const res = `${process.env.TABLEAU_SERVER_URL}/trusted/${ticketText}`;
 
-		console.log("ticketText", ticketText);
+		console.log("ticketText", res);
 
 		if (ticketText !== "-1") {
-			return NextResponse.json({ ticket: ticketText });
+			return NextResponse.json({ ticket: res });
 		} else {
 			return NextResponse.json(
 				{ error: "Configuration issue" },

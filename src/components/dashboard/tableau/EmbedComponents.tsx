@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReactNode } from "react";
-import TableauEmbed from "./TableauEmbed";
+import TableauEmbedv2 from "./TableauEmbedv2";
 
 // Base Generic Embed Component
 interface EmbedComponentProps {
@@ -62,7 +62,7 @@ export function TableauEmbedComponent({
       height={height}
       width={width}
     >
-      <TableauEmbed src={url} />
+      <TableauEmbedv2 url={url} sheetName={sheetName} />
     </EmbedComponent>
   );
 }

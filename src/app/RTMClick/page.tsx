@@ -1,13 +1,15 @@
 "use client"
+import { TableauEmbedComponent } from "@/components/dashboard/tableau/EmbedComponents";
+import TableauEmbedReact from "@/components/dashboard/tableau/TableauDashboard";
 import TableauEmbed from "@/components/dashboard/tableau/TableauEmbed";
+import TableauEmbedServer from "@/components/dashboard/tableau/TableauEmbedServer";
+import TableauEmbedv2 from "@/components/dashboard/tableau/TableauEmbedv2";
 import { Card } from "@/components/ui/card";
 import useTrustedTableau from "@/hooks/useTrustedTableau";
 
+const tableauServerURL = process.env.TABLEAU_SERVER_URL;
+
 const tableauDashboardData = [
-  {
-    title: "ViewShip Dashboard",
-    src: "https://public.tableau.com/views/RiverWaterQuality-Public/sheet1",
-  },
   {
     title: "VOD Analysis",
     src: "RTMKlik_17576649176570/RadioAnalysis2/e5a6af72-acba-4558-be12-2053ab01763b/cd4308e2-2538-425e-982a-c8eee03599be",
@@ -32,10 +34,12 @@ const tableauDashboardData = [
 
 function TableauEmbedWithTicket({ src }: { src: string }) {
     const ticket = useTrustedTableau("User1");
+    const fullsrc = `${ticket}/views/${src}`;
+    console.log("Tableau Embed Src:", fullsrc);
 
     return (
         <TableauEmbed
-            src={`${process.env.TABLEAU_SERVER_URL}/trusted/${ticket}/views/${src}`}
+            src={fullsrc}
             // src={src}
             height="600px"
             width="100%"
@@ -63,7 +67,25 @@ export default function TableauDashboards() {
         <div className="grid grid-cols-1 gap-2 backdrop-blur-lg flex-grow">
             <Card className="p-4">
             <h2 className="text-lg font-semibold mb-2">{dashboard.title}</h2>
+            {/* <TableauEmbedComponent url={dashboard.src.split("/")[0]} sheetName={dashboard.src.split("/").pop()} /> */}
             <TableauEmbedWithTicket src={dashboard.src} />
+            {/* <TableauEmbedReact
+              viewUrl={dashboard.src}
+              height="600px"
+              width="100%"
+              hideTabs={true}
+              hideToolbar={false}
+              device="desktop"
+            /> */}
+            {/* <TableauEmbedServer
+              viewUrl={dashboard.src}
+              // src={src}
+              height="600px"
+              width="100%"
+              hideTabs={true}
+              hideToolbar={false}
+              device="desktop"
+            /> */}
             </Card>
         </div>
       ))}
