@@ -308,7 +308,7 @@ const EngagementOverTimeChart = ({
               Daily posts count with reach and interactions trends
             </p>
           </div>
-          
+
           {/* Info Icon with Tooltip */}
           <div className="relative">
             <div
@@ -321,11 +321,12 @@ const EngagementOverTimeChart = ({
             {showTooltip && (
               <div className="absolute right-0 top-8 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-10">
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  <strong className="text-gray-900">Chart Explanation:</strong> Posts are shown as absolute
-                  counts (blue bars, left axis). Reach and interactions are shown as
-                  percentages relative to their peak values (orange and green lines,
-                  right axis). 100% represents the day with the highest
-                  reach/interactions. Hover over data points to see actual numbers.
+                  <strong className="text-gray-900">Chart Explanation:</strong>{" "}
+                  Posts are shown as absolute counts (blue bars, left axis).
+                  Reach and interactions are shown as percentages relative to
+                  their peak values (orange and green lines, right axis). 100%
+                  represents the day with the highest reach/interactions. Hover
+                  over data points to see actual numbers.
                 </p>
               </div>
             )}
