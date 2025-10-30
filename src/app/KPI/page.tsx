@@ -1364,7 +1364,7 @@ const KPISection = () => {
 export default function HomepageDashboard () {
   return (
     <>
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 pt-12">
       <KPISection />
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">

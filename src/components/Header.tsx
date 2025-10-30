@@ -19,18 +19,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 
 export default function Header() {
   const pathname = usePathname();
-
-  const hideHeaderPaths = ["/login"]; // Paths where header not be rendered cosmetic
-  const hideHeader = hideHeaderPaths.some(path => pathname.startsWith(path));
-
-  if (hideHeader) {
-    return null;
-  }
-  
-  const specialPaths = ["/settings", "/home"];
-  const hideHeaderItems = specialPaths.some(path => pathname.startsWith(path));
-
   const { data: session } = useSession();
+
+  const hideHeaderPaths = ["/login","/change-password","/contact"]; // Paths where header not be rendered cosmetic
+  const hideHeader = pathname === "/" ? !session : hideHeaderPaths.some(path => pathname.startsWith(path));
+  
+  const specialPaths = ["/settings"];
+  const hideHeaderItems = specialPaths.some(path => pathname.startsWith(path)) || pathname === "/";
+  
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -135,6 +131,10 @@ export default function Header() {
     );
   }
 
+    if (hideHeader) {
+    return null;
+  }
+
   if (hideHeaderItems) {
     return (
       <header
@@ -147,9 +147,9 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href="/home" className="flex-shrink-0">
+            <Link href="/" className="flex-shrink-0">
               <div className="flex-shrink-0">
-                {pathname !== "/home" ? (
+                {pathname !== "/" ? (
                   <MedinaLogo size="sm" />
                 ) : (
                   <div className="w-10 h-10" />
@@ -222,7 +222,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/home" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0">
             <div className="flex-shrink-0">
               {pathname !== "/" ? (
                 <MedinaLogo size="sm" />
@@ -238,7 +238,7 @@ export default function Header() {
               {/* Home */}
               <NavigationMenuItem>
                 <NavigationMenuLink
-                  href="/home"
+                  href="/"
                   className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/20 data-[state=open]:bg-white/20 drop-shadow-sm"
                 >
                   Home
