@@ -49,19 +49,29 @@ const ClassificationMentionsChart = ({
 
       if (isPreProcessed) {
         // Data is already processed from API - just format it
-        chartData = data.map((item) => ({
-          category: item.category,
-          count: item.count,
-          displayName:
-            item.category.length > 15
-              ? item.category.substring(0, 12) + "..."
-              : item.category,
-        }));
+        chartData = data
+          .filter((item) => {
+            // Skip N/A and Unknown categories
+            const category = item.category || "";
+            return category !== "N/A" && category !== "Unknown";
+          })
+          .map((item) => ({
+            category: item.category,
+            count: item.count,
+            displayName:
+              item.category.length > 15
+                ? item.category.substring(0, 12) + "..."
+                : item.category,
+          }));
       } else {
         // Legacy: Count mentions by category from raw data
         const categoryCounts = data.reduce((acc, item) => {
           if (item && item.category) {
             const category = item.category.trim();
+            // Skip N/A and Unknown categories
+            if (category === "N/A" || category === "Unknown") {
+              return acc;
+            }
             acc[category] = (acc[category] || 0) + 1;
           }
           return acc;

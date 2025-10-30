@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -111,45 +111,113 @@ const RTMTabs = ({ onFilterChange, activeTab, setActiveTab }) => {
   );
 };
 
-// Active Filters Display Component
+// Active Filters Display Component (Floating & Draggable)
 const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
+  const [position, setPosition] = useState({ x: 32, y: 32 }); // Initial position (bottom-left with 8*4px = 32px offset)
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [cardRef, setCardRef] = useState(null);
+
   const activeFilters = Object.entries(filters).filter(
     ([key, value]) => value !== null && value !== undefined && value !== ""
   );
 
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!cardRef) return;
+
+      // Calculate position from bottom-left
+      const newX = e.clientX - dragOffset.x;
+      const newY =
+        window.innerHeight - e.clientY - (cardRef.offsetHeight - dragOffset.y);
+
+      // Constrain to viewport
+      const maxX = window.innerWidth - cardRef.offsetWidth;
+      const maxY = window.innerHeight - cardRef.offsetHeight;
+
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      });
+    },
+    [dragOffset.x, dragOffset.y, cardRef]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleMouseDown = useCallback((e) => {
+    // Only allow dragging from the header area
+    if (e.target.closest(".drag-handle")) {
+      setIsDragging(true);
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
   if (activeFilters.length === 0) return null;
 
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Active Filters</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClearAll}
-            className="text-xs"
-          >
-            Clear All
-          </Button>
-        </div>
+    <Card
+      ref={setCardRef}
+      className="fixed z-50 shadow-2xl border-2 border-slate-200 max-w-lg bg-white transition-shadow hover:shadow-3xl"
+      style={{
+        left: `${position.x}px`,
+        bottom: `${position.y}px`,
+        cursor: isDragging ? "grabbing" : "default",
+      }}
+      onMouseDown={handleMouseDown}
+    >
+      <CardHeader className="pb-4 px-6 pt-5 drag-handle cursor-grab active:cursor-grabbing">
+        <CardTitle className="text-base font-semibold flex items-center gap-2.5 select-none">
+          <Filter className="h-5 w-5 text-blue-600" />
+          Active Filters
+          <span className="text-xs text-gray-400 font-normal ml-2">
+            (drag to move)
+          </span>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex flex-wrap gap-2">
+      <CardContent className="pt-0 px-6 pb-5 space-y-4">
+        <div className="flex flex-wrap gap-3">
           {activeFilters.map(([key, value]) => (
             <Badge
               key={key}
               variant="outline"
-              className="flex items-center gap-1"
+              className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 text-sm"
             >
-              {key}: {String(value)}
+              <span className="font-semibold capitalize">{key}:</span>
+              <span className="font-normal">{String(value)}</span>
               <X
-                className="h-3 w-3 cursor-pointer"
+                className="h-4 w-4 cursor-pointer hover:text-red-600 transition-colors ml-1"
                 onClick={() => onRemoveFilter(key)}
               />
             </Badge>
           ))}
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onClearAll}
+          className="w-full text-xs hover:bg-red-50 hover:text-red-600 border-red-200 text-red-600"
+        >
+          <X className="h-3.5 w-3.5 mr-2" />
+          Clear All Filters
+        </Button>
       </CardContent>
     </Card>
   );
@@ -888,6 +956,13 @@ const RTMDashboard = () => {
       {/* Header with Controls */}
       <Header />
 
+      {/* Floating Active Filters */}
+      <ActiveFilters
+        filters={globalFilters}
+        onRemoveFilter={handleRemoveFilter}
+        onClearAll={handleClearAllFilters}
+      />
+
       {/* Subtle loading indicator at the top */}
       {isLoadingMetrics && (
         <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-blue-600 animate-pulse"></div>
@@ -917,12 +992,6 @@ const RTMDashboard = () => {
               )}
           </p>
         </div>
-
-        <ActiveFilters
-          filters={globalFilters}
-          onRemoveFilter={handleRemoveFilter}
-          onClearAll={handleClearAllFilters}
-        />
 
         {/* Controls */}
         <div className="flex gap-2 flex-wrap items-center">
