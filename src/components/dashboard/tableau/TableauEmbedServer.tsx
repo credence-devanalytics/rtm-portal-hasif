@@ -1,4 +1,7 @@
+"use client"
+
 import Script from "next/script";
+import { use, useEffect, useState } from "react";
 
 interface TableauEmbedServerProps {
 	viewUrl: string;
@@ -9,7 +12,7 @@ interface TableauEmbedServerProps {
 	device?: "default" | "desktop" | "tablet" | "phone";
 }
 
-async function TableauEmbedServer({
+function TableauEmbedServer({
 	viewUrl,
 	height = "600px",
 	width = "100%",
@@ -17,25 +20,39 @@ async function TableauEmbedServer({
 	hideToolbar = false,
 	device = "default",
 }: TableauEmbedServerProps) {
-	// Fetch the Tableau ticket from the API route
-	const response = await fetch("/api/get-tableau-ticket", {
-		method: "POST",
-		cache: "no-store",
-	});
-	const { ticket } = await response.json();
 
-	const trustedUrl = `http://202.165.16.167/trusted/${ticket}/${viewUrl}?:embed=yes&:toolbar=${
+	const [ticket, setTicket] = useState<string>("");
+
+	useEffect(() => {
+		// Fetch the Tableau ticket from the API route
+		const fetchTicket = async () => {
+			const response = await fetch("/api/tableau/get-tableau-ticket", {
+				method: "POST",
+				cache: "no-store",
+			});
+			const { ticket } = await response.json();
+			setTicket(ticket);
+		};
+		fetchTicket();
+	}, []);
+
+	if (!ticket) {
+		return <div>Loading Tableau Dashboard...</div>;
+	}
+
+	const trustedUrl = `${ticket}/views/${viewUrl}?:embed=yes&:toolbar=${
 		hideToolbar ? "no" : "yes"
 	}&:tabs=${hideTabs ? "no" : "yes"}&:device=${device}`;
+	console.log("TableauEmbedServer trustedUrl:", trustedUrl);
 
 	return (
 		<>
 			<Script
 				type="module"
-				src="https://100.83.250.224:8080/javascripts/api/tableau.embedding.3.latest.min.js"
+				src={`http://100.83.250.224:8080/javascripts/api/tableau.embedding.3.latest.min.js`}
 				strategy="lazyOnload"
 			/>
-			<div>
+			{trustedUrl && <div>
 				{/* @ts-ignore */}
 				<tableau-viz
 					id="tableauViz"
@@ -48,7 +65,8 @@ async function TableauEmbedServer({
 				>
 					{/* @ts-ignore */}
 				</tableau-viz>
-			</div>
+			</div>}
+			
 		</>
 	);
 }
