@@ -158,7 +158,7 @@ const KPISection = () => {
 
   return (
     <section id="KPI" className="w-full max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 xl:gap-6 2xl:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 xl:gap-6 2xl:gap-8">
         {KPIdata.map((item, index) => (
           <KPICard key={item.name} item={item} index={index}/>
         ))}
