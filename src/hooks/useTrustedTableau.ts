@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const useTrustedTableau = (username: string) => {
+const useTrustedTableau = () => {
 	const [ticket, setTicket] = useState<string | null>(null);
 
 	useEffect(() => {

@@ -33,7 +33,7 @@ const tableauDashboardData = [
 ];
 
 function TableauEmbedWithTicket({ src }: { src: string }) {
-    const ticket = useTrustedTableau("User1");
+    const ticket = useTrustedTableau();
     const fullsrc = `${ticket}/views/${src}`;
     console.log("Tableau Embed Src:", fullsrc);
 
