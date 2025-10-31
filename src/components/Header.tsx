@@ -25,7 +25,7 @@ export default function Header() {
   const hideHeader = pathname === "/" && !session;
   
   // Paths where header items are hidden
-  const specialPaths = ["/login", "/change-password", "/contact", "/settings", "/"];
+  const specialPaths = ["/login", "/change-password", "/contact", "/settings"];
   const hideHeaderItems = specialPaths.some(path => pathname.startsWith(path));
   
   const [scrolled, setScrolled] = useState(false);
@@ -136,7 +136,7 @@ export default function Header() {
     return null;
   }
 
-  if (hideHeaderItems) {
+  if (hideHeaderItems || pathname === "/") {
     return (
       <header
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
@@ -161,7 +161,7 @@ export default function Header() {
             {/* Desktop Navigation */}
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList className="space-x-1">
-                {pathname !== "/" && (
+                {pathname !== "/" && !pathname.startsWith("/settings") && (
                   <NavigationMenuItem key="Contact Us">
                     <NavigationMenuLink
                       href="/contact"
