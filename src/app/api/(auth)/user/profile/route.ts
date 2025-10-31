@@ -62,3 +62,36 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function GET(request: Request) {
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user?.id) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is admin
+    const currentUser = await db
+      .select({ 
+        name: users.name, 
+        email: users.email,
+        role: users.role,
+        status: users.status,
+        systemId: users.systemId,
+        position: users.position,
+        taskRole: users.taskRole
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    return Response.json({ user: currentUser[0] });
+
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

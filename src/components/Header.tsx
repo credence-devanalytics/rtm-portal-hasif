@@ -21,11 +21,12 @@ export default function Header() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const hideHeaderPaths = ["/login","/change-password","/contact"]; // Paths where header not be rendered cosmetic
-  const hideHeader = pathname === "/" ? !session : hideHeaderPaths.some(path => pathname.startsWith(path));
+  // Condition where header not rendered cosmetic
+  const hideHeader = pathname === "/" && !session;
   
-  const specialPaths = ["/settings"];
-  const hideHeaderItems = specialPaths.some(path => pathname.startsWith(path)) || pathname === "/";
+  // Paths where header items are hidden
+  const specialPaths = ["/login", "/change-password", "/contact", "/settings", "/"];
+  const hideHeaderItems = specialPaths.some(path => pathname.startsWith(path));
   
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -160,6 +161,16 @@ export default function Header() {
             {/* Desktop Navigation */}
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList className="space-x-1">
+                {pathname !== "/" && (
+                  <NavigationMenuItem key="Contact Us">
+                    <NavigationMenuLink
+                      href="/contact"
+                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/20 data-[state=open]:bg-white/20 drop-shadow-sm"
+                    >
+                      Contact Us
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                )}
                 <NavigationMenuItem>
                   <UserMenu session={session} variant="floating" />
                 </NavigationMenuItem>

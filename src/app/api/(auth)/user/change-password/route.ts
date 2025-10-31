@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/index";
 import { users, accounts } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import bcrypt from "bcryptjs";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -15,7 +14,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Parse the request body
-    const { newPassword } = await request.json();
+    const { newPassword, firstTime } = await request.json();
 
     // Validate the new password
     if (!newPassword || newPassword.length < 8) {
@@ -25,34 +24,19 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Check if user status is 'new'
-    const user = session.user as any;
-    if (user.status !== "new") {
-      return NextResponse.json(
-        { error: "Password change is only for first-time users" },
-        { status: 403 }
-      );
-    }
-
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
     // Update the password in the accounts table
-    await db
-      .update(accounts)
-      .set({
-        password: hashedPassword,
-      })
-      .where(eq(accounts.userId, session.user.id));
+    const result = await auth.api.changePassword(session.user.id, newPassword);
 
     // Update user status from 'new' to 'active'
-    await db
-      .update(users)
-      .set({
-        status: "active",
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, session.user.id));
+    if (firstTime) {
+      await db
+        .update(users)
+        .set({
+          status: "active",
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, session.user.id));              
+    }
 
     return NextResponse.json({
       success: true,
