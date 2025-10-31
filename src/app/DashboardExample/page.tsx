@@ -266,13 +266,13 @@ const DashboardExample = () => {
             <CardContent className="">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Redis Status</span>
+                  <span>Cache Type</span>
                   <span className="font-semibold">
-                    {cacheQuery.data.data?.redis?.status || "Unknown"}
+                    In-Memory (TanStack Query)
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Overall</span>
+                  <span>Overall Status</span>
                   <span className="font-semibold">
                     {cacheQuery.data.data?.overall || "Unknown"}
                   </span>

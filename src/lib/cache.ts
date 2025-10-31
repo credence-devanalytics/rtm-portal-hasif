@@ -1,59 +1,21 @@
 /**
  * Caching System for Dashboard API
- * Supports Redis with fallback to in-memory cache
+ * Uses in-memory cache (TanStack Query handles client-side caching)
  * Handles 40k+ rows efficiently by caching aggregated queries
  */
 
-import { createClient } from 'redis';
 import NodeCache from 'node-cache';
 import crypto from 'crypto';
 
 class CacheManager {
-  redis: any;
   nodeCache: NodeCache;
-  isRedisConnected: boolean;
 
   constructor() {
-    this.redis = null;
     this.nodeCache = new NodeCache({ 
       stdTTL: 300, // 5 minutes default TTL
       checkperiod: 60, // Check for expired keys every minute
       useClones: false // Better performance for large objects
     });
-    this.isRedisConnected = false;
-    this.initRedis();
-  }
-
-  /**
-   * Initialize Redis connection with fallback
-   */
-  async initRedis() {
-    try {
-      // Try to connect to Redis
-      this.redis = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
-        socket: {
-          connectTimeout: 5000
-        }
-      });
-
-      this.redis.on('error', (err) => {
-        console.warn('Redis connection error, falling back to in-memory cache:', err.message);
-        this.isRedisConnected = false;
-      });
-
-      this.redis.on('connect', () => {
-        console.log('Redis connected successfully');
-        this.isRedisConnected = true;
-      });
-
-      // Attempt connection
-      await this.redis.connect();
-      this.isRedisConnected = true;
-    } catch (error) {
-      console.warn('Redis unavailable, using in-memory cache:', error.message);
-      this.isRedisConnected = false;
-    }
   }
 
   /**
@@ -84,14 +46,7 @@ class CacheManager {
    */
   async get(cacheKey) {
     try {
-      if (this.isRedisConnected && this.redis) {
-        const data = await this.redis.get(cacheKey);
-        if (data) {
-          return JSON.parse(data);
-        }
-      }
-      
-      // Fallback to node-cache
+      // Use in-memory cache (TanStack Query handles client-side)
       return this.nodeCache.get(cacheKey) || null;
     } catch (error) {
       console.error('Cache get error:', error);
@@ -107,12 +62,8 @@ class CacheManager {
    */
   async set(cacheKey, data, ttlSeconds = 300) {
     try {
-      if (this.isRedisConnected && this.redis) {
-        await this.redis.setEx(cacheKey, ttlSeconds, JSON.stringify(data));
-      } else {
-        // Fallback to node-cache
-        this.nodeCache.set(cacheKey, data, ttlSeconds);
-      }
+      // Use in-memory cache (TanStack Query handles client-side)
+      this.nodeCache.set(cacheKey, data, ttlSeconds);
     } catch (error) {
       console.error('Cache set error:', error);
     }
@@ -124,9 +75,6 @@ class CacheManager {
    */
   async delete(cacheKey) {
     try {
-      if (this.isRedisConnected && this.redis) {
-        await this.redis.del(cacheKey);
-      }
       this.nodeCache.del(cacheKey);
     } catch (error) {
       console.error('Cache delete error:', error);
@@ -138,9 +86,6 @@ class CacheManager {
    */
   async clear() {
     try {
-      if (this.isRedisConnected && this.redis) {
-        await this.redis.flushAll();
-      }
       this.nodeCache.flushAll();
     } catch (error) {
       console.error('Cache clear error:', error);
@@ -153,18 +98,9 @@ class CacheManager {
    */
   async getStats() {
     const stats: any = {
-      redisConnected: this.isRedisConnected,
+      cacheType: 'in-memory',
       nodeCacheStats: this.nodeCache.getStats()
     };
-
-    if (this.isRedisConnected && this.redis) {
-      try {
-        const info = await this.redis.info('memory');
-        stats.redisMemory = info;
-      } catch (error) {
-        stats.redisError = (error as Error).message;
-      }
-    }
 
     return stats;
   }
@@ -184,7 +120,7 @@ class CacheManager {
     // Try to get from cache first
     let cachedResult = await this.get(cacheKey);
     
-    if (cachedResult) {
+    if (cachedResult && typeof cachedResult === 'object') {
       console.log(`Cache HIT for ${queryType} (${Date.now() - startTime}ms) - Key: ${cacheKey}`);
       return {
         ...cachedResult,
