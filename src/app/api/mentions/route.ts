@@ -272,32 +272,46 @@ export async function GET(request: Request) {
 								ELSE 'Other'
 							END`
 						)
-						.orderBy(desc(count())),
+					.orderBy(desc(count())),
 
-					// 13. Get daily channel breakdown (for Channel Posts time series chart)
-					db
-						.select({
-							date: sql`DATE(${mentionsClassify.inserttime})`.as("date"),
-							channel: mentionsClassify.channel,
-							count: count(),
-							totalReach: sum(mentionsClassify.reach),
-							totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
-						})
-						.from(mentionsClassify)
-						.where(
-							and(
-								...whereConditions,
-								sql`${mentionsClassify.channel} IS NOT NULL AND ${mentionsClassify.channel} != ''`
-							)
+				// 13. Get daily channel breakdown (for Channel Posts time series chart)
+				db
+					.select({
+						date: sql`DATE(${mentionsClassify.inserttime})`.as("date"),
+						channel: mentionsClassify.channel,
+						platform: mentionsClassify.type,
+						unit: sql`CASE 
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+							ELSE 'Other'
+						END`.as('unit'),
+						count: count(),
+						totalReach: sum(mentionsClassify.reach),
+						totalInteractions: sql`SUM(COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.totalreactionscount}, 0))`,
+					})
+					.from(mentionsClassify)
+					.where(
+						and(
+							...whereConditions,
+							sql`${mentionsClassify.channel} IS NOT NULL AND ${mentionsClassify.channel} != ''`
 						)
-						.groupBy(
-							sql`DATE(${mentionsClassify.inserttime})`,
-							mentionsClassify.channel
-						)
-						.orderBy(sql`DATE(${mentionsClassify.inserttime})`),
-				]);
-
-			const response = {
+					)
+					.groupBy(
+						sql`DATE(${mentionsClassify.inserttime})`,
+						mentionsClassify.channel,
+						mentionsClassify.type,
+						sql`CASE 
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%radio%' THEN 'Radio'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%tv%' THEN 'TV'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%' THEN 'News'
+							WHEN LOWER(${mentionsClassify.groupname}) LIKE '%official%' THEN 'Official'
+							ELSE 'Other'
+						END`
+					)
+					.orderBy(sql`DATE(${mentionsClassify.inserttime})`),
+			]);			const response = {
 				// Raw data for detailed analysis
 				mentions: mentions.slice(
 					0,
@@ -386,16 +400,16 @@ export async function GET(request: Request) {
 						totalInteractions: Number(a.totalInteractions) || 0,
 					})),
 
-					// Daily channel breakdown (for Channel Posts time series chart)
-					dailyChannelData: dailyChannelBreakdown.map((d) => ({
-						date: d.date,
-						channel: d.channel,
-						count: Number(d.count) || 0,
-						totalReach: Number(d.totalReach) || 0,
-						totalInteractions: Number(d.totalInteractions) || 0,
-					})),
-
-					// Top performing content
+				// Daily channel breakdown (for Channel Posts time series chart)
+				dailyChannelData: dailyChannelBreakdown.map((d) => ({
+					date: d.date,
+					channel: d.channel,
+					platform: d.platform,
+					unit: d.unit,
+					count: Number(d.count) || 0,
+					totalReach: Number(d.totalReach) || 0,
+					totalInteractions: Number(d.totalInteractions) || 0,
+				})),					// Top performing content
 					topContent: topMentions,
 
 					// Metadata

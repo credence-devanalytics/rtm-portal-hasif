@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ComposedChart,
   Bar,
@@ -16,6 +16,8 @@ const EngagementOverTimeChart = ({
   onFilterChange = null,
   activeFilters = {} as any,
 }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   // Create engagement data grouped by date with proper reach and interaction calculation
   const createEngagementOverTime = (transformedData) => {
     if (!transformedData || transformedData.length === 0) {
@@ -297,13 +299,38 @@ const EngagementOverTimeChart = ({
   return (
     <div className="w-full">
       <div className="p-6 bg-white ">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Engagement Over Time
-          </h2>
-          <p className="text-gray-600">
-            Daily posts count with reach and interactions trends
-          </p>
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Engagement Over Time
+            </h2>
+            <p className="text-gray-600">
+              Daily posts count with reach and interactions trends
+            </p>
+          </div>
+
+          {/* Info Icon with Tooltip */}
+          <div className="relative">
+            <div
+              className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center cursor-help text-sm font-bold"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+            >
+              i
+            </div>
+            {showTooltip && (
+              <div className="absolute right-0 top-8 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-10">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  <strong className="text-gray-900">Chart Explanation:</strong>{" "}
+                  Posts are shown as absolute counts (blue bars, left axis).
+                  Reach and interactions are shown as percentages relative to
+                  their peak values (orange and green lines, right axis). 100%
+                  represents the day with the highest reach/interactions. Hover
+                  over data points to see actual numbers.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Summary Stats */}
@@ -430,17 +457,6 @@ const EngagementOverTimeChart = ({
               />
             </ComposedChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Legend explanation */}
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600">
-            <strong>Chart Explanation:</strong> Posts are shown as absolute
-            counts (blue bars, left axis). Reach and interactions are shown as
-            percentages relative to their peak values (orange and green lines,
-            right axis). 100% represents the day with the highest
-            reach/interactions. Hover over data points to see actual numbers.
-          </p>
         </div>
 
         {/* Additional Insights */}
