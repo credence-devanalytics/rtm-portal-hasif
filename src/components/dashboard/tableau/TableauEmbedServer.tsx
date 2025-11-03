@@ -65,7 +65,7 @@ function TableauEmbedServer({
 		<>
 			<Script
 				type="module"
-				src={`https://100.83.250.224/javascripts/api/tableau.embedding.3.latest.min.js`}
+				src={`https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js`}
 				strategy="lazyOnload"
 			/>
 			{trustedUrl && <div>
