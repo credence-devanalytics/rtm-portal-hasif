@@ -7,12 +7,11 @@ import TableauEmbedv2 from "@/components/dashboard/tableau/TableauEmbedv2";
 import { Card } from "@/components/ui/card";
 import useTrustedTableau from "@/hooks/useTrustedTableau";
 
-const tableauServerURL = process.env.TABLEAU_SERVER_URL;
 
 const tableauDashboardData = [
   {
     title: "VOD Analysis",
-    src: "RTMKlik_17576649176570/RadioAnalysis2/e5a6af72-acba-4558-be12-2053ab01763b/cd4308e2-2538-425e-982a-c8eee03599be",
+    src: "RTMKlik_17576649176570/RadioAnalysis2",
   },
   {
     title: "TV Analysis",
@@ -24,7 +23,7 @@ const tableauDashboardData = [
   },
   {
     title: "Overall Analysis",
-    src: "RTMKlik_17576649176570/Dashboard6/62cbe4c7-bae2-47cb-a048-fa78ebcfe63f/b9f595eb-16fe-4b78-8771-1088c53bde81",
+    src: "RTMKlik_17576649176570/Dashboard6",
   },
   {
     title: "Overall Analysis Radio",
@@ -50,25 +49,25 @@ function TableauEmbedWithTicket({ src }: { src: string }) {
     );
 }
 
-export default function TableauDashboards() {
+export default function RTMClickPage() {
 	return (
     <div className="container mx-auto px-4 pb-8 h-full flex flex-col pt-16 gap-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            RTM Social Media Dashboard
+            RTMKlik Analytics
           </h1>
           <p className="text-muted-foreground">
-            Real-time monitoring across Radio, TV, and Berita social channels
+            Comprehensive RTMKlik Analysis for every channel in this platform
           </p>
         </div>
         </div>
       { tableauDashboardData.map((dashboard) => (
         <div className="grid grid-cols-1 gap-2 backdrop-blur-lg flex-grow">
-            <Card className="p-4">
+            <Card className="p-4 gap-0">
             <h2 className="text-lg font-semibold mb-2">{dashboard.title}</h2>
             {/* <TableauEmbedComponent url={dashboard.src.split("/")[0]} sheetName={dashboard.src.split("/").pop()} /> */}
-            <TableauEmbedWithTicket src={dashboard.src} />
+            {/* <TableauEmbedWithTicket src={dashboard.src} /> */}
             {/* <TableauEmbedReact
               viewUrl={dashboard.src}
               height="600px"
@@ -77,7 +76,7 @@ export default function TableauDashboards() {
               hideToolbar={false}
               device="desktop"
             /> */}
-            {/* <TableauEmbedServer
+            <TableauEmbedServer
               viewUrl={dashboard.src}
               // src={src}
               height="600px"
@@ -85,7 +84,7 @@ export default function TableauDashboards() {
               hideTabs={true}
               hideToolbar={false}
               device="desktop"
-            /> */}
+            />
             </Card>
         </div>
       ))}
