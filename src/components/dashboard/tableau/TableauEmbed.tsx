@@ -40,7 +40,7 @@ function TableauEmbed({
 		<>
 			<Script
 				type="module"
-				src="http://100.83.250.224:8080/javascripts/api/tableau.embedding.3.latest.min.js"
+				src="https://100.83.250.224/javascripts/api/tableau.embedding.3.latest.min.js"
 				strategy="lazyOnload"
 			/>
 			<div ref={vizRef}>

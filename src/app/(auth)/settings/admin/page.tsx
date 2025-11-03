@@ -330,7 +330,6 @@ export default function AdminPage() {
                                         >
                                             <option value="user">User</option>
                                             <option value="admin">Admin</option>
-                                            <option value="superadmin">Super Admin</option>
                                         </select>
                                     </div>
                                     <div>

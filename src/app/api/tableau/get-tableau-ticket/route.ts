@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-	console.log("Fetching Tableau ticket from...", process.env.TABLEAU_SERVER_URL);
+	console.log("Fetching Tableau ticket from ", process.env.TABLEAU_TICKET_URL);
 	try {
-		const response = await fetch(`${process.env.TABLEAU_SERVER_URL}/trusted`, {
+		const response = await fetch(`${process.env.TABLEAU_TICKET_URL}/trusted`, {
 			method: "POST",
 			body: new URLSearchParams({
 				username: "dataops",
