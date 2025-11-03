@@ -1,5 +1,6 @@
 "use client"
 
+import { Monitor } from "lucide-react";
 import Script from "next/script";
 import { use, useEffect, useState } from "react";
 
@@ -37,7 +38,22 @@ function TableauEmbedServer({
 	}, []);
 
 	if (!ticket) {
-		return <div>Loading Tableau Dashboard...</div>;
+		return (
+		/* No Data State */
+		<div className="flex flex-col items-center justify-center py-8 space-y-3">
+		<div className="p-3 rounded-full bg-gray-50 border border-gray-200">
+			<Monitor className="h-6 w-6 text-gray-400" />
+		</div>
+		<div className="text-center">
+			<p className="text-gray-500 font-medium text-sm">
+			More data coming soon
+			</p>
+			<p className="text-gray-400 text-xs mt-1">
+			Check back later for updates
+			</p>
+		</div>
+		</div>
+		)
 	}
 
 	const trustedUrl = `${ticket}/views/${viewUrl}?:embed=yes&:toolbar=${

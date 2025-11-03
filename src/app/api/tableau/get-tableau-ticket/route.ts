@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
+	console.log("Fetching Tableau ticket from...", process.env.TABLEAU_SERVER_URL);
 	try {
 		const response = await fetch(`${process.env.TABLEAU_SERVER_URL}/trusted`, {
 			method: "POST",
