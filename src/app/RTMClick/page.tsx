@@ -5,6 +5,7 @@ import TableauEmbed from "@/components/dashboard/tableau/TableauEmbed";
 import TableauEmbedServer from "@/components/dashboard/tableau/TableauEmbedServer";
 import TableauEmbedv2 from "@/components/dashboard/tableau/TableauEmbedv2";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import useTrustedTableau from "@/hooks/useTrustedTableau";
 import { useSession } from "@/lib/auth-client";
 import { Monitor } from "lucide-react";
@@ -17,22 +18,27 @@ function TableauDashboards() {
     {
       title: "Overall Analysis",
       src: "RTMKlik_17576649176570/Dashboard6",
+      key: "overall"
     },
     {
       title: "Demographic Analysis",
       src: "RTMKlik_17576649176570/D",
+      key: "demographic"
     },
     {
       title: "TV Analysis",
       src: "RTMKlik_17576649176570/TVAnalysis",
+      key: "tv"
     },
     {
       title: "VOD Analysis",
       src: "RTMKlik_17576649176570/RadioAnalysis2",
+      key: "vod"
     },
     {
       title: "Radio Analysis",
       src: "RTMKlik_17576649176570/RadioAnalysis2_1",
+      key: "radio"
     },
   ];
 
@@ -55,13 +61,29 @@ function TableauDashboards() {
   }
 
   return (
-    tableauDashboardData.map((dashboard) => (
-      <div className="grid grid-cols-1 gap-2 backdrop-blur-lg flex-grow">
-        <Card className="p-4 gap-0">
-          <h2 className="text-lg font-semibold mb-2">{dashboard.title}</h2>
-          {/* <TableauEmbedComponent url={dashboard.src.split("/")[0]} sheetName={dashboard.src.split("/").pop()} /> */}
-          {/* <TableauEmbedWithTicket src={dashboard.src} /> */}
-          {/* <TableauEmbedReact
+    <Tabs defaultValue="overall" className="w-full flex justify-center">
+      <TabsList className="h-12 items-center justify-center rounded-xl bg-white p-1 text-slate-500 shadow-sm border border-black backdrop-blur-sm grid grid-cols-5 w-full max-w-full m-auto">
+        {tableauDashboardData.map((dashboard) => (
+          <TabsTrigger
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 lg:px-4 py-1.5 text-xs lg:text-sm font-medium transition-all flex-1 h-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-sm"
+            value={dashboard.key}
+            key={dashboard.key}
+          >
+            {dashboard.title}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {tableauDashboardData.map((dashboard) => (
+        <TabsContent
+          className="grid grid-cols-1 gap-2 backdrop-blur-lg flex-grow py-4"
+          value={dashboard.key}
+          key={dashboard.key}
+        >
+          <Card className="p-4 gap-0">
+            <h2 className="text-lg font-semibold mb-2">{dashboard.title}</h2>
+            {/* <TableauEmbedComponent url={dashboard.src.split("/")[0]} sheetName={dashboard.src.split("/").pop()} /> */}
+            {/* <TableauEmbedWithTicket src={dashboard.src} /> */}
+            {/* <TableauEmbedReact
             viewUrl={dashboard.src}
             height="600px"
             width="100%"
@@ -69,19 +91,20 @@ function TableauDashboards() {
             hideToolbar={false}
             device="desktop"
           /> */}
-          <TableauEmbedServer
-            viewUrl={dashboard.src}
-            // src={src}
-            height="600px"
-            width="100%"
-            hideTabs={true}
-            hideToolbar={false}
-            device="desktop"
-          />
-        </Card>
-      </div>
-    ))
-  )
+            <TableauEmbedServer
+              viewUrl={dashboard.src}
+              // src={src}
+              height="600px"
+              width="100%"
+              hideTabs={true}
+              hideToolbar={false}
+              device="desktop"
+            />
+          </Card>
+        </TabsContent>
+      ))}
+    </Tabs>
+  );
 }
 
 
