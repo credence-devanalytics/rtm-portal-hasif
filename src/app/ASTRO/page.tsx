@@ -376,7 +376,9 @@ const ASTROPage = () => {
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">ASTRO Analytics</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            ASTRO Analytics
+          </h1>
           <p className="text-gray-600">
             Channel Rating & Reach Performance Analysis
           </p>
@@ -396,11 +398,7 @@ const ASTROPage = () => {
             />
             Refresh
           </Button>
-          <Button
-            onClick={() => window.print()}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={() => window.print()} variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
