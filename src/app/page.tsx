@@ -226,7 +226,7 @@ const KPISection = () => {
       {
         name: "Total Radio Listeners on RTM Stations",
         stat: totalRadioListeners,
-        limit: 3000000,
+        limit: 22000000,
         percentage:
           totalRadioListeners > 0 ? (totalRadioListeners / 3000000) * 100 : 0,
         platforms: radioPlatforms,
