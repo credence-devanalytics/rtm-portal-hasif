@@ -365,49 +365,61 @@ const ASTROPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20">
       <Header />
 
+      {/* Subtle loading indicator at the top */}
+      {loading && (
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-purple-600 animate-pulse"></div>
+      )}
+
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white py-8 px-6 mt-16">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">ASTRO Analytics</h1>
-              <p className="text-purple-100">
-                Channel Rating & Reach Performance Analysis
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={handleRefresh}
-                variant="secondary"
-                size="sm"
-                disabled={loading}
-              >
-                <RefreshCw
-                  className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-                />
-                Refresh
-              </Button>
-            </div>
-          </div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">ASTRO Analytics</h1>
+          <p className="text-gray-600">
+            Channel Rating & Reach Performance Analysis
+          </p>
+        </div>
+
+        {/* Controls */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            className={`${loading ? "animate-pulse" : ""}`}
+            disabled={loading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+          <Button
+            onClick={() => window.print()}
+            variant="outline"
+            size="sm"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+      <div className="space-y-6">
         {/* Filters Section */}
-        <Card>
-          <CardHeader>
+        <Card className="">
+          <CardHeader className="">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Filter className="h-5 w-5 text-gray-700" />
-                <CardTitle>Filters</CardTitle>
+                <CardTitle className="">Filters</CardTitle>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Year Filter */}
               <div className="space-y-2">
@@ -604,16 +616,16 @@ const ASTROPage = () => {
         {!loading && !error && reachOverTime.length > 0 && (
           <div className="grid grid-cols-2 gap-6">
             <Card className="col-span-2">
-              <CardHeader>
+              <CardHeader className="">
                 <CardTitle className="flex items-center space-x-2">
                   <TrendingUp className="h-5 w-5 text-purple-600" />
                   <span>Reach Over Time</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="">
                   Channel reach performance trends for {filters.year}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <ResponsiveContainer width="100%" height={400}>
                   <LineChart
                     data={reachOverTime}
@@ -680,16 +692,16 @@ const ASTROPage = () => {
         {!loading && !error && ratingOverTime.length > 0 && (
           <div className="grid grid-cols-2 gap-6">
             <Card className="col-span-2">
-              <CardHeader>
+              <CardHeader className="">
                 <CardTitle className="flex items-center space-x-2">
                   <Star className="h-5 w-5 text-yellow-500" />
                   <span>Rating Over Time</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="">
                   Channel rating performance trends for {filters.year}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 <ResponsiveContainer width="100%" height={400}>
                   <LineChart
                     data={ratingOverTime}
