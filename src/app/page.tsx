@@ -145,8 +145,11 @@ const KPISection = () => {
     const astroRadioListeners = astroQuery.data?.success
       ? astroQuery.data.data?.radio_reach || 0
       : null;
-    const rtmklikViewers = rtmklikQuery.data?.success
-      ? rtmklikQuery.data.data?.totalActiveUsers || 0
+    const rtmklikTVViewers = rtmklikQuery.data?.success
+      ? rtmklikQuery.data.data?.tv || 0
+      : null;
+    const rtmklikRadioListeners = rtmklikQuery.data?.success
+      ? rtmklikQuery.data.data?.radio || 0
       : null;
     const pbViewers = pbQuery.data?.success
       ? pbQuery.data.data?.totalAudience || 0
@@ -157,13 +160,15 @@ const KPISection = () => {
       unifiTVViewers,
       myTVViewers,
       astroTVViewers,
-      rtmklikViewers,
+      rtmklikTVViewers,
       pbViewers,
     ].filter((v) => v !== null);
     const totalViewers =
       tvValues.length > 0 ? tvValues.reduce((sum, val) => sum + val, 0) : 0;
 
-    const radioValues = [astroRadioListeners].filter((v) => v !== null);
+    const radioValues = [astroRadioListeners, rtmklikRadioListeners].filter(
+      (v) => v !== null
+    );
     const totalRadioListeners =
       radioValues.length > 0
         ? radioValues.reduce((sum, val) => sum + val, 0)
@@ -186,7 +191,7 @@ const KPISection = () => {
       { name: "ASTRO", stat: astroTVViewers, link: "/ASTRO", color: "purple" },
       {
         name: "RTMKlik",
-        stat: rtmklikViewers,
+        stat: rtmklikTVViewers,
         link: "/RTMClick",
         color: "yellow",
       },
@@ -208,6 +213,12 @@ const KPISection = () => {
         stat: astroRadioListeners,
         link: "/ASTRO",
         color: "purple",
+      },
+      {
+        name: "RTMKlik",
+        stat: rtmklikRadioListeners,
+        link: "/RTMClick",
+        color: "yellow",
       },
     ].sort((a, b) => {
       if (a.stat === null) return 1;

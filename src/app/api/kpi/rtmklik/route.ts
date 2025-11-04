@@ -1,7 +1,6 @@
 /**
  * KPI RTMKlik API
- * Provides total active users for RTMKlik for the current year
- * Note: RTMKlik data structure doesn't have tx_year, using existing summary endpoint
+ * Provides total active users for RTMKlik TV and Radio for the current year
  */
 
 import { db } from '@/index';
@@ -10,31 +9,39 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
-    // RTMKlik uses current month data based on the rtmklik-summary endpoint
-    // We'll use the existing logic from rtmklik-summary
-    const totalActiveUsersResult = await db.execute(sql`
+    const currentYear = new Date().getFullYear();
+
+    // RTMKlik TV
+    const tvResult = await db.execute(sql`
       SELECT 
-        (
-          SELECT COALESCE(SUM(value), 0)
-          FROM rtmklik_live_malaysia
-          WHERE metric = 'activeUsers'
-            AND DATE_TRUNC('month', date::date) = DATE_TRUNC('month', CURRENT_DATE)
-        ) 
-        + 
-        (
-          SELECT COALESCE(SUM(value), 0)
-          FROM rtmklik_radio_malaysia
-          WHERE metric = 'activeUsers'
-            AND DATE_TRUNC('month', date::date) = DATE_TRUNC('month', CURRENT_DATE)
-        ) AS total_active_users_rtmklik
+        SUM(value) as totalActiveUsers
+      FROM rtmklik_popular_pages
+      WHERE EXTRACT(YEAR FROM date) = ${currentYear}
+      AND metric = 'activeUsers'
+      AND class = 'live'
     `);
 
-    const totalActiveUsers = totalActiveUsersResult.rows[0]?.total_active_users_rtmklik || 0;
+    // RTMKlik Radio
+    const radioResult = await db.execute(sql`
+      SELECT 
+        SUM(value) as totalActiveUsers
+      FROM rtmklik_popular_pages
+      WHERE EXTRACT(YEAR FROM date) = ${currentYear}
+      AND metric = 'activeUsers'
+      AND class = 'radio'
+    `);
+
+    const tvActiveUsers = tvResult.rows[0]?.totalactiveusers || 0;
+    const radioActiveUsers = radioResult.rows[0]?.totalactiveusers || 0;
+    const totalActiveUsers = Number(tvActiveUsers) + Number(radioActiveUsers);
 
     return NextResponse.json({
       success: true,
       data: {
-        totalActiveUsers: Number(totalActiveUsers) || 0
+        totalActiveUsers: totalActiveUsers || 0,
+        tv: Number(tvActiveUsers) || 0,
+        radio: Number(radioActiveUsers) || 0,
+        year: currentYear
       }
     });
 

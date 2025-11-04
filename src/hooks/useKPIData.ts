@@ -12,6 +12,8 @@ interface KPIResponse {
     tv_reach?: number;
     radio_reach?: number;
     totalActiveUsers?: number;
+    tv?: number;
+    radio?: number;
     totalAudience?: number;
     year?: number;
   };
