@@ -239,7 +239,7 @@ const KPISection = () => {
         stat: totalRadioListeners,
         limit: 22000000,
         percentage:
-          totalRadioListeners > 0 ? (totalRadioListeners / 3000000) * 100 : 0,
+          totalRadioListeners > 0 ? (totalRadioListeners / 22000000) * 100 : 0,
         platforms: radioPlatforms,
       },
     ];
