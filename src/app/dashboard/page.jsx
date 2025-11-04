@@ -462,7 +462,7 @@ const SocialMediaDashboard = () => {
     const today = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
-    
+
     // Reset filters but keep the default 30-day date range
     setFilters({
       ...DEFAULT_FILTERS,
@@ -471,7 +471,7 @@ const SocialMediaDashboard = () => {
         to: today.toISOString().split("T")[0],
       },
     });
-    
+
     setSelectedSource("all");
     setSelectedDateRange({
       from: thirtyDaysAgo,

@@ -17,13 +17,13 @@ const SentimentBySourceChart = ({
   onChartClick,
   activeFilters,
   isLoading,
-  extra=true,
+  extra = true,
 }) => {
   console.log("SentimentBySourceChart - Component rendering with props:", {
     dataLength: data ? data.length : 0,
     isLoading,
     extra,
-    activeFilters
+    activeFilters,
   });
 
   // Color scheme for sentiments
@@ -56,7 +56,10 @@ const SentimentBySourceChart = ({
   const chartData = React.useMemo(() => {
     console.log("SentimentBySourceChart - Raw data:", data);
     if (!data || !Array.isArray(data)) {
-      console.log("SentimentBySourceChart - Data is not array or missing:", data);
+      console.log(
+        "SentimentBySourceChart - Data is not array or missing:",
+        data
+      );
       return [];
     }
 
@@ -70,7 +73,7 @@ const SentimentBySourceChart = ({
           (item.positive || 0) + (item.negative || 0) + (item.neutral || 0),
       }))
       .filter((item) => item.total > 0);
-    
+
     console.log("SentimentBySourceChart - Processed data:", processedData);
     return processedData;
   }, [data]);
@@ -119,7 +122,10 @@ const SentimentBySourceChart = ({
           <CardTitle>Sentiment by Platform</CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ height: extra ? '400px' : '200px' }} className="flex items-center justify-center">
+          <div
+            style={{ height: extra ? "400px" : "200px" }}
+            className="flex items-center justify-center"
+          >
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
           </div>
         </CardContent>
@@ -134,7 +140,10 @@ const SentimentBySourceChart = ({
           <CardTitle>Sentiment by Platform</CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ height: extra ? '400px' : '200px' }} className="flex items-center justify-center">
+          <div
+            style={{ height: extra ? "400px" : "200px" }}
+            className="flex items-center justify-center"
+          >
             <p className="text-gray-500">No platform data available</p>
           </div>
         </CardContent>
@@ -146,14 +155,14 @@ const SentimentBySourceChart = ({
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle>Sentiment by Platform</CardTitle>
-        {extra && 
+        {extra && (
           <p className="text-sm text-muted-foreground">
             Click on a bar to filter by platform
           </p>
-        }
+        )}
       </CardHeader>
       <CardContent>
-        <div className="w-full" style={{ height: extra ? '400px' : '200px' }}>
+        <div className="w-full" style={{ height: extra ? "400px" : "200px" }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
@@ -204,11 +213,13 @@ const SentimentBySourceChart = ({
         </div>
 
         {/* Platform Summary */}
-        {extra &&
+        {extra && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {chartData.slice(0, 4).map((item) => {
-                const isActive = activeFilters?.sources?.includes(item.platform);
+                const isActive = activeFilters?.sources?.includes(
+                  item.platform
+                );
                 return (
                   <div
                     key={item.platform}
@@ -223,7 +234,9 @@ const SentimentBySourceChart = ({
                   >
                     <div className="flex items-center gap-2 mb-2">
                       {getPlatformIcon(item.platform)}
-                      <span className="text-sm font-medium">{item.platform}</span>
+                      <span className="text-sm font-medium">
+                        {item.platform}
+                      </span>
                     </div>
                     <div className="text-lg font-bold text-gray-900">
                       {item.total.toLocaleString()}
@@ -234,7 +247,7 @@ const SentimentBySourceChart = ({
               })}
             </div>
           </div>
-      }
+        )}
       </CardContent>
     </Card>
   );
