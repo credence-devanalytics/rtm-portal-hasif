@@ -67,15 +67,21 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
           <XAxis
             dataKey="month"
             tick={{ fontSize: 11, fontFamily: "var(--font-geist-sans)" }}
-            angle={-45}
-            textAnchor="end"
             height={60}
           />
           <YAxis
             tick={{ fontSize: 11, fontFamily: "var(--font-geist-sans)" }}
             tickFormatter={formatYAxisTick}
           />
-          <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
+          <Tooltip
+            content={
+              <CustomTooltip
+                active={undefined}
+                payload={undefined}
+                label={undefined}
+              />
+            }
+          />
           <Legend
             wrapperStyle={{
               paddingTop: "20px",
@@ -84,32 +90,27 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
             }}
           />
           <Line
-
             type="linear"
-
             dataKey="2022"
             stroke="#8884d8"
-            strokeWidth={2}
-            dot={{ r: 4 }}
+            strokeWidth={3}
+            dot={{ r: 5, fill: "#8884d8", strokeWidth: 0 }}
             name="2022"
           />
           <Line
-
             type="linear"
-
             dataKey="2023"
             stroke="#82ca9d"
-            strokeWidth={2}
-            dot={{ r: 4 }}
+            strokeWidth={3}
+            dot={{ r: 5, fill: "#82ca9d", strokeWidth: 0 }}
             name="2023"
           />
           <Line
             type="linear"
-
             dataKey="2024"
             stroke="#ffc658"
-            strokeWidth={2}
-            dot={{ r: 4 }}
+            strokeWidth={3}
+            dot={{ r: 5, fill: "#ffc658", strokeWidth: 0 }}
             name="2024"
           />
         </LineChart>

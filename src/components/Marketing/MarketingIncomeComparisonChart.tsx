@@ -70,6 +70,55 @@ const MarketingIncomeComparisonChart = ({ data = [] }) => {
     }).format(value);
   };
 
+  // Calculate nice rounded ticks for Y-axis
+  const calculateYAxisDomain = () => {
+    const allValues = [];
+    chartData.forEach((yearData) => {
+      channels.forEach((channel) => {
+        if (yearData[channel]) {
+          allValues.push(yearData[channel]);
+        }
+      });
+    });
+
+    const maxValue = Math.max(...allValues);
+    const minValue = Math.min(...allValues);
+
+    // Round up to nearest significant number
+    const magnitude = Math.pow(10, Math.floor(Math.log10(maxValue)));
+    const roundedMax = Math.ceil(maxValue / magnitude) * magnitude;
+    const roundedMin = Math.floor(minValue / magnitude) * magnitude;
+
+    return [roundedMin, roundedMax];
+  };
+
+  const generateYAxisTicks = () => {
+    const [min, max] = calculateYAxisDomain();
+    const range = max - min;
+    const tickCount = 6;
+    const roughStep = range / (tickCount - 1);
+
+    // Round step to a nice number (1, 2, 5 * 10^n)
+    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+    const residual = roughStep / magnitude;
+    let niceStep;
+
+    if (residual <= 1) niceStep = magnitude;
+    else if (residual <= 2) niceStep = 2 * magnitude;
+    else if (residual <= 5) niceStep = 5 * magnitude;
+    else niceStep = 10 * magnitude;
+
+    const ticks = [];
+    for (let i = 0; i <= tickCount; i++) {
+      const tick = min + niceStep * i;
+      if (tick <= max) {
+        ticks.push(tick);
+      }
+    }
+
+    return ticks;
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -116,11 +165,19 @@ const MarketingIncomeComparisonChart = ({ data = [] }) => {
             <YAxis
               tick={{ fontSize: 14 }}
               tickFormatter={formatCurrency}
-              domain={["dataMin", "dataMax"]}
-              tickCount={8}
+              domain={calculateYAxisDomain()}
+              ticks={generateYAxisTicks()}
               padding={{ top: 20, bottom: 20 }}
             />
-            <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
+            <Tooltip
+              content={
+                <CustomTooltip
+                  active={undefined}
+                  payload={undefined}
+                  label={undefined}
+                />
+              }
+            />
             <Legend wrapperStyle={{ paddingTop: "20px", fontSize: "14px" }} />
             {channels.map((channel, index) => (
               <Line

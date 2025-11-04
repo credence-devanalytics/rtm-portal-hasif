@@ -165,7 +165,7 @@ export default function Stats09(data: Stats09Props) {
             <Progress value={data.percentage} className="mt-6 h-2" />
             <dd className="mt-2 flex items-center justify-between text-sm">
               {/* Add dynamic color based on percentage like the progress bar*/}
-              <span style={{ color: getProgressColor(data.percentage), fontWeight: "bold" }}>{data.percentage}%</span>
+              <span style={{ color: getProgressColor(data.percentage), fontWeight: "bold" }}>{data.percentage.toPrecision(3)}%</span>
               <span className="text-muted-foreground">
                 {data.stat.toLocaleString()} of {data.limit.toLocaleString()}
               </span>

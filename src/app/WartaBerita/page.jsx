@@ -854,6 +854,7 @@ const PortalBeritaPage = () => {
                       cy="50%"
                       outerRadius={100}
                       dataKey="totalUsers"
+                      nameKey="audienceName"
                       label={({ percentage }) => `${percentage}%`}
                       labelLine={true}
                     >
@@ -872,18 +873,13 @@ const PortalBeritaPage = () => {
                         `${value.toLocaleString()} users (${
                           props.payload.percentage
                         }%)`,
-                        "Total Users",
+                        props.payload.audienceName,
                       ]}
-                      labelFormatter={(label, payload) => {
-                        if (payload && payload.length > 0) {
-                          return `Audience: ${payload[0].payload.audienceName}`;
-                        }
-                        return `Audience: ${label}`;
-                      }}
                     />
                     <Legend
-                      formatter={(value, entry) => entry.payload.audienceName}
-                      wrapperStyle={{ fontSize: "12px" }}
+                      verticalAlign="bottom"
+                      height={36}
+                      wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
                     />
                   </RechartsPieChart>
                 </ResponsiveContainer>
@@ -1266,27 +1262,15 @@ const PortalBeritaPage = () => {
                         <td className="py-3 px-4 relative">
                           <div className="relative group">
                             <div
-                              className="font-medium text-black max-w-xs truncate cursor-pointer hover:text-gray-700 transition-all duration-300 ease-out"
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(
-                                    page.pageName
-                                  );
-                                  // Show copied confirmation
-                                  const element = document.getElementById(
-                                    `copied-${index}`
-                                  );
-                                  if (element) {
-                                    element.classList.remove("opacity-0");
-                                    element.classList.add("opacity-100");
-                                    setTimeout(() => {
-                                      element.classList.remove("opacity-100");
-                                      element.classList.add("opacity-0");
-                                    }, 2000);
-                                  }
-                                } catch (err) {
-                                  console.error("Failed to copy text: ", err);
-                                }
+                              className="font-medium text-black max-w-xs truncate cursor-pointer hover:text-blue-600 hover:underline transition-all duration-300 ease-out"
+                              onClick={() => {
+                                const searchQuery = encodeURIComponent(
+                                  page.pageName
+                                );
+                                window.open(
+                                  `https://www.google.com/search?q=${searchQuery}`,
+                                  "_blank"
+                                );
                               }}
                             >
                               {page.pageName}
@@ -1300,22 +1284,11 @@ const PortalBeritaPage = () => {
                             <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-4 py-2.5 bg-white border border-black text-black text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out group-hover:translate-y-0 translate-y-1 pointer-events-none whitespace-nowrap z-[9999]">
                               {page.pageName}
                               <div className="text-xs text-gray-600 mt-1">
-                                Click to copy
+                                Click to search on Google
                               </div>
                               {/* Arrow */}
                               <div className="absolute top-full left-1/2 -translate-x-1/2">
                                 <div className="w-2 h-2 bg-white border-r border-b border-black transform rotate-45 -mt-1"></div>
-                              </div>
-                            </div>
-                            {/* Copied Confirmation */}
-                            <div
-                              id={`copied-${index}`}
-                              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-black text-white text-sm font-medium rounded-lg shadow-lg opacity-0 transition-all duration-200 ease-out pointer-events-none whitespace-nowrap z-[10000]"
-                            >
-                              Copied!
-                              {/* Arrow */}
-                              <div className="absolute top-full left-1/2 -translate-x-1/2">
-                                <div className="w-2 h-2 bg-black transform rotate-45 -mt-1"></div>
                               </div>
                             </div>
                           </div>

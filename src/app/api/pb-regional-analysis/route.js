@@ -80,14 +80,26 @@ export async function GET(request) {
 
 		console.log("PB Region data:", regionData);
 
-		// Process data for charts
-		const chartData = regionData.map((item) => ({
-			region: item.region,
-			activeUsers: parseInt(item.totalActiveUsers) || 0,
-			newUsers: parseInt(item.totalNewUsers) || 0,
-			recordCount: parseInt(item.recordCount) || 0,
-			percentage: 0, // Will calculate after getting totals
-		}));
+		// Process data for charts - filter out "(not set)" and invalid regions
+		const chartData = regionData
+			.filter((item) => {
+				const region = item.region?.trim().toLowerCase();
+				return (
+					region &&
+					region !== "(not set)" &&
+					region !== "not set" &&
+					region !== "" &&
+					region !== "unknown" &&
+					region !== "n/a"
+				);
+			})
+			.map((item) => ({
+				region: item.region,
+				activeUsers: parseInt(item.totalActiveUsers) || 0,
+				newUsers: parseInt(item.totalNewUsers) || 0,
+				recordCount: parseInt(item.recordCount) || 0,
+				percentage: 0, // Will calculate after getting totals
+			}));
 
 		// Calculate percentages
 		const totalUsers = chartData.reduce(
@@ -102,7 +114,7 @@ export async function GET(request) {
 		});
 
 		// Sort by active users descending
-		chartData.sort((a, b) => b.activeusers - a.activeusers);
+		chartData.sort((a, b) => b.activeUsers - a.activeUsers);
 
 		// Find top regions
 		const topRegion = chartData[0] || {};
@@ -119,12 +131,12 @@ export async function GET(request) {
 						0
 					),
 					topRegion: topRegion.region || "N/A",
-					topRegionUsers: topRegion.activeusers || 0,
+					topRegionUsers: topRegion.activeUsers || 0,
 					topRegionPercentage: topRegion.percentage || 0,
 					regionCount: chartData.length,
 					topRegions: topRegions.map((r) => ({
 						region: r.region,
-						users: r.activeusers,
+						users: r.activeUsers,
 						percentage: r.percentage,
 					})),
 				},

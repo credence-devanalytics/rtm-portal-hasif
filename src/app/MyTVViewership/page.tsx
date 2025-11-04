@@ -228,6 +228,23 @@ const MyTVViewershipPage = () => {
     BERNAMA: "#1F2023",
   };
 
+  // Calculate filtered channel stats - use channelBreakdown from API which has program counts
+  const filteredChannelStats = React.useMemo(() => {
+    if (!data?.channelBreakdown) return {};
+
+    const stats = {};
+
+    // Use the channelBreakdown from API response as it already includes program counts from mytv_top_programs
+    data.channelBreakdown.forEach((channelData) => {
+      stats[channelData.channel] = {
+        totalViewers: channelData.totalViewers || 0,
+        programCount: channelData.programCount || 0,
+      };
+    });
+
+    return stats;
+  }, [data]);
+
   // Prepare MAU by Channels and Months data for bar chart
   const mauChartData = React.useMemo(() => {
     if (!data?.data) return [];
@@ -442,11 +459,8 @@ const MyTVViewershipPage = () => {
                       {/* Total Viewers (MAU) */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* TODO: Calculate TV1 viewers from mytv_v2_viewership */}
                           {formatNumber(
-                            data.channelBreakdown?.find(
-                              (ch) => ch.channel === "TV1"
-                            )?.totalViewers || 0
+                            filteredChannelStats["TV1"]?.totalViewers || 0
                           )}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
@@ -460,10 +474,7 @@ const MyTVViewershipPage = () => {
                       {/* Number of Programs */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* Program count from mytv_v2_top_programs */}
-                          {data.channelBreakdown?.find(
-                            (ch) => ch.channel === "TV1"
-                          )?.programCount || 0}
+                          {filteredChannelStats["TV1"]?.programCount || 0}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
                           Number of Programs
@@ -492,11 +503,8 @@ const MyTVViewershipPage = () => {
                       {/* Total Viewers (MAU) */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* TODO: Calculate TV2 viewers from mytv_v2_viewership */}
                           {formatNumber(
-                            data.channelBreakdown?.find(
-                              (ch) => ch.channel === "TV2"
-                            )?.totalViewers || 0
+                            filteredChannelStats["TV2"]?.totalViewers || 0
                           )}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
@@ -510,10 +518,7 @@ const MyTVViewershipPage = () => {
                       {/* Number of Programs */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* Program count from mytv_v2_top_programs */}
-                          {data.channelBreakdown?.find(
-                            (ch) => ch.channel === "TV2"
-                          )?.programCount || 0}
+                          {filteredChannelStats["TV2"]?.programCount || 0}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
                           Number of Programs
@@ -542,11 +547,8 @@ const MyTVViewershipPage = () => {
                       {/* Total Viewers (MAU) */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* TODO: Calculate TV6 viewers from mytv_v2_viewership */}
                           {formatNumber(
-                            data.channelBreakdown?.find(
-                              (ch) => ch.channel === "TV6"
-                            )?.totalViewers || 0
+                            filteredChannelStats["TV6"]?.totalViewers || 0
                           )}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
@@ -560,10 +562,7 @@ const MyTVViewershipPage = () => {
                       {/* Number of Programs */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* Program count from mytv_v2_top_programs */}
-                          {data.channelBreakdown?.find(
-                            (ch) => ch.channel === "TV6"
-                          )?.programCount || 0}
+                          {filteredChannelStats["TV6"]?.programCount || 0}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
                           Number of Programs
@@ -592,11 +591,8 @@ const MyTVViewershipPage = () => {
                       {/* Total Viewers (MAU) */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* TODO: Calculate OKEY viewers from mytv_v2_viewership */}
                           {formatNumber(
-                            data.channelBreakdown?.find(
-                              (ch) => ch.channel === "OKEY"
-                            )?.totalViewers || 0
+                            filteredChannelStats["OKEY"]?.totalViewers || 0
                           )}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
@@ -610,10 +606,7 @@ const MyTVViewershipPage = () => {
                       {/* Number of Programs */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* Program count from mytv_v2_top_programs */}
-                          {data.channelBreakdown?.find(
-                            (ch) => ch.channel === "OKEY"
-                          )?.programCount || 0}
+                          {filteredChannelStats["OKEY"]?.programCount || 0}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
                           Number of Programs
@@ -642,11 +635,8 @@ const MyTVViewershipPage = () => {
                       {/* Total Viewers (MAU) */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* TODO: Calculate SUKAN RTM viewers from mytv_v2_viewership */}
                           {formatNumber(
-                            data.channelBreakdown?.find(
-                              (ch) => ch.channel === "SUKAN RTM"
-                            )?.totalViewers || 0
+                            filteredChannelStats["SUKAN RTM"]?.totalViewers || 0
                           )}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
@@ -660,10 +650,7 @@ const MyTVViewershipPage = () => {
                       {/* Number of Programs */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* Program count from mytv_v2_top_programs */}
-                          {data.channelBreakdown?.find(
-                            (ch) => ch.channel === "SUKAN RTM"
-                          )?.programCount || 0}
+                          {filteredChannelStats["SUKAN RTM"]?.programCount || 0}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
                           Number of Programs
@@ -692,11 +679,8 @@ const MyTVViewershipPage = () => {
                       {/* Total Viewers (MAU) */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* TODO: Calculate BERITA RTM viewers from mytv_v2_viewership */}
                           {formatNumber(
-                            data.channelBreakdown?.find(
-                              (ch) => ch.channel === "BERITA RTM"
-                            )?.totalViewers || 0
+                            filteredChannelStats["BERITA RTM"]?.totalViewers || 0
                           )}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
@@ -710,10 +694,7 @@ const MyTVViewershipPage = () => {
                       {/* Number of Programs */}
                       <div className="space-y-1 text-center">
                         <div className="text-3xl font-bold text-gray-900">
-                          {/* Program count from mytv_v2_top_programs */}
-                          {data.channelBreakdown?.find(
-                            (ch) => ch.channel === "BERITA RTM"
-                          )?.programCount || 0}
+                          {filteredChannelStats["BERITA RTM"]?.programCount || 0}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
                           Number of Programs
@@ -906,9 +887,6 @@ const MyTVViewershipPage = () => {
                         <th className="text-right p-3 font-semibold">
                           Total Viewers
                         </th>
-                        <th className="text-right p-3 font-semibold">
-                          Formatted
-                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -917,9 +895,6 @@ const MyTVViewershipPage = () => {
                           <td className="p-3 font-medium">{item.region}</td>
                           <td className="p-3 text-right font-semibold">
                             {item.totalViewers.toLocaleString()}
-                          </td>
-                          <td className="p-3 text-right text-gray-600">
-                            {formatNumber(item.totalViewers)}
                           </td>
                         </tr>
                       ))}

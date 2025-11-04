@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useMemo, useEffect, useCallback } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import {
   Card,
   CardContent,
@@ -888,37 +890,123 @@ const RTMDashboard = () => {
     return num.toLocaleString();
   };
 
-  const exportData = () => {
-    // Implement export functionality
-    const dataToExport = {
-      totalMentions: displayTotalMentions,
-      totalEngagements: displayTotalEngagements,
-      totalReach: displayTotalReach,
-      data: filteredData,
-      dateRange: selectedDateRange,
-      filters: globalFilters,
-      hasActiveFilters,
-      rawTotals: hasActiveFilters
-        ? {
-            totalMentions,
-            totalEngagements,
-            totalReach,
-          }
-        : null,
-    };
+  const exportData = async () => {
+    try {
+      console.log("🔍 Starting PDF export...");
 
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
-      type: "application/json",
-    });
+      // Get the dashboard container
+      const dashboardElement = document.querySelector(
+        ".dashboard-container"
+      ) as HTMLElement;
+      console.log("📦 Dashboard element:", dashboardElement);
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `rtm-dashboard-${new Date().toISOString().split("T")[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      if (!dashboardElement) {
+        console.error("❌ Dashboard container not found");
+        alert(
+          "Dashboard container not found. Please refresh the page and try again."
+        );
+        return;
+      }
+
+      console.log("📐 Dashboard dimensions:", {
+        width: dashboardElement.scrollWidth,
+        height: dashboardElement.scrollHeight,
+        offsetWidth: dashboardElement.offsetWidth,
+        offsetHeight: dashboardElement.offsetHeight,
+      });
+
+      // Hide the active filters card temporarily
+      const activeFiltersCard = document.querySelector(
+        ".fixed.z-50"
+      ) as HTMLElement;
+      if (activeFiltersCard) {
+        console.log("🙈 Hiding active filters card");
+        activeFiltersCard.style.display = "none";
+      }
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+      console.log("⬆️ Scrolled to top");
+
+      // Wait a bit for any animations to complete
+      console.log("⏳ Waiting for layout to stabilize...");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("📸 Attempting screenshot with foreignObjectRendering...");
+
+      // Try using foreignObjectRendering which bypasses CSS parsing
+      // This should avoid the oklch color parsing issue entirely
+      const canvas = await html2canvas(dashboardElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        windowWidth: dashboardElement.scrollWidth,
+        windowHeight: dashboardElement.scrollHeight,
+        foreignObjectRendering: true, // Use SVG foreignObject instead of parsing CSS
+        imageTimeout: 15000,
+      });
+
+      console.log("✅ Screenshot captured! Canvas dimensions:", {
+        width: canvas.width,
+        height: canvas.height,
+      });
+
+      // Show the active filters card again
+      if (activeFiltersCard) {
+        console.log("👁️ Showing active filters card again");
+        activeFiltersCard.style.display = "";
+      }
+
+      // Calculate PDF dimensions (A4 size in mm)
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      console.log("📄 PDF dimensions:", {
+        width: imgWidth,
+        height: imgHeight,
+        orientation: imgHeight > imgWidth ? "portrait" : "landscape",
+      });
+
+      // Create PDF
+      console.log("📝 Creating PDF...");
+      const pdf = new jsPDF({
+        orientation: imgHeight > imgWidth ? "portrait" : "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Add image to PDF
+      console.log("🖼️ Converting canvas to image...");
+      const imgData = canvas.toDataURL("image/png");
+      console.log("✅ Image data created, length:", imgData.length);
+
+      console.log("➕ Adding image to PDF...");
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+
+      // Save PDF
+      const fileName = `RTM_Dashboard_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      console.log("💾 Saving PDF as:", fileName);
+      pdf.save(fileName);
+
+      console.log("✅ PDF export completed successfully!");
+      alert("PDF exported successfully!");
+    } catch (error) {
+      console.error("❌ Error exporting PDF:", error);
+      console.error("Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        error: error,
+      });
+      alert(
+        `Failed to export PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }. Check console for details.`
+      );
+    }
   };
 
   // Show error state only, no loading screen
@@ -952,7 +1040,7 @@ const RTMDashboard = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20 dashboard-container">
       {/* Header with Controls */}
       <Header />
 
@@ -1046,7 +1134,7 @@ const RTMDashboard = () => {
 
           <Button onClick={exportData} variant="outline" size="sm" className="">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export PDF
           </Button>
         </div>
       </div>

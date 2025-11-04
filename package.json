@@ -57,6 +57,8 @@
 		"drizzle-orm": "^0.44.5",
 		"embla-carousel-react": "^8.6.0",
 		"framer-motion": "^12.23.24",
+		"html2canvas": "^1.4.1",
+		"jspdf": "^3.0.3",
 		"lucide-react": "^0.532.0",
 		"motion": "^12.23.12",
 		"mysql2": "^3.14.5",
