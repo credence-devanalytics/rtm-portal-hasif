@@ -1116,7 +1116,7 @@ const UnifiTVPage = () => {
 
             {/* MAU Trends Over Time - Full Width Row (2 columns) */}
             <Card className="bg-card shadow-sm col-span-2">
-              <CardHeader className="">
+              <CardHeader className="items-start">
                 <CardTitle className="flex items-center space-x-2">
                   <TrendingUpIcon className="h-5 w-5 text-accent" />
                   <span>MAU Trends Over Time</span>
@@ -1129,7 +1129,61 @@ const UnifiTVPage = () => {
                 <ResponsiveContainer width="100%" height={400}>
                   <AreaChart data={data.analytics.monthlyTrends}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0f2fe" />
-                    <XAxis dataKey="displayMonth" tick={{ fontSize: 12 }} />
+                    <XAxis 
+                      dataKey="displayMonth"
+                      interval={0}
+                      tick={(props) => {
+                        const { x, y, payload } = props;
+                        // Parse the displayMonth (format: "2024-01" or similar)
+                        const dateStr = payload.value;
+                        let month = '';
+                        let year = '';
+                        
+                        if (dateStr) {
+                          // Try to parse the date string
+                          const parts = dateStr.split('-');
+                          if (parts.length >= 2) {
+                            const monthNum = parseInt(parts[1], 10);
+                            year = parts[0];
+                            const monthNames = [
+                              'January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'
+                            ];
+                            month = monthNames[monthNum - 1] || '';
+                          } else {
+                            // Fallback if format is different
+                            month = dateStr;
+                          }
+                        }
+                        
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text
+                              x={0}
+                              y={0}
+                              dy={16}
+                              textAnchor="middle"
+                              fill="#666"
+                              fontSize={11}
+                              fontWeight={500}
+                            >
+                              {month}
+                            </text>
+                            <text
+                              x={0}
+                              y={0}
+                              dy={30}
+                              textAnchor="middle"
+                              fill="#666"
+                              fontSize={11}
+                            >
+                              {year}
+                            </text>
+                          </g>
+                        );
+                      }}
+                      height={60}
+                    />
                     <YAxis
                       tickFormatter={(value) => {
                         if (value >= 1000000)
@@ -1217,7 +1271,6 @@ const UnifiTVPage = () => {
                         type="number"
                         dataKey="avgDuration"
                         name="Avg Duration"
-                        unit=" min"
                         label={{
                           value: "Average Duration (minutes)",
                           position: "insideBottom",
@@ -1495,7 +1548,7 @@ const UnifiTVPage = () => {
                                 : "0"}
                             </td>
                             <td className="p-3 text-right">
-                              {program.avgDurationMinutes || 0} min
+                              {program.avgDurationMinutes || 0}
                             </td>
                             <td className="p-3 text-center">
                               <Badge

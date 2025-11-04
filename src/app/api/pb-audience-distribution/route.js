@@ -35,7 +35,7 @@ export async function GET() {
 		const chartData = audienceDistribution
 			.filter((item) => item.totalUsers > 0) // Only include segments with users
 			.map((item, index) => ({
-				audienceName: item.audiencename,
+				audienceName: item.audienceName,
 				totalUsers: parseInt(item.totalUsers) || 0,
 				fill: colors[index % colors.length],
 				percentage: 0, // Will be calculated below
@@ -70,8 +70,8 @@ export async function GET() {
 					totalSegments,
 					totalUsers: totalAllSegments,
 					largestSegment: {
-						name: largestSegment.audiencename,
-						users: largestSegment.totalusers,
+						name: largestSegment.audienceName,
+						users: largestSegment.totalUsers,
 						percentage: largestSegment.percentage,
 					},
 					avgUsersPerSegment,
