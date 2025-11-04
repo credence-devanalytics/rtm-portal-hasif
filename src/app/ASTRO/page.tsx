@@ -84,7 +84,7 @@ const ASTROPage = () => {
     AsyikFM: "#6C2870",
     TraxxFM: "#E63265",
     MinnalFM: "#7E3683",
-    AiFM: "#ED232A",
+    AiFM: "#FF000D",
   };
 
   // Fetch data function

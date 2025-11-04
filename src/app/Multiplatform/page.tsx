@@ -244,7 +244,8 @@ const MultiplatformPage = () => {
         },
         allChannels: [],
         hasData: false,
-        latestDate: null,
+        latestMonth: null,
+        latestYear: null,
       };
     }
 
@@ -294,7 +295,8 @@ const MultiplatformPage = () => {
         },
         allChannels: [],
         hasData: false,
-        latestDate: mytvData.latestDate || null,
+        latestMonth: mytvData.latestMonth || null,
+        latestYear: mytvData.latestYear || null,
       };
     }
 
@@ -330,7 +332,8 @@ const MultiplatformPage = () => {
       },
       allChannels: channelsWithData,
       hasData: true,
-      latestDate: mytvData.latestDate || null,
+      latestMonth: mytvData.latestMonth || null,
+      latestYear: mytvData.latestYear || null,
     };
   }, [mytvData]);
 
@@ -819,15 +822,28 @@ const MultiplatformPage = () => {
               {/* Updated Date */}
               <div className="text-center text-xs text-gray-400 mb-3">
                 Updated as of:{" "}
-                {mytvMetrics.latestDate
-                  ? new Date(mytvMetrics.latestDate).toLocaleDateString(
-                      "en-MY",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }
-                    )
+                {mytvMetrics.latestMonth && mytvMetrics.latestYear
+                  ? (() => {
+                      // Convert month number to month name
+                      const monthNames = [
+                        "January",
+                        "February",
+                        "March",
+                        "April",
+                        "May",
+                        "June",
+                        "July",
+                        "August",
+                        "September",
+                        "October",
+                        "November",
+                        "December",
+                      ];
+                      const monthIndex = parseInt(mytvMetrics.latestMonth) - 1;
+                      const monthName =
+                        monthNames[monthIndex] || mytvMetrics.latestMonth;
+                      return `${monthName} ${mytvMetrics.latestYear}`;
+                    })()
                   : new Date().toLocaleDateString("en-MY", {
                       year: "numeric",
                       month: "long",
