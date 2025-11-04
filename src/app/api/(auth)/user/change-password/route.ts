@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/index";
 import { users, accounts } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Parse the request body
-    const { newPassword, firstTime } = await request.json();
+    const { currentPassword, newPassword, firstTime } = await request.json();
 
     // Validate the new password
     if (!newPassword || newPassword.length < 8) {
@@ -25,7 +26,15 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update the password in the accounts table
-    const result = await auth.api.changePassword(session.user.id, newPassword);
+    const result = await auth.api.changePassword({
+    body: {
+        newPassword, 
+        currentPassword,
+        revokeOtherSessions: true,
+    },
+    // This endpoint requires session cookies.
+    headers: await headers(),
+});
 
     // Update user status from 'new' to 'active'
     if (firstTime) {

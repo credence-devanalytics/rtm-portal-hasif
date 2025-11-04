@@ -42,6 +42,8 @@ export default function ChangePasswordPage() {
       return
     }
 
+    const currentPassword = session.user.email
+
     try {
       const response = await fetch("/api/user/change-password", {
         method: "PUT",
@@ -49,6 +51,7 @@ export default function ChangePasswordPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          currentPassword,
           newPassword,
           firstTime: true,
         }),

@@ -56,9 +56,7 @@ function TableauEmbedServer({
 		)
 	}
 
-	const trustedUrl = `${ticket}/views/${viewUrl}?:embed=yes&:toolbar=${
-		hideToolbar ? "no" : "yes"
-	}&:tabs=${hideTabs ? "no" : "yes"}&:device=${device}`;
+	const trustedUrl = `${ticket}/views/${viewUrl}`;
 	console.log("TableauEmbedServer trustedUrl:", trustedUrl);
 
 	return (
