@@ -75,7 +75,7 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
       setPosition({
         x: Math.max(0, Math.min(newX, maxX)),
         y: Math.max(0, Math.min(newY, maxY)),
-      }); 
+      });
     },
     [dragOffset.x, dragOffset.y, cardRef]
   );
@@ -284,7 +284,7 @@ const fetchEngagementRate = async (filters) => {
 };
 
 const SocialMediaDashboard = () => {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  // Initialize date range (last 30 days)
   const [selectedDateRange, setSelectedDateRange] = useState(() => {
     const today = new Date();
     const thirtyDaysAgo = new Date();
@@ -294,6 +294,22 @@ const SocialMediaDashboard = () => {
       to: today,
     };
   });
+
+  // Initialize filters with default date range
+  const [filters, setFilters] = useState(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    return {
+      ...DEFAULT_FILTERS,
+      dateRange: {
+        from: thirtyDaysAgo.toISOString().split("T")[0],
+        to: today.toISOString().split("T")[0],
+      },
+    };
+  });
+
   const [selectedSource, setSelectedSource] = useState("all");
   const [authorSortConfig, setAuthorSortConfig] = useState({
     sortBy: "totalPosts",
@@ -443,11 +459,20 @@ const SocialMediaDashboard = () => {
 
   // Clear all filters
   const handleClearAllFilters = () => {
-    setFilters(DEFAULT_FILTERS);
-    setSelectedSource("all");
     const today = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    // Reset filters but keep the default 30-day date range
+    setFilters({
+      ...DEFAULT_FILTERS,
+      dateRange: {
+        from: thirtyDaysAgo.toISOString().split("T")[0],
+        to: today.toISOString().split("T")[0],
+      },
+    });
+    
+    setSelectedSource("all");
     setSelectedDateRange({
       from: thirtyDaysAgo,
       to: today,

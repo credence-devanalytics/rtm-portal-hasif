@@ -104,9 +104,10 @@ const SentimentBySourceChart = ({
     return null;
   };
 
-  // Handle bar click
-  const handleBarClick = (data, index) => {
-    if (onChartClick) {
+  // Handle bar click - Recharts passes data differently
+  const handleBarClick = (data) => {
+    if (onChartClick && data && data.platform) {
+      console.log("Bar clicked:", data.platform);
       onChartClick("source", data.platform);
     }
   };
@@ -162,7 +163,6 @@ const SentimentBySourceChart = ({
                 left: extra ? 14 : 8,
                 bottom: extra ? 5 : 2,
               }}
-              onClick={handleBarClick || null}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
@@ -181,6 +181,7 @@ const SentimentBySourceChart = ({
                 fill={SENTIMENT_COLORS.positive}
                 name="Positive"
                 className="cursor-pointer hover:opacity-80"
+                onClick={handleBarClick}
               />
               <Bar
                 dataKey="neutral"
@@ -188,6 +189,7 @@ const SentimentBySourceChart = ({
                 fill={SENTIMENT_COLORS.neutral}
                 name="Neutral"
                 className="cursor-pointer hover:opacity-80"
+                onClick={handleBarClick}
               />
               <Bar
                 dataKey="negative"
@@ -195,6 +197,7 @@ const SentimentBySourceChart = ({
                 fill={SENTIMENT_COLORS.negative}
                 name="Negative"
                 className="cursor-pointer hover:opacity-80"
+                onClick={handleBarClick}
               />
             </BarChart>
           </ResponsiveContainer>
