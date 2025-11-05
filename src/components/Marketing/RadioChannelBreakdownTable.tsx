@@ -1,8 +1,12 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 const RadioChannelBreakdownTable = ({ data }) => {
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
   if (!data) {
     return (
       <Card className="">
@@ -41,75 +45,185 @@ const RadioChannelBreakdownTable = ({ data }) => {
     );
   };
 
-  const renderChannelGroup = (groupName, groupData) => (
-    <div key={groupName} className="mb-8">
-      <h4 className="text-lg font-bold text-gray-800 mb-4 px-4 py-2 bg-gray-50 rounded-t-lg border-b font-sans">
-        {groupName}
-      </h4>
+  // Sort function
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700 font-sans">
-                Channel
-              </th>
-              <th className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans">
-                2022
-              </th>
-              <th className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans">
-                % Growth
-              </th>
-              <th className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans">
-                2023
-              </th>
-              <th className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans">
-                % Growth
-              </th>
-              <th className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans">
-                2024
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {groupData.channels.map((channel, index) => (
-              <tr
-                key={`${channel.channel}-${index}`}
-                className={`border-b border-gray-100 hover:bg-gray-50 ${
-                  channel.isTotal
-                    ? "bg-blue-50 font-semibold border-t-2 border-blue-200"
-                    : ""
-                }`}
-              >
-                <td
-                  className={`py-3 px-4 font-sans ${
-                    channel.isTotal ? "font-bold text-blue-800" : ""
+  // Get sort icon
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1 h-3 w-3 text-gray-400" />
+      );
+    }
+    return sortConfig.direction === "asc" ? (
+      <ArrowUp className="inline-block ml-1 h-3 w-3 text-blue-600" />
+    ) : (
+      <ArrowDown className="inline-block ml-1 h-3 w-3 text-blue-600" />
+    );
+  };
+
+  // Sort channels within a group
+  const sortChannels = (channels) => {
+    if (!sortConfig.key) return channels;
+
+    // Separate total row from regular channels
+    const totalRow = channels.find((ch) => ch.isTotal);
+    const regularChannels = channels.filter((ch) => !ch.isTotal);
+
+    const sorted = [...regularChannels].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case "channel":
+          aValue = a.channel.toLowerCase();
+          bValue = b.channel.toLowerCase();
+          return sortConfig.direction === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        case "year2022":
+          aValue = a[2022] || 0;
+          bValue = b[2022] || 0;
+          break;
+        case "year2023":
+          aValue = a[2023] || 0;
+          bValue = b[2023] || 0;
+          break;
+        case "year2024":
+          aValue = a[2024] || 0;
+          bValue = b[2024] || 0;
+          break;
+        case "growth2022to2023":
+          aValue =
+            a.growth2022to2023 === "N/A"
+              ? -Infinity
+              : parseFloat(a.growth2022to2023);
+          bValue =
+            b.growth2022to2023 === "N/A"
+              ? -Infinity
+              : parseFloat(b.growth2022to2023);
+          break;
+        case "growth2023to2024":
+          aValue =
+            a.growth2023to2024 === "N/A"
+              ? -Infinity
+              : parseFloat(a.growth2023to2024);
+          bValue =
+            b.growth2023to2024 === "N/A"
+              ? -Infinity
+              : parseFloat(b.growth2023to2024);
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortConfig.direction === "asc") {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+
+    // Always keep total row at the end
+    return totalRow ? [...sorted, totalRow] : sorted;
+  };
+
+  const renderChannelGroup = (groupName, groupData) => {
+    const sortedChannels = sortChannels(groupData.channels);
+
+    return (
+      <div key={groupName} className="mb-8">
+        <h4 className="text-lg font-bold text-gray-800 mb-4 px-4 py-2 bg-gray-50 rounded-t-lg border-b font-sans">
+          {groupName}
+        </h4>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th
+                  className="text-left py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                  onClick={() => handleSort("channel")}
+                >
+                  Channel {getSortIcon("channel")}
+                </th>
+                <th
+                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                  onClick={() => handleSort("year2022")}
+                >
+                  2022 {getSortIcon("year2022")}
+                </th>
+                <th
+                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                  onClick={() => handleSort("growth2022to2023")}
+                >
+                  % Growth {getSortIcon("growth2022to2023")}
+                </th>
+                <th
+                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                  onClick={() => handleSort("year2023")}
+                >
+                  2023 {getSortIcon("year2023")}
+                </th>
+                <th
+                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                  onClick={() => handleSort("growth2023to2024")}
+                >
+                  % Growth {getSortIcon("growth2023to2024")}
+                </th>
+                <th
+                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                  onClick={() => handleSort("year2024")}
+                >
+                  2024 {getSortIcon("year2024")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedChannels.map((channel, index) => (
+                <tr
+                  key={`${channel.channel}-${index}`}
+                  className={`border-b border-gray-100 hover:bg-gray-50 ${
+                    channel.isTotal
+                      ? "bg-blue-50 font-semibold border-t-2 border-blue-200"
+                      : ""
                   }`}
                 >
-                  {channel.channel}
-                </td>
-                <td className="text-right py-3 px-4 text-xs font-sans">
-                  {formatCurrency(channel[2022])}
-                </td>
-                <td className="text-right py-3 px-4 font-sans">
-                  {formatPercentage(channel.growth2022to2023)}
-                </td>
-                <td className="text-right py-3 px-4 text-xs font-sans">
-                  {formatCurrency(channel[2023])}
-                </td>
-                <td className="text-right py-3 px-4 font-sans">
-                  {formatPercentage(channel.growth2023to2024)}
-                </td>
-                <td className="text-right py-3 px-4 text-xs font-sans">
-                  {formatCurrency(channel[2024])}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <td
+                    className={`py-3 px-4 font-sans ${
+                      channel.isTotal ? "font-bold text-blue-800" : ""
+                    }`}
+                  >
+                    {channel.channel}
+                  </td>
+                  <td className="text-right py-3 px-4 text-xs font-sans">
+                    {formatCurrency(channel[2022])}
+                  </td>
+                  <td className="text-right py-3 px-4 font-sans">
+                    {formatPercentage(channel.growth2022to2023)}
+                  </td>
+                  <td className="text-right py-3 px-4 text-xs font-sans">
+                    {formatCurrency(channel[2023])}
+                  </td>
+                  <td className="text-right py-3 px-4 font-sans">
+                    {formatPercentage(channel.growth2023to2024)}
+                  </td>
+                  <td className="text-right py-3 px-4 text-xs font-sans">
+                    {formatCurrency(channel[2024])}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <Card className="">

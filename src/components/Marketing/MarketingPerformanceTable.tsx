@@ -1,9 +1,18 @@
 "use client";
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 
 const MarketingPerformanceTable = ({ data = [] }) => {
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
   // Calculate percentage changes
   const calculatePercentageChange = (current, previous) => {
     if (previous === 0) {
@@ -13,37 +22,96 @@ const MarketingPerformanceTable = ({ data = [] }) => {
   };
 
   // Process data to include percentage changes
-  const processedData = data.map((item) => {
-    const change2022to2023 = calculatePercentageChange(
-      item.previousValue,
-      item.year2022Value || 0
-    );
-    const change2023to2024 = calculatePercentageChange(
-      item.currentValue,
-      item.previousValue
-    );
+  const processedData = useMemo(() => {
+    return data.map((item) => {
+      const change2022to2023 = calculatePercentageChange(
+        item.previousValue,
+        item.year2022Value || 0
+      );
+      const change2023to2024 = calculatePercentageChange(
+        item.currentValue,
+        item.previousValue
+      );
 
-    return {
-      ...item,
-      change2022to2023: change2022to2023,
-      change2023to2024: change2023to2024,
-      formatted2022to2023: `${
-        change2022to2023 >= 0 ? "+" : ""
-      }${change2022to2023.toFixed(1)}%`,
-      formatted2023to2024: `${
-        change2023to2024 >= 0 ? "+" : ""
-      }${change2023to2024.toFixed(1)}%`,
-    };
-  });
+      return {
+        ...item,
+        change2022to2023: change2022to2023,
+        change2023to2024: change2023to2024,
+        formatted2022to2023: `${
+          change2022to2023 >= 0 ? "+" : ""
+        }${change2022to2023.toFixed(1)}%`,
+        formatted2023to2024: `${
+          change2023to2024 >= 0 ? "+" : ""
+        }${change2023to2024.toFixed(1)}%`,
+      };
+    });
+  }, [data]);
+
+  // Sort function
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Sort data based on sortConfig
+  const sortedData = useMemo(() => {
+    if (!sortConfig.key) return processedData;
+
+    const sorted = [...processedData].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case "channel":
+          aValue = a.saluran.toLowerCase();
+          bValue = b.saluran.toLowerCase();
+          return sortConfig.direction === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        case "year2022":
+          aValue = a.year2022Value || 0;
+          bValue = b.year2022Value || 0;
+          break;
+        case "year2023":
+          aValue = a.previousValue;
+          bValue = b.previousValue;
+          break;
+        case "year2024":
+          aValue = a.currentValue;
+          bValue = b.currentValue;
+          break;
+        case "growth2022to2023":
+          aValue = a.change2022to2023;
+          bValue = b.change2022to2023;
+          break;
+        case "growth2023to2024":
+          aValue = a.change2023to2024;
+          bValue = b.change2023to2024;
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortConfig.direction === "asc") {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+
+    return sorted;
+  }, [processedData, sortConfig]);
 
   // Calculate totals
   const totals = {
-    year2022: processedData.reduce(
+    year2022: sortedData.reduce(
       (sum, item) => sum + (item.year2022Value || 0),
       0
     ),
-    year2023: processedData.reduce((sum, item) => sum + item.previousValue, 0),
-    year2024: processedData.reduce((sum, item) => sum + item.currentValue, 0),
+    year2023: sortedData.reduce((sum, item) => sum + item.previousValue, 0),
+    year2024: sortedData.reduce((sum, item) => sum + item.currentValue, 0),
   };
 
   const totalChange2022to2023 = calculatePercentageChange(
@@ -88,6 +156,20 @@ const MarketingPerformanceTable = ({ data = [] }) => {
     }
   };
 
+  // Get sort icon
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) {
+      return (
+        <ArrowUpDown className="inline-block ml-1 h-3 w-3 text-gray-400" />
+      );
+    }
+    return sortConfig.direction === "asc" ? (
+      <ArrowUp className="inline-block ml-1 h-3 w-3 text-blue-600" />
+    ) : (
+      <ArrowDown className="inline-block ml-1 h-3 w-3 text-blue-600" />
+    );
+  };
+
   return (
     <Card className="">
       <CardHeader className="">
@@ -106,28 +188,46 @@ const MarketingPerformanceTable = ({ data = [] }) => {
               <table className="w-full text-sm font-sans">
                 <thead className="sticky top-0 bg-white">
                   <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-4 pr-1 pl-2 font-bold text-sm min-w-[100px] font-sans">
-                      Channel
+                    <th
+                      className="text-left py-4 pr-1 pl-2 font-bold text-sm min-w-[100px] font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("channel")}
+                    >
+                      Channel {getSortIcon("channel")}
                     </th>
-                    <th className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans">
-                      2022
+                    <th
+                      className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("year2022")}
+                    >
+                      2022 {getSortIcon("year2022")}
                     </th>
-                    <th className="text-center py-3 px-1 font-bold text-sm min-w-[60px] font-sans">
-                      Growth
+                    <th
+                      className="text-center py-3 px-1 font-bold text-sm min-w-[60px] font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("growth2022to2023")}
+                    >
+                      Growth {getSortIcon("growth2022to2023")}
                     </th>
-                    <th className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans">
-                      2023
+                    <th
+                      className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("year2023")}
+                    >
+                      2023 {getSortIcon("year2023")}
                     </th>
-                    <th className="text-center py-3 px-1 font-bold text-sm min-w-[60px] font-sans">
-                      Growth
+                    <th
+                      className="text-center py-3 px-1 font-bold text-sm min-w-[60px] font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("growth2023to2024")}
+                    >
+                      Growth {getSortIcon("growth2023to2024")}
                     </th>
-                    <th className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans">
-                      2024
+                    <th
+                      className="text-right py-3 px-1 font-bold text-sm min-w-[70px] font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("year2024")}
+                    >
+                      2024 {getSortIcon("year2024")}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {processedData.map((channel, index) => {
+                  {sortedData.map((channel, index) => {
                     const trend2022to2023 = getTrendIcon(
                       channel.change2022to2023
                     );
