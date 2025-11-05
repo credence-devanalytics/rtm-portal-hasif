@@ -15,7 +15,7 @@ interface TableauEmbedServerProps {
 
 function TableauEmbedServer({
 	viewUrl,
-	height = "600px",
+	height = "900px",
 	width = "100%",
 	hideTabs = false,
 	hideToolbar = false,
@@ -66,19 +66,16 @@ function TableauEmbedServer({
 				src={`https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js`}
 				strategy="lazyOnload"
 			/>
-			{trustedUrl && <div>
+			{trustedUrl && <div style={{ width: '100%', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
 				{/* @ts-ignore */}
 				<tableau-viz
 					id="tableauViz"
 					src={trustedUrl}
-					height={height}
-					width={width}
+					width="100%"
 					device={device}
 					toolbar={hideToolbar ? "hidden" : "bottom"}
 					hide-tabs={hideTabs ? "" : undefined}
-				>
-					{/* @ts-ignore */}
-				</tableau-viz>
+				/>
 			</div>}
 			
 		</>
