@@ -28,6 +28,8 @@ export default function AdminPage() {
     const [isUsersLoading, setIsUsersLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [editingUserData, setEditingUserData] = useState<{ name: string; email: string; role: string; permissions: string[] } | null>(null);
+    const [roleFilter, setRoleFilter] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     const socmedPages = [
         {name:'SocMed Account', key:'SocMedAcc'},
@@ -82,15 +84,16 @@ export default function AdminPage() {
 
     const addUser = () => {
         const newUser: User = {
-            name: "Full Name",
-            email: "mail@example.com",
+            id: `new-${Date.now()}`, // Temporary ID for new users
+            name: "",
+            email: "",
             role: "user",
             createdAt: new Date(),
             permissions: [],
         };
 
-        const updatedUsers = [...users];
-        updatedUsers.push(newUser);
+        // Add new user at the top of the list
+        const updatedUsers = [newUser, ...users];
         setUsers(updatedUsers);
         setEditingUserId(newUser.id);
         setEditingUserData({ 
@@ -175,13 +178,12 @@ export default function AdminPage() {
                 const data = await response.json();
                 
                 if (isNewUser) {
-                    // Replace the temporary user with the actual created user
-                    setUsers(users.map(user => 
-                        user.id === userId ? {
-                            ...data.user,
-                            createdAt: new Date(data.user.createdAt)
-                        } : user
-                    ));
+                    // Replace the temporary user with the actual created user at the top
+                    const newUser = {
+                        ...data.user,
+                        createdAt: new Date(data.user.createdAt)
+                    };
+                    setUsers([newUser, ...users.filter(user => user.id !== userId)]);
                     
                     // Show password information for new users
                     if (data.temporaryPassword) {
@@ -220,10 +222,12 @@ export default function AdminPage() {
     };
 
     const cancelUserEdit = () => {
+        // If it was a new user that was being added, remove it
+        if (editingUserId?.startsWith('new-')) {
+            setUsers(users.filter(user => user.id !== editingUserId));
+        }
         setEditingUserId(null);
         setEditingUserData(null);
-        // If it was a new user that was being added, remove it
-        setUsers(users.filter(user => !user.id.startsWith('new-')));
     };
 
     const startEditUser = (user: User) => {
@@ -236,11 +240,24 @@ export default function AdminPage() {
         });
     };
 
-    const canDeleteUser = (user: User) => {
+    const canEditUser = (user: User) => {
         if (user.role === "superadmin") return false;
         if (userData?.role === "admin" && user.role === "admin") return false;
         return true;
     };
+
+    // Filter users based on role and search query
+    const filteredUsers = users.filter(user => {
+        // Role filter
+        const matchesRole = roleFilter === "all" || user.role === roleFilter;
+        
+        // Search filter (name or email)
+        const matchesSearch = searchQuery === "" || 
+            user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        return matchesRole && matchesSearch;
+    });
 
     return (
         <div className="space-y-6 px-12">
@@ -259,7 +276,7 @@ export default function AdminPage() {
                         <Users className="w-5 h-5 text-gray-600" />
                         <h2 className="text-xl font-semibold">Account Management</h2>
                         <Badge variant="secondary" className="ml-2">
-                            {users.length} users
+                            {filteredUsers.length} / {users.length} users
                         </Badge>
                     </div>
                     <Button
@@ -271,7 +288,79 @@ export default function AdminPage() {
                         Add User
                     </Button>
                 </div>
-                {users.map((user) => {
+
+                {/* Filters */}
+                <div className="mb-6 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Search Input */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Search by Name or Email
+                            </label>
+                            <Input
+                                type="text"
+                                placeholder="Search users..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full"
+                            />
+                        </div>
+
+                        {/* Role Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Filter by Role
+                            </label>
+                            <select
+                                value={roleFilter}
+                                onChange={(e) => setRoleFilter(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-md text-sm"
+                            >
+                                <option value="all">All Roles</option>
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                                <option value="superadmin">Super Admin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Active Filters Display */}
+                    {(roleFilter !== "all" || searchQuery !== "") && (
+                        <div className="flex items-center gap-2 text-sm">
+                            <span className="text-gray-600">Active filters:</span>
+                            {roleFilter !== "all" && (
+                                <Badge variant="secondary" className="cursor-pointer" onClick={() => setRoleFilter("all")}>
+                                    Role: {roleFilter} ×
+                                </Badge>
+                            )}
+                            {searchQuery !== "" && (
+                                <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearchQuery("")}>
+                                    Search: "{searchQuery}" ×
+                                </Badge>
+                            )}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setRoleFilter("all");
+                                    setSearchQuery("");
+                                }}
+                                className="text-xs h-6"
+                            >
+                                Clear all
+                            </Button>
+                        </div>
+                    )}
+                </div>
+
+                {/* User List */}
+                <div className="space-y-4">
+                {filteredUsers.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                        No users found matching the current filters.
+                    </div>
+                ) : (
+                    filteredUsers.map((user) => {
                     const isEditingUser = editingUserId === user.id;
                     const isCurrentUser = user.id === userData?.id;
                     
@@ -320,7 +409,7 @@ export default function AdminPage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2 disabled">Role</label>
                                         <select
                                             value={editingUserData?.role || 'user'}
                                             onChange={(e) => setEditingUserData(prev => 
@@ -438,14 +527,15 @@ export default function AdminPage() {
                                         </div>
                                     </div>
                                     <div className="flex gap-2 ml-4">
-                                        <Button
-                                            onClick={() => startEditUser(user)}
-                                            size="sm"
-                                            variant="outline"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </Button>
-                                        {!isCurrentUser && canDeleteUser(user) && (
+                                        {!isCurrentUser && canEditUser(user) && (
+                                            <>
+                                            <Button
+                                                onClick={() => startEditUser(user)}
+                                                size="sm"
+                                                variant="outline"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </Button>
                                             <Button
                                                 onClick={() => deleteUser(user.id)}
                                                 size="sm"
@@ -453,13 +543,16 @@ export default function AdminPage() {
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
                             )}
                         </div>
                     );
-                })}
+                })
+                )}
+                </div>
             </Card>
         </div>
     );
