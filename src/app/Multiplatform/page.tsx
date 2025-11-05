@@ -18,6 +18,8 @@ import {
   ArrowDown,
   Minus,
   DollarSign,
+  Database,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -596,6 +598,8 @@ const MultiplatformPage = () => {
       textColor: "text-amber-900",
       link: "/RTMClick",
       hasData: rtmklikMetrics.hasData,
+      dataSource: "api", // Retrieved via API
+      dataSourceSpec: "Google Analytics", // Specification
       metrics: {
         mau: rtmklikMetrics.hasData
           ? rtmklikMetrics.formattedTotalActiveUsers
@@ -629,6 +633,8 @@ const MultiplatformPage = () => {
       textColor: "text-blue-900",
       link: "/MyTVViewership",
       hasData: mytvMetrics.hasData,
+      dataSource: "manual", // Retrieved manually
+      dataSourceSpec: "PDF", // Specification
       metrics: {
         mau:
           mytvMetrics.totalViewers > 0
@@ -659,6 +665,8 @@ const MultiplatformPage = () => {
       textColor: "text-purple-900",
       link: "/ASTRO",
       hasData: astroMetrics.hasData,
+      dataSource: "manual", // Retrieved manually
+      dataSourceSpec: "PDF", // Specification
       metrics: {
         mau: astroMetrics.hasData
           ? `${astroMetrics.topRatedTVChannel.name} (${astroMetrics.topRatedTVChannel.rating})`
@@ -692,6 +700,8 @@ const MultiplatformPage = () => {
       textColor: "text-emerald-900",
       link: "/UnifiTV",
       hasData: true,
+      dataSource: "manual", // Retrieved manually
+      dataSourceSpec: "PDF / Excel", // Specification
       metrics: {
         mau: unifiMetrics.mau.toLocaleString(),
         totalHours: unifiMetrics.totalHours.toLocaleString(),
@@ -718,6 +728,8 @@ const MultiplatformPage = () => {
       textColor: "text-indigo-900",
       link: "/WartaBerita",
       hasData: portalBeritaMetrics.hasData,
+      dataSource: "api", // Retrieved via API
+      dataSourceSpec: "Google Analytics", // Specification
       metrics: {
         mau: portalBeritaMetrics.hasData
           ? portalBeritaMetrics.formattedTotalAudience
@@ -745,6 +757,8 @@ const MultiplatformPage = () => {
       textColor: "text-rose-900",
       link: "/Marketing",
       hasData: marketingMetrics.hasData,
+      dataSource: "manual", // Retrieved manually
+      dataSourceSpec: "PDF", // Specification
       metrics: {
         mau: marketingMetrics.hasData
           ? (marketingMetrics as any).formattedTotalValue
@@ -859,9 +873,18 @@ const MultiplatformPage = () => {
                     height={64}
                     className="object-contain"
                   />
-                  <CardTitle className="text-xl font-bold text-gray-900">
-                    MyTV
-                  </CardTitle>
+                  <div className="flex flex-col">
+                    <CardTitle className="text-xl font-bold text-gray-900">
+                      MyTV
+                    </CardTitle>
+                    {/* Data Source Badge */}
+                    <div className="flex items-center gap-1 mt-1">
+                      <FileText className="h-3 w-3 text-orange-600" />
+                      <span className="text-[10px] text-orange-600 font-medium">
+                        Manual Entry (PDF)
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
@@ -1031,9 +1054,18 @@ const MultiplatformPage = () => {
                   <div className="p-2 rounded-lg bg-rose-100 text-rose-700">
                     <DollarSign className="h-8 w-8" />
                   </div>
-                  <CardTitle className="text-xl font-bold text-gray-900">
-                    Marketing Revenue
-                  </CardTitle>
+                  <div className="flex flex-col">
+                    <CardTitle className="text-xl font-bold text-gray-900">
+                      Marketing Revenue
+                    </CardTitle>
+                    {/* Data Source Badge */}
+                    <div className="flex items-center gap-1 mt-1">
+                      <FileText className="h-3 w-3 text-orange-600" />
+                      <span className="text-[10px] text-orange-600 font-medium">
+                        Manual Entry (PDF)
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
@@ -1230,9 +1262,18 @@ const MultiplatformPage = () => {
                     height={64}
                     className="object-contain"
                   />
-                  <CardTitle className="text-xl font-bold text-gray-900">
-                    Portal Berita
-                  </CardTitle>
+                  <div className="flex flex-col">
+                    <CardTitle className="text-xl font-bold text-gray-900">
+                      Portal Berita
+                    </CardTitle>
+                    {/* Data Source Badge */}
+                    <div className="flex items-center gap-1 mt-1">
+                      <Database className="h-3 w-3 text-green-600" />
+                      <span className="text-[10px] text-green-600 font-medium">
+                        API (Google Analytics)
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
@@ -1363,9 +1404,18 @@ const MultiplatformPage = () => {
                     height={64}
                     className="object-contain"
                   />
-                  <CardTitle className="text-xl font-bold text-gray-900">
-                    ASTRO
-                  </CardTitle>
+                  <div className="flex flex-col">
+                    <CardTitle className="text-xl font-bold text-gray-900">
+                      ASTRO
+                    </CardTitle>
+                    {/* Data Source Badge */}
+                    <div className="flex items-center gap-1 mt-1">
+                      <FileText className="h-3 w-3 text-orange-600" />
+                      <span className="text-[10px] text-orange-600 font-medium">
+                        Manual Entry (PDF)
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
@@ -1490,9 +1540,18 @@ const MultiplatformPage = () => {
                     height={64}
                     className="object-contain"
                   />
-                  <CardTitle className="text-xl font-bold text-gray-900">
-                    RTMKlik
-                  </CardTitle>
+                  <div className="flex flex-col">
+                    <CardTitle className="text-xl font-bold text-gray-900">
+                      RTMKlik
+                    </CardTitle>
+                    {/* Data Source Badge */}
+                    <div className="flex items-center gap-1 mt-1">
+                      <Database className="h-3 w-3 text-green-600" />
+                      <span className="text-[10px] text-green-600 font-medium">
+                        API (Google Analytics)
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
@@ -1704,9 +1763,29 @@ const MultiplatformPage = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 {platform.icon}
-                <CardTitle className="text-xl font-bold text-gray-900">
-                  {platform.name}
-                </CardTitle>
+                <div className="flex flex-col">
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    {platform.name}
+                  </CardTitle>
+                  {/* Data Source Badge */}
+                  <div className="flex items-center gap-1 mt-1">
+                    {platform.dataSource === "api" ? (
+                      <>
+                        <Database className="h-3 w-3 text-green-600" />
+                        <span className="text-[10px] text-green-600 font-medium">
+                          API ({platform.dataSourceSpec})
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-3 w-3 text-orange-600" />
+                        <span className="text-[10px] text-orange-600 font-medium">
+                          Manual Entry ({platform.dataSourceSpec})
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-gray-600 transition-colors" />
             </div>
