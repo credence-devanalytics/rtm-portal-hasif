@@ -11,7 +11,6 @@ interface TableauEmbedServerProps {
 	hideTabs?: boolean;
 	hideToolbar?: boolean;
 	device?: "default" | "desktop" | "tablet" | "phone";
-	aspectRatio?: number; // Optional: custom aspect ratio (width/height)
 }
 
 function TableauEmbedServer({
@@ -21,12 +20,9 @@ function TableauEmbedServer({
 	hideTabs = false,
 	hideToolbar = false,
 	device = "default",
-	aspectRatio = 16/9, // Default 16:9 aspect ratio
 }: TableauEmbedServerProps) {
 
 	const [ticket, setTicket] = useState<string>("");
-	const [calculatedHeight, setCalculatedHeight] = useState<string>(height);
-	const [containerWidth, setContainerWidth] = useState<number>(0);
 
 	useEffect(() => {
 		// Fetch the Tableau ticket from the API route
@@ -40,61 +36,6 @@ function TableauEmbedServer({
 		};
 		fetchTicket();
 	}, []);
-
-	useEffect(() => {
-		// Get container width for responsive calculations
-		const updateContainerWidth = () => {
-			const container = document.getElementById('tableauViz')?.parentElement;
-			if (container) {
-				setContainerWidth(container.clientWidth);
-			}
-		};
-
-		updateContainerWidth();
-		window.addEventListener('resize', updateContainerWidth);
-		return () => window.removeEventListener('resize', updateContainerWidth);
-	}, [ticket]);
-
-	useEffect(() => {
-		// Calculate responsive height based on aspect ratio
-		if (containerWidth > 0) {
-			// Use the provided aspect ratio or default to 16:9
-			const newHeight = Math.round(containerWidth / aspectRatio);
-			
-			// Set minimum and maximum height constraints
-			const minHeight = 600;
-			const maxHeight = 2000;
-			const constrainedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-			
-			console.log('Container width:', containerWidth);
-			console.log('Calculated height:', constrainedHeight);
-			
-			setCalculatedHeight(`${constrainedHeight}px`);
-		}
-	}, [containerWidth]);
-
-	useEffect(() => {
-		// Optional: Listen for Tableau viz events to get actual dimensions
-		const handleVizLoad = () => {
-			const vizElement = document.getElementById('tableauViz') as any;
-			if (vizElement && vizElement.viz) {
-				try {
-					const viz = vizElement.viz;
-					// You can add additional logic here to get actual viz dimensions
-					// and adjust if needed
-					console.log('Tableau viz loaded');
-				} catch (error) {
-					console.log('Could not access Tableau viz object:', error);
-				}
-			}
-		};
-
-		if (ticket) {
-			// Small delay to ensure viz is initialized
-			const timer = setTimeout(handleVizLoad, 2000);
-			return () => clearTimeout(timer);
-		}
-	}, [ticket]);
 
 	if (!ticket) {
 		return (
@@ -127,12 +68,11 @@ function TableauEmbedServer({
 				src={`https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js`}
 				strategy="lazyOnload"
 			/>
-			{trustedUrl && <div style={{ width: '100%', overflow: 'hidden' }}>
+			{trustedUrl && <div style={{ width: '100%', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
 				{/* @ts-ignore */}
 				<tableau-viz
 					id="tableauViz"
 					src={trustedUrl}
-					height={calculatedHeight}
 					width="100%"
 					device={device}
 					toolbar={hideToolbar ? "hidden" : "bottom"}

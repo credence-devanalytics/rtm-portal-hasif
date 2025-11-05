@@ -84,14 +84,15 @@ function TableauDashboards() {
             {/* <TableauEmbedComponent url={dashboard.src.split("/")[0]} sheetName={dashboard.src.split("/").pop()} /> */}
             {/* <TableauEmbedWithTicket src={dashboard.src} /> */}
             {/* <TableauEmbedReact
-            viewUrl={dashboard.src}
-            height="600px"
-            width="100%"
-            hideTabs={true}
-            hideToolbar={false}
-            device="desktop"
-          /> */}
-            <TableauEmbedServer
+              viewUrl={dashboard.src}
+              height="600px"
+              width="100%"
+              hideTabs={true}
+              hideToolbar={false}
+              device="desktop"
+            /> */}
+            <div className="w-full flex justify-center">
+              <TableauEmbedServer
               viewUrl={dashboard.src}
               // src={src}
               height="600px"
@@ -100,6 +101,7 @@ function TableauDashboards() {
               hideToolbar={false}
               device="desktop"
             />
+            </div>
           </Card>
         </TabsContent>
       ))}
