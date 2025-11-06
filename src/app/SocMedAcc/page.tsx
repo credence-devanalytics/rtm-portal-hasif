@@ -938,23 +938,29 @@ const RTMDashboard = () => {
   const exportData = async () => {
     try {
       // Get the dashboard container
-      const dashboardElement = document.querySelector(".dashboard-container") as HTMLElement;
-      
+      const dashboardElement = document.querySelector(
+        ".dashboard-container"
+      ) as HTMLElement;
+
       if (!dashboardElement) {
         alert("Dashboard container not found. Please refresh and try again.");
         return;
       }
 
       // Hide the active filters card and export button temporarily
-      const activeFiltersCard = document.querySelector(".fixed.z-50") as HTMLElement;
-      const exportButton = document.querySelector('button[title*="Opens print dialog"]') as HTMLElement;
-      
+      const activeFiltersCard = document.querySelector(
+        ".fixed.z-50"
+      ) as HTMLElement;
+      const exportButton = document.querySelector(
+        'button[title*="Opens print dialog"]'
+      ) as HTMLElement;
+
       if (activeFiltersCard) activeFiltersCard.style.display = "none";
       if (exportButton) exportButton.style.display = "none";
 
       // Scroll to top
       window.scrollTo(0, 0);
-      
+
       // Wait for layout to stabilize
       await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -987,13 +993,19 @@ const RTMDashboard = () => {
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
 
       // Save PDF
-      const fileName = `RTM_Dashboard_${new Date().toISOString().split("T")[0]}.pdf`;
+      const fileName = `RTM_Dashboard_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
       pdf.save(fileName);
 
       console.log("✅ PDF exported successfully!");
     } catch (error) {
       console.error("❌ Error exporting PDF:", error);
-      alert(`Failed to export PDF: ${error instanceof Error ? error.message : "Unknown error"}`);
+      alert(
+        `Failed to export PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -1120,10 +1132,10 @@ const RTMDashboard = () => {
             Refresh
           </Button>
 
-          <Button 
-            onClick={exportData} 
-            variant="outline" 
-            size="sm" 
+          <Button
+            onClick={exportData}
+            variant="outline"
+            size="sm"
             className=""
             title="Opens print dialog. Set Scale to 19 in More Settings for best results."
           >
