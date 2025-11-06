@@ -11,6 +11,7 @@ interface TableauEmbedServerProps {
 	hideTabs?: boolean;
 	hideToolbar?: boolean;
 	device?: "default" | "desktop" | "tablet" | "phone";
+	username?: string;
 }
 
 function TableauEmbedServer({
@@ -20,6 +21,7 @@ function TableauEmbedServer({
 	hideTabs = false,
 	hideToolbar = false,
 	device = "default",
+	username,
 }: TableauEmbedServerProps) {
 
 	const [ticket, setTicket] = useState<string>("");
@@ -30,6 +32,7 @@ function TableauEmbedServer({
 			const response = await fetch("/api/tableau/get-tableau-ticket", {
 				method: "POST",
 				cache: "no-store",
+				body: JSON.stringify({ username })
 			});
 			const { ticket } = await response.json();
 			setTicket(ticket);

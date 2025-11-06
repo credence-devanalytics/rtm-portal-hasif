@@ -12,7 +12,7 @@ import { Monitor } from "lucide-react";
 import { useEffect, useState } from "react";
 
 
-function TableauDashboards() {
+function TableauDashboards({ username }: { username: string | undefined }) {
   
   const tableauDashboardData = [
     {
@@ -94,6 +94,7 @@ function TableauDashboards() {
             <div className="w-full flex justify-center">
               <TableauEmbedServer
               viewUrl={dashboard.src}
+              username={username}
               // src={src}
               height="600px"
               width="100%"
@@ -111,21 +112,24 @@ function TableauDashboards() {
 
 
 export default function RTMClickPage() {
-  const { data:session } = useSession();
-  const [access, setAccess] = useState<boolean>(null);
+  // const { data:session } = useSession();
+  // const [access, setAccess] = useState<boolean>(null);
+  // const username = session?.user?.email;
 
-  useEffect(() => {
-    const userAccess = async () => {
-      const response = await fetch("/api/user/access", {
-        method: "GET",
-        cache: "no-store",
-      });
-      const access = ((await response.json()).access?.rtmklik || session?.user?.role === "superadmin") || false;
-      // console.log("RTMklik access:", access);
-      setAccess(access);
-    };
-    userAccess();
-  }, []);
+  // useEffect(() => {
+  //   const userAccess = async () => {
+  //     const response = await fetch("/api/user/access", {
+  //       method: "GET",
+  //       cache: "no-store",
+  //     });
+  //     const access = ((await response.json()).access?.rtmklik || session?.user?.role === "superadmin") || false;
+  //     // console.log("RTMklik access:", access);
+  //     setAccess(access);
+  //   };
+  //   userAccess();
+  // }, []);
+  const access: boolean | null = true;
+  const username = "dataops"
 
     return (
     <div className="container mx-auto px-4 pb-8 h-full flex flex-col pt-16 gap-8">
@@ -139,7 +143,7 @@ export default function RTMClickPage() {
           </p>
         </div>
         </div>
-      { access && <TableauDashboards />}
+      { access && <TableauDashboards username={username} />}
       {access === false && (
         <div className="flex flex-col items-center justify-center py-8 space-y-3">
           <div className="p-3 rounded-full bg-gray-50 border border-gray-200">
