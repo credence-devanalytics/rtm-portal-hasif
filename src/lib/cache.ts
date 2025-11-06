@@ -222,9 +222,32 @@ export function buildWhereConditions(filters, schema) {
   
   // Unit/Group filtering
   if (filters.unit && filters.unit !== 'all') {
-    whereConditions.push(
-      sql`LOWER(${schema.groupname}) LIKE ${`%${filters.unit.toLowerCase()}%`}`
-    );
+    const unitLower = filters.unit.toLowerCase();
+    
+    // Match the CASE logic used in queries for consistent filtering
+    if (unitLower === 'berita' || unitLower === 'news') {
+      // Match both "berita" and "news" for the News/Berita unit
+      whereConditions.push(
+        sql`(LOWER(${schema.groupname}) LIKE '%berita%' OR LOWER(${schema.groupname}) LIKE '%news%')`
+      );
+    } else if (unitLower === 'radio') {
+      whereConditions.push(
+        sql`LOWER(${schema.groupname}) LIKE '%radio%'`
+      );
+    } else if (unitLower === 'tv') {
+      whereConditions.push(
+        sql`LOWER(${schema.groupname}) LIKE '%tv%'`
+      );
+    } else if (unitLower === 'official') {
+      whereConditions.push(
+        sql`LOWER(${schema.groupname}) LIKE '%official%'`
+      );
+    } else {
+      // Fallback: generic LIKE match for any other unit value
+      whereConditions.push(
+        sql`LOWER(${schema.groupname}) LIKE ${`%${unitLower}%`}`
+      );
+    }
   }
   
   // Sentiment filtering
