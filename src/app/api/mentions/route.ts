@@ -431,6 +431,14 @@ export async function GET(request: Request) {
 				result._cache?.hit ? "HIT" : "MISS"
 			})`
 		);
+		
+		// DEBUG: Log dailyChannelData to see what we're getting
+		console.log("🔍 Daily Channel Data Debug:", {
+			filters,
+			dailyChannelDataCount: result.dailyChannelData?.length || 0,
+			sampleData: result.dailyChannelData?.slice(0, 3),
+			uniqueUnits: [...new Set(result.dailyChannelData?.map(d => d.unit) || [])],
+		});
 
 		return NextResponse.json(result);
 	} catch (error) {

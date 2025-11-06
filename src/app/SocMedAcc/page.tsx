@@ -119,6 +119,7 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [cardRef, setCardRef] = useState(null);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const activeFilters = Object.entries(filters).filter(
     ([key, value]) => value !== null && value !== undefined && value !== ""
@@ -174,6 +175,35 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
 
   if (activeFilters.length === 0) return null;
 
+  // Minimized view
+  if (isMinimized) {
+    return (
+      <Card
+        ref={setCardRef}
+        className="fixed z-50 shadow-2xl border-2 border-slate-200 bg-white transition-shadow hover:shadow-3xl cursor-pointer"
+        style={{
+          left: `${position.x}px`,
+          bottom: `${position.y}px`,
+        }}
+        onClick={() => setIsMinimized(false)}
+        onMouseDown={handleMouseDown}
+      >
+        <CardContent className="p-4 drag-handle cursor-grab active:cursor-grabbing">
+          <div className="flex items-center gap-2 select-none">
+            <Filter className="h-5 w-5 text-blue-600" />
+            <Badge className="bg-blue-600 text-white hover:bg-blue-700">
+              {activeFilters.length}
+            </Badge>
+            <span className="text-sm font-medium">
+              Filter{activeFilters.length > 1 ? "s" : ""} Active
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Expanded view
   return (
     <Card
       ref={setCardRef}
@@ -192,6 +222,17 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
           <span className="text-xs text-gray-400 font-normal ml-2">
             (drag to move)
           </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMinimized(true);
+            }}
+            className="ml-auto h-6 w-6 p-0 hover:bg-slate-100"
+          >
+            <span className="text-lg leading-none">−</span>
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0 px-6 pb-5 space-y-4">
@@ -466,12 +507,14 @@ const RTMDashboard = () => {
         globalFilters.platform ||
         (selectedPlatform !== "all" ? selectedPlatform : ""),
       channel: globalFilters.channel || "",
+      unit: activeTab === "overall" ? "" : activeTab, // Add unit filter based on active tab
     };
   }, [
     selectedDateRange,
     selectedPlatform,
     globalFilters.platform,
     globalFilters.channel,
+    activeTab, // Add activeTab to dependencies
   ]);
 
   // Fetch dashboard data (mentions, authors, dailyChannelData, etc.)
@@ -486,6 +529,7 @@ const RTMDashboard = () => {
           to: queryFilters.to,
           platform: queryFilters.platform,
           channel: queryFilters.channel,
+          unit: queryFilters.unit, // Add unit parameter
         });
 
         const response = await fetch(`/api/mentions?${params}`);
@@ -516,6 +560,7 @@ const RTMDashboard = () => {
     queryFilters.to,
     queryFilters.platform,
     queryFilters.channel,
+    queryFilters.unit, // Add unit to dependencies
   ]);
 
   // ============================================
@@ -892,119 +937,74 @@ const RTMDashboard = () => {
 
   const exportData = async () => {
     try {
-      console.log("🔍 Starting PDF export...");
-
       // Get the dashboard container
       const dashboardElement = document.querySelector(
         ".dashboard-container"
       ) as HTMLElement;
-      console.log("📦 Dashboard element:", dashboardElement);
 
       if (!dashboardElement) {
-        console.error("❌ Dashboard container not found");
-        alert(
-          "Dashboard container not found. Please refresh the page and try again."
-        );
+        alert("Dashboard container not found. Please refresh and try again.");
         return;
       }
 
-      console.log("📐 Dashboard dimensions:", {
-        width: dashboardElement.scrollWidth,
-        height: dashboardElement.scrollHeight,
-        offsetWidth: dashboardElement.offsetWidth,
-        offsetHeight: dashboardElement.offsetHeight,
-      });
-
-      // Hide the active filters card temporarily
+      // Hide the active filters card and export button temporarily
       const activeFiltersCard = document.querySelector(
         ".fixed.z-50"
       ) as HTMLElement;
-      if (activeFiltersCard) {
-        console.log("🙈 Hiding active filters card");
-        activeFiltersCard.style.display = "none";
-      }
+      const exportButton = document.querySelector(
+        'button[title*="Opens print dialog"]'
+      ) as HTMLElement;
+
+      if (activeFiltersCard) activeFiltersCard.style.display = "none";
+      if (exportButton) exportButton.style.display = "none";
 
       // Scroll to top
       window.scrollTo(0, 0);
-      console.log("⬆️ Scrolled to top");
 
-      // Wait a bit for any animations to complete
-      console.log("⏳ Waiting for layout to stabilize...");
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Wait for layout to stabilize
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
-      console.log("📸 Attempting screenshot with foreignObjectRendering...");
-
-      // Try using foreignObjectRendering which bypasses CSS parsing
-      // This should avoid the oklch color parsing issue entirely
+      // Capture with html2canvas at 19% scale (0.19)
       const canvas = await html2canvas(dashboardElement, {
-        scale: 2,
+        scale: 0.19, // This matches the 19% scale you want
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: "#ffffff",
         windowWidth: dashboardElement.scrollWidth,
         windowHeight: dashboardElement.scrollHeight,
-        foreignObjectRendering: true, // Use SVG foreignObject instead of parsing CSS
-        imageTimeout: 15000,
       });
 
-      console.log("✅ Screenshot captured! Canvas dimensions:", {
-        width: canvas.width,
-        height: canvas.height,
-      });
+      // Show hidden elements again
+      if (activeFiltersCard) activeFiltersCard.style.display = "";
+      if (exportButton) exportButton.style.display = "";
 
-      // Show the active filters card again
-      if (activeFiltersCard) {
-        console.log("👁️ Showing active filters card again");
-        activeFiltersCard.style.display = "";
-      }
-
-      // Calculate PDF dimensions (A4 size in mm)
+      // Create PDF with proper dimensions
       const imgWidth = 210; // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      console.log("📄 PDF dimensions:", {
-        width: imgWidth,
-        height: imgHeight,
-        orientation: imgHeight > imgWidth ? "portrait" : "landscape",
-      });
-
-      // Create PDF
-      console.log("📝 Creating PDF...");
       const pdf = new jsPDF({
         orientation: imgHeight > imgWidth ? "portrait" : "landscape",
         unit: "mm",
         format: "a4",
       });
 
-      // Add image to PDF
-      console.log("🖼️ Converting canvas to image...");
       const imgData = canvas.toDataURL("image/png");
-      console.log("✅ Image data created, length:", imgData.length);
-
-      console.log("➕ Adding image to PDF...");
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
 
       // Save PDF
       const fileName = `RTM_Dashboard_${
         new Date().toISOString().split("T")[0]
       }.pdf`;
-      console.log("💾 Saving PDF as:", fileName);
       pdf.save(fileName);
 
-      console.log("✅ PDF export completed successfully!");
-      alert("PDF exported successfully!");
+      console.log("✅ PDF exported successfully!");
     } catch (error) {
       console.error("❌ Error exporting PDF:", error);
-      console.error("Error details:", {
-        message: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-        error: error,
-      });
       alert(
         `Failed to export PDF: ${
           error instanceof Error ? error.message : "Unknown error"
-        }. Check console for details.`
+        }`
       );
     }
   };
@@ -1132,9 +1132,15 @@ const RTMDashboard = () => {
             Refresh
           </Button>
 
-          <Button onClick={exportData} variant="outline" size="sm" className="">
+          <Button
+            onClick={exportData}
+            variant="outline"
+            size="sm"
+            className=""
+            title="Opens print dialog. Set Scale to 19 in More Settings for best results."
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export PDF
+            Print/Export PDF
           </Button>
         </div>
       </div>

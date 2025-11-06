@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/index";
 import { users, userAccess } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 
 export async function GET(request: Request) {
 	try {
@@ -27,6 +27,7 @@ export async function GET(request: Request) {
 			return Response.json({ error: "Forbidden" }, { status: 403 });
 		}
 
+		const isSuperadmin = currentUser[0].role === "superadmin";
 		// Get all users
 		const allUsers = await db
 			.select({
@@ -37,7 +38,9 @@ export async function GET(request: Request) {
 				image: users.image,
 				createdAt: users.createdAt,
 			})
-			.from(users);
+			.from(users)
+			.where(isSuperadmin ? ne(users.role, "") : ne(users.role, "superadmin")); 
+			// Show superadmins only to other superadmins
 
 		// Fetch access permissions for all users
 		const usersWithPermissions = await Promise.all(
