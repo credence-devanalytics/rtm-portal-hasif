@@ -1,13 +1,43 @@
 import { db } from "@/index";
 import { sql } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: Request) {
 	try {
-		console.log("Radio Monthly Marketing API called");
+		const { searchParams } = new URL(request.url);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
 
-		const result = await db.execute(sql`
-			SELECT * FROM marketing_channel_bymonth WHERE report_type = 'Chart 4'
-		`);
+		console.log("Radio Monthly Marketing API called");
+		console.log("Filter params:", { yearParam, monthParam });
+
+		// Build WHERE clause with filters
+		let whereClause = `WHERE report_type = 'Chart 4'`;
+
+		if (yearParam && yearParam !== "all") {
+			whereClause += ` AND year = ${parseInt(yearParam)}`;
+			console.log("Filtering by year:", yearParam);
+		}
+
+		if (monthParam && monthParam !== "all") {
+			const [year, month] = monthParam.split('-');
+			// Map month number to Malay month name
+			const monthNames: Record<string, string> = {
+				'01': 'Januari', '02': 'Februari', '03': 'Mac', '04': 'April',
+				'05': 'Mei', '06': 'Jun', '07': 'Julai', '08': 'Ogos',
+				'09': 'September', '10': 'Oktober', '11': 'November', '12': 'Disember'
+			};
+			const monthName = monthNames[month];
+			whereClause += ` AND month = '${monthName}'`;
+			if (year) {
+				whereClause += ` AND year = ${parseInt(year)}`;
+			}
+			console.log("Filtering by month:", monthName, "year:", year);
+		}
+
+		const query = `SELECT * FROM marketing_channel_bymonth ${whereClause}`;
+		console.log("Executing query:", query);
+
+		const result = await db.execute(sql.raw(query));
 		const monthlyData = result.rows;
 
 		console.log("Radio monthly data:", monthlyData);

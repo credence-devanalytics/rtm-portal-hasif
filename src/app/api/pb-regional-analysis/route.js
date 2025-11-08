@@ -4,7 +4,7 @@ import {
 	pberitaAudienceRegion,
 	pberitaAudienceRegionGender,
 } from "../../../../drizzle/schema";
-import { sql } from "drizzle-orm";
+import { sql, and, gte, lte } from "drizzle-orm";
 
 export async function GET(request) {
 	try {
@@ -12,10 +12,44 @@ export async function GET(request) {
 
 		const { searchParams } = new URL(request.url);
 		const analysisType = searchParams.get("type") || "region";
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
+
+		console.log('Filter params:', { analysisType, yearParam, monthParam });
+
+		// Build date filter conditions
+		const regionDateFilters = [];
+		const regionGenderDateFilters = [];
+
+		if (monthParam) {
+			// Month filter: YYYY-MM format
+			const [year, month] = monthParam.split('-');
+			const startDate = `${year}-${month}-01`;
+			const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+			const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+
+			regionDateFilters.push(gte(pberitaAudienceRegion.date, startDate));
+			regionDateFilters.push(lte(pberitaAudienceRegion.date, endDate));
+			regionGenderDateFilters.push(gte(pberitaAudienceRegionGender.date, startDate));
+			regionGenderDateFilters.push(lte(pberitaAudienceRegionGender.date, endDate));
+
+			console.log('Month filter applied:', { startDate, endDate });
+		} else if (yearParam) {
+			// Year only filter
+			const startDate = `${yearParam}-01-01`;
+			const endDate = `${yearParam}-12-31`;
+
+			regionDateFilters.push(gte(pberitaAudienceRegion.date, startDate));
+			regionDateFilters.push(lte(pberitaAudienceRegion.date, endDate));
+			regionGenderDateFilters.push(gte(pberitaAudienceRegionGender.date, startDate));
+			regionGenderDateFilters.push(lte(pberitaAudienceRegionGender.date, endDate));
+
+			console.log('Year filter applied:', { startDate, endDate });
+		}
 
 		if (analysisType === "region-gender") {
 			// Combined region and gender analysis
-			const regionGenderData = await db
+			let regionGenderQuery = db
 				.select({
 					region: pberitaAudienceRegionGender.region,
 					userGender: pberitaAudienceRegionGender.usergender,
@@ -27,11 +61,19 @@ export async function GET(request) {
 					),
 					recordCount: sql`COUNT(*)`.as("recordCount"),
 				})
-				.from(pberitaAudienceRegionGender)
-				.groupBy(
-					pberitaAudienceRegionGender.region,
-					pberitaAudienceRegionGender.usergender
-				);
+				.from(pberitaAudienceRegionGender);
+
+			// Apply date filters if present
+			if (regionGenderDateFilters.length > 0) {
+				regionGenderQuery = regionGenderQuery.where(and(...regionGenderDateFilters));
+			}
+
+			regionGenderQuery = regionGenderQuery.groupBy(
+				pberitaAudienceRegionGender.region,
+				pberitaAudienceRegionGender.usergender
+			);
+
+			const regionGenderData = await regionGenderQuery;
 
 			console.log("PB Region-Gender data:", regionGenderData);
 
@@ -64,7 +106,7 @@ export async function GET(request) {
 		}
 
 		// Regular region analysis
-		const regionData = await db
+		let regionDataQuery = db
 			.select({
 				region: pberitaAudienceRegion.region,
 				totalActiveUsers: sql`SUM(${pberitaAudienceRegion.activeusers})`.as(
@@ -75,8 +117,16 @@ export async function GET(request) {
 				),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
 			})
-			.from(pberitaAudienceRegion)
-			.groupBy(pberitaAudienceRegion.region);
+			.from(pberitaAudienceRegion);
+
+		// Apply date filters if present
+		if (regionDateFilters.length > 0) {
+			regionDataQuery = regionDataQuery.where(and(...regionDateFilters));
+		}
+
+		regionDataQuery = regionDataQuery.groupBy(pberitaAudienceRegion.region);
+
+		const regionData = await regionDataQuery;
 
 		console.log("PB Region data:", regionData);
 

@@ -16,30 +16,48 @@ const MarketingIncomeComparisonChart = ({ data = [] }) => {
   // Debug: Log the incoming data
   console.log("Chart component received data:", data);
 
-  // Transform the data for the line chart - restructure to have years as x-axis and channels as lines
-  const chartData = [
-    {
-      year: "2022",
-      ...data.reduce((acc, item) => {
-        acc[item.saluran] = item.year2022Value || 0;
-        return acc;
-      }, {}),
-    },
-    {
-      year: "2023",
-      ...data.reduce((acc, item) => {
-        acc[item.saluran] = item.previousValue;
-        return acc;
-      }, {}),
-    },
-    {
-      year: "2024",
-      ...data.reduce((acc, item) => {
-        acc[item.saluran] = item.currentValue;
-        return acc;
-      }, {}),
-    },
-  ];
+  // Determine which years have actual data
+  const availableYears = React.useMemo(() => {
+    const years: string[] = [];
+    const hasData = {
+      2022: data.some(item => item.year2022Value && item.year2022Value > 0),
+      2023: data.some(item => item.previousValue && item.previousValue > 0),
+      2024: data.some(item => item.currentValue && item.currentValue > 0),
+    };
+    
+    if (hasData[2022]) years.push("2022");
+    if (hasData[2023]) years.push("2023");
+    if (hasData[2024]) years.push("2024");
+    
+    return years;
+  }, [data]);
+
+  // Transform the data for the line chart - only include years with data
+  const chartData = React.useMemo(() => {
+    const result: any[] = [];
+    
+    availableYears.forEach(year => {
+      const yearData: any = { year };
+      
+      if (year === "2022") {
+        data.forEach(item => {
+          yearData[item.saluran] = item.year2022Value || 0;
+        });
+      } else if (year === "2023") {
+        data.forEach(item => {
+          yearData[item.saluran] = item.previousValue || 0;
+        });
+      } else if (year === "2024") {
+        data.forEach(item => {
+          yearData[item.saluran] = item.currentValue || 0;
+        });
+      }
+      
+      result.push(yearData);
+    });
+    
+    return result;
+  }, [data, availableYears]);
 
   // Debug: Log the transformed chart data
   console.log("Transformed chart data:", chartData);
@@ -144,14 +162,18 @@ const MarketingIncomeComparisonChart = ({ data = [] }) => {
     return null;
   };
 
+  const yearLabel = availableYears.length === 1 
+    ? availableYears[0] 
+    : availableYears.join(" vs ");
+
   return (
     <Card className="">
       <CardHeader className="">
         <CardTitle className="text-lg font-bold font-sans">
-          Income Comparison: 2022 vs 2023 vs 2024
+          Income Comparison: {yearLabel}
         </CardTitle>
         <p className="text-sm text-gray-600 font-sans">
-          Three-year comparison of income by marketing channel
+          {availableYears.length > 1 ? `${availableYears.length}-year` : "Year"} comparison of income by marketing channel
         </p>
       </CardHeader>
       <CardContent className="">

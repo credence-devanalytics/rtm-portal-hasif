@@ -29,7 +29,7 @@ import {
   TvIcon,
 } from "lucide-react";
 import Header from "@/components/Header";
-import Image from "next/image";
+import NextImage from "next/image";
 import {
   LineChart,
   Line,
@@ -40,6 +40,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import * as htmlToImage from "html-to-image";
+import jsPDF from "jspdf";
 
 const ASTROPage = () => {
   const [data, setData] = useState(null);
@@ -48,6 +50,11 @@ const ASTROPage = () => {
   const [channelSummary, setChannelSummary] = useState([]);
   const [reachOverTime, setReachOverTime] = useState([]);
   const [ratingOverTime, setRatingOverTime] = useState([]);
+  const [tvReachOverTime, setTvReachOverTime] = useState([]);
+  const [tvRatingOverTime, setTvRatingOverTime] = useState([]);
+  const [radioReachOverTime, setRadioReachOverTime] = useState([]);
+  const [radioRatingOverTime, setRadioRatingOverTime] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Filters State
   const [filters, setFilters] = useState({
@@ -115,6 +122,10 @@ const ASTROPage = () => {
         processChannelSummary(result.data);
         processReachOverTime(result.data);
         processRatingOverTime(result.data);
+        processTvReachOverTime(result.data);
+        processTvRatingOverTime(result.data);
+        processRadioReachOverTime(result.data);
+        processRadioRatingOverTime(result.data);
       }
     } catch (err) {
       console.error("Error fetching ASTRO data:", err);
@@ -349,6 +360,250 @@ const ASTROPage = () => {
     setRatingOverTime(timeSeriesArray);
   };
 
+  // Process TV reach over time data for line chart
+  const processTvReachOverTime = (rawData) => {
+    const monthNames = {
+      1: "January",
+      2: "February",
+      3: "March",
+      4: "April",
+      5: "May",
+      6: "June",
+      7: "July",
+      8: "August",
+      9: "September",
+      10: "October",
+      11: "November",
+      12: "December",
+    };
+
+    // Filter only reach data for TV channels
+    const reachData = rawData.filter((record) => {
+      const metricType = record.metricType || record.metric_type;
+      const txYear = record.txYear || record.tx_year;
+      const channel = record.channel;
+      const isTvChannel = channel.toLowerCase().includes('tv');
+
+      if (filters.year === "all") {
+        return metricType === "reach" && isTvChannel;
+      }
+
+      return (
+        metricType === "reach" &&
+        isTvChannel &&
+        (txYear === parseInt(filters.year) || txYear === filters.year)
+      );
+    });
+
+    const allChannels = [...new Set(reachData.map((record) => record.channel))];
+    const monthMap = {};
+
+    reachData.forEach((record) => {
+      const monthNum = record.txMonth || record.tx_month;
+      const monthName = monthNames[monthNum] || `Month ${monthNum}`;
+      const channel = record.channel;
+
+      if (!monthMap[monthNum]) {
+        monthMap[monthNum] = { month: monthName, monthNum: monthNum };
+        allChannels.forEach((ch) => {
+          monthMap[monthNum][ch] = 0;
+        });
+      }
+
+      monthMap[monthNum][channel] = record.value || 0;
+    });
+
+    const timeSeriesArray = Object.values(monthMap).sort((a, b) => {
+      return parseInt(a.monthNum) - parseInt(b.monthNum);
+    });
+
+    setTvReachOverTime(timeSeriesArray);
+  };
+
+  // Process TV rating over time data for line chart
+  const processTvRatingOverTime = (rawData) => {
+    const monthNames = {
+      1: "January",
+      2: "February",
+      3: "March",
+      4: "April",
+      5: "May",
+      6: "June",
+      7: "July",
+      8: "August",
+      9: "September",
+      10: "October",
+      11: "November",
+      12: "December",
+    };
+
+    const ratingData = rawData.filter((record) => {
+      const metricType = record.metricType || record.metric_type;
+      const txYear = record.txYear || record.tx_year;
+      const channel = record.channel;
+      const isTvChannel = channel.toLowerCase().includes('tv');
+
+      if (filters.year === "all") {
+        return metricType === "rating" && isTvChannel;
+      }
+
+      return (
+        metricType === "rating" &&
+        isTvChannel &&
+        (txYear === parseInt(filters.year) || txYear === filters.year)
+      );
+    });
+
+    const allChannels = [
+      ...new Set(ratingData.map((record) => record.channel)),
+    ];
+    const monthMap = {};
+
+    ratingData.forEach((record) => {
+      const monthNum = record.txMonth || record.tx_month;
+      const monthName = monthNames[monthNum] || `Month ${monthNum}`;
+      const channel = record.channel;
+
+      if (!monthMap[monthNum]) {
+        monthMap[monthNum] = { month: monthName, monthNum: monthNum };
+        allChannels.forEach((ch) => {
+          monthMap[monthNum][ch] = null;
+        });
+      }
+
+      const value = record.value || 0;
+      monthMap[monthNum][channel] = value > 0 ? value : null;
+    });
+
+    const timeSeriesArray = Object.values(monthMap).sort((a, b) => {
+      return parseInt(a.monthNum) - parseInt(b.monthNum);
+    });
+
+    setTvRatingOverTime(timeSeriesArray);
+  };
+
+  // Process Radio reach over time data for line chart
+  const processRadioReachOverTime = (rawData) => {
+    const monthNames = {
+      1: "January",
+      2: "February",
+      3: "March",
+      4: "April",
+      5: "May",
+      6: "June",
+      7: "July",
+      8: "August",
+      9: "September",
+      10: "October",
+      11: "November",
+      12: "December",
+    };
+
+    // Filter only reach data for Radio channels
+    const reachData = rawData.filter((record) => {
+      const metricType = record.metricType || record.metric_type;
+      const txYear = record.txYear || record.tx_year;
+      const channel = record.channel;
+      const isRadioChannel = channel.toLowerCase().includes('fm');
+
+      if (filters.year === "all") {
+        return metricType === "reach" && isRadioChannel;
+      }
+
+      return (
+        metricType === "reach" &&
+        isRadioChannel &&
+        (txYear === parseInt(filters.year) || txYear === filters.year)
+      );
+    });
+
+    const allChannels = [...new Set(reachData.map((record) => record.channel))];
+    const monthMap = {};
+
+    reachData.forEach((record) => {
+      const monthNum = record.txMonth || record.tx_month;
+      const monthName = monthNames[monthNum] || `Month ${monthNum}`;
+      const channel = record.channel;
+
+      if (!monthMap[monthNum]) {
+        monthMap[monthNum] = { month: monthName, monthNum: monthNum };
+        allChannels.forEach((ch) => {
+          monthMap[monthNum][ch] = 0;
+        });
+      }
+
+      monthMap[monthNum][channel] = record.value || 0;
+    });
+
+    const timeSeriesArray = Object.values(monthMap).sort((a, b) => {
+      return parseInt(a.monthNum) - parseInt(b.monthNum);
+    });
+
+    setRadioReachOverTime(timeSeriesArray);
+  };
+
+  // Process Radio rating over time data for line chart
+  const processRadioRatingOverTime = (rawData) => {
+    const monthNames = {
+      1: "January",
+      2: "February",
+      3: "March",
+      4: "April",
+      5: "May",
+      6: "June",
+      7: "July",
+      8: "August",
+      9: "September",
+      10: "October",
+      11: "November",
+      12: "December",
+    };
+
+    const ratingData = rawData.filter((record) => {
+      const metricType = record.metricType || record.metric_type;
+      const txYear = record.txYear || record.tx_year;
+      const channel = record.channel;
+      const isRadioChannel = channel.toLowerCase().includes('fm');
+
+      if (filters.year === "all") {
+        return metricType === "rating" && isRadioChannel;
+      }
+
+      return (
+        metricType === "rating" &&
+        isRadioChannel &&
+        (txYear === parseInt(filters.year) || txYear === filters.year)
+      );
+    });
+
+    const allChannels = [
+      ...new Set(ratingData.map((record) => record.channel)),
+    ];
+    const monthMap = {};
+
+    ratingData.forEach((record) => {
+      const monthNum = record.txMonth || record.tx_month;
+      const monthName = monthNames[monthNum] || `Month ${monthNum}`;
+      const channel = record.channel;
+
+      if (!monthMap[monthNum]) {
+        monthMap[monthNum] = { month: monthName, monthNum: monthNum };
+        allChannels.forEach((ch) => {
+          monthMap[monthNum][ch] = null;
+        });
+      }
+
+      const value = record.value || 0;
+      monthMap[monthNum][channel] = value > 0 ? value : null;
+    });
+
+    const timeSeriesArray = Object.values(monthMap).sort((a, b) => {
+      return parseInt(a.monthNum) - parseInt(b.monthNum);
+    });
+
+    setRadioRatingOverTime(timeSeriesArray);
+  };
+
   // Fetch data on mount and when filters change
   useEffect(() => {
     fetchData();
@@ -364,9 +619,185 @@ const ASTROPage = () => {
     fetchData();
   };
 
+  // Export data function - PDF Export with high quality
+  const exportData = async () => {
+    try {
+      // Show export overlay
+      setIsExporting(true);
+
+      // Wait a brief moment for the overlay to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Get the dashboard container
+      const dashboardElement = document.querySelector(
+        ".dashboard-container"
+      ) as HTMLElement;
+
+      if (!dashboardElement) {
+        alert("Dashboard container not found. Please refresh and try again.");
+        setIsExporting(false);
+        return;
+      }
+
+      // Hide the export button temporarily
+      const exportButton = document.querySelector(
+        'button[title*="Opens print dialog"]'
+      ) as HTMLElement | null;
+
+      if (exportButton) exportButton.style.display = "none";
+
+      // Temporarily remove max-width constraints to capture full content
+      const originalMaxWidth = dashboardElement.style.maxWidth;
+      const originalWidth = dashboardElement.style.width;
+      const originalMargin = dashboardElement.style.margin;
+      dashboardElement.style.maxWidth = "none";
+      dashboardElement.style.width = "fit-content";
+      dashboardElement.style.margin = "0";
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+
+      // Wait for layout to stabilize after width change
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Get the full scrollable width and height (including overflow)
+      const fullWidth = Math.max(
+        dashboardElement.scrollWidth,
+        dashboardElement.offsetWidth,
+        dashboardElement.clientWidth
+      );
+      const fullHeight = Math.max(
+        dashboardElement.scrollHeight,
+        dashboardElement.offsetHeight,
+        dashboardElement.clientHeight
+      );
+
+      console.log("📐 Capturing dimensions:", {
+        scrollWidth: dashboardElement.scrollWidth,
+        offsetWidth: dashboardElement.offsetWidth,
+        clientWidth: dashboardElement.clientWidth,
+        fullWidth,
+        fullHeight,
+      });
+
+      // Capture with html-to-image with ULTRA HIGH QUALITY settings
+      const dataUrl = await htmlToImage.toPng(dashboardElement, {
+        quality: 1.0, // Maximum quality
+        pixelRatio: 2, // 2x resolution (optimal for capturing wide content)
+        cacheBust: true, // Prevent caching issues
+        backgroundColor: "#ffffff",
+        width: fullWidth, // Use full width including scrollable area
+        height: fullHeight, // Use full height including scrollable area
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+        },
+      });
+
+      // Restore original styles
+      dashboardElement.style.maxWidth = originalMaxWidth;
+      dashboardElement.style.width = originalWidth;
+      dashboardElement.style.margin = originalMargin;
+
+      // Show hidden elements again
+      if (exportButton) exportButton.style.display = "";
+
+      // Create an image to get dimensions
+      const img = new Image();
+      img.src = dataUrl;
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Create PDF - scale down to fit A4
+      const scaleFactor = 0.45;
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+
+      // Calculate dimensions with scale factor (300 DPI for print quality)
+      let scaledWidth = img.width * scaleFactor * 0.084667; // Convert pixels to mm (300 DPI)
+      let scaledHeight = img.height * scaleFactor * 0.084667;
+
+      // Determine orientation based on scaled dimensions
+      const orientation = scaledHeight > scaledWidth ? "portrait" : "landscape";
+      const pageWidth = orientation === "portrait" ? pdfWidth : pdfHeight;
+      const pageHeight = orientation === "portrait" ? pdfHeight : pdfWidth;
+
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Center the image on the page (without additional auto-fit scaling)
+      const xOffset = (pageWidth - scaledWidth) / 2;
+      const yOffset = (pageHeight - scaledHeight) / 2;
+
+      // Add image centered on the page
+      pdf.addImage(dataUrl, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
+
+      // Save PDF with dynamic filename
+      const fileName = `ASTRO_Analytics_Export_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      pdf.save(fileName);
+
+      console.log("✅ PDF exported successfully!");
+    } catch (error) {
+      console.error("❌ Error exporting PDF:", error);
+      alert(
+        `Failed to export PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      // Hide export overlay
+      setIsExporting(false);
+    }
+  };
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20">
-      <Header />
+    <>
+      {/* Export Overlay - MUST be outside dashboard-container */}
+      {isExporting && (
+        <div
+          className="export-overlay fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ minHeight: "100vh", height: "100%" }}
+        >
+          {/* Blurred backdrop - scrollable, extended to cover full document height */}
+          <div
+            className="absolute inset-0 bg-white/80 backdrop-blur-md"
+            style={{ minHeight: "100vh", height: "100%", width: "100vw" }}
+          ></div>
+
+          {/* Loading message */}
+          <div className="relative z-10 bg-white rounded-lg shadow-2xl border-2 border-blue-500 p-8 max-w-md mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Download className="h-16 w-16 text-blue-600 animate-bounce" />
+                <div className="absolute inset-0 h-16 w-16 text-blue-400 animate-ping opacity-75">
+                  <Download className="h-16 w-16" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Exporting in Progress
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Please wait while we generate your PDF...
+                </p>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse w-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20 dashboard-container">
+        <Header />
 
       {/* Subtle loading indicator at the top */}
       {loading && (
@@ -398,9 +829,14 @@ const ASTROPage = () => {
             />
             Refresh
           </Button>
-          <Button onClick={() => window.print()} variant="outline" size="sm">
+          <Button
+            onClick={exportData}
+            variant="outline"
+            size="sm"
+            title="Opens print dialog. Set Scale to 21 in More Settings for best results."
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Print/Export PDF
           </Button>
         </div>
       </div>
@@ -510,199 +946,323 @@ const ASTROPage = () => {
 
         {/* Channel Summary Cards */}
         {!loading && !error && channelSummary.length > 0 && (
-          <div>
-            <div className="mb-4">
+          <div className="space-y-8">
+            {/* TV Channels Section */}
+            {channelSummary.filter(channel => 
+              channel.channel.toLowerCase().includes('tv')
+            ).length > 0 && (
+              <div>
+                <div className="mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    TV Channel Performance Summary
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Rating and Total Reach by TV Channel for {filters.year}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 w-full">
+                  {channelSummary
+                    .filter(channel => channel.channel.toLowerCase().includes('tv'))
+                    .map((channel, index) => (
+                      <Card
+                        key={channel.channel}
+                        className="hover:shadow-lg transition-shadow w-full"
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            {/* Left Side: Channel Logo */}
+                            <div className="flex-shrink-0">
+                              {channel.logo ? (
+                                <div className="w-32 h-32 relative rounded-lg overflow-hidden flex items-center justify-center">
+                                  <NextImage
+                                    src={channel.logo}
+                                    alt={channel.channel}
+                                    width={128}
+                                    height={128}
+                                    className="object-contain"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-32 h-32 bg-purple-100 rounded-lg flex items-center justify-center">
+                                  <TvIcon className="h-16 w-16 text-purple-600" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Right Side: Metrics Stacked Vertically */}
+                            <div className="flex-1 flex flex-col items-center space-y-4">
+                              {/* Total Reach (Active Users) - Top */}
+                              <div className="text-center">
+                                <div
+                                  className="text-4xl font-bold mb-1"
+                                  style={{ color: "#00B4D8" }}
+                                >
+                                  {channel.totalReach}
+                                </div>
+                                <div
+                                  className="text-sm font-medium"
+                                  style={{ color: "#00B4D8" }}
+                                >
+                                  Active Users (Reach)
+                                </div>
+                              </div>
+
+                              {/* Dividing Line */}
+                              <div className="w-[200px] border-t-2 border-gray-300"></div>
+
+                              {/* Rating (Programs) - Bottom */}
+                              <div className="text-center">
+                                <div
+                                  className="text-4xl font-bold mb-1"
+                                  style={{ color: "#E63946" }}
+                                >
+                                  {channel.avgRating}
+                                </div>
+                                <div
+                                  className="text-sm font-medium"
+                                  style={{ color: "#E63946" }}
+                                >
+                                  Average Rating
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Rank Badge at bottom if top 3 */}
+                          {index < 3 && (
+                            <div className="mt-[-10px] ml-10 text-start">
+                              <Badge
+                                variant="secondary"
+                                className={`text-xs px-3 py-1 ${
+                                  index === 0
+                                    ? "bg-yellow-500 text-white"
+                                    : index === 1
+                                    ? "bg-gray-400 text-white"
+                                    : "bg-amber-600 text-white"
+                                }`}
+                              >
+                                #{index + 1}
+                              </Badge>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Radio Channels Section */}
+            {channelSummary.filter(channel => 
+              channel.channel.toLowerCase().includes('fm')
+            ).length > 0 && (
+              <div>
+                <div className="mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Radio Channel Performance Summary
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Rating and Total Reach by Radio Channel for {filters.year}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 w-full">
+                  {channelSummary
+                    .filter(channel => channel.channel.toLowerCase().includes('fm'))
+                    .map((channel, index) => (
+                      <Card
+                        key={channel.channel}
+                        className="hover:shadow-lg transition-shadow w-full"
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            {/* Left Side: Channel Logo */}
+                            <div className="flex-shrink-0">
+                              {channel.logo ? (
+                                <div className="w-32 h-32 relative rounded-lg overflow-hidden flex items-center justify-center">
+                                  <NextImage
+                                    src={channel.logo}
+                                    alt={channel.channel}
+                                    width={128}
+                                    height={128}
+                                    className="object-contain"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-32 h-32 bg-purple-100 rounded-lg flex items-center justify-center">
+                                  <TvIcon className="h-16 w-16 text-purple-600" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Right Side: Metrics Stacked Vertically */}
+                            <div className="flex-1 flex flex-col items-center space-y-4">
+                              {/* Total Reach (Active Users) - Top */}
+                              <div className="text-center">
+                                <div
+                                  className="text-4xl font-bold mb-1"
+                                  style={{ color: "#00B4D8" }}
+                                >
+                                  {channel.totalReach}
+                                </div>
+                                <div
+                                  className="text-sm font-medium"
+                                  style={{ color: "#00B4D8" }}
+                                >
+                                  Active Users (Reach)
+                                </div>
+                              </div>
+
+                              {/* Dividing Line */}
+                              <div className="w-[200px] border-t-2 border-gray-300"></div>
+
+                              {/* Rating (Programs) - Bottom */}
+                              <div className="text-center">
+                                <div
+                                  className="text-4xl font-bold mb-1"
+                                  style={{ color: "#E63946" }}
+                                >
+                                  {channel.avgRating}
+                                </div>
+                                <div
+                                  className="text-sm font-medium"
+                                  style={{ color: "#E63946" }}
+                                >
+                                  Average Rating
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Rank Badge at bottom if top 3 */}
+                          {index < 3 && (
+                            <div className="mt-[-10px] ml-10 text-start">
+                              <Badge
+                                variant="secondary"
+                                className={`text-xs px-3 py-1 ${
+                                  index === 0
+                                    ? "bg-yellow-500 text-white"
+                                    : index === 1
+                                    ? "bg-gray-400 text-white"
+                                    : "bg-amber-600 text-white"
+                                }`}
+                              >
+                                #{index + 1}
+                              </Badge>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TV Channels - Reach Over Time Line Chart */}
+        {!loading && !error && tvReachOverTime.length > 0 && (
+          <div className="space-y-4">
+            <div>
               <h2 className="text-xl font-bold text-gray-900">
-                Channel Performance Summary
+                TV Channel Trends
               </h2>
               <p className="text-sm text-gray-600">
-                Rating and Total Reach by Channel for {filters.year}
+                Performance trends for TV channels
               </p>
             </div>
-
-            <div className="grid grid-cols-3 gap-4 w-full">
-              {channelSummary.map((channel, index) => (
-                <Card
-                  key={channel.channel}
-                  className="hover:shadow-lg transition-shadow w-full"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      {/* Left Side: Channel Logo */}
-                      <div className="flex-shrink-0">
-                        {channel.logo ? (
-                          <div className="w-32 h-32 relative rounded-lg overflow-hidden flex items-center justify-center">
-                            <Image
-                              src={channel.logo}
-                              alt={channel.channel}
-                              width={128}
-                              height={128}
-                              className="object-contain"
+            <div className="grid grid-cols-2 gap-6">
+              <Card className="col-span-2">
+                <CardHeader className="">
+                  <CardTitle className="flex items-center space-x-2">
+                    <TrendingUp className="h-5 w-5 text-purple-600" />
+                    <span>TV Reach Over Time</span>
+                  </CardTitle>
+                  <CardDescription className="">
+                    TV channel reach performance trends for {filters.year}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="">
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart
+                      data={tvReachOverTime}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        label={{
+                          value: "Month",
+                          position: "insideBottom",
+                          offset: -5,
+                        }}
+                      />
+                      <YAxis
+                        label={{
+                          value: "Reach",
+                          angle: -90,
+                          position: "insideLeft",
+                        }}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          padding: "10px",
+                        }}
+                        labelFormatter={(value) => `Month: ${value}`}
+                        formatter={(value, name) => [
+                          value.toLocaleString(),
+                          name,
+                        ]}
+                      />
+                      <Legend />
+                      {tvReachOverTime.length > 0 &&
+                        Object.keys(tvReachOverTime[0])
+                          .filter((key) => key !== "month" && key !== "monthNum")
+                          .map((channel) => (
+                            <Line
+                              key={channel}
+                              type="monotone"
+                              dataKey={channel}
+                              stroke={channelColors[channel] || "#6b7280"}
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                              activeDot={{ r: 6 }}
                             />
-                          </div>
-                        ) : (
-                          <div className="w-32 h-32 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <TvIcon className="h-16 w-16 text-purple-600" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right Side: Metrics Stacked Vertically */}
-                      <div className="flex-1 flex flex-col items-center space-y-4">
-                        {/* Total Reach (Active Users) - Top */}
-                        <div className="text-center">
-                          <div
-                            className="text-4xl font-bold mb-1"
-                            style={{ color: "#00B4D8" }}
-                          >
-                            {channel.totalReach}
-                          </div>
-                          <div
-                            className="text-sm font-medium"
-                            style={{ color: "#00B4D8" }}
-                          >
-                            Active Users (Reach)
-                          </div>
-                        </div>
-
-                        {/* Dividing Line */}
-                        <div className="w-[200px] border-t-2 border-gray-300"></div>
-
-                        {/* Rating (Programs) - Bottom */}
-                        <div className="text-center">
-                          <div
-                            className="text-4xl font-bold mb-1"
-                            style={{ color: "#E63946" }}
-                          >
-                            {channel.avgRating}
-                          </div>
-                          <div
-                            className="text-sm font-medium"
-                            style={{ color: "#E63946" }}
-                          >
-                            Average Rating
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Rank Badge at bottom if top 3 */}
-                    {index < 3 && (
-                      <div className="mt-[-10px] ml-10 text-start">
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs px-3 py-1 ${
-                            index === 0
-                              ? "bg-yellow-500 text-white"
-                              : index === 1
-                              ? "bg-gray-400 text-white"
-                              : "bg-amber-600 text-white"
-                          }`}
-                        >
-                          #{index + 1}
-                        </Badge>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                          ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
             </div>
           </div>
         )}
 
-        {/* Reach Over Time Line Chart */}
-        {!loading && !error && reachOverTime.length > 0 && (
-          <div className="grid grid-cols-2 gap-6">
-            <Card className="col-span-2">
-              <CardHeader className="">
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-purple-600" />
-                  <span>Reach Over Time</span>
-                </CardTitle>
-                <CardDescription className="">
-                  Channel reach performance trends for {filters.year}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart
-                    data={reachOverTime}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="month"
-                      tick={{ fontSize: 12 }}
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                      label={{
-                        value: "Month",
-                        position: "insideBottom",
-                        offset: -5,
-                      }}
-                    />
-                    <YAxis
-                      label={{
-                        value: "Reach",
-                        angle: -90,
-                        position: "insideLeft",
-                      }}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        padding: "10px",
-                      }}
-                      labelFormatter={(value) => `Month: ${value}`}
-                      formatter={(value, name) => [
-                        value.toLocaleString(),
-                        name,
-                      ]}
-                    />
-                    <Legend />
-                    {/* Dynamically render lines only for channels with data */}
-                    {reachOverTime.length > 0 &&
-                      Object.keys(reachOverTime[0])
-                        .filter((key) => key !== "month" && key !== "monthNum")
-                        .map((channel) => (
-                          <Line
-                            key={channel}
-                            type="monotone"
-                            dataKey={channel}
-                            stroke={channelColors[channel] || "#6b7280"}
-                            strokeWidth={2}
-                            dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
-                          />
-                        ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Rating Over Time Line Chart */}
-        {!loading && !error && ratingOverTime.length > 0 && (
+        {/* TV Channels - Rating Over Time Line Chart */}
+        {!loading && !error && tvRatingOverTime.length > 0 && (
           <div className="grid grid-cols-2 gap-6">
             <Card className="col-span-2">
               <CardHeader className="">
                 <CardTitle className="flex items-center space-x-2">
                   <Star className="h-5 w-5 text-yellow-500" />
-                  <span>Rating Over Time</span>
+                  <span>TV Rating Over Time</span>
                 </CardTitle>
                 <CardDescription className="">
-                  Channel rating performance trends for {filters.year}
+                  TV channel rating performance trends for {filters.year}
                 </CardDescription>
               </CardHeader>
               <CardContent className="">
                 <ResponsiveContainer width="100%" height={400}>
                   <LineChart
-                    data={ratingOverTime}
+                    data={tvRatingOverTime}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -741,13 +1301,179 @@ const ASTROPage = () => {
                       }}
                     />
                     <Legend />
-                    {/* Dynamically render lines only for channels with non-zero data */}
-                    {ratingOverTime.length > 0 &&
-                      Object.keys(ratingOverTime[0])
+                    {tvRatingOverTime.length > 0 &&
+                      Object.keys(tvRatingOverTime[0])
                         .filter((key) => key !== "month" && key !== "monthNum")
                         .filter((channel) => {
-                          // Only show channels that have at least one non-zero value
-                          return ratingOverTime.some(
+                          return tvRatingOverTime.some(
+                            (month) =>
+                              month[channel] != null && month[channel] > 0
+                          );
+                        })
+                        .map((channel) => (
+                          <Line
+                            key={channel}
+                            type="monotone"
+                            dataKey={channel}
+                            stroke={channelColors[channel] || "#6b7280"}
+                            strokeWidth={2}
+                            dot={{ r: 4 }}
+                            activeDot={{ r: 6 }}
+                            connectNulls={false}
+                          />
+                        ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Radio Channels - Reach Over Time Line Chart */}
+        {!loading && !error && radioReachOverTime.length > 0 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Radio Channel Trends
+              </h2>
+              <p className="text-sm text-gray-600">
+                Performance trends for Radio channels
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <Card className="col-span-2">
+                <CardHeader className="">
+                  <CardTitle className="flex items-center space-x-2">
+                    <TrendingUp className="h-5 w-5 text-purple-600" />
+                    <span>Radio Reach Over Time</span>
+                  </CardTitle>
+                  <CardDescription className="">
+                    Radio channel reach performance trends for {filters.year}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="">
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart
+                      data={radioReachOverTime}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 12 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        label={{
+                          value: "Month",
+                          position: "insideBottom",
+                          offset: -5,
+                        }}
+                      />
+                      <YAxis
+                        label={{
+                          value: "Reach",
+                          angle: -90,
+                          position: "insideLeft",
+                        }}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          padding: "10px",
+                        }}
+                        labelFormatter={(value) => `Month: ${value}`}
+                        formatter={(value, name) => [
+                          value.toLocaleString(),
+                          name,
+                        ]}
+                      />
+                      <Legend />
+                      {radioReachOverTime.length > 0 &&
+                        Object.keys(radioReachOverTime[0])
+                          .filter((key) => key !== "month" && key !== "monthNum")
+                          .map((channel) => (
+                            <Line
+                              key={channel}
+                              type="monotone"
+                              dataKey={channel}
+                              stroke={channelColors[channel] || "#6b7280"}
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                              activeDot={{ r: 6 }}
+                            />
+                          ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Radio Channels - Rating Over Time Line Chart */}
+        {!loading && !error && radioRatingOverTime.length > 0 && (
+          <div className="grid grid-cols-2 gap-6">
+            <Card className="col-span-2">
+              <CardHeader className="">
+                <CardTitle className="flex items-center space-x-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  <span>Radio Rating Over Time</span>
+                </CardTitle>
+                <CardDescription className="">
+                  Radio channel rating performance trends for {filters.year}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="">
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart
+                    data={radioRatingOverTime}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      label={{
+                        value: "Month",
+                        position: "insideBottom",
+                        offset: -5,
+                      }}
+                    />
+                    <YAxis
+                      label={{
+                        value: "Rating",
+                        angle: -90,
+                        position: "insideLeft",
+                      }}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "white",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        padding: "10px",
+                      }}
+                      labelFormatter={(value) => `Month: ${value}`}
+                      formatter={(value, name) => {
+                        if (value === null || value === 0)
+                          return ["No data", name];
+                        return [value.toLocaleString(), name];
+                      }}
+                    />
+                    <Legend />
+                    {radioRatingOverTime.length > 0 &&
+                      Object.keys(radioRatingOverTime[0])
+                        .filter((key) => key !== "month" && key !== "monthNum")
+                        .filter((channel) => {
+                          return radioRatingOverTime.some(
                             (month) =>
                               month[channel] != null && month[channel] > 0
                           );
@@ -786,7 +1512,8 @@ const ASTROPage = () => {
           </Card>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

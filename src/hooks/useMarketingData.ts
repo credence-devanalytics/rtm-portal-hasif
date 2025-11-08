@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
-export const useMarketingData = () => {
+export const useMarketingData = (filterParam?: string | null) => {
   return useQuery({
-    queryKey: ['marketing-analysis'],
+    queryKey: ['marketing-analysis', filterParam],
     queryFn: async () => {
-      const response = await fetch('/api/marketing-analysis');
+      const url = filterParam
+        ? `/api/marketing-analysis?${filterParam}`
+        : '/api/marketing-analysis';
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch marketing data');
       }

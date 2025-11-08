@@ -4,8 +4,30 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
-const RadioChannelBreakdownTable = ({ data }) => {
+interface RadioChannelBreakdownTableProps {
+  data: any;
+  selectedYear?: string;
+}
+
+const RadioChannelBreakdownTable = ({ data, selectedYear = "all" }: RadioChannelBreakdownTableProps) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
+  // Determine if we should show growth columns
+  const showGrowthColumns = selectedYear === "all";
+
+  // Detect which years have data across all channel groups
+  const availableYears = useMemo(() => {
+    if (!data) return { 2022: false, 2023: false, 2024: false };
+    
+    // Get all channels from all groups
+    const allChannels = Object.values(data).flatMap((group: any) => group.channels || []);
+    
+    return {
+      2022: allChannels.some((ch: any) => ch[2022] && ch[2022] > 0),
+      2023: allChannels.some((ch: any) => ch[2023] && ch[2023] > 0),
+      2024: allChannels.some((ch: any) => ch[2024] && ch[2024] > 0),
+    };
+  }, [data]);
 
   if (!data) {
     return (
@@ -152,36 +174,46 @@ const RadioChannelBreakdownTable = ({ data }) => {
                 >
                   Channel {getSortIcon("channel")}
                 </th>
-                <th
-                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => handleSort("year2022")}
-                >
-                  2022 {getSortIcon("year2022")}
-                </th>
-                <th
-                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => handleSort("growth2022to2023")}
-                >
-                  % Growth {getSortIcon("growth2022to2023")}
-                </th>
-                <th
-                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => handleSort("year2023")}
-                >
-                  2023 {getSortIcon("year2023")}
-                </th>
-                <th
-                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => handleSort("growth2023to2024")}
-                >
-                  % Growth {getSortIcon("growth2023to2024")}
-                </th>
-                <th
-                  className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => handleSort("year2024")}
-                >
-                  2024 {getSortIcon("year2024")}
-                </th>
+                {availableYears[2022] && (
+                  <th
+                    className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => handleSort("year2022")}
+                  >
+                    2022 {getSortIcon("year2022")}
+                  </th>
+                )}
+                {showGrowthColumns && availableYears[2022] && availableYears[2023] && (
+                  <th
+                    className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => handleSort("growth2022to2023")}
+                  >
+                    % Growth {getSortIcon("growth2022to2023")}
+                  </th>
+                )}
+                {availableYears[2023] && (
+                  <th
+                    className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => handleSort("year2023")}
+                  >
+                    2023 {getSortIcon("year2023")}
+                  </th>
+                )}
+                {showGrowthColumns && availableYears[2023] && availableYears[2024] && (
+                  <th
+                    className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => handleSort("growth2023to2024")}
+                  >
+                    % Growth {getSortIcon("growth2023to2024")}
+                  </th>
+                )}
+                {availableYears[2024] && (
+                  <th
+                    className="text-right py-3 px-4 font-semibold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => handleSort("year2024")}
+                  >
+                    2024 {getSortIcon("year2024")}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -201,21 +233,31 @@ const RadioChannelBreakdownTable = ({ data }) => {
                   >
                     {channel.channel}
                   </td>
-                  <td className="text-right py-3 px-4 text-xs font-sans">
-                    {formatCurrency(channel[2022])}
-                  </td>
-                  <td className="text-right py-3 px-4 font-sans">
-                    {formatPercentage(channel.growth2022to2023)}
-                  </td>
-                  <td className="text-right py-3 px-4 text-xs font-sans">
-                    {formatCurrency(channel[2023])}
-                  </td>
-                  <td className="text-right py-3 px-4 font-sans">
-                    {formatPercentage(channel.growth2023to2024)}
-                  </td>
-                  <td className="text-right py-3 px-4 text-xs font-sans">
-                    {formatCurrency(channel[2024])}
-                  </td>
+                  {availableYears[2022] && (
+                    <td className="text-right py-3 px-4 text-xs font-sans">
+                      {formatCurrency(channel[2022])}
+                    </td>
+                  )}
+                  {showGrowthColumns && availableYears[2022] && availableYears[2023] && (
+                    <td className="text-right py-3 px-4 font-sans">
+                      {formatPercentage(channel.growth2022to2023)}
+                    </td>
+                  )}
+                  {availableYears[2023] && (
+                    <td className="text-right py-3 px-4 text-xs font-sans">
+                      {formatCurrency(channel[2023])}
+                    </td>
+                  )}
+                  {showGrowthColumns && availableYears[2023] && availableYears[2024] && (
+                    <td className="text-right py-3 px-4 font-sans">
+                      {formatPercentage(channel.growth2023to2024)}
+                    </td>
+                  )}
+                  {availableYears[2024] && (
+                    <td className="text-right py-3 px-4 text-xs font-sans">
+                      {formatCurrency(channel[2024])}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

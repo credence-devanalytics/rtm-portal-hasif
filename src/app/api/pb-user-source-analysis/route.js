@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { pberitaFirstUserSource } from "../../../../drizzle/schema";
-import { sql } from "drizzle-orm";
+import { sql, and, gte, lte } from "drizzle-orm";
 
 export async function GET(request) {
 	try {
@@ -11,9 +11,34 @@ export async function GET(request) {
 		const { searchParams } = new URL(request.url);
 		const limit = searchParams.get("limit") || "5"; // Default to top 5
 		const limitNum = parseInt(limit);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
+
+		console.log('Filter params:', { limit, yearParam, monthParam });
+
+		// Build date filter conditions
+		const dateFilters = [];
+
+		if (monthParam) {
+			// Month filter: YYYY-MM format
+			const [year, month] = monthParam.split('-');
+			const startDate = `${year}-${month}-01`;
+			const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+			const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+			dateFilters.push(gte(pberitaFirstUserSource.date, startDate));
+			dateFilters.push(lte(pberitaFirstUserSource.date, endDate));
+			console.log('Month filter applied:', { startDate, endDate });
+		} else if (yearParam) {
+			// Year only filter
+			const startDate = `${yearParam}-01-01`;
+			const endDate = `${yearParam}-12-31`;
+			dateFilters.push(gte(pberitaFirstUserSource.date, startDate));
+			dateFilters.push(lte(pberitaFirstUserSource.date, endDate));
+			console.log('Year filter applied:', { startDate, endDate });
+		}
 
 		// Fetch user source data and group by main source
-		const userSourceData = await db
+		let userSourceQuery = db
 			.select({
 				mainSource: pberitaFirstUserSource.mainSource,
 				totalActiveUsers: sql`SUM(${pberitaFirstUserSource.activeusers})`.as(
@@ -24,10 +49,19 @@ export async function GET(request) {
 					"avgDailyUsers"
 				),
 			})
-			.from(pberitaFirstUserSource)
+			.from(pberitaFirstUserSource);
+
+		// Apply date filters if present
+		if (dateFilters.length > 0) {
+			userSourceQuery = userSourceQuery.where(and(...dateFilters));
+		}
+
+		userSourceQuery = userSourceQuery
 			.groupBy(pberitaFirstUserSource.mainSource)
 			.orderBy(sql`SUM(${pberitaFirstUserSource.activeusers}) DESC`)
 			.limit(limitNum);
+
+		const userSourceData = await userSourceQuery;
 
 		console.log("PB User Source data:", userSourceData);
 

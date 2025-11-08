@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { pberitaPopularPages } from "../../../../drizzle/schema";
-import { sql } from "drizzle-orm";
+import { sql, and, gte, lte } from "drizzle-orm";
 
 export async function GET(request) {
 	try {
@@ -11,9 +11,34 @@ export async function GET(request) {
 		const { searchParams } = new URL(request.url);
 		const limit = searchParams.get("limit") || "10"; // Default to top 10
 		const limitNum = parseInt(limit);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
+
+		console.log('Filter params:', { limit, yearParam, monthParam });
+
+		// Build date filter conditions
+		const dateFilters = [];
+
+		if (monthParam) {
+			// Month filter: YYYY-MM format
+			const [year, month] = monthParam.split('-');
+			const startDate = `${year}-${month}-01`;
+			const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+			const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+			dateFilters.push(gte(pberitaPopularPages.date, startDate));
+			dateFilters.push(lte(pberitaPopularPages.date, endDate));
+			console.log('Month filter applied:', { startDate, endDate });
+		} else if (yearParam) {
+			// Year only filter
+			const startDate = `${yearParam}-01-01`;
+			const endDate = `${yearParam}-12-31`;
+			dateFilters.push(gte(pberitaPopularPages.date, startDate));
+			dateFilters.push(lte(pberitaPopularPages.date, endDate));
+			console.log('Year filter applied:', { startDate, endDate });
+		}
 
 		// Fetch popular pages data
-		const popularPages = await db
+		let popularPagesQuery = db
 			.select({
 				unifiedScreenClass: pberitaPopularPages.unifiedscreenclass,
 				screenPageViews: sql`SUM(${pberitaPopularPages.screenpageviews})`.as(
@@ -21,10 +46,19 @@ export async function GET(request) {
 				),
 				activeUsers: sql`SUM(${pberitaPopularPages.activeusers})`.as("activeUsers"),
 			})
-			.from(pberitaPopularPages)
+			.from(pberitaPopularPages);
+
+		// Apply date filters if present
+		if (dateFilters.length > 0) {
+			popularPagesQuery = popularPagesQuery.where(and(...dateFilters));
+		}
+
+		popularPagesQuery = popularPagesQuery
 			.groupBy(pberitaPopularPages.unifiedscreenclass)
 			.orderBy(sql`SUM(${pberitaPopularPages.screenpageviews}) DESC`)
 			.limit(limitNum);
+
+		const popularPages = await popularPagesQuery;
 
 		console.log("PB Popular Pages data:", popularPages);
 
@@ -37,9 +71,9 @@ export async function GET(request) {
 			avgViewsPerUser:
 				parseInt(item.activeUsers) > 0
 					? (
-							(parseInt(item.screenPageViews) || 0) /
-							(parseInt(item.activeUsers) || 1)
-					  ).toFixed(2)
+						(parseInt(item.screenPageViews) || 0) /
+						(parseInt(item.activeUsers) || 1)
+					).toFixed(2)
 					: "0.00",
 		}));
 

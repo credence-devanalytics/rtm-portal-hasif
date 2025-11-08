@@ -1,19 +1,43 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { pberitaAudienceGender } from "../../../../drizzle/schema";
-import { sql } from "drizzle-orm";
+import { sql, and, gte, lte } from "drizzle-orm";
 
 export async function GET(request) {
 	try {
 		console.log("PB Gender Distribution API called");
 
-		// Get view type from query parameters
+		// Get query parameters
 		const { searchParams } = new URL(request.url);
 		const viewType = searchParams.get("view");
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
+
+		console.log('Filter params:', { viewType, yearParam, monthParam });
+
+		// Build date filter conditions
+		const dateFilters = [];
+		if (monthParam) {
+			// Month filter: YYYY-MM format
+			const [year, month] = monthParam.split('-');
+			const startDate = `${year}-${month}-01`;
+			const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+			const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+			dateFilters.push(gte(pberitaAudienceGender.date, startDate));
+			dateFilters.push(lte(pberitaAudienceGender.date, endDate));
+			console.log('Month filter applied:', { startDate, endDate });
+		} else if (yearParam) {
+			// Year only filter
+			const startDate = `${yearParam}-01-01`;
+			const endDate = `${yearParam}-12-31`;
+			dateFilters.push(gte(pberitaAudienceGender.date, startDate));
+			dateFilters.push(lte(pberitaAudienceGender.date, endDate));
+			console.log('Year filter applied:', { startDate, endDate });
+		}
 
 		if (viewType === "hourly" || viewType === "hourly-pm") {
 			// Fetch hourly gender distribution
-			const hourlyGenderData = await db
+			let hourlyGenderQuery = db
 				.select({
 					hour: pberitaAudienceGender.hour,
 					usergender: pberitaAudienceGender.usergender,
@@ -24,12 +48,22 @@ export async function GET(request) {
 						"totalNewUsers"
 					),
 				})
-				.from(pberitaAudienceGender)
-				.where(
-					sql`${pberitaAudienceGender.hour} IS NOT NULL AND ${pberitaAudienceGender.hour} != ''`
-				)
+				.from(pberitaAudienceGender);
+
+			// Apply date filters if present
+			const hourFilters = [
+				sql`${pberitaAudienceGender.hour} IS NOT NULL AND ${pberitaAudienceGender.hour} != ''`
+			];
+			if (dateFilters.length > 0) {
+				hourFilters.push(...dateFilters);
+			}
+
+			hourlyGenderQuery = hourlyGenderQuery
+				.where(and(...hourFilters))
 				.groupBy(pberitaAudienceGender.hour, pberitaAudienceGender.usergender)
 				.orderBy(pberitaAudienceGender.hour);
+
+			const hourlyGenderData = await hourlyGenderQuery;
 
 			console.log("Hourly gender data from DB:", hourlyGenderData);
 
@@ -74,7 +108,7 @@ export async function GET(request) {
 		}
 
 		// Overall gender distribution
-		const genderData = await db
+		let genderDataQuery = db
 			.select({
 				usergender: pberitaAudienceGender.usergender,
 				totalActiveUsers: sql`SUM(${pberitaAudienceGender.activeusers})`.as(
@@ -85,8 +119,16 @@ export async function GET(request) {
 				),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
 			})
-			.from(pberitaAudienceGender)
-			.groupBy(pberitaAudienceGender.usergender);
+			.from(pberitaAudienceGender);
+
+		// Apply date filters if present
+		if (dateFilters.length > 0) {
+			genderDataQuery = genderDataQuery.where(and(...dateFilters));
+		}
+
+		genderDataQuery = genderDataQuery.groupBy(pberitaAudienceGender.usergender);
+
+		const genderData = await genderDataQuery;
 
 		const chartData = genderData.map((item) => ({
 			gender: item.usergender,
@@ -132,13 +174,13 @@ export async function GET(request) {
 					genderRatio:
 						chartData.length >= 2
 							? {
-									female:
-										chartData.find((item) => item.gender === "female")
-											?.percentage || 0,
-									male:
-										chartData.find((item) => item.gender === "male")
-											?.percentage || 0,
-							  }
+								female:
+									chartData.find((item) => item.gender === "female")
+										?.percentage || 0,
+								male:
+									chartData.find((item) => item.gender === "male")
+										?.percentage || 0,
+							}
 							: null,
 				},
 			},

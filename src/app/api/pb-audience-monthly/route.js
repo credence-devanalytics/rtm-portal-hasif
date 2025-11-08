@@ -3,25 +3,53 @@ import { db } from "@/index";
 import { pberitaAudience } from "../../../../drizzle/schema";
 import { asc, sql, gte, and, lte } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request) {
 	try {
 		console.log("PB Audience Monthly API called");
 
-		// Fetch 2025 data only and aggregate by month using SQL
-		const monthlyData = await db
+		// Get query parameters for filtering
+		const { searchParams } = new URL(request.url);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
+
+		console.log('Filter params:', { yearParam, monthParam });
+
+		// Build date filter conditions
+		const dateFilters = [];
+		if (monthParam) {
+			// Month filter: YYYY-MM format
+			const [year, month] = monthParam.split('-');
+			const startDate = `${year}-${month}-01`;
+			const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+			const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+			dateFilters.push(gte(pberitaAudience.date, startDate));
+			dateFilters.push(lte(pberitaAudience.date, endDate));
+			console.log('Month filter applied:', { startDate, endDate });
+		} else if (yearParam) {
+			// Year only filter
+			const startDate = `${yearParam}-01-01`;
+			const endDate = `${yearParam}-12-31`;
+			dateFilters.push(gte(pberitaAudience.date, startDate));
+			dateFilters.push(lte(pberitaAudience.date, endDate));
+			console.log('Year filter applied:', { startDate, endDate });
+		}
+
+		// Fetch data and aggregate by month using SQL
+		let monthlyDataQuery = db
 			.select({
 				month: sql`EXTRACT(MONTH FROM ${pberitaAudience.date})`.as("month"),
 				year: sql`EXTRACT(YEAR FROM ${pberitaAudience.date})`.as("year"),
 				totalUsers: sql`SUM(${pberitaAudience.totalusers})`.as("totalUsers"),
 				newUsers: sql`SUM(${pberitaAudience.newusers})`.as("newUsers"),
 			})
-			.from(pberitaAudience)
-			.where(
-				and(
-					gte(pberitaAudience.date, "2025-01-01"),
-					lte(pberitaAudience.date, "2025-12-31")
-				)
-			)
+			.from(pberitaAudience);
+
+		// Apply date filters if present
+		if (dateFilters.length > 0) {
+			monthlyDataQuery = monthlyDataQuery.where(and(...dateFilters));
+		}
+
+		monthlyDataQuery = monthlyDataQuery
 			.groupBy(
 				sql`EXTRACT(YEAR FROM ${pberitaAudience.date})`,
 				sql`EXTRACT(MONTH FROM ${pberitaAudience.date})`
@@ -30,6 +58,8 @@ export async function GET() {
 				sql`EXTRACT(YEAR FROM ${pberitaAudience.date})`,
 				sql`EXTRACT(MONTH FROM ${pberitaAudience.date})`
 			);
+
+		const monthlyData = await monthlyDataQuery;
 
 		console.log("Monthly aggregated data:", monthlyData);
 

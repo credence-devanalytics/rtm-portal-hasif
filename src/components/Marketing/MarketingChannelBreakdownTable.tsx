@@ -10,11 +10,19 @@ import {
   ArrowDown,
 } from "lucide-react";
 
-const MarketingChannelBreakdownTable = ({ data }) => {
+interface MarketingChannelBreakdownTableProps {
+  data: any;
+  selectedYear?: string;
+}
+
+const MarketingChannelBreakdownTable = ({ data, selectedYear = "all" }: MarketingChannelBreakdownTableProps) => {
   const [sortConfig, setSortConfig] = useState({
     key: "year2024",
     direction: "desc",
   });
+
+  // Determine if we should show growth columns
+  const showGrowthColumns = selectedYear === "all";
 
   if (!data || !data.channels) {
     return (
@@ -36,6 +44,16 @@ const MarketingChannelBreakdownTable = ({ data }) => {
   }
 
   const { channels, totals } = data;
+
+  // Determine which years have data
+  const availableYears = useMemo(() => {
+    const years = {
+      2022: channels.some((ch: any) => ch.year2022 && ch.year2022 > 0),
+      2023: channels.some((ch: any) => ch.year2023 && ch.year2023 > 0),
+      2024: channels.some((ch: any) => ch.year2024 && ch.year2024 > 0),
+    };
+    return years;
+  }, [channels]);
 
   // Function to get trend icon and color
   const getTrendIcon = (value) => {
@@ -150,36 +168,46 @@ const MarketingChannelBreakdownTable = ({ data }) => {
                 >
                   Channel {getSortIcon("channel")}
                 </th>
-                <th
-                  className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => handleSort("year2022")}
-                >
-                  2022 {getSortIcon("year2022")}
-                </th>
-                <th
-                  className="text-center py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => handleSort("growth2022to2023")}
-                >
-                  2022-2023 {getSortIcon("growth2022to2023")}
-                </th>
-                <th
-                  className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => handleSort("year2023")}
-                >
-                  2023 {getSortIcon("year2023")}
-                </th>
-                <th
-                  className="text-center py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => handleSort("growth2023to2024")}
-                >
-                  2023-2024 {getSortIcon("growth2023to2024")}
-                </th>
-                <th
-                  className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => handleSort("year2024")}
-                >
-                  2024 {getSortIcon("year2024")}
-                </th>
+                {availableYears[2022] && (
+                  <th
+                    className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("year2022")}
+                  >
+                    2022 {getSortIcon("year2022")}
+                  </th>
+                )}
+                {showGrowthColumns && availableYears[2022] && availableYears[2023] && (
+                  <th
+                    className="text-center py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("growth2022to2023")}
+                  >
+                    2022-2023 {getSortIcon("growth2022to2023")}
+                  </th>
+                )}
+                {availableYears[2023] && (
+                  <th
+                    className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("year2023")}
+                  >
+                    2023 {getSortIcon("year2023")}
+                  </th>
+                )}
+                {showGrowthColumns && availableYears[2023] && availableYears[2024] && (
+                  <th
+                    className="text-center py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("growth2023to2024")}
+                  >
+                    2023-2024 {getSortIcon("growth2023to2024")}
+                  </th>
+                )}
+                {availableYears[2024] && (
+                  <th
+                    className="text-right py-3 px-2 font-bold text-sm text-gray-700 font-sans cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("year2024")}
+                  >
+                    2024 {getSortIcon("year2024")}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -199,35 +227,45 @@ const MarketingChannelBreakdownTable = ({ data }) => {
                     <td className="py-3 px-2 font-medium text-gray-900">
                       {channel.channel}
                     </td>
-                    <td className="py-3 px-2 text-right text-gray-700">
-                      {channel.formatted2022}
-                    </td>
-                    <td className="py-3 px-2 text-center">
-                      <div
-                        className={`flex items-center justify-center gap-1 ${trend2022to2023.color}`}
-                      >
-                        <TrendIcon2022to2023 className="h-3 w-3" />
-                        <span className="text-xs font-medium">
-                          {trend2022to2023.text}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-2 text-right text-gray-700">
-                      {channel.formatted2023}
-                    </td>
-                    <td className="py-3 px-2 text-center">
-                      <div
-                        className={`flex items-center justify-center gap-1 ${trend2023to2024.color}`}
-                      >
-                        <TrendIcon2023to2024 className="h-3 w-3" />
-                        <span className="text-xs font-medium">
-                          {trend2023to2024.text}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-2 text-right text-gray-700">
-                      {channel.formatted2024}
-                    </td>
+                    {availableYears[2022] && (
+                      <td className="py-3 px-2 text-right text-gray-700">
+                        {channel.formatted2022}
+                      </td>
+                    )}
+                    {showGrowthColumns && availableYears[2022] && availableYears[2023] && (
+                      <td className="py-3 px-2 text-center">
+                        <div
+                          className={`flex items-center justify-center gap-1 ${trend2022to2023.color}`}
+                        >
+                          <TrendIcon2022to2023 className="h-3 w-3" />
+                          <span className="text-xs font-medium">
+                            {trend2022to2023.text}
+                          </span>
+                        </div>
+                      </td>
+                    )}
+                    {availableYears[2023] && (
+                      <td className="py-3 px-2 text-right text-gray-700">
+                        {channel.formatted2023}
+                      </td>
+                    )}
+                    {showGrowthColumns && availableYears[2023] && availableYears[2024] && (
+                      <td className="py-3 px-2 text-center">
+                        <div
+                          className={`flex items-center justify-center gap-1 ${trend2023to2024.color}`}
+                        >
+                          <TrendIcon2023to2024 className="h-3 w-3" />
+                          <span className="text-xs font-medium">
+                            {trend2023to2024.text}
+                          </span>
+                        </div>
+                      </td>
+                    )}
+                    {availableYears[2024] && (
+                      <td className="py-3 px-2 text-right text-gray-700">
+                        {channel.formatted2024}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -237,45 +275,55 @@ const MarketingChannelBreakdownTable = ({ data }) => {
                 <td className="py-4 px-2 text-gray-900 font-bold">
                   {totals.channel}
                 </td>
-                <td className="py-4 px-2 text-right text-gray-900">
-                  {totals.formatted2022}
-                </td>
-                <td className="py-4 px-2 text-center">
-                  <div
-                    className={`flex items-center justify-center gap-1 ${
-                      getTrendIcon(totals.growth2022to2023).color
-                    }`}
-                  >
-                    {React.createElement(
-                      getTrendIcon(totals.growth2022to2023).icon,
-                      { className: "h-3 w-3" }
-                    )}
-                    <span className="text-xs font-bold">
-                      {getTrendIcon(totals.growth2022to2023).text}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-4 px-2 text-right text-gray-900">
-                  {totals.formatted2023}
-                </td>
-                <td className="py-4 px-2 text-center">
-                  <div
-                    className={`flex items-center justify-center gap-1 ${
-                      getTrendIcon(totals.growth2023to2024).color
-                    }`}
-                  >
-                    {React.createElement(
-                      getTrendIcon(totals.growth2023to2024).icon,
-                      { className: "h-3 w-3" }
-                    )}
-                    <span className="text-xs font-bold">
-                      {getTrendIcon(totals.growth2023to2024).text}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-4 px-2 text-right text-gray-900">
-                  {totals.formatted2024}
-                </td>
+                {availableYears[2022] && (
+                  <td className="py-4 px-2 text-right text-gray-900">
+                    {totals.formatted2022}
+                  </td>
+                )}
+                {showGrowthColumns && availableYears[2022] && availableYears[2023] && (
+                  <td className="py-4 px-2 text-center">
+                    <div
+                      className={`flex items-center justify-center gap-1 ${
+                        getTrendIcon(totals.growth2022to2023).color
+                      }`}
+                    >
+                      {React.createElement(
+                        getTrendIcon(totals.growth2022to2023).icon,
+                        { className: "h-3 w-3" }
+                      )}
+                      <span className="text-xs font-bold">
+                        {getTrendIcon(totals.growth2022to2023).text}
+                      </span>
+                    </div>
+                  </td>
+                )}
+                {availableYears[2023] && (
+                  <td className="py-4 px-2 text-right text-gray-900">
+                    {totals.formatted2023}
+                  </td>
+                )}
+                {showGrowthColumns && availableYears[2023] && availableYears[2024] && (
+                  <td className="py-4 px-2 text-center">
+                    <div
+                      className={`flex items-center justify-center gap-1 ${
+                        getTrendIcon(totals.growth2023to2024).color
+                      }`}
+                    >
+                      {React.createElement(
+                        getTrendIcon(totals.growth2023to2024).icon,
+                        { className: "h-3 w-3" }
+                      )}
+                      <span className="text-xs font-bold">
+                        {getTrendIcon(totals.growth2023to2024).text}
+                      </span>
+                    </div>
+                  </td>
+                )}
+                {availableYears[2024] && (
+                  <td className="py-4 px-2 text-right text-gray-900">
+                    {totals.formatted2024}
+                  </td>
+                )}
               </tr>
             </tbody>
           </table>

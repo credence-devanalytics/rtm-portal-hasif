@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -19,6 +20,23 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
       </div>
     );
   }
+
+  // Determine which years have data
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    data.forEach((item) => {
+      if (item[2022] && item[2022] > 0) years.add(2022);
+      if (item[2023] && item[2023] > 0) years.add(2023);
+      if (item[2024] && item[2024] > 0) years.add(2024);
+    });
+    return Array.from(years).sort();
+  }, [data]);
+
+  const yearColors = {
+    2022: "#8884d8",
+    2023: "#82ca9d",
+    2024: "#ffc658",
+  };
 
   // Custom tooltip formatter
   const CustomTooltip = ({ active, payload, label }) => {
@@ -89,30 +107,17 @@ const RadioMonthlyPerformanceChart = ({ data }) => {
               fontFamily: "var(--font-geist-sans)",
             }}
           />
-          <Line
-            type="linear"
-            dataKey="2022"
-            stroke="#8884d8"
-            strokeWidth={3}
-            dot={{ r: 5, fill: "#8884d8", strokeWidth: 0 }}
-            name="2022"
-          />
-          <Line
-            type="linear"
-            dataKey="2023"
-            stroke="#82ca9d"
-            strokeWidth={3}
-            dot={{ r: 5, fill: "#82ca9d", strokeWidth: 0 }}
-            name="2023"
-          />
-          <Line
-            type="linear"
-            dataKey="2024"
-            stroke="#ffc658"
-            strokeWidth={3}
-            dot={{ r: 5, fill: "#ffc658", strokeWidth: 0 }}
-            name="2024"
-          />
+          {availableYears.map((year) => (
+            <Line
+              key={year}
+              type="linear"
+              dataKey={year.toString()}
+              stroke={yearColors[year]}
+              strokeWidth={3}
+              dot={{ r: 5, fill: yearColors[year], strokeWidth: 0 }}
+              name={year.toString()}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>

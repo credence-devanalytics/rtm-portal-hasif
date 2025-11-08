@@ -180,7 +180,7 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
     return (
       <Card
         ref={setCardRef}
-        className="fixed z-50 shadow-2xl border-2 border-slate-200 bg-white transition-shadow hover:shadow-3xl cursor-pointer"
+        className="active-filters-card fixed z-50 shadow-2xl border-2 border-slate-200 bg-white transition-shadow hover:shadow-3xl cursor-pointer"
         style={{
           left: `${position.x}px`,
           bottom: `${position.y}px`,
@@ -207,7 +207,7 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
   return (
     <Card
       ref={setCardRef}
-      className="fixed z-50 shadow-2xl border-2 border-slate-200 max-w-lg bg-white transition-shadow hover:shadow-3xl"
+      className="active-filters-card fixed z-50 shadow-2xl border-2 border-slate-200 max-w-lg bg-white transition-shadow hover:shadow-3xl"
       style={{
         left: `${position.x}px`,
         bottom: `${position.y}px`,
@@ -278,6 +278,7 @@ const RTMDashboard = () => {
       to: today,
     };
   });
+  const [isExporting, setIsExporting] = useState(false);
 
   // Global filter state
   const [globalFilters, setGlobalFilters] = useState({
@@ -937,6 +938,12 @@ const RTMDashboard = () => {
 
   const exportData = async () => {
     try {
+      // Show export overlay
+      setIsExporting(true);
+
+      // Wait a brief moment for the overlay to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Get the dashboard container
       const dashboardElement = document.querySelector(
         ".dashboard-container"
@@ -944,16 +951,17 @@ const RTMDashboard = () => {
 
       if (!dashboardElement) {
         alert("Dashboard container not found. Please refresh and try again.");
+        setIsExporting(false);
         return;
       }
 
       // Hide the active filters card and export button temporarily
       const activeFiltersCard = document.querySelector(
-        ".fixed.z-50"
-      ) as HTMLElement;
+        ".active-filters-card"
+      ) as HTMLElement | null;
       const exportButton = document.querySelector(
         'button[title*="Opens print dialog"]'
-      ) as HTMLElement;
+      ) as HTMLElement | null;
 
       if (activeFiltersCard) activeFiltersCard.style.display = "none";
       if (exportButton) exportButton.style.display = "none";
@@ -961,8 +969,10 @@ const RTMDashboard = () => {
       // Temporarily remove max-width constraints to capture full content
       const originalMaxWidth = dashboardElement.style.maxWidth;
       const originalWidth = dashboardElement.style.width;
+      const originalMargin = dashboardElement.style.margin;
       dashboardElement.style.maxWidth = "none";
-      dashboardElement.style.width = "max-content";
+      dashboardElement.style.width = "fit-content";
+      dashboardElement.style.margin = "0";
 
       // Scroll to top
       window.scrollTo(0, 0);
@@ -993,7 +1003,7 @@ const RTMDashboard = () => {
       // Capture with html-to-image with ULTRA HIGH QUALITY settings
       const dataUrl = await htmlToImage.toPng(dashboardElement, {
         quality: 1.0, // Maximum quality
-        pixelRatio: 4, // 4x resolution for ultra-crisp output (sharper than 2x)
+        pixelRatio: 2, // 2x resolution (optimal for capturing wide content)
         cacheBust: true, // Prevent caching issues
         backgroundColor: "#ffffff",
         width: fullWidth, // Use full width including scrollable area
@@ -1007,6 +1017,7 @@ const RTMDashboard = () => {
       // Restore original styles
       dashboardElement.style.maxWidth = originalMaxWidth;
       dashboardElement.style.width = originalWidth;
+      dashboardElement.style.margin = originalMargin;
 
       // Show hidden elements again
       if (activeFiltersCard) activeFiltersCard.style.display = "";
@@ -1076,6 +1087,9 @@ const RTMDashboard = () => {
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
+    } finally {
+      // Hide export overlay
+      setIsExporting(false);
     }
   };
 
@@ -1110,16 +1124,48 @@ const RTMDashboard = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20 dashboard-container">
-      {/* Header with Controls */}
-      <Header />
+    <>
+      {/* Export Overlay - MUST be outside dashboard-container */}
+      {isExporting && (
+        <div className="export-overlay fixed inset-0 z-[100] flex items-center justify-center" style={{ minHeight: '100vh', height: '100%' }}>
+          {/* Blurred backdrop - scrollable, extended to cover full document height */}
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-md" style={{ minHeight: '100vh', height: '100%', width: '100vw' }}></div>
+          
+          {/* Loading message */}
+          <div className="relative z-10 bg-white rounded-lg shadow-2xl border-2 border-blue-500 p-8 max-w-md mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Download className="h-16 w-16 text-blue-600 animate-bounce" />
+                <div className="absolute inset-0 h-16 w-16 text-blue-400 animate-ping opacity-75">
+                  <Download className="h-16 w-16" />
+                </div>  
+              </div>
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Exporting in Progress
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Please wait while we generate your PDF...
+                </p>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse w-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Floating Active Filters */}
-      <ActiveFilters
-        filters={globalFilters}
-        onRemoveFilter={handleRemoveFilter}
-        onClearAll={handleClearAllFilters}
-      />
+      <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20 dashboard-container">
+        {/* Header with Controls */}
+        <Header />
+
+        {/* Floating Active Filters */}
+        <ActiveFilters
+          filters={globalFilters}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAll={handleClearAllFilters}
+        />
 
       {/* Subtle loading indicator at the top */}
       {isLoadingMetrics && (
@@ -1681,6 +1727,7 @@ const RTMDashboard = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
