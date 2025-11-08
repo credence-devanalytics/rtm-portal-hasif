@@ -2,14 +2,44 @@ import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { sql } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: Request) {
 	try {
-		console.log("TV Monthly Marketing API called");
+		const { searchParams } = new URL(request.url);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
 
-		// Fetch TV monthly data from database using raw SQL
-		const result = await db.execute(sql`
-			SELECT * FROM marketing_channel_bymonth WHERE report_type = 'Chart 2'
-		`);
+		console.log("TV Monthly Marketing API called");
+		console.log("Filter params:", { yearParam, monthParam });
+
+		// Build WHERE clause with filters
+		let whereClause = `WHERE report_type = 'Chart 2'`;
+
+		if (yearParam && yearParam !== "all") {
+			whereClause += ` AND year = ${parseInt(yearParam)}`;
+			console.log("Filtering by year:", yearParam);
+		}
+
+		if (monthParam && monthParam !== "all") {
+			const [year, month] = monthParam.split('-');
+			// Map month number to Malay month name
+			const monthNames: Record<string, string> = {
+				'01': 'Januari', '02': 'Februari', '03': 'Mac', '04': 'April',
+				'05': 'Mei', '06': 'Jun', '07': 'Julai', '08': 'Ogos',
+				'09': 'September', '10': 'Oktober', '11': 'November', '12': 'Disember'
+			};
+			const monthName = monthNames[month];
+			whereClause += ` AND month = '${monthName}'`;
+			if (year) {
+				whereClause += ` AND year = ${parseInt(year)}`;
+			}
+			console.log("Filtering by month:", monthName, "year:", year);
+		}
+
+		// Fetch TV monthly data from database using raw SQL with filters
+		const query = `SELECT * FROM marketing_channel_bymonth ${whereClause}`;
+		console.log("Executing query:", query);
+
+		const result = await db.execute(sql.raw(query));
 		const monthlyData = result.rows;
 
 		console.log("Monthly TV data:", monthlyData);
@@ -78,15 +108,15 @@ export async function GET() {
 		const growth2022to2023 =
 			Number(yearlyTotals[2022]) > 0
 				? ((Number(yearlyTotals[2023]) - Number(yearlyTotals[2022])) /
-						Number(yearlyTotals[2022])) *
-				  100
+					Number(yearlyTotals[2022])) *
+				100
 				: 0;
 
 		const growth2023to2024 =
 			Number(yearlyTotals[2023]) > 0
 				? ((Number(yearlyTotals[2024]) - Number(yearlyTotals[2023])) /
-						Number(yearlyTotals[2023])) *
-				  100
+					Number(yearlyTotals[2023])) *
+				100
 				: 0;
 
 		const response = {

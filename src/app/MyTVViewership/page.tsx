@@ -18,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  CalendarIcon,
   TrendingUpIcon,
   UsersIcon,
   PlayCircleIcon,
@@ -35,6 +34,8 @@ import {
   Download,
 } from "lucide-react";
 import Header from "@/components/Header";
+import * as htmlToImage from "html-to-image";
+import jsPDF from "jspdf";
 
 // Import recharts components
 import {
@@ -59,10 +60,10 @@ const MyTVViewershipPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Filters State
   const [filters, setFilters] = useState({
-    year: "all", // Changed from "2025" to "all" to show all years
     region: "all",
     channel: "all",
     sortBy: "viewers",
@@ -86,7 +87,6 @@ const MyTVViewershipPage = () => {
     "TV6",
     "BERNAMA",
   ];
-  const availableYears = ["2024", "2025", "2023", "2022"]; // Added more years
   const availableRegions = ["Semenanjung Malaysia", "Kota Kinabalu & Kuching"];
 
   // Fetch data function
@@ -146,7 +146,6 @@ const MyTVViewershipPage = () => {
 
   const resetFilters = () => {
     setFilters({
-      year: "all", // Changed from "2025" to "all"
       region: "all",
       channel: "all",
       sortBy: "viewers",
@@ -179,31 +178,162 @@ const MyTVViewershipPage = () => {
     return num.toLocaleString();
   };
 
-  // Export data function
-  const exportData = () => {
-    const dataToExport = {
-      summary: data?.summary,
-      channelBreakdown: data?.channelBreakdown,
-      regionalBreakdown: data?.regionalBreakdown,
-      data: data?.data,
-      filters: filters,
-      exportDate: new Date().toISOString(),
-    };
+  // Export data function - PDF Export with high quality
+  const exportData = async () => {
+    try {
+      // Show export overlay
+      setIsExporting(true);
 
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
-      type: "application/json",
-    });
+      // Wait a brief moment for the overlay to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `mytv-viewership-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      // Get the dashboard container
+      const dashboardElement = document.querySelector(
+        ".dashboard-container"
+      ) as HTMLElement;
+
+      if (!dashboardElement) {
+        alert("Dashboard container not found. Please refresh and try again.");
+        setIsExporting(false);
+        return;
+      }
+
+      // Hide the active filters card and export button temporarily
+      const activeFiltersCard = document.querySelector(
+        ".fixed.z-50"
+      ) as HTMLElement | null;
+      const exportButton = document.querySelector(
+        'button[title*="Opens print dialog"]'
+      ) as HTMLElement | null;
+
+      if (activeFiltersCard) activeFiltersCard.style.display = "none";
+      if (exportButton) exportButton.style.display = "none";
+
+      // Temporarily remove max-width constraints to capture full content
+      const originalMaxWidth = dashboardElement.style.maxWidth;
+      const originalWidth = dashboardElement.style.width;
+      const originalMargin = dashboardElement.style.margin;
+      dashboardElement.style.maxWidth = "none";
+      dashboardElement.style.width = "fit-content";
+      dashboardElement.style.margin = "0";
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+
+      // Wait for layout to stabilize after width change
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Get the full scrollable width and height (including overflow)
+      const fullWidth = Math.max(
+        dashboardElement.scrollWidth,
+        dashboardElement.offsetWidth,
+        dashboardElement.clientWidth
+      );
+      const fullHeight = Math.max(
+        dashboardElement.scrollHeight,
+        dashboardElement.offsetHeight,
+        dashboardElement.clientHeight
+      );
+
+      console.log("📐 Capturing dimensions:", {
+        scrollWidth: dashboardElement.scrollWidth,
+        offsetWidth: dashboardElement.offsetWidth,
+        clientWidth: dashboardElement.clientWidth,
+        fullWidth,
+        fullHeight,
+      });
+
+      // Capture with html-to-image with ULTRA HIGH QUALITY settings
+      const dataUrl = await htmlToImage.toPng(dashboardElement, {
+        quality: 1.0, // Maximum quality
+        pixelRatio: 2, // 2x resolution (optimal for capturing wide content)
+        cacheBust: true, // Prevent caching issues
+        backgroundColor: "#ffffff",
+        width: fullWidth, // Use full width including scrollable area
+        height: fullHeight, // Use full height including scrollable area
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+        },
+      });
+
+      // Restore original styles
+      dashboardElement.style.maxWidth = originalMaxWidth;
+      dashboardElement.style.width = originalWidth;
+      dashboardElement.style.margin = originalMargin;
+
+      // Show hidden elements again
+      if (activeFiltersCard) activeFiltersCard.style.display = "";
+      if (exportButton) exportButton.style.display = "";
+
+      // Create an image to get dimensions
+      const img = new Image();
+      img.src = dataUrl;
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Create PDF - scale down to 50% of original size
+      const scaleFactor = 0.57;
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+
+      // Calculate dimensions with scale factor (300 DPI for print quality)
+      let scaledWidth = img.width * scaleFactor * 0.084667; // Convert pixels to mm (300 DPI)
+      let scaledHeight = img.height * scaleFactor * 0.084667;
+
+      // Determine orientation based on scaled dimensions
+      const orientation = scaledHeight > scaledWidth ? "portrait" : "landscape";
+      const pageWidth = orientation === "portrait" ? pdfWidth : pdfHeight;
+      const pageHeight = orientation === "portrait" ? pdfHeight : pdfWidth;
+
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Add margin for safety (5mm on each side)
+      const margin = 5;
+      const availableWidth = pageWidth - margin * 2;
+      const availableHeight = pageHeight - margin * 2;
+
+      // If image exceeds page bounds, scale it down proportionally to fit
+      if (scaledWidth > availableWidth || scaledHeight > availableHeight) {
+        const widthRatio = availableWidth / scaledWidth;
+        const heightRatio = availableHeight / scaledHeight;
+        const scaleRatio = Math.min(widthRatio, heightRatio);
+
+        scaledWidth = scaledWidth * scaleRatio;
+        scaledHeight = scaledHeight * scaleRatio;
+      }
+
+      // Center the image on the page
+      const xOffset = (pageWidth - scaledWidth) / 2;
+      const yOffset = (pageHeight - scaledHeight) / 2;
+
+      // Add image centered on the page
+      pdf.addImage(dataUrl, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
+
+      // Save PDF with dynamic filename
+      const fileName = `MyTV_Viewership_Export_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      pdf.save(fileName);
+
+      console.log("✅ PDF exported successfully!");
+    } catch (error) {
+      console.error("❌ Error exporting PDF:", error);
+      alert(
+        `Failed to export PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      // Hide export overlay
+      setIsExporting(false);
+    }
   };
 
   // Chart colors
@@ -306,8 +436,40 @@ const MyTVViewershipPage = () => {
   }
 
   return (
-    <div className="p-6 pt-16 max-w-7xl mx-auto space-y-6">
-      {/* Page Header with Controls */}
+    <>
+      {/* Export Overlay - Outside dashboard container */}
+      {isExporting && (
+        <div className="export-overlay fixed inset-0 z-[100] flex items-center justify-center" style={{ minHeight: '100vh', height: '100%' }}>
+          {/* Blurred backdrop - scrollable, extended to cover full document height */}
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-md" style={{ minHeight: '100vh', height: '100%', width: '100vw' }}></div>
+          
+          {/* Loading message */}
+          <div className="relative z-10 bg-white rounded-lg shadow-2xl border-2 border-blue-500 p-8 max-w-md mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Download className="h-16 w-16 text-blue-600 animate-bounce" />
+                <div className="absolute inset-0 h-16 w-16 text-blue-400 animate-ping opacity-75">
+                  <Download className="h-16 w-16" />
+                </div>  
+              </div>
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Exporting in Progress
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Please wait while we generate your PDF...
+                </p>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse w-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="p-6 pt-16 max-w-7xl mx-auto space-y-6 bg-white min-h-screen dashboard-container">
+        {/* Page Header with Controls */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -326,29 +488,6 @@ const MyTVViewershipPage = () => {
 
         {/* Controls */}
         <div className="flex gap-2 flex-wrap items-center">
-          {/* Year Filter */}
-          <div className="flex items-center space-x-2">
-            <CalendarIcon className="h-4 w-4 text-gray-600" />
-            <Select
-              value={filters.year}
-              onValueChange={(value) => handleFilterChange("year", value)}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="">
-                <SelectItem className="" value="all">
-                  All Years
-                </SelectItem>
-                {availableYears.map((year) => (
-                  <SelectItem className="" key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Channel Filter */}
           <div className="flex items-center space-x-2">
             <TvIcon className="h-4 w-4 text-gray-600" />
@@ -408,9 +547,15 @@ const MyTVViewershipPage = () => {
             Refresh
           </Button>
 
-          <Button onClick={exportData} variant="outline" size="sm" className="">
+          <Button 
+            onClick={exportData} 
+            variant="outline" 
+            size="sm" 
+            className=""
+            title="Opens print dialog. Set Scale to 21 in More Settings for best results."
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Print/Export PDF
           </Button>
         </div>
       </div>
@@ -1054,7 +1199,8 @@ const MyTVViewershipPage = () => {
           </Card>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

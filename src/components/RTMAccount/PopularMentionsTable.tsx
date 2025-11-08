@@ -173,7 +173,7 @@ const PopularMentionsTable = ({
                 Account & Platform
               </th>
               <th className="text-center p-4 font-semibold text-gray-700">
-                Date & Time
+                Date
               </th>
               <th className="text-center p-4 font-semibold text-gray-700">
                 Reach
@@ -252,13 +252,12 @@ const PopularMentionsTable = ({
                     </div>
                   </td>
 
-                  {/* Date & Time Column */}
+                  {/* Date Column */}
                   <td className="p-4">
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <Calendar className="w-4 h-4" />
                       <div>
                         <div className="font-medium">{date}</div>
-                        <div className="text-xs text-gray-500">{time}</div>
                       </div>
                     </div>
                   </td>

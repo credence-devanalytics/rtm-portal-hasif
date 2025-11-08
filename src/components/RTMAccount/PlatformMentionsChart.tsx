@@ -71,10 +71,17 @@ const PlatformMentionsChart = ({
         const targetPlatform = (
           (activeFilters as any).platform || ""
         ).toLowerCase();
-        const targetUnit = ((activeFilters as any).unit || "").toLowerCase();
+        const rawTargetUnit = ((activeFilters as any).unit || "").toLowerCase();
+
+        // Map frontend unit filter to database CASE values
+        const targetUnit =
+          rawTargetUnit === "berita" || rawTargetUnit === "news"
+            ? "news"
+            : rawTargetUnit;
 
         console.log("📊 Filtering channels:", {
           targetPlatform,
+          rawTargetUnit,
           targetUnit,
           beforeFilterCount: dailyChannelData.length,
         });

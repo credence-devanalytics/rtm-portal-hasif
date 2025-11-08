@@ -1,6 +1,8 @@
 "use client";
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp,
   TrendingDown,
@@ -10,7 +12,11 @@ import {
   Users,
   Activity,
   Zap,
+  Download,
+  RefreshCw,
 } from "lucide-react";
+import * as htmlToImage from "html-to-image";
+import jsPDF from "jspdf";
 import { useMarketingData } from "@/hooks/useMarketingData";
 import { useTVMonthlyData } from "@/hooks/useTVMonthlyData";
 import { useMarketingTable2Data } from "@/hooks/useMarketingTable2Data";
@@ -25,27 +31,224 @@ import RadioChannelBreakdownTable from "@/components/Marketing/RadioChannelBreak
 import Header from "@/components/Header";
 
 const MarketingDashboard = () => {
-  const { data: marketingData, isLoading, error } = useMarketingData();
+  const [isExporting, setIsExporting] = useState(false);
+  const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
+
+  // Year options for Marketing data (2022, 2023, 2024)
+  const yearOptions = useMemo(() => {
+    return [
+      { value: "all", label: "All Years" },
+      { value: "2024", label: "2024" },
+      { value: "2023", label: "2023" },
+      { value: "2022", label: "2022" },
+    ];
+  }, []);
+
+  // Month options
+  const monthOptions = useMemo(() => {
+    return [
+      { value: "all", label: "All Months" },
+      { value: "01", label: "January" },
+      { value: "02", label: "February" },
+      { value: "03", label: "March" },
+      { value: "04", label: "April" },
+      { value: "05", label: "May" },
+      { value: "06", label: "June" },
+      { value: "07", label: "July" },
+      { value: "08", label: "August" },
+      { value: "09", label: "September" },
+      { value: "10", label: "October" },
+      { value: "11", label: "November" },
+      { value: "12", label: "December" },
+    ];
+  }, []);
+
+  // Compute the filter parameter for API calls
+  const filterParam = useMemo(() => {
+    if (selectedYear === "all" && selectedMonth === "all") {
+      return null; // No filter
+    } else if (selectedYear !== "all" && selectedMonth === "all") {
+      return `year=${selectedYear}`; // Year only
+    } else if (selectedYear === "all" && selectedMonth !== "all") {
+      // Month only - use current year
+      const currentYear = new Date().getFullYear();
+      return `month=${currentYear}-${selectedMonth}`;
+    } else {
+      // Both year and month selected
+      return `month=${selectedYear}-${selectedMonth}`;
+    }
+  }, [selectedYear, selectedMonth]);
+
+  const { data: marketingData, isLoading, error } = useMarketingData(filterParam);
   const {
     data: tvMonthlyData,
     isLoading: tvLoading,
     error: tvError,
-  } = useTVMonthlyData();
+  } = useTVMonthlyData(filterParam);
   const {
     data: table2Data,
     isLoading: table2Loading,
     error: table2Error,
-  } = useMarketingTable2Data();
+  } = useMarketingTable2Data(filterParam);
   const {
     data: radioMonthlyData,
     isLoading: radioLoading,
     error: radioError,
-  } = useRadioMonthlyData();
+  } = useRadioMonthlyData(filterParam);
   const {
     data: radioChannelsData,
     isLoading: radioChannelsLoading,
     error: radioChannelsError,
-  } = useRadioChannelsData();
+  } = useRadioChannelsData(filterParam);
+
+  // Refresh all data
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  // Export data function - PDF Export with high quality
+  const exportData = async () => {
+    try {
+      // Show export overlay
+      setIsExporting(true);
+
+      // Wait a brief moment for the overlay to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Get the dashboard container
+      const dashboardElement = document.querySelector(".dashboard-container") as HTMLElement;
+
+      if (!dashboardElement) {
+        alert("Dashboard container not found. Please refresh and try again.");
+        setIsExporting(false);
+        return;
+      }
+
+      // Hide the export button temporarily
+      const exportButton = document.querySelector(
+        'button[title*="Opens print dialog"]'
+      ) as HTMLElement;
+
+      if (exportButton) exportButton.style.display = "none";
+
+      // Temporarily remove max-width constraints to capture full content
+      const originalMaxWidth = dashboardElement.style.maxWidth;
+      const originalWidth = dashboardElement.style.width;
+      const originalMargin = dashboardElement.style.margin;
+      dashboardElement.style.maxWidth = "none";
+      dashboardElement.style.width = "fit-content";
+      dashboardElement.style.margin = "0";
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+
+      // Wait for layout to stabilize after width change
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Get the full scrollable width and height (including overflow)
+      const fullWidth = Math.max(
+        dashboardElement.scrollWidth,
+        dashboardElement.offsetWidth,
+        dashboardElement.clientWidth
+      );
+      const fullHeight = Math.max(
+        dashboardElement.scrollHeight,
+        dashboardElement.offsetHeight,
+        dashboardElement.clientHeight
+      );
+
+      console.log("📐 Capturing dimensions:", {
+        scrollWidth: dashboardElement.scrollWidth,
+        offsetWidth: dashboardElement.offsetWidth,
+        clientWidth: dashboardElement.clientWidth,
+        fullWidth,
+        fullHeight,
+      });
+
+      // Capture with html-to-image with ULTRA HIGH QUALITY settings
+      const dataUrl = await htmlToImage.toPng(dashboardElement, {
+        quality: 1.0,
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: "#ffffff",
+        width: fullWidth,
+        height: fullHeight,
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+        },
+      });
+
+      // Restore original styles
+      dashboardElement.style.maxWidth = originalMaxWidth;
+      dashboardElement.style.width = originalWidth;
+      dashboardElement.style.margin = originalMargin;
+
+      // Show hidden elements again
+      if (exportButton) exportButton.style.display = "";
+
+      // Create an image to get dimensions
+      const img = new Image();
+      img.src = dataUrl;
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Create PDF - scale down to fit A4
+      const scaleFactor = 0.34;
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+
+      let scaledWidth = img.width * scaleFactor * 0.084667;
+      let scaledHeight = img.height * scaleFactor * 0.084667;
+
+      const orientation = scaledHeight > scaledWidth ? "portrait" : "landscape";
+      const pageWidth = orientation === "portrait" ? pdfWidth : pdfHeight;
+      const pageHeight = orientation === "portrait" ? pdfHeight : pdfWidth;
+
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: "mm",
+        format: "a4",
+      });
+
+      const margin = 5;
+      const availableWidth = pageWidth - margin * 2;
+      const availableHeight = pageHeight - margin * 2;
+
+      if (scaledWidth > availableWidth || scaledHeight > availableHeight) {
+        const widthRatio = availableWidth / scaledWidth;
+        const heightRatio = availableHeight / scaledHeight;
+        const scaleRatio = Math.min(widthRatio, heightRatio);
+
+        scaledWidth = scaledWidth * scaleRatio;
+        scaledHeight = scaledHeight * scaleRatio;
+      }
+
+      const xOffset = (pageWidth - scaledWidth) / 2;
+      const yOffset = (pageHeight - scaledHeight) / 2;
+
+      pdf.addImage(dataUrl, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
+
+      const fileName = `Marketing_Dashboard_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      pdf.save(fileName);
+
+      console.log("✅ PDF exported successfully!");
+    } catch (error) {
+      console.error("❌ Error exporting PDF:", error);
+      alert(
+        `Failed to export PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Debug: Log the marketing data
   console.log("Marketing dashboard received data:", marketingData);
@@ -171,17 +374,101 @@ const MarketingDashboard = () => {
   const OverallTrendIcon = overallTrend.icon;
 
   return (
-    <div className="p-6 pt-16 max-w-7xl mx-auto space-y-6">
-      <div className="pt-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-sans">
-            Marketing Dashboard
-          </h1>
-          <p className="text-base text-muted-foreground font-sans mt-2">
-            Comprehensive analysis of marketing channel performance and revenue
-            breakdown
-          </p>
+    <>
+      {/* Export Overlay */}
+      {isExporting && (
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-base text-gray-700 font-sans">
+              Exporting dashboard to PDF...
+            </p>
+          </div>
         </div>
+      )}
+
+      <div className="p-6 pt-16 max-w-7xl mx-auto space-y-6">
+        <div className="pt-6 dashboard-container">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight font-sans">
+                Marketing Dashboard
+              </h1>
+              <p className="text-base text-muted-foreground font-sans mt-2">
+                Comprehensive analysis of marketing channel performance and revenue
+                breakdown
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Year Filter */}
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="year-filter"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Year:
+                </label>
+                <select
+                  id="year-filter"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                >
+                  {yearOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Month Filter */}
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="month-filter"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Month:
+                </label>
+                <select
+                  id="month-filter"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                >
+                  {monthOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Refresh Button */}
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
+
+              {/* Export Button */}
+              <Button
+                onClick={exportData}
+                variant="default"
+                size="sm"
+                className="flex items-center gap-2"
+                disabled={isExporting}
+              >
+                <Download className="h-4 w-4" />
+                {isExporting ? "Exporting..." : "Export PDF"}
+              </Button>
+            </div>
+          </div>
 
         {/* Yearly Performance Section */}
         <div className="mt-8">
@@ -195,7 +482,7 @@ const MarketingDashboard = () => {
             <MarketingIncomeComparisonChart data={saluranMetrics} />
 
             {/* Performance Table */}
-            <MarketingPerformanceTable data={saluranMetrics} />
+            <MarketingPerformanceTable data={saluranMetrics} selectedYear={selectedYear} />
           </div>
         </div>
 
@@ -213,7 +500,10 @@ const MarketingDashboard = () => {
 
           {/* Channel Breakdown Table under TV section */}
           <div className="mt-8">
-            <MarketingChannelBreakdownTable data={table2Data?.data} />
+            <MarketingChannelBreakdownTable 
+              data={table2Data?.data} 
+              selectedYear={selectedYear}
+            />
           </div>
         </div>
 
@@ -231,11 +521,15 @@ const MarketingDashboard = () => {
 
           {/* Radio Channel Breakdown Table */}
           <div className="mt-8">
-            <RadioChannelBreakdownTable data={radioChannelsData?.data} />
+            <RadioChannelBreakdownTable 
+              data={radioChannelsData?.data}
+              selectedYear={selectedYear}
+            />
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -126,17 +126,11 @@ export async function GET(request: Request) {
 					platform: mentionsClassify.type,
 					topic: mentionsClassify.topic, // Use topic instead of category
 					sentiment: mentionsClassify.sentiment,
-					reach: sql<number>`
-						COALESCE(NULLIF(${mentionsClassify.reach}, 0), 
-						NULLIF(${mentionsClassify.viewcount}, 0),
-						NULLIF(${mentionsClassify.followerscount}, 0),
-						NULLIF(${mentionsClassify.sourcereach}, 0),
-						0)
-					`,
+					reach: mentionsClassify.reach, // Use reach column directly
 					interactions: sql<number>`
 						COALESCE(NULLIF(${mentionsClassify.interaction}, 0),
 						NULLIF(${mentionsClassify.totalreactionscount}, 0),
-						${mentionsClassify.likecount} + ${mentionsClassify.commentcount} + ${mentionsClassify.sharecount},
+						${mentionsClassify.likecount} + ${mentionsClassify.commentcount} + ${mentionsClassify.sharecount} + ${mentionsClassify.playcount} + ${mentionsClassify.replycount} + ${mentionsClassify.retweetcount},
 						0)
 					`,
 					likecount: mentionsClassify.likecount,
@@ -149,13 +143,7 @@ export async function GET(request: Request) {
 				})
 				.from(mentionsClassify)
 				.where(and(...whereConditions))
-				.orderBy(desc(sql`
-					COALESCE(NULLIF(${mentionsClassify.reach}, 0), 
-					NULLIF(${mentionsClassify.viewcount}, 0),
-					NULLIF(${mentionsClassify.followerscount}, 0),
-					NULLIF(${mentionsClassify.sourcereach}, 0),
-					0)
-				`))
+				.orderBy(desc(mentionsClassify.reach)) // Order by reach column directly
 				.limit(10),
 		]);
 

@@ -7,6 +7,8 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as htmlToImage from "html-to-image";
+import jsPDF from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -345,6 +347,7 @@ const SocialMediaDashboard = () => {
     sortOrder: "desc",
   });
   const [postsSortBy, setPostsSortBy] = useState("reach");
+  const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();
 
   // Data queries
@@ -626,11 +629,163 @@ const SocialMediaDashboard = () => {
     setPostsSortBy(newSort);
   }, []);
 
-  // Export functionality (placeholder)
-  const handleExport = useCallback(() => {
-    console.log("Export functionality would be implemented here");
-    // Could export to CSV, PDF, etc.
-  }, []);
+  // Export functionality
+  const exportData = async () => {
+    try {
+      // Show export overlay
+      setIsExporting(true);
+
+      // Wait a brief moment for the overlay to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Get the dashboard container
+      const dashboardElement = document.querySelector(
+        ".dashboard-container"
+      );
+
+      if (!dashboardElement) {
+        alert("Dashboard container not found. Please refresh and try again.");
+        return;
+      }
+
+      // Hide the active filters card and export button temporarily
+      // Using specific selector to target Active Filters inside dashboard-container
+      const activeFiltersCard = document.querySelector(
+        ".dashboard-container .fixed.z-50"
+      );
+      const exportButton = document.querySelector(
+        'button[title*="Opens print dialog"]'
+      );
+
+      if (activeFiltersCard) activeFiltersCard.style.display = "none";
+      if (exportButton) exportButton.style.display = "none";
+
+      // Temporarily remove max-width constraints to capture full content
+      const originalMaxWidth = dashboardElement.style.maxWidth;
+      const originalWidth = dashboardElement.style.width;
+      const originalMargin = dashboardElement.style.margin;
+      dashboardElement.style.maxWidth = "none";
+      dashboardElement.style.width = "fit-content";
+      dashboardElement.style.margin = "0";
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+
+      // Wait for layout to stabilize after width change
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Get the full scrollable width and height (including overflow)
+      const fullWidth = Math.max(
+        dashboardElement.scrollWidth,
+        dashboardElement.offsetWidth,
+        dashboardElement.clientWidth
+      );
+      const fullHeight = Math.max(
+        dashboardElement.scrollHeight,
+        dashboardElement.offsetHeight,
+        dashboardElement.clientHeight
+      );
+
+      console.log("📐 Capturing dimensions:", {
+        scrollWidth: dashboardElement.scrollWidth,
+        offsetWidth: dashboardElement.offsetWidth,
+        clientWidth: dashboardElement.clientWidth,
+        fullWidth,
+        fullHeight,
+      });
+
+      // Capture with html-to-image with ULTRA HIGH QUALITY settings
+      const dataUrl = await htmlToImage.toPng(dashboardElement, {
+        quality: 1.0, // Maximum quality
+        pixelRatio: 2, // 2x resolution (optimal for capturing wide content)
+        cacheBust: true, // Prevent caching issues
+        backgroundColor: "#ffffff",
+        width: fullWidth, // Use full width including scrollable area
+        height: fullHeight, // Use full height including scrollable area
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+        },
+      });
+
+      // Restore original styles
+      dashboardElement.style.maxWidth = originalMaxWidth;
+      dashboardElement.style.width = originalWidth;
+      dashboardElement.style.margin = originalMargin;
+
+      // Show hidden elements again
+      if (activeFiltersCard) activeFiltersCard.style.display = "";
+      if (exportButton) exportButton.style.display = "";
+
+      // Create an image to get dimensions
+      const img = new Image();
+      img.src = dataUrl;
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Create PDF - scale down to fit A4
+      const scaleFactor = 0.34;
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+
+      // Calculate dimensions with scale factor (300 DPI for print quality)
+      let scaledWidth = img.width * scaleFactor * 0.084667; // Convert pixels to mm (300 DPI)
+      let scaledHeight = img.height * scaleFactor * 0.084667;
+
+      // Determine orientation based on scaled dimensions
+      const orientation = scaledHeight > scaledWidth ? "portrait" : "landscape";
+      const pageWidth = orientation === "portrait" ? pdfWidth : pdfHeight;
+      const pageHeight = orientation === "portrait" ? pdfHeight : pdfWidth;
+
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Add margin for safety (5mm on each side)
+      const margin = 5;
+      const availableWidth = pageWidth - margin * 2;
+      const availableHeight = pageHeight - margin * 2;
+
+      // If image exceeds page bounds, scale it down proportionally to fit
+      if (scaledWidth > availableWidth || scaledHeight > availableHeight) {
+        const widthRatio = availableWidth / scaledWidth;
+        const heightRatio = availableHeight / scaledHeight;
+        const scaleRatio = Math.min(widthRatio, heightRatio);
+
+        scaledWidth = scaledWidth * scaleRatio;
+        scaledHeight = scaledHeight * scaleRatio;
+      }
+
+      // Center the image on the page
+      const xOffset = (pageWidth - scaledWidth) / 2;
+      const yOffset = (pageHeight - scaledHeight) / 2;
+
+      // Add image centered on the page
+      pdf.addImage(dataUrl, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
+
+      // Save PDF with dynamic filename
+      const fileName = `Social_Media_Dashboard_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      pdf.save(fileName);
+
+      console.log("✅ PDF exported successfully!");
+    } catch (error) {
+      console.error("❌ Error exporting PDF:", error);
+      alert(
+        `Failed to export PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      // Hide export overlay
+      setIsExporting(false);
+    }
+  };
 
   // Check if any data is loading
   const isLoading =
@@ -684,11 +839,43 @@ const SocialMediaDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6 bg-white min-h-screen">
-      <Header />
+    <>
+      {/* Export Overlay - MUST be outside dashboard-container */}
+      {isExporting && (
+        <div className="export-overlay fixed inset-0 z-[100] flex items-center justify-center" style={{ minHeight: '100vh', height: '100%' }}>
+          {/* Blurred backdrop - scrollable, extended to cover full document height */}
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-md" style={{ minHeight: '100vh', height: '100%', width: '100vw' }}></div>
+          
+          {/* Loading message */}
+          <div className="relative z-10 bg-white rounded-lg shadow-2xl border-2 border-blue-500 p-8 max-w-md mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Download className="h-16 w-16 text-blue-600 animate-bounce" />
+                <div className="absolute inset-0 h-16 w-16 text-blue-400 animate-ping opacity-75">
+                  <Download className="h-16 w-16" />
+                </div>  
+              </div>
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Exporting in Progress
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Please wait while we generate your PDF...
+                </p>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse w-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Floating Active Filters */}
-      <ActiveFilters
+      <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white min-h-screen pt-20 dashboard-container">
+        <Header />
+
+        {/* Floating Active Filters */}
+        <ActiveFilters
         filters={filters}
         onRemoveFilter={handleRemoveFilter}
         onClearAll={handleClearAllFilters}
@@ -700,29 +887,28 @@ const SocialMediaDashboard = () => {
       )}
 
       {/* Dashboard Header */}
-      <div className="pt-16 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Social Media Mentions Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Real-time analytics for social media mentions with interactive
-              filtering
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {getDateRangeDisplay()}
-              {activeFilterCount > 0 && (
-                <span className="text-blue-600 ml-2">
-                  ({activeFilterCount} filter
-                  {activeFilterCount !== 1 ? "s" : ""} active)
-                </span>
-              )}
-            </p>
-          </div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Social Media Mentions Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Real-time analytics for social media mentions with interactive
+            filtering
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {getDateRangeDisplay()}
+            {activeFilterCount > 0 && (
+              <span className="text-blue-600 ml-2">
+                ({activeFilterCount} filter
+                {activeFilterCount !== 1 ? "s" : ""} active)
+              </span>
+            )}
+          </p>
+        </div>
 
-          {/* Controls */}
-          <div className="flex gap-2 flex-wrap items-center">
+        {/* Controls */}
+        <div className="flex gap-2 flex-wrap items-center">
             <CalendarDatePicker
               selectedDateRange={selectedDateRange}
               onDateRangeChange={handleDateRangeChange}
@@ -756,12 +942,16 @@ const SocialMediaDashboard = () => {
               Refresh
             </Button>
 
-            <Button onClick={handleExport} variant="outline" size="sm">
+            <Button
+              onClick={exportData}
+              variant="outline"
+              size="sm"
+              title="Opens print dialog. Set Scale to 19 in More Settings for best results."
+            >
               <Download className="h-4 w-4 mr-2" />
-              Export
+              Print/Export PDF
             </Button>
           </div>
-        </div>
       </div>
 
       {/* Metrics Cards */}
@@ -843,7 +1033,8 @@ const SocialMediaDashboard = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
 
