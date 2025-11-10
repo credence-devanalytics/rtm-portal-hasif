@@ -25,7 +25,7 @@ function TableauEmbedServer({
 }: TableauEmbedServerProps) {
 
 	const [ticket, setTicket] = useState<string>("");
-	const usernameParam = username==="superadmin" ? "CredenceCreator" : username;
+	const usernameParam = username==="superadmin" ? "dataops" : username;
 
 	useEffect(() => {
 		// Fetch the Tableau ticket from the API route
@@ -33,7 +33,7 @@ function TableauEmbedServer({
 			const response = await fetch("/api/tableau/get-tableau-ticket", {
 				method: "POST",
 				cache: "no-store",
-				body: JSON.stringify({ username })
+				body: JSON.stringify({ username:usernameParam })
 			});
 			const { ticket } = await response.json();
 			setTicket(ticket);
