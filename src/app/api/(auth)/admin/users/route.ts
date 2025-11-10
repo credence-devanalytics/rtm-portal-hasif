@@ -113,6 +113,12 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return Response.json({ error: "Invalid email format" }, { status: 400 });
+    }
+
     if (!["user", "admin", "superadmin"].includes(role)) {
       return Response.json({ error: "Invalid role" }, { status: 400 });
     }

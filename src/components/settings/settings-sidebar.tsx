@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Settings } from "lucide-react"
+import { User, ShieldUserIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useUserData } from "@/hooks/use-user-data"
@@ -16,7 +16,7 @@ const items = [
   {
     title: "Admin", 
     url: "/settings/admin",
-    icon: Settings,
+    icon: ShieldUserIcon,
   },
 ]
 
