@@ -25,6 +25,7 @@ function TableauEmbedServer({
 }: TableauEmbedServerProps) {
 
 	const [ticket, setTicket] = useState<string>("");
+	const usernameParam = username==="superadmin" ? "CredenceCreator" : username;
 
 	useEffect(() => {
 		// Fetch the Tableau ticket from the API route

@@ -112,28 +112,28 @@ function TableauDashboards({ username }: { username: string | undefined }) {
 
 
 export default function RTMClickPage() {
-  // const { data:session } = useSession();
-  // const [access, setAccess] = useState<boolean>(null);
-  // const username = session?.user?.email;
+  const { data:session } = useSession();
+  const [access, setAccess] = useState<boolean>(null);
+  const username = session?.user?.role === "superadmin" ? "superadmin" : session?.user?.email;
 
-  // useEffect(() => {
-  //   const userAccess = async () => {
-  //     const response = await fetch("/api/user/access", {
-  //       method: "GET",
-  //       cache: "no-store",
-  //     });
-  //     const access = ((await response.json()).access?.rtmklik || session?.user?.role === "superadmin") || false;
-  //     // console.log("RTMklik access:", access);
-  //     setAccess(access);
-  //   };
-  //   userAccess();
-  // }, []);
-  const access: boolean | null = true;
-  const username = "dataops"
+  useEffect(() => {
+    const userAccess = async () => {
+      const response = await fetch("/api/user/access", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const access = ((await response.json()).access?.rtmklik || session?.user?.role === "superadmin") || false;
+      // console.log("RTMklik access:", access);
+      setAccess(access);
+    };
+    userAccess();
+  }, []);
+  // const access: boolean | null = true;
+  // const username = "dataops"
 
     return (
     <div className="container mx-auto px-4 pb-8 h-full flex flex-col pt-16 gap-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             RTMKlik Analytics
@@ -142,8 +142,10 @@ export default function RTMClickPage() {
             Comprehensive RTMKlik Analysis for every channel in this platform
           </p>
         </div>
-        </div>
+      </div>
+
       { access && <TableauDashboards username={username} />}
+
       {access === false && (
         <div className="flex flex-col items-center justify-center py-8 space-y-3">
           <div className="p-3 rounded-full bg-gray-50 border border-gray-200">
