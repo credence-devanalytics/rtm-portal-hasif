@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, JSX } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Users,
@@ -23,7 +23,7 @@ import {
   Meh,
 } from "lucide-react";
 import Link from "next/link";
-import Header from "@/components/Header";
+import Image from "next/image";
 import TVMonthlyPerformanceChart from "@/components/Marketing/TVMonthlyPerformanceChart";;
 import { useRadioMonthlyData } from "@/hooks/useRadioMonthlyData";
 import { useTVMonthlyData } from "@/hooks/useTVMonthlyData";
@@ -35,392 +35,722 @@ import PlatformDonutChart from "@/components/RTMAccount/PlatformDonutChart";
 import { useRTMMentions, transformRTMData } from "@/hooks/useRTMQueries";
 import { SentimentBySourceChart } from "@/components/dashboard/public-mentions/sentiment-by-source-chart";
 import EngagementOverTimeChart from "@/components/RTMAccount/EngagementOverTimeChart";
-import {
-  useUnifiTVKPI,
-  useMyTVKPI,
-  useASTROKPI,
-  useRTMKlikKPI,
-  usePortalBeritaKPI,
-} from "@/hooks/useKPIData";
+import { Button } from "@/components/ui/button";
+import MedinaLogo from "@/components/MedinaLogo";
 import Stats09 from "@/components/stats-3";
 
 const MultiplatformSection = () => {
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState("202502");
-  const [mytvData, setMytvData] = useState(null);
-  const [marketingData, setMarketingData] = useState(null);
-  const [portalBeritaData, setPortalBeritaData] = useState(null);
-
-  // Total audience for MyTV platform
-  const totalAudience = 7581399;
-
-  // Mock data for UnifiTV (from unifi_summary table)
-  const unifiData = {
-    mau_total: 518883,
-    duration_total_hour: 2345678,
-    programmes: [
-      { programme_name: "Berita RTM", duration_total_hour: 456789 },
-      { programme_name: "TV1 Drama", duration_total_hour: 389456 },
-      { programme_name: "Sukan RTM", duration_total_hour: 234567 },
-    ],
-  };
-
-  // Calculate UnifiTV metrics
-  const unifiMetrics = {
-    mau: unifiData.mau_total,
-    totalHours: unifiData.duration_total_hour,
-    avgHoursPerUser: (
-      unifiData.duration_total_hour / unifiData.mau_total
-    ).toFixed(1),
-    topChannel: {
-      name: unifiData.programmes[0].programme_name,
-      percentage: (
-        (unifiData.programmes[0].duration_total_hour /
-          unifiData.duration_total_hour) *
-        100
-      ).toFixed(1),
-    },
-  };
-
-  // Fetch MyTV data
-  useEffect(() => {
-    const fetchMytvData = async () => {
-      try {
-        const response = await fetch("/api/mytv-analysis");
-        const data = await response.json();
-        console.log("MyTV API Response:", data);
-        console.log("Channel Metrics:", data?.channelMetrics);
-        setMytvData(data);
-      } catch (error) {
-        console.error("Error fetching MyTV data:", error);
-      }
-    };
-
-    fetchMytvData();
-  }, []);
-
-  // Fetch Marketing data
-  useEffect(() => {
-    const fetchMarketingData = async () => {
-      try {
-        console.log("Fetching marketing data...");
-        const response = await fetch("/api/marketing-analysis");
-        console.log("Marketing response status:", response.status);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("Marketing API Response:", data);
-        console.log("Marketing Data Success:", data?.success);
-        console.log("Marketing Saluran Metrics:", data?.data?.saluranMetrics);
-        setMarketingData(data);
-      } catch (error) {
-        console.error("Error fetching Marketing data:", error);
-        console.error("Full error details:", error.message);
-      }
-    };
-
-    fetchMarketingData();
-  }, []);
-
-  // Fetch Portal Berita data
-  useEffect(() => {
-    const fetchPortalBeritaData = async () => {
-      try {
-        console.log("Fetching Portal Berita data...");
-        const response = await fetch("/api/pb-dashboard-summary");
-        console.log("Portal Berita response status:", response.status);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("Portal Berita API Response:", data);
-        setPortalBeritaData(data);
-      } catch (error) {
-        console.error("Error fetching Portal Berita data:", error);
-        console.error("Full error details:", error.message);
-      }
-    };
-
-    fetchPortalBeritaData();
-  }, []);
-
-  // Calculate MyTV metrics using the mytv-analysis API
-  const mytvMetrics = useMemo(() => {
-    if (!mytvData?.channelMetrics || !Array.isArray(mytvData.channelMetrics)) {
-      return {
-        totalViewers: 0,
-        topChannel: {
-          name: "No data",
-          audienceShare: "Data not available",
-          avgViewers: "Data not available",
-        },
-        top3Channels: [],
-        lowestChannel: {
-          name: "No data",
-          audienceShare: "Data not available",
-          avgViewers: "Data not available",
-        },
-        allChannels: [],
-        hasData: false,
-      };
-    }
-
-    // Use the channel metrics data from the mytv-analysis API
-    const channelData = mytvData.channelMetrics;
-
-    // Calculate total audience share
-    const totalAudienceShare = channelData.reduce(
-      (sum, item) => sum + (parseFloat(item.audienceShare) || 0),
-      0
-    );
-
-    // Process channels data
-    const channelsWithData = channelData
-      .map((item) => {
-        const audienceShare = parseFloat(item.audienceShare) || 0;
-        const avgViewers = parseInt(item.avgViewers) || 0;
-
+    const [mytvData, setMytvData] = useState(null);
+    const [marketingData, setMarketingData] = useState(null);
+    const [portalBeritaData, setPortalBeritaData] = useState(null);
+    const [astroData, setAstroData] = useState(null);
+    const [unifiData, setUnifiData] = useState(null);
+    const [rtmklikData, setRtmklikData] = useState(null);
+  
+    // Total audience for MyTV platform
+    const totalAudience = 7581399;
+  
+    // Calculate UnifiTV metrics
+    const unifiMetrics = useMemo(() => {
+      if (!unifiData?.data) {
         return {
-          name: item.channel || "Unknown",
-          audienceShare: audienceShare,
-          displayAudienceShare:
-            audienceShare > 0 ? `${audienceShare}%` : "Data not available",
-          avgViewers,
-          displayAvgViewers:
-            avgViewers !== null
-              ? avgViewers.toLocaleString()
-              : "Data not available",
+          mau: 0,
+          totalHours: 0,
+          avgHoursPerUser: 0,
+          topChannel: {
+            name: "No data",
+            percentage: "0.0",
+          },
         };
-      })
-      .filter((item) => item.audienceShare > 0 || item.avgViewers !== null)
-      .sort((a, b) => (b.audienceShare || 0) - (a.audienceShare || 0));
-
-    if (channelsWithData.length === 0) {
+      }
+  
+      const data = unifiData.data;
+      const totalHours = data.duration_total_hour || 0;
+      const totalMAU = data.mau_total || 0;
+  
+      // Calculate percentage based on MAU if duration data is not available
+      let topChannelPercentage = "0.0";
+      if (data.programmes && data.programmes[0]) {
+        if (totalHours > 0 && data.programmes[0].duration_total_hour > 0) {
+          // Use duration percentage if available
+          topChannelPercentage = (
+            (data.programmes[0].duration_total_hour / totalHours) *
+            100
+          ).toFixed(1);
+        } else if (totalMAU > 0 && data.programmes[0].mau_total > 0) {
+          // Fall back to MAU percentage
+          topChannelPercentage = (
+            (data.programmes[0].mau_total / totalMAU) *
+            100
+          ).toFixed(1);
+        }
+      }
+  
       return {
-        totalViewers: 0,
+        mau: totalMAU,
+        totalHours: totalHours,
+        avgHoursPerUser:
+          totalMAU > 0 && totalHours > 0
+            ? (totalHours / totalMAU).toFixed(1)
+            : "0.0",
         topChannel: {
-          name: "No data",
-          audienceShare: "Data not available",
-          avgViewers: "Data not available",
+          name: data.programmes[0]?.programme_name || "No data",
+          percentage: topChannelPercentage,
+          avgViewers:
+            data.programmes[0]?.avg_viewers || data.programmes[0]?.mau_total || 0,
         },
-        top3Channels: [],
-        lowestChannel: {
-          name: "No data",
-          audienceShare: "Data not available",
-          avgViewers: "Data not available",
-        },
-        allChannels: [],
-        hasData: false,
       };
-    }
-
-    // Get top channel
-    const topChannel = channelsWithData[0] || {
-      name: "No data",
-      displayAudienceShare: "Data not available",
-      displayAvgViewers: "Data not available",
-    };
-
-    // Get top 3 channels
-    const top3Channels = channelsWithData.slice(0, 3);
-
-    // Get lowest channel
-    const lowestChannel = channelsWithData[channelsWithData.length - 1] || {
-      name: "No data",
-      displayAudienceShare: "Data not available",
-      displayAvgViewers: "Data not available",
-    };
-
-    return {
-      totalViewers: totalAudience, // Using the fixed total audience number
-      topChannel: {
-        name: topChannel.name,
-        audienceShare: topChannel.displayAudienceShare,
-        avgViewers: topChannel.displayAvgViewers,
-      },
-      top3Channels,
-      lowestChannel: {
-        name: lowestChannel.name,
-        audienceShare: lowestChannel.displayAudienceShare,
-        avgViewers: lowestChannel.displayAvgViewers,
-      },
-      allChannels: channelsWithData,
-      hasData: true,
-    };
-  }, [mytvData]);
-
-  // Calculate Marketing metrics
-  const marketingMetrics = useMemo(() => {
-    console.log("Calculating marketing metrics...");
-    console.log("Marketing data:", marketingData);
-    console.log("Marketing data success:", marketingData?.success);
-    console.log(
-      "Marketing data saluranMetrics:",
-      marketingData?.data?.saluranMetrics
-    );
-
-    if (!marketingData?.success || !marketingData?.data?.saluranMetrics) {
-      console.log("Marketing data not available, returning default values");
-      return {
-        hasData: false,
-        totalValue: 0,
-        topSaluran: { name: "No data", value: 0, change: "N/A" },
-        overallChange: "N/A",
-        totalSaluran: 0,
-        top3Saluran: [],
+    }, [unifiData]);
+  
+    // Fetch MyTV data
+    useEffect(() => {
+      const fetchMytvData = async () => {
+        try {
+          const response = await fetch("/api/mytv-analysis");
+          const data = await response.json();
+          console.log("MyTV API Response:", data);
+          console.log("Channel Metrics:", data?.channelMetrics);
+          setMytvData(data);
+        } catch (error) {
+          console.error("Error fetching MyTV data:", error);
+        }
       };
-    }
-
-    const { saluranMetrics, summary } = marketingData.data;
-    console.log("Marketing summary:", summary);
-
-    const result = {
-      hasData: true,
-      totalValue: summary.totalCurrent,
-      formattedTotalValue: summary.formattedTotalCurrent,
-      totalPreviousValue: summary.totalPrevious,
-      formattedTotalPreviousValue: summary.formattedTotalPrevious,
-      topSaluran: summary.topSaluran
-        ? {
-            name: summary.topSaluran.saluran,
-            value: summary.topSaluran.currentValue,
-            formattedValue: summary.topSaluran.formattedCurrentValue,
-            change: summary.topSaluran.formattedChange,
-            direction: summary.topSaluran.changeDirection,
+  
+      fetchMytvData();
+    }, []);
+  
+    // Fetch Marketing data
+    useEffect(() => {
+      const fetchMarketingData = async () => {
+        try {
+          console.log("Fetching marketing data...");
+          const response = await fetch("/api/marketing-analysis");
+          console.log("Marketing response status:", response.status);
+  
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-        : { name: "No data", value: 0, change: "N/A" },
-      overallChange: summary.overallChange,
-      overallDirection: summary.overallDirection,
-      totalSaluran: summary.totalSaluran,
-      activeSaluran: summary.activeSaluran,
-      top3Saluran: saluranMetrics.slice(0, 3),
-    };
-
-    console.log("Final marketing metrics:", result);
-    return result;
-  }, [marketingData]);
-
-  // Calculate Portal Berita metrics
-  const portalBeritaMetrics = useMemo(() => {
-    console.log("Calculating Portal Berita metrics...");
-    console.log("Portal Berita data:", portalBeritaData);
-
-    if (!portalBeritaData?.success || !portalBeritaData?.data) {
-      console.log("Portal Berita data not available, returning default values");
-      return {
-        hasData: false,
-        totalAudience: 0,
-        topRegion: { name: "No data", users: 0 },
-        topTrafficSource: { name: "No data", users: 0 },
-        topExternalSource: { name: "No data", users: 0 },
+  
+          const data = await response.json();
+          console.log("Marketing API Response:", data);
+          console.log("Marketing Data Success:", data?.success);
+          console.log("Marketing Saluran Metrics:", data?.data?.saluranMetrics);
+          setMarketingData(data);
+        } catch (error) {
+          console.error("Error fetching Marketing data:", error);
+          console.error("Full error details:", error.message);
+        }
       };
-    }
-
-    const { data } = portalBeritaData;
-    console.log("Portal Berita summary:", data.summary);
-
-    return {
-      hasData: data.summary.hasData,
-      totalAudience: data.totalAudience,
-      formattedTotalAudience: data.summary.formattedTotalAudience,
-      topRegion: data.topRegion,
-      topTrafficSource: data.topTrafficSource,
-      topExternalSource: data.topExternalSource,
-      metrics: data.summary.metrics,
+  
+      fetchMarketingData();
+    }, []);
+  
+    // Fetch Portal Berita data
+    useEffect(() => {
+      const fetchPortalBeritaData = async () => {
+        try {
+          console.log("Fetching Portal Berita data...");
+          const response = await fetch("/api/pb-dashboard-summary");
+          console.log("Portal Berita response status:", response.status);
+  
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+  
+          const data = await response.json();
+          console.log("Portal Berita API Response:", data);
+          setPortalBeritaData(data);
+        } catch (error) {
+          console.error("Error fetching Portal Berita data:", error);
+          console.error("Full error details:", error.message);
+        }
+      };
+  
+      fetchPortalBeritaData();
+    }, []);
+  
+    // Fetch Astro Rate & Reach data
+    useEffect(() => {
+      const fetchAstroData = async () => {
+        try {
+          console.log("Fetching Astro Rate & Reach data...");
+          const response = await fetch("/api/astro-rate-reach");
+          console.log("Astro response status:", response.status);
+  
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+  
+          const data = await response.json();
+          console.log("Astro API Response:", data);
+          setAstroData(data);
+        } catch (error) {
+          console.error("Error fetching Astro data:", error);
+          console.error("Full error details:", error.message);
+        }
+      };
+  
+      fetchAstroData();
+    }, []);
+  
+    // Fetch UnifiTV data
+    useEffect(() => {
+      const fetchUnifiData = async () => {
+        try {
+          console.log("Fetching UnifiTV data...");
+          const response = await fetch("/api/unifitv-summary");
+          console.log("UnifiTV response status:", response.status);
+  
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+  
+          const data = await response.json();
+          console.log("UnifiTV API Response:", data);
+          setUnifiData(data);
+        } catch (error) {
+          console.error("Error fetching UnifiTV data:", error);
+          console.error("Full error details:", error.message);
+        }
+      };
+  
+      fetchUnifiData();
+    }, []);
+  
+    // Fetch RTMKlik data
+    useEffect(() => {
+      const fetchRtmklikData = async () => {
+        try {
+          console.log("Fetching RTMKlik data...");
+          const response = await fetch("/api/rtmklik-summary");
+          console.log("RTMKlik response status:", response.status);
+  
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+  
+          const data = await response.json();
+          console.log("RTMKlik API Response:", data);
+          setRtmklikData(data);
+        } catch (error) {
+          console.error("Error fetching RTMKlik data:", error);
+          console.error("Full error details:", error.message);
+        }
+      };
+  
+      fetchRtmklikData();
+    }, []);
+  
+    // Calculate MyTV metrics using the mytv-analysis API
+    const mytvMetrics = useMemo(() => {
+      if (!mytvData?.channelMetrics || !Array.isArray(mytvData.channelMetrics)) {
+        return {
+          totalViewers: 0,
+          topChannel: {
+            name: "No data",
+            audienceShare: "Data not available",
+            avgViewers: "Data not available",
+          },
+          top3Channels: [],
+          lowestChannel: {
+            name: "No data",
+            audienceShare: "Data not available",
+            avgViewers: "Data not available",
+          },
+          allChannels: [],
+          hasData: false,
+          latestMonth: null,
+          latestYear: null,
+        };
+      }
+  
+      // Use the channel metrics data from the mytv-analysis API
+      const channelData = mytvData.channelMetrics;
+  
+      // Calculate total audience share
+      const totalAudienceShare = channelData.reduce(
+        (sum, item) => sum + (parseFloat(item.audienceShare) || 0),
+        0
+      );
+  
+      // Process channels data
+      const channelsWithData = channelData
+        .map((item) => {
+          const audienceShare = parseFloat(item.audienceShare) || 0;
+          const avgViewers = parseInt(item.avgViewers) || 0;
+  
+          return {
+            name: item.channel || "Unknown",
+            audienceShare: audienceShare,
+            displayAudienceShare:
+              audienceShare > 0 ? `${audienceShare}%` : "Data not available",
+            avgViewers,
+            displayAvgViewers:
+              avgViewers !== null
+                ? avgViewers.toLocaleString()
+                : "Data not available",
+          };
+        })
+        .filter((item) => item.audienceShare > 0 || item.avgViewers !== null)
+        .sort((a, b) => (b.audienceShare || 0) - (a.audienceShare || 0));
+  
+      if (channelsWithData.length === 0) {
+        return {
+          totalViewers: 0,
+          topChannel: {
+            name: "No data",
+            audienceShare: "Data not available",
+            avgViewers: "Data not available",
+          },
+          top3Channels: [],
+          lowestChannel: {
+            name: "No data",
+            audienceShare: "Data not available",
+            avgViewers: "Data not available",
+          },
+          allChannels: [],
+          hasData: false,
+          latestMonth: mytvData.latestMonth || null,
+          latestYear: mytvData.latestYear || null,
+        };
+      }
+  
+      // Get top channel
+      const topChannel = channelsWithData[0] || {
+        name: "No data",
+        displayAudienceShare: "Data not available",
+        displayAvgViewers: "Data not available",
+      };
+  
+      // Get top 3 channels
+      const top3Channels = channelsWithData.slice(0, 3);
+  
+      // Get lowest channel
+      const lowestChannel = channelsWithData[channelsWithData.length - 1] || {
+        name: "No data",
+        displayAudienceShare: "Data not available",
+        displayAvgViewers: "Data not available",
+      };
+  
+      return {
+        totalViewers: totalAudience, // Using the fixed total audience number
+        topChannel: {
+          name: topChannel.name,
+          audienceShare: topChannel.displayAudienceShare,
+          avgViewers: topChannel.displayAvgViewers,
+        },
+        top3Channels,
+        lowestChannel: {
+          name: lowestChannel.name,
+          audienceShare: lowestChannel.displayAudienceShare,
+          avgViewers: lowestChannel.displayAvgViewers,
+        },
+        allChannels: channelsWithData,
+        hasData: true,
+        latestMonth: mytvData.latestMonth || null,
+        latestYear: mytvData.latestYear || null,
+      };
+    }, [mytvData]);
+  
+    // Calculate Marketing metrics
+    const marketingMetrics = useMemo(() => {
+      console.log("Calculating marketing metrics...");
+      console.log("Marketing data:", marketingData);
+      console.log("Marketing data success:", marketingData?.success);
+      console.log(
+        "Marketing data saluranMetrics:",
+        marketingData?.data?.saluranMetrics
+      );
+  
+      if (!marketingData?.success || !marketingData?.data?.saluranMetrics) {
+        console.log("Marketing data not available, returning default values");
+        return {
+          hasData: false,
+          totalValue: 0,
+          topSaluran: { name: "No data", value: 0, change: "N/A" },
+          overallChange: "N/A",
+          totalSaluran: 0,
+          top3Saluran: [],
+        };
+      }
+  
+      const { saluranMetrics, summary } = marketingData.data;
+      console.log("Marketing summary:", summary);
+  
+      const result = {
+        hasData: true,
+        totalValue: summary.totalCurrent,
+        formattedTotalValue: summary.formattedTotalCurrent,
+        totalPreviousValue: summary.totalPrevious,
+        formattedTotalPreviousValue: summary.formattedTotalPrevious,
+        topSaluran: summary.topSaluran
+          ? {
+              name: summary.topSaluran.saluran,
+              value: summary.topSaluran.currentValue,
+              formattedValue: summary.topSaluran.formattedCurrentValue,
+              change: summary.topSaluran.formattedChange,
+              direction: summary.topSaluran.changeDirection,
+            }
+          : { name: "No data", value: 0, change: "N/A" },
+        overallChange: summary.overallChange,
+        overallDirection: summary.overallDirection,
+        totalSaluran: summary.totalSaluran,
+        activeSaluran: summary.activeSaluran,
+        top3Saluran: saluranMetrics.slice(0, 3),
+      };
+  
+      console.log("Final marketing metrics:", result);
+      return result;
+    }, [marketingData]);
+  
+    // Calculate Portal Berita metrics
+    const portalBeritaMetrics = useMemo(() => {
+      console.log("Calculating Portal Berita metrics...");
+      console.log("Portal Berita data:", portalBeritaData);
+  
+      if (!portalBeritaData?.success || !portalBeritaData?.data) {
+        console.log("Portal Berita data not available, returning default values");
+        return {
+          hasData: false,
+          totalAudience: 0,
+          topRegion: { name: "No data", users: 0 },
+          topTrafficSource: { name: "No data", users: 0 },
+          topExternalSource: { name: "No data", users: 0 },
+          latestDate: null,
+        };
+      }
+  
+      const { data } = portalBeritaData;
+      console.log("Portal Berita summary:", data.summary);
+  
+      return {
+        hasData: data.summary.hasData,
+        totalAudience: data.totalAudience,
+        formattedTotalAudience: data.summary.formattedTotalAudience,
+        topRegion: data.topRegion,
+        topTrafficSource: data.topTrafficSource,
+        topExternalSource: data.topExternalSource,
+        metrics: data.summary.metrics,
+        latestDate: data.latestDate || null,
+      };
+    }, [portalBeritaData]);
+  
+    // Calculate Astro metrics
+    const astroMetrics = useMemo(() => {
+      console.log("Calculating Astro metrics...");
+      console.log("Astro data:", astroData);
+      console.log("Astro data success:", astroData?.success);
+      console.log("Astro data array:", astroData?.data);
+      console.log("Astro data length:", astroData?.data?.length);
+      console.log("Astro latest date:", astroData?.latestDate);
+  
+      if (
+        !astroData?.success ||
+        !astroData?.data ||
+        astroData.data.length === 0
+      ) {
+        console.log("Astro data not available, returning default values");
+        return {
+          hasData: false,
+          topRatedTVChannel: { name: "No data", rating: 0 },
+          topRatedRadioChannel: { name: "No data", rating: 0 },
+          totalTVReach: 0,
+          totalRadioReach: 0,
+          latestDate: null,
+        };
+      }
+  
+      const records = astroData.data;
+      console.log("Astro records:", records);
+      console.log("First record:", records[0]);
+  
+      // Separate rating and reach records - using metricType (camelCase) instead of metric_type
+      const ratingRecords = records.filter((r) => r.metricType === "rating");
+      const reachRecords = records.filter((r) => r.metricType === "reach");
+  
+      console.log("Rating records count:", ratingRecords.length);
+      console.log("Reach records count:", reachRecords.length);
+      console.log("Sample rating record:", ratingRecords[0]);
+      console.log("Sample reach record:", reachRecords[0]);
+  
+      // Helper function to determine channel type based on channel name
+      const getChannelType = (channelName) => {
+        if (!channelName) return null;
+        const upperName = channelName.toUpperCase();
+        if (upperName.includes("FM")) return "radio";
+        if (upperName.includes("TV")) return "tv";
+        return null;
+      };
+  
+      // Separate TV and Radio records based on channel name
+      const tvRatingRecords = ratingRecords.filter(
+        (r) => getChannelType(r.channel) === "tv"
+      );
+      const radioRatingRecords = ratingRecords.filter(
+        (r) => getChannelType(r.channel) === "radio"
+      );
+      const tvReachRecords = reachRecords.filter(
+        (r) => getChannelType(r.channel) === "tv"
+      );
+      const radioReachRecords = reachRecords.filter(
+        (r) => getChannelType(r.channel) === "radio"
+      );
+  
+      console.log("TV Rating records count:", tvRatingRecords.length);
+      console.log("Radio Rating records count:", radioRatingRecords.length);
+      console.log("TV Reach records count:", tvReachRecords.length);
+      console.log("Radio Reach records count:", radioReachRecords.length);
+  
+      // Calculate top rated TV channel (highest rating value)
+      const topRatedTV =
+        tvRatingRecords.length > 0
+          ? tvRatingRecords.reduce(
+              (max, record) => (record.value > max.value ? record : max),
+              tvRatingRecords[0]
+            )
+          : { channel: "No data", value: 0 };
+  
+      console.log("Top rated TV channel:", topRatedTV);
+  
+      // Calculate top rated Radio channel (highest rating value)
+      const topRatedRadio =
+        radioRatingRecords.length > 0
+          ? radioRatingRecords.reduce(
+              (max, record) => (record.value > max.value ? record : max),
+              radioRatingRecords[0]
+            )
+          : { channel: "No data", value: 0 };
+  
+      console.log("Top rated Radio channel:", topRatedRadio);
+  
+      // Calculate total TV reach
+      const totalTVReach = tvReachRecords.reduce(
+        (sum, record) => sum + (record.value || 0),
+        0
+      );
+  
+      console.log("Total TV reach:", totalTVReach);
+  
+      // Calculate total Radio reach
+      const totalRadioReach = radioReachRecords.reduce(
+        (sum, record) => sum + (record.value || 0),
+        0
+      );
+  
+      console.log("Total Radio reach:", totalRadioReach);
+  
+      const result = {
+        hasData: true,
+        topRatedTVChannel: {
+          name: topRatedTV.channel,
+          rating: topRatedTV.value,
+        },
+        topRatedRadioChannel: {
+          name: topRatedRadio.channel,
+          rating: topRatedRadio.value,
+        },
+        totalTVReach,
+        totalRadioReach,
+        latestDate: astroData.latestDate,
+      };
+  
+      console.log("Final Astro metrics:", result);
+  
+      return result;
+    }, [astroData]);
+  
+    // Calculate RTMKlik metrics
+    const rtmklikMetrics = useMemo(() => {
+      console.log("Calculating RTMKlik metrics...");
+      console.log("RTMKlik data:", rtmklikData);
+  
+      if (!rtmklikData?.success || !rtmklikData?.data) {
+        console.log("RTMKlik data not available, returning default values");
+        return {
+          hasData: false,
+          totalActiveUsers: 0,
+          topRegion: { name: "No data", users: 0 },
+          topChannel: { name: "No data", users: 0 },
+          totalPageViews: 0,
+          latestDate: null,
+        };
+      }
+  
+      const { data } = rtmklikData;
+      console.log("RTMKlik data summary:", data);
+  
+      return {
+        hasData: data.hasData,
+        totalActiveUsers: data.totalActiveUsers,
+        formattedTotalActiveUsers: data.formattedTotalActiveUsers,
+        topRegion: data.topRegion,
+        topChannel: data.topChannel,
+        totalPageViews: data.totalPageViews,
+        formattedTotalPageViews: data.formattedTotalPageViews,
+        latestDate: data.latestDate || null,
+      };
+    }, [rtmklikData]);
+  
+    interface Platform {
+      id: string,
+      name: string,
+      icon: JSX.Element,
+      color: string,
+      link: string,
+      hasData: boolean,
+      metrics: {
+        mau: string,
+        totalHours: string,
+        avgHours: string,
+        topChannel: string,
+      },
     };
-  }, [portalBeritaData]);
 
-  // Platform data structure
-  const platforms = [
-    {
-      id: "rtmclick",
-      name: "RTMKlik",
-      icon: <Radio className="h-8 w-8" />,
-      color: "from-amber-500 to-amber-600",
-      borderColor: "border-amber-200",
-      bgColor: "bg-amber-50",
-      textColor: "text-amber-900",
-      link: "/RTMClick",
-      hasData: false,
-      metrics: {
-        topChannel: "No data available yet",
-        totalHours: "No data available yet",
+    // Platform data structure
+    const platforms: Platform[] = [
+      {
+        id: "rtmclick",
+        name: "RTMKlik",
+        icon: (
+          <Image
+            src="/multiplatform-logos/new-size-rtmklik.png"
+            alt="RTMKlik Logo"
+            width={64}
+            height={64}
+            className="object-contain"
+          />
+        ),
+        color: "amber",
+        link: "/RTMClick",
+        hasData: rtmklikMetrics.hasData,
+        metrics: {
+          mau: rtmklikMetrics.hasData
+            ? rtmklikMetrics.formattedTotalActiveUsers
+            : "No data available yet",
+          totalHours: rtmklikMetrics.hasData
+            ? `${rtmklikMetrics.topRegion.name} (${rtmklikMetrics.topRegion.formattedUsers})`
+            : "No data available yet",
+          avgHours: rtmklikMetrics.hasData
+            ? `${rtmklikMetrics.topChannel.name}`
+            : "No data available yet",
+          topChannel: rtmklikMetrics.hasData
+            ? rtmklikMetrics.formattedTotalPageViews
+            : "No data available yet",
+        },
       },
-    },
-    {
-      id: "mytv",
-      name: "MyTV",
-      icon: <Tv className="h-8 w-8" />,
-      color: "from-blue-500 to-blue-600",
-      borderColor: "border-blue-200",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-900",
-      link: "/MyTVViewership",
-      hasData: mytvMetrics.hasData,
-      metrics: {
-        topChannel: mytvMetrics.hasData
-          ? `${mytvMetrics.topChannel.name} - ${mytvMetrics.topChannel.audienceShare}`
-          : "No data",
-        totalHours: (987654).toLocaleString(),
+      {
+        id: "mytv",
+        name: "MyTV",
+        icon: (
+          <Image
+            src="/multiplatform-logos/new-size-mytv.png"
+            alt="MyTV Logo"
+            width={64}
+            height={64}
+            className="object-contain"
+          />
+        ),
+        color: "blue",
+        link: "/MyTVViewership",
+        hasData: mytvMetrics.hasData,
+        metrics: {
+          mau:
+            mytvMetrics.totalViewers > 0
+              ? mytvMetrics.totalViewers.toLocaleString()
+              : "No data",
+          totalHours: "N/A",
+          avgHours: "N/A",
+          topChannel: mytvMetrics.hasData
+            ? `${mytvMetrics.topChannel.name} – ${mytvMetrics.topChannel.audienceShare}`
+            : "No data",
+        },
       },
-    },
-    {
-      id: "astro",
-      name: "ASTRO",
-      icon: <Star className="h-8 w-8" />,
-      color: "from-purple-500 to-purple-600",
-      borderColor: "border-purple-200",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-900",
-      link: "/ASTRO",
-      hasData: false,
-      metrics: {
-        topChannel: "No data available yet",
-        totalHours: "No data available yet",
+      {
+        id: "astro",
+        name: "ASTRO",
+        icon: (
+          <Image
+            src="/multiplatform-logos/new-size-astro.png"
+            alt="ASTRO Logo"
+            width={64}
+            height={64}
+            className="object-contain"
+          />
+        ),
+        color: "purple",
+        link: "/ASTRO",
+        hasData: astroMetrics.hasData,
+        metrics: {
+          mau: astroMetrics.hasData
+            ? `${astroMetrics.topRatedTVChannel.name} (${astroMetrics.topRatedTVChannel.rating})`
+            : "No data available yet",
+          totalHours: astroMetrics.hasData
+            ? `${astroMetrics.totalTVReach.toLocaleString()}`
+            : "No data available yet",
+          avgHours: astroMetrics.hasData
+            ? `${astroMetrics.topRatedRadioChannel.name} (${astroMetrics.topRatedRadioChannel.rating})`
+            : "No data available yet",
+          topChannel: astroMetrics.hasData
+            ? `${astroMetrics.totalRadioReach.toLocaleString()}`
+            : "No data available yet",
+        },
       },
-    },
-    {
-      id: "unifitv",
-      name: "UnifiTV",
-      icon: <Wifi className="h-8 w-8" />,
-      color: "from-emerald-500 to-emerald-600",
-      borderColor: "border-emerald-200",
-      bgColor: "bg-emerald-50",
-      textColor: "text-emerald-900",
-      link: "/UnifiTV",
-      hasData: true,
-      metrics: {
-        topChannel: `${unifiMetrics.topChannel.name} (${unifiMetrics.topChannel.percentage}%)`,
-        totalHours: unifiMetrics.totalHours.toLocaleString(),
+      {
+        id: "unifitv",
+        name: "UnifiTV",
+        icon: (
+          <Image
+            src="/multiplatform-logos/new-size-unifitv.png"
+            alt="UnifiTV Logo"
+            width={64}
+            height={64}
+            className="object-contain"
+          />
+        ),
+        color: "emerald",
+        link: "/UnifiTV",
+        hasData: true,
+        metrics: {
+          mau: unifiMetrics.mau.toLocaleString(),
+          totalHours: unifiMetrics.totalHours.toLocaleString(),
+          avgHours: unifiMetrics.avgHoursPerUser.toLocaleString(),
+          topChannel: `${unifiMetrics.topChannel.name} (${unifiMetrics.topChannel.percentage}%)`,
+        },
       },
-    },
-    {
-      id: "wartaberita",
-      name: "Portal Berita",
-      icon: <Monitor className="h-8 w-8" />,
-      color: "from-indigo-500 to-indigo-600",
-      borderColor: "border-indigo-200",
-      bgColor: "bg-indigo-50",
-      textColor: "text-indigo-900",
-      link: "/WartaBerita",
-      hasData: portalBeritaMetrics.hasData,
-      metrics: {
-        topChannel: portalBeritaMetrics.hasData
-        ? `${portalBeritaMetrics.topExternalSource.name}`
-        : "No data available yet",
-        totalHours: portalBeritaMetrics.hasData
-          ? `${
-              portalBeritaMetrics.topRegion.name
-            } (${portalBeritaMetrics.topRegion.users.toLocaleString()})`
-          : "No data available yet",
+      {
+        id: "wartaberita",
+        name: "Portal Berita",
+        icon: (
+          <Image
+            src="/multiplatform-logos/new-size-portalberita.png"
+            alt="Portal Berita Logo"
+            width={64}
+            height={64}
+            className="object-contain"
+          />
+        ),
+        color: "indigo",
+        link: "/WartaBerita",
+        hasData: portalBeritaMetrics.hasData,
+        metrics: {
+          mau: portalBeritaMetrics.hasData
+            ? portalBeritaMetrics.formattedTotalAudience
+            : "No data available yet",
+          totalHours: portalBeritaMetrics.hasData
+            ? `${
+                portalBeritaMetrics.topRegion.name
+              } (${portalBeritaMetrics.topRegion.users.toLocaleString()})`
+            : "No data available yet",
+          avgHours: portalBeritaMetrics.hasData
+            ? `${portalBeritaMetrics.topTrafficSource.name}`
+            : "No data available yet",
+          topChannel: portalBeritaMetrics.hasData
+            ? `${portalBeritaMetrics.topExternalSource.name}`
+            : "No data available yet",
+        },
       },
-    },
-  ];
+    ];
 
   useEffect(() => {
     // Simulate loading
@@ -518,7 +848,7 @@ const MultiplatformSection = () => {
             <CardTitle className="text-xl font-bold text-gray-900 mt-3">
               <div className="flex items-center justify-between">
                 <div className="flex flex-row items-center space-x-3 gap-3">
-                  <div className={`p-2 rounded-lg ${getIconBgColor(platform.id)}`}>
+                  <div className="flex items-center gap-4">
                     {platform.icon}
                   </div>
                   {platform.name}
@@ -1266,141 +1596,23 @@ const AccountsSection = () => {
 };
 
 const KPISection = () => {
-  // Use TanStack Query hooks for parallel data fetching with caching
-  const unifiQuery = useUnifiTVKPI();
-  const mytvQuery = useMyTVKPI();
-  const astroQuery = useASTROKPI();
-  const rtmklikQuery = useRTMKlikKPI();
-  const pbQuery = usePortalBeritaKPI();
 
-  // Check if any query is loading
-  const isLoading =
-    unifiQuery.isLoading ||
-    mytvQuery.isLoading ||
-    astroQuery.isLoading ||
-    rtmklikQuery.isLoading ||
-    pbQuery.isLoading;
-
-  // Memoize the KPI data to avoid unnecessary recalculations
-  const kpiData = useMemo(() => {
-    // Extract values or set to null if no data
-    const unifiTVViewers = unifiQuery.data?.success
-      ? unifiQuery.data.data?.mau_total || 0
-      : null;
-    const myTVViewers = mytvQuery.data?.success
-      ? mytvQuery.data.data?.total_reach || 0
-      : null;
-    const astroTVViewers = astroQuery.data?.success
-      ? astroQuery.data.data?.tv_reach || 0
-      : null;
-    const astroRadioListeners = astroQuery.data?.success
-      ? astroQuery.data.data?.radio_reach || 0
-      : null;
-    const rtmklikTVViewers = rtmklikQuery.data?.success
-      ? rtmklikQuery.data.data?.tv || 0
-      : null;
-    const rtmklikRadioListeners = rtmklikQuery.data?.success
-      ? rtmklikQuery.data.data?.radio || 0
-      : null;
-    const pbViewers = pbQuery.data?.success
-      ? pbQuery.data.data?.totalAudience || 0
-      : null;
-
-    // Calculate totals (only include non-null values)
-    const tvValues = [
-      unifiTVViewers,
-      myTVViewers,
-      astroTVViewers,
-      rtmklikTVViewers,
-      pbViewers,
-    ].filter((v) => v !== null);
-    const totalViewers =
-      tvValues.length > 0 ? tvValues.reduce((sum, val) => sum + val, 0) : 0;
-
-    const radioValues = [astroRadioListeners, rtmklikRadioListeners].filter(
-      (v) => v !== null
-    );
-    const totalRadioListeners =
-      radioValues.length > 0
-        ? radioValues.reduce((sum, val) => sum + val, 0)
-        : 0;
-
-    // Build platforms array with N/A for missing data
-    const tvPlatforms = [
-      {
-        name: "UnifiTV",
-        stat: unifiTVViewers,
-        link: "/UnifiTV",
-        color: "green",
-      },
-      {
-        name: "MyTV",
-        stat: myTVViewers,
-        link: "/MyTVViewership",
-        color: "blue",
-      },
-      { name: "ASTRO", stat: astroTVViewers, link: "/ASTRO", color: "purple" },
-      {
-        name: "RTMKlik",
-        stat: rtmklikTVViewers,
-        link: "/RTMClick",
-        color: "yellow",
-      },
-      {
-        name: "Portal Berita",
-        stat: pbViewers,
-        link: "/WartaBerita",
-        color: "indigo",
-      },
-    ].sort((a, b) => {
-      if (a.stat === null) return 1;
-      if (b.stat === null) return -1;
-      return b.stat - a.stat;
-    });
-
-    const radioPlatforms = [
-      {
-        name: "ASTRO",
-        stat: astroRadioListeners,
-        link: "/ASTRO",
-        color: "purple",
-      },
-      {
-        name: "RTMKlik",
-        stat: rtmklikRadioListeners,
-        link: "/RTMClick",
-        color: "yellow",
-      },
-    ].sort((a, b) => {
-      if (a.stat === null) return 1;
-      if (b.stat === null) return -1;
-      return b.stat - a.stat;
-    });
-
-    return [
-      {
-        name: "Total Viewers for RTM Channels",
-        stat: totalViewers,
-        limit: 115000000,
-        percentage: totalViewers > 0 ? (totalViewers / 115000000) * 100 : 0,
-        platforms: tvPlatforms,
-      },
-      {
-        name: "Total Radio Listeners on RTM Stations",
-        stat: totalRadioListeners,
-        limit: 22000000,
-        percentage:
-          totalRadioListeners > 0 ? (totalRadioListeners / 22000000) * 100 : 0,
-        platforms: radioPlatforms,
-      },
-    ];
-  }, [
-    unifiQuery.data,
-    mytvQuery.data,
-    astroQuery.data,
-    rtmklikQuery.data,
-    pbQuery.data,
-  ]);
+  const KPIdata = [
+    {"name": "Total Viewers for RTM Channels", "stat": 100000000, "limit": 115000000, "percentage": 80, platforms: [
+        {"name": "UnifiTV", "stat": 30000000, "limit": 50000000, "percentage": 80, link:"/UnifiTV", color:"green"}, 
+        {"name": "MyTV", "stat": 15000000, "limit": 40000000, "percentage": 87.5, link:"/MyTVViewership", color:"blue"}, 
+        {"name": "ASTRO", "stat": 25000000, "limit": 25000000, "percentage": 100, link:"/ASTRO", color:"purple"},
+        {"name": "RTMKlik", "stat": 20000000, "limit": 50000000, "percentage": 80, link:"/RTMClick", color:"yellow"}, 
+        {"name": "Portal Berita", "stat": 10000000, "limit": 50000000, "percentage": 80, link:"/WartaBerita", color:"indigo"}, 
+    ]},
+    {"name": "Total Radio Listeners on RTM Stations", "stat": 1800000, "limit": 3000000, "percentage": 66.67, platforms: [
+        {"name": "UnifiTV", "stat": 600000, "limit": 50000000, "percentage": 80, link:"/UnifiTV", color:"green"}, 
+        {"name": "MyTV", "stat": 300000, "limit": 40000000, "percentage": 87.5, link:"/MyTVViewership", color:"blue"}, 
+        {"name": "ASTRO", "stat": 400000, "limit": 25000000, "percentage": 100, link:"/ASTRO", color:"purple"},
+        {"name": "RTMKlik", "stat": 350000, "limit": 40000000, "percentage": 87.5, link:"/RTMClick", color:"yellow"},         
+        {"name": "Portal Berita", "stat": 150000, "limit": 40000000, "percentage": 87.5, link:"/WartaBerita", color:"indigo"}, 
+    ]},
+  ]
 
   const KPICard = ({ item, index }) => {
     // Sort platforms by stat value (highest first)
@@ -1414,12 +1626,12 @@ const KPISection = () => {
             {item.name}
           </CardTitle>
         </CardHeader>
-
+        
         <CardContent className="p-0">
           <div className="flex flex-col gap-6 w-full">
             {/* Left side - Main KPI using Stats09 */}
             <div className="w-full">
-              <Stats09
+              <Stats09 
                 name={item.name}
                 stat={item.stat}
                 limit={item.limit}
@@ -1432,22 +1644,14 @@ const KPISection = () => {
               <Card className="h-full w-full gap-2">
                 <CardHeader className="pb-0">
                   <CardTitle className="text-sm font-medium text-gray-600 p-0">
-                    {item.name.includes("Viewers")
-                      ? "Viewers by Platform"
-                      : "Listeners by Platform"}
+                    {item.name.includes('Viewers') ? 'Viewers by Platform' : 'Listeners by Platform'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="pl-3 pr-6">
                     {sortedPlatforms.map((platform) => (
-                      <div
-                        key={platform.name}
-                        className="flex items-center justify-between py-1 gap-0"
-                      >
-                        <Link
-                          href={platform.link}
-                          className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0 space-x-1`}
-                        >
+                      <div key={platform.name} className="flex items-center justify-between py-1 gap-0">
+                        <Link href={platform.link} className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0 space-x-1`}>
                           <span className="">{platform.name}</span>
                           <ExternalLink className="inline-block ml-1 mb-0.5 w-3 h-3 text-gray-600" />
                         </Link>
@@ -1455,10 +1659,8 @@ const KPISection = () => {
                           <div className="text-sm font-semibold text-gray-900 ml-8 whitespace-nowrap justify-end">
                             {platform.stat.toLocaleString()}
                           </div>
-                          <div className="text-sm font-semibold text-gray-400 ml-4 whitespace-nowrap justify-end w-8">
-                            {((platform.stat / item.stat) * 100)
-                              .toFixed(2)}
-                            %
+                          <div className="text-sm font-semibold text-gray-400 ml-8 whitespace-nowrap justify-end w-8">
+                            {(platform.stat / item.stat * 100).toPrecision(2).toLocaleString()}%
                           </div>
                         </div>
                       </div>
@@ -1470,12 +1672,12 @@ const KPISection = () => {
           </div>
         </CardContent>
       </Card>
-    );
+    )
   };
 
   return (
     <section id="KPI" className="pt-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
         <div className="text-center w-full">
           <h1 className="text-3xl font-bold tracking-tight">
             Key Performance Indicators (KPI)
@@ -1485,19 +1687,13 @@ const KPISection = () => {
           </p>
         </div>
       </div>
-      {isLoading ? (
-        <div className="text-center py-8 text-gray-600">
-          Loading KPI data...
-        </div>
-      ) : (
-        <div className="flex flex-row gap-6 mt-6 h-fit w-full">
-          {kpiData.map((item, index) => (
-            <KPICard key={index} item={item} index={index} />
-          ))}
-        </div>
-      )}
+      <div className="flex flex-row gap-6 mt-6 h-fit w-full">
+        {KPIdata.map((item, index) => (
+          <KPICard key={index} item={item} index={index} />
+        ))}
+      </div>
     </section>
-  );
+  )
 };
 
 export default function HomepageDashboard () {
