@@ -2,13 +2,27 @@ import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { sql } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: Request) {
 	try {
-		console.log("Marketing Table 2 API called");
+		const { searchParams } = new URL(request.url);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
 
-		const result = await db.execute(sql`
-			SELECT * FROM marketing_channel_byyear WHERE report_type = 'Table 2'
-		`);
+		console.log("Marketing Table 2 API called");
+		console.log("Filter params:", { yearParam, monthParam });
+
+		// Build WHERE clause with filters
+		let whereClause = `WHERE report_type = 'Table 2'`;
+
+		if (yearParam && yearParam !== "all") {
+			whereClause += ` AND year = ${parseInt(yearParam)}`;
+			console.log("Filtering by year:", yearParam);
+		}
+
+		const query = `SELECT * FROM marketing_channel_byyear ${whereClause}`;
+		console.log("Executing query:", query);
+
+		const result = await db.execute(sql.raw(query));
 		const table2Data = result.rows;
 
 		console.log("Table 2 data:", table2Data);
@@ -67,14 +81,14 @@ export async function GET() {
 		const totalGrowth2022to2023 =
 			totals.year2022 !== 0
 				? ((Number(totals.year2023) - Number(totals.year2022)) /
-						Number(totals.year2022)) *
-				  100
+					Number(totals.year2022)) *
+				100
 				: 0;
 		const totalGrowth2023to2024 =
 			totals.year2023 !== 0
 				? ((Number(totals.year2024) - Number(totals.year2023)) /
-						Number(totals.year2023)) *
-				  100
+					Number(totals.year2023)) *
+				100
 				: 0;
 
 		const totalsRow = {

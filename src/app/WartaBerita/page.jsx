@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Users,
   Trophy,
@@ -18,7 +19,11 @@ import {
   PieChart,
   LineChart,
   Activity,
+  Download,
+  RefreshCw,
 } from "lucide-react";
+import * as htmlToImage from "html-to-image";
+import jsPDF from "jspdf";
 import {
   BarChart,
   Bar,
@@ -39,6 +44,9 @@ import {
 
 const PortalBeritaPage = () => {
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [selectedYear, setSelectedYear] = useState("2025");
+  const [selectedMonth, setSelectedMonth] = useState("all");
   const [dashboardData, setDashboardData] = useState(null);
   const [audienceData, setAudienceData] = useState(null);
   const [ageData, setAgeData] = useState(null);
@@ -55,12 +63,63 @@ const PortalBeritaPage = () => {
   const [trafficSourceData, setTrafficSourceData] = useState(null);
   const [trafficSourceLimit, setTrafficSourceLimit] = useState(5);
 
+  // Generate year options (last 2 years: 2025, 2024)
+  const yearOptions = useMemo(() => {
+    const options = [{ value: "all", label: "All Years" }];
+    const currentYear = new Date().getFullYear();
+    
+    for (let i = 0; i < 2; i++) {
+      const year = currentYear - i;
+      options.push({ value: year.toString(), label: year.toString() });
+    }
+    
+    return options;
+  }, []);
+
+  // Month options
+  const monthOptions = useMemo(() => {
+    return [
+      { value: "all", label: "All Months" },
+      { value: "01", label: "January" },
+      { value: "02", label: "February" },
+      { value: "03", label: "March" },
+      { value: "04", label: "April" },
+      { value: "05", label: "May" },
+      { value: "06", label: "June" },
+      { value: "07", label: "July" },
+      { value: "08", label: "August" },
+      { value: "09", label: "September" },
+      { value: "10", label: "October" },
+      { value: "11", label: "November" },
+      { value: "12", label: "December" },
+    ];
+  }, []);
+
+  // Compute the filter parameter for API calls
+  const filterParam = useMemo(() => {
+    if (selectedYear === "all" && selectedMonth === "all") {
+      return null; // No filter
+    } else if (selectedYear !== "all" && selectedMonth === "all") {
+      return `year=${selectedYear}`; // Year only
+    } else if (selectedYear === "all" && selectedMonth !== "all") {
+      // Month only - use current year
+      const currentYear = new Date().getFullYear();
+      return `month=${currentYear}-${selectedMonth}`;
+    } else {
+      // Both year and month selected
+      return `month=${selectedYear}-${selectedMonth}`;
+    }
+  }, [selectedYear, selectedMonth]);
+
   // Fetch dashboard summary data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         console.log("Fetching Portal Berita dashboard data...");
-        const response = await fetch("/api/pb-dashboard-summary");
+        const url = filterParam
+          ? `/api/pb-dashboard-summary?${filterParam}`
+          : "/api/pb-dashboard-summary";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -73,13 +132,16 @@ const PortalBeritaPage = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [filterParam]);
 
   // Fetch audience data for charts (monthly view)
   useEffect(() => {
     const fetchAudienceData = async () => {
       try {
-        const response = await fetch("/api/pb-audience-monthly");
+        const url = filterParam
+          ? `/api/pb-audience-monthly?${filterParam}`
+          : "/api/pb-audience-monthly";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -92,13 +154,16 @@ const PortalBeritaPage = () => {
     };
 
     fetchAudienceData();
-  }, []);
+  }, [filterParam]);
 
   // Fetch age demographics data
   useEffect(() => {
     const fetchAgeData = async () => {
       try {
-        const response = await fetch("/api/pb-age-demographics");
+        const url = filterParam
+          ? `/api/pb-age-demographics?${filterParam}`
+          : "/api/pb-age-demographics";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -111,13 +176,16 @@ const PortalBeritaPage = () => {
     };
 
     fetchAgeData();
-  }, []);
+  }, [filterParam]);
 
   // Fetch gender distribution data
   useEffect(() => {
     const fetchGenderData = async () => {
       try {
-        const response = await fetch("/api/pb-gender-distribution");
+        const url = filterParam
+          ? `/api/pb-gender-distribution?${filterParam}`
+          : "/api/pb-gender-distribution";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -130,13 +198,16 @@ const PortalBeritaPage = () => {
     };
 
     fetchGenderData();
-  }, []);
+  }, [filterParam]);
 
   // Fetch hourly gender distribution data
   useEffect(() => {
     const fetchHourlyGenderData = async () => {
       try {
-        const response = await fetch("/api/pb-gender-distribution?view=hourly");
+        const url = filterParam
+          ? `/api/pb-gender-distribution?view=hourly&${filterParam}`
+          : "/api/pb-gender-distribution?view=hourly";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -149,15 +220,16 @@ const PortalBeritaPage = () => {
     };
 
     fetchHourlyGenderData();
-  }, []);
+  }, [filterParam]);
 
   // Fetch hourly gender distribution data (PM)
   useEffect(() => {
     const fetchHourlyGenderDataPM = async () => {
       try {
-        const response = await fetch(
-          "/api/pb-gender-distribution?view=hourly-pm"
-        );
+        const url = filterParam
+          ? `/api/pb-gender-distribution?view=hourly-pm&${filterParam}`
+          : "/api/pb-gender-distribution?view=hourly-pm";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -170,13 +242,16 @@ const PortalBeritaPage = () => {
     };
 
     fetchHourlyGenderDataPM();
-  }, []);
+  }, [filterParam]);
 
   // Fetch regional data
   useEffect(() => {
     const fetchRegionData = async () => {
       try {
-        const response = await fetch("/api/pb-regional-analysis");
+        const url = filterParam
+          ? `/api/pb-regional-analysis?${filterParam}`
+          : "/api/pb-regional-analysis";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -189,13 +264,16 @@ const PortalBeritaPage = () => {
     };
 
     fetchRegionData();
-  }, []);
+  }, [filterParam]);
 
   // Fetch audience distribution data
   useEffect(() => {
     const fetchAudienceDistributionData = async () => {
       try {
-        const response = await fetch("/api/pb-audience-distribution");
+        const url = filterParam
+          ? `/api/pb-audience-distribution?${filterParam}`
+          : "/api/pb-audience-distribution";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -208,15 +286,16 @@ const PortalBeritaPage = () => {
     };
 
     fetchAudienceDistributionData();
-  }, []);
+  }, [filterParam]);
 
   // Fetch popular pages data
   useEffect(() => {
     const fetchPopularPagesData = async () => {
       try {
-        const response = await fetch(
-          `/api/pb-popular-pages?limit=${popularPagesLimit}`
-        );
+        const url = filterParam
+          ? `/api/pb-popular-pages?limit=${popularPagesLimit}&${filterParam}`
+          : `/api/pb-popular-pages?limit=${popularPagesLimit}`;
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -229,7 +308,7 @@ const PortalBeritaPage = () => {
     };
 
     fetchPopularPagesData();
-  }, [popularPagesLimit]);
+  }, [popularPagesLimit, filterParam]);
 
   // Fetch traffic source data
   useEffect(() => {
@@ -239,9 +318,10 @@ const PortalBeritaPage = () => {
           "Fetching traffic source data with limit:",
           trafficSourceLimit
         );
-        const response = await fetch(
-          `/api/pb-user-source-analysis?limit=${trafficSourceLimit}`
-        );
+        const url = filterParam
+          ? `/api/pb-user-source-analysis?limit=${trafficSourceLimit}&${filterParam}`
+          : `/api/pb-user-source-analysis?limit=${trafficSourceLimit}`;
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -255,7 +335,7 @@ const PortalBeritaPage = () => {
     };
 
     fetchTrafficSourceData();
-  }, [trafficSourceLimit]);
+  }, [trafficSourceLimit, filterParam]);
 
   // Calculate dashboard metrics
   const dashboardMetrics = useMemo(() => {
@@ -518,11 +598,207 @@ const PortalBeritaPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Refresh all data
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  // Export data function - PDF Export with high quality
+  const exportData = async () => {
+    try {
+      // Show export overlay
+      setIsExporting(true);
+
+      // Wait a brief moment for the overlay to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Get the dashboard container
+      const dashboardElement = document.querySelector(
+        ".dashboard-container"
+      );
+
+      if (!dashboardElement) {
+        alert("Dashboard container not found. Please refresh and try again.");
+        setIsExporting(false);
+        return;
+      }
+
+      // Hide the export button temporarily
+      const exportButton = document.querySelector(
+        'button[title*="Opens print dialog"]'
+      );
+
+      if (exportButton) exportButton.style.display = "none";
+
+      // Temporarily remove max-width constraints to capture full content
+      const originalMaxWidth = dashboardElement.style.maxWidth;
+      const originalWidth = dashboardElement.style.width;
+      const originalMargin = dashboardElement.style.margin;
+      dashboardElement.style.maxWidth = "none";
+      dashboardElement.style.width = "fit-content";
+      dashboardElement.style.margin = "0";
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+
+      // Wait for layout to stabilize after width change
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Get the full scrollable width and height (including overflow)
+      const fullWidth = Math.max(
+        dashboardElement.scrollWidth,
+        dashboardElement.offsetWidth,
+        dashboardElement.clientWidth
+      );
+      const fullHeight = Math.max(
+        dashboardElement.scrollHeight,
+        dashboardElement.offsetHeight,
+        dashboardElement.clientHeight
+      );
+
+      console.log("📐 Capturing dimensions:", {
+        scrollWidth: dashboardElement.scrollWidth,
+        offsetWidth: dashboardElement.offsetWidth,
+        clientWidth: dashboardElement.clientWidth,
+        fullWidth,
+        fullHeight,
+      });
+
+      // Capture with html-to-image with ULTRA HIGH QUALITY settings
+      const dataUrl = await htmlToImage.toPng(dashboardElement, {
+        quality: 1.0, // Maximum quality
+        pixelRatio: 2, // 2x resolution (optimal for capturing wide content)
+        cacheBust: true, // Prevent caching issues
+        backgroundColor: "#ffffff",
+        width: fullWidth, // Use full width including scrollable area
+        height: fullHeight, // Use full height including scrollable area
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+        },
+      });
+
+      // Restore original styles
+      dashboardElement.style.maxWidth = originalMaxWidth;
+      dashboardElement.style.width = originalWidth;
+      dashboardElement.style.margin = originalMargin;
+
+      // Show hidden elements again
+      if (exportButton) exportButton.style.display = "";
+
+      // Create an image to get dimensions
+      const img = new Image();
+      img.src = dataUrl;
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Create PDF - scale down to fit A4
+      const scaleFactor = 0.34;
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+
+      // Calculate dimensions with scale factor (300 DPI for print quality)
+      let scaledWidth = img.width * scaleFactor * 0.084667; // Convert pixels to mm (300 DPI)
+      let scaledHeight = img.height * scaleFactor * 0.084667;
+
+      // Determine orientation based on scaled dimensions
+      const orientation = scaledHeight > scaledWidth ? "portrait" : "landscape";
+      const pageWidth = orientation === "portrait" ? pdfWidth : pdfHeight;
+      const pageHeight = orientation === "portrait" ? pdfHeight : pdfWidth;
+
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Add margin for safety (5mm on each side)
+      const margin = 5;
+      const availableWidth = pageWidth - margin * 2;
+      const availableHeight = pageHeight - margin * 2;
+
+      // If image exceeds page bounds, scale it down proportionally to fit
+      if (scaledWidth > availableWidth || scaledHeight > availableHeight) {
+        const widthRatio = availableWidth / scaledWidth;
+        const heightRatio = availableHeight / scaledHeight;
+        const scaleRatio = Math.min(widthRatio, heightRatio);
+
+        scaledWidth = scaledWidth * scaleRatio;
+        scaledHeight = scaledHeight * scaleRatio;
+      }
+
+      // Center the image on the page
+      const xOffset = (pageWidth - scaledWidth) / 2;
+      const yOffset = (pageHeight - scaledHeight) / 2;
+
+      // Add image centered on the page
+      pdf.addImage(dataUrl, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
+
+      // Save PDF with dynamic filename
+      const fileName = `Portal_Berita_Analytics_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      pdf.save(fileName);
+
+      console.log("✅ PDF exported successfully!");
+    } catch (error) {
+      console.error("❌ Error exporting PDF:", error);
+      alert(
+        `Failed to export PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      // Hide export overlay
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-white pt-20">
-        {/* Header */}
-        <div className="bg-white border-b border-black px-6 py-8 top-0 z-50 shadow-sm">
+      <>
+        {/* Export Overlay - MUST be outside dashboard-container */}
+        {isExporting && (
+          <div
+            className="export-overlay fixed inset-0 z-[100] flex items-center justify-center"
+            style={{ minHeight: "100vh", height: "100%" }}
+          >
+            {/* Blurred backdrop - scrollable, extended to cover full document height */}
+            <div
+              className="absolute inset-0 bg-white/80 backdrop-blur-md"
+              style={{ minHeight: "100vh", height: "100%", width: "100vw" }}
+            ></div>
+
+            {/* Loading message */}
+            <div className="relative z-10 bg-white rounded-lg shadow-2xl border-2 border-blue-500 p-8 max-w-md mx-4">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                  <Download className="h-16 w-16 text-blue-600 animate-bounce" />
+                  <div className="absolute inset-0 h-16 w-16 text-blue-400 animate-ping opacity-75">
+                    <Download className="h-16 w-16" />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Exporting in Progress
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Please wait while we generate your PDF...
+                  </p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div className="bg-blue-600 h-2 rounded-full animate-pulse w-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="min-h-screen bg-white pt-20 dashboard-container">
+          {/* Header */}
+          <div className="bg-white border-b border-black px-6 py-8 top-0 z-50 shadow-sm">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
               <div>
@@ -566,14 +842,53 @@ const PortalBeritaPage = () => {
             ))}
           </div>
         </div>
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white pt-20">
-      {/* Header */}
-      <div className="bg-white border-b border-black px-6 py-8 top-0 z-50 shadow-sm">
+    <>
+      {/* Export Overlay - MUST be outside dashboard-container */}
+      {isExporting && (
+        <div
+          className="export-overlay fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ minHeight: "100vh", height: "100%" }}
+        >
+          {/* Blurred backdrop - scrollable, extended to cover full document height */}
+          <div
+            className="absolute inset-0 bg-white/80 backdrop-blur-md"
+            style={{ minHeight: "100vh", height: "100%", width: "100vw" }}
+          ></div>
+
+          {/* Loading message */}
+          <div className="relative z-10 bg-white rounded-lg shadow-2xl border-2 border-blue-500 p-8 max-w-md mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Download className="h-16 w-16 text-blue-600 animate-bounce" />
+                <div className="absolute inset-0 h-16 w-16 text-blue-400 animate-ping opacity-75">
+                  <Download className="h-16 w-16" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Exporting in Progress
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Please wait while we generate your PDF...
+                </p>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse w-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-white pt-20 dashboard-container">
+        {/* Header */}
+        <div className="bg-white border-b border-black px-6 py-8 top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div>
@@ -585,6 +900,52 @@ const PortalBeritaPage = () => {
               </p>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Year Filter */}
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="px-3 py-2 text-sm border border-black rounded-md bg-white text-black hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black"
+                title="Filter data by year"
+              >
+                {yearOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Month Filter */}
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-3 py-2 text-sm border border-black rounded-md bg-white text-black hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black"
+                title="Filter data by month"
+              >
+                {monthOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                title="Refresh all dashboard data"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+              <Button
+                onClick={exportData}
+                variant="outline"
+                size="sm"
+                title="Opens print dialog. Set Scale to 21 in More Settings for best results."
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Print/Export PDF
+              </Button>
               <Badge
                 variant="secondary"
                 className="px-3 py-1 bg-gray-200 text-black border border-black"
@@ -854,6 +1215,7 @@ const PortalBeritaPage = () => {
                       cy="50%"
                       outerRadius={100}
                       dataKey="totalUsers"
+                      nameKey="audienceName"
                       label={({ percentage }) => `${percentage}%`}
                       labelLine={true}
                     >
@@ -872,18 +1234,13 @@ const PortalBeritaPage = () => {
                         `${value.toLocaleString()} users (${
                           props.payload.percentage
                         }%)`,
-                        "Total Users",
+                        props.payload.audienceName,
                       ]}
-                      labelFormatter={(label, payload) => {
-                        if (payload && payload.length > 0) {
-                          return `Audience: ${payload[0].payload.audienceName}`;
-                        }
-                        return `Audience: ${label}`;
-                      }}
                     />
                     <Legend
-                      formatter={(value, entry) => entry.payload.audienceName}
-                      wrapperStyle={{ fontSize: "12px" }}
+                      verticalAlign="bottom"
+                      height={36}
+                      wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
                     />
                   </RechartsPieChart>
                 </ResponsiveContainer>
@@ -1266,27 +1623,15 @@ const PortalBeritaPage = () => {
                         <td className="py-3 px-4 relative">
                           <div className="relative group">
                             <div
-                              className="font-medium text-black max-w-xs truncate cursor-pointer hover:text-gray-700 transition-all duration-300 ease-out"
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(
-                                    page.pageName
-                                  );
-                                  // Show copied confirmation
-                                  const element = document.getElementById(
-                                    `copied-${index}`
-                                  );
-                                  if (element) {
-                                    element.classList.remove("opacity-0");
-                                    element.classList.add("opacity-100");
-                                    setTimeout(() => {
-                                      element.classList.remove("opacity-100");
-                                      element.classList.add("opacity-0");
-                                    }, 2000);
-                                  }
-                                } catch (err) {
-                                  console.error("Failed to copy text: ", err);
-                                }
+                              className="font-medium text-black max-w-xs truncate cursor-pointer hover:text-blue-600 hover:underline transition-all duration-300 ease-out"
+                              onClick={() => {
+                                const searchQuery = encodeURIComponent(
+                                  page.pageName
+                                );
+                                window.open(
+                                  `https://www.google.com/search?q=${searchQuery}`,
+                                  "_blank"
+                                );
                               }}
                             >
                               {page.pageName}
@@ -1300,22 +1645,11 @@ const PortalBeritaPage = () => {
                             <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-4 py-2.5 bg-white border border-black text-black text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out group-hover:translate-y-0 translate-y-1 pointer-events-none whitespace-nowrap z-[9999]">
                               {page.pageName}
                               <div className="text-xs text-gray-600 mt-1">
-                                Click to copy
+                                Click to search on Google
                               </div>
                               {/* Arrow */}
                               <div className="absolute top-full left-1/2 -translate-x-1/2">
                                 <div className="w-2 h-2 bg-white border-r border-b border-black transform rotate-45 -mt-1"></div>
-                              </div>
-                            </div>
-                            {/* Copied Confirmation */}
-                            <div
-                              id={`copied-${index}`}
-                              className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-black text-white text-sm font-medium rounded-lg shadow-lg opacity-0 transition-all duration-200 ease-out pointer-events-none whitespace-nowrap z-[10000]"
-                            >
-                              Copied!
-                              {/* Arrow */}
-                              <div className="absolute top-full left-1/2 -translate-x-1/2">
-                                <div className="w-2 h-2 bg-black transform rotate-45 -mt-1"></div>
                               </div>
                             </div>
                           </div>
@@ -1377,7 +1711,8 @@ const PortalBeritaPage = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

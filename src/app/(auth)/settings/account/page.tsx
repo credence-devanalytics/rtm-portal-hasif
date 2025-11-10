@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useState } from "react";
 import { LogOut, User, Lock } from "lucide-react";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function AccountPage() {
     const { data: session, isPending } = useSession();
@@ -172,9 +173,8 @@ export default function AccountPage() {
                         <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
                             Current Password
                         </label>
-                        <Input
+                        <PasswordInput
                             id="currentPassword"
-                            type="password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
                             placeholder="Enter your current password"
@@ -186,9 +186,8 @@ export default function AccountPage() {
                         <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
                             New Password
                         </label>
-                        <Input
+                        <PasswordInput
                             id="newPassword"
-                            type="password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Enter your new password"
@@ -200,9 +199,8 @@ export default function AccountPage() {
                         <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                             Confirm New Password
                         </label>
-                        <Input
+                        <PasswordInput
                             id="confirmPassword"
-                            type="password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Confirm your new password"

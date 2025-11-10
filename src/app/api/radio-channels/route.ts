@@ -1,13 +1,27 @@
 import { db } from "@/index";
 import { sql } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: Request) {
 	try {
-		console.log("Radio Channel Table API called");
+		const { searchParams } = new URL(request.url);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
 
-		const result = await db.execute(sql`
-			SELECT * FROM marketing_channel_byyear WHERE report_type = 'Table 4'
-		`);
+		console.log("Radio Channel Table API called");
+		console.log("Filter params:", { yearParam, monthParam });
+
+		// Build WHERE clause with filters
+		let whereClause = `WHERE report_type = 'Table 4'`;
+
+		if (yearParam && yearParam !== "all") {
+			whereClause += ` AND year = ${parseInt(yearParam)}`;
+			console.log("Filtering by year:", yearParam);
+		}
+
+		const query = `SELECT * FROM marketing_channel_byyear ${whereClause}`;
+		console.log("Executing query:", query);
+
+		const result = await db.execute(sql.raw(query));
 		const radioChannelData = result.rows;
 
 		console.log("Radio channel data count:", radioChannelData.length);
@@ -87,16 +101,16 @@ export async function GET() {
 			const groupTotalGrowth2022to2023 =
 				groupTotal2022 > 0
 					? (
-							((groupTotal2023 - groupTotal2022) / groupTotal2022) *
-							100
-					  ).toFixed(1)
+						((groupTotal2023 - groupTotal2022) / groupTotal2022) *
+						100
+					).toFixed(1)
 					: "N/A";
 			const groupTotalGrowth2023to2024 =
 				groupTotal2023 > 0
 					? (
-							((groupTotal2024 - groupTotal2023) / groupTotal2023) *
-							100
-					  ).toFixed(1)
+						((groupTotal2024 - groupTotal2023) / groupTotal2023) *
+						100
+					).toFixed(1)
 					: "N/A";
 
 			// Add Total row

@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Define public routes that don't require authentication
-const publicRoutes = ["/", "/login", "/contact", "/register"];
+const publicRoutes = ["/", "/login", "/contact", "/ASTRO"];
 
 // Define routes that should redirect authenticated users away
-const authRoutes = ["/login", "/register"];
+const authRoutes = ["/login"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
 
   // Check if user has a session token (better-auth stores it in cookies)
   const sessionToken = request.cookies.get("better-auth.session_token");
-  
+
   // If accessing an auth route (login/register) and has session
   if (authRoutes.includes(pathname) && sessionToken) {
     return NextResponse.redirect(new URL("/", request.url));

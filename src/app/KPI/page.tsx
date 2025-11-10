@@ -35,8 +35,13 @@ import PlatformDonutChart from "@/components/RTMAccount/PlatformDonutChart";
 import { useRTMMentions, transformRTMData } from "@/hooks/useRTMQueries";
 import { SentimentBySourceChart } from "@/components/dashboard/public-mentions/sentiment-by-source-chart";
 import EngagementOverTimeChart from "@/components/RTMAccount/EngagementOverTimeChart";
-import { Button } from "@/components/ui/button";
-import MedinaLogo from "@/components/MedinaLogo";
+import {
+  useUnifiTVKPI,
+  useMyTVKPI,
+  useASTROKPI,
+  useRTMKlikKPI,
+  usePortalBeritaKPI,
+} from "@/hooks/useKPIData";
 import Stats09 from "@/components/stats-3";
 
 const MultiplatformSection = () => {
@@ -1261,23 +1266,141 @@ const AccountsSection = () => {
 };
 
 const KPISection = () => {
+  // Use TanStack Query hooks for parallel data fetching with caching
+  const unifiQuery = useUnifiTVKPI();
+  const mytvQuery = useMyTVKPI();
+  const astroQuery = useASTROKPI();
+  const rtmklikQuery = useRTMKlikKPI();
+  const pbQuery = usePortalBeritaKPI();
 
-  const KPIdata = [
-    {"name": "Total Viewers for RTM Channels", "stat": 100000000, "limit": 115000000, "percentage": 80, platforms: [
-        {"name": "UnifiTV", "stat": 30000000, "limit": 50000000, "percentage": 80, link:"/UnifiTV", color:"green"}, 
-        {"name": "MyTV", "stat": 15000000, "limit": 40000000, "percentage": 87.5, link:"/MyTVViewership", color:"blue"}, 
-        {"name": "ASTRO", "stat": 25000000, "limit": 25000000, "percentage": 100, link:"/ASTRO", color:"purple"},
-        {"name": "RTMKlik", "stat": 20000000, "limit": 50000000, "percentage": 80, link:"/RTMClick", color:"yellow"}, 
-        {"name": "Portal Berita", "stat": 10000000, "limit": 50000000, "percentage": 80, link:"/WartaBerita", color:"indigo"}, 
-    ]},
-    {"name": "Total Radio Listeners on RTM Stations", "stat": 1800000, "limit": 3000000, "percentage": 66.67, platforms: [
-        {"name": "UnifiTV", "stat": 600000, "limit": 50000000, "percentage": 80, link:"/UnifiTV", color:"green"}, 
-        {"name": "MyTV", "stat": 300000, "limit": 40000000, "percentage": 87.5, link:"/MyTVViewership", color:"blue"}, 
-        {"name": "ASTRO", "stat": 400000, "limit": 25000000, "percentage": 100, link:"/ASTRO", color:"purple"},
-        {"name": "RTMKlik", "stat": 350000, "limit": 40000000, "percentage": 87.5, link:"/RTMClick", color:"yellow"},         
-        {"name": "Portal Berita", "stat": 150000, "limit": 40000000, "percentage": 87.5, link:"/WartaBerita", color:"indigo"}, 
-    ]},
-  ]
+  // Check if any query is loading
+  const isLoading =
+    unifiQuery.isLoading ||
+    mytvQuery.isLoading ||
+    astroQuery.isLoading ||
+    rtmklikQuery.isLoading ||
+    pbQuery.isLoading;
+
+  // Memoize the KPI data to avoid unnecessary recalculations
+  const kpiData = useMemo(() => {
+    // Extract values or set to null if no data
+    const unifiTVViewers = unifiQuery.data?.success
+      ? unifiQuery.data.data?.mau_total || 0
+      : null;
+    const myTVViewers = mytvQuery.data?.success
+      ? mytvQuery.data.data?.total_reach || 0
+      : null;
+    const astroTVViewers = astroQuery.data?.success
+      ? astroQuery.data.data?.tv_reach || 0
+      : null;
+    const astroRadioListeners = astroQuery.data?.success
+      ? astroQuery.data.data?.radio_reach || 0
+      : null;
+    const rtmklikTVViewers = rtmklikQuery.data?.success
+      ? rtmklikQuery.data.data?.tv || 0
+      : null;
+    const rtmklikRadioListeners = rtmklikQuery.data?.success
+      ? rtmklikQuery.data.data?.radio || 0
+      : null;
+    const pbViewers = pbQuery.data?.success
+      ? pbQuery.data.data?.totalAudience || 0
+      : null;
+
+    // Calculate totals (only include non-null values)
+    const tvValues = [
+      unifiTVViewers,
+      myTVViewers,
+      astroTVViewers,
+      rtmklikTVViewers,
+      pbViewers,
+    ].filter((v) => v !== null);
+    const totalViewers =
+      tvValues.length > 0 ? tvValues.reduce((sum, val) => sum + val, 0) : 0;
+
+    const radioValues = [astroRadioListeners, rtmklikRadioListeners].filter(
+      (v) => v !== null
+    );
+    const totalRadioListeners =
+      radioValues.length > 0
+        ? radioValues.reduce((sum, val) => sum + val, 0)
+        : 0;
+
+    // Build platforms array with N/A for missing data
+    const tvPlatforms = [
+      {
+        name: "UnifiTV",
+        stat: unifiTVViewers,
+        link: "/UnifiTV",
+        color: "green",
+      },
+      {
+        name: "MyTV",
+        stat: myTVViewers,
+        link: "/MyTVViewership",
+        color: "blue",
+      },
+      { name: "ASTRO", stat: astroTVViewers, link: "/ASTRO", color: "purple" },
+      {
+        name: "RTMKlik",
+        stat: rtmklikTVViewers,
+        link: "/RTMClick",
+        color: "yellow",
+      },
+      {
+        name: "Portal Berita",
+        stat: pbViewers,
+        link: "/WartaBerita",
+        color: "indigo",
+      },
+    ].sort((a, b) => {
+      if (a.stat === null) return 1;
+      if (b.stat === null) return -1;
+      return b.stat - a.stat;
+    });
+
+    const radioPlatforms = [
+      {
+        name: "ASTRO",
+        stat: astroRadioListeners,
+        link: "/ASTRO",
+        color: "purple",
+      },
+      {
+        name: "RTMKlik",
+        stat: rtmklikRadioListeners,
+        link: "/RTMClick",
+        color: "yellow",
+      },
+    ].sort((a, b) => {
+      if (a.stat === null) return 1;
+      if (b.stat === null) return -1;
+      return b.stat - a.stat;
+    });
+
+    return [
+      {
+        name: "Total Viewers for RTM Channels",
+        stat: totalViewers,
+        limit: 115000000,
+        percentage: totalViewers > 0 ? (totalViewers / 115000000) * 100 : 0,
+        platforms: tvPlatforms,
+      },
+      {
+        name: "Total Radio Listeners on RTM Stations",
+        stat: totalRadioListeners,
+        limit: 22000000,
+        percentage:
+          totalRadioListeners > 0 ? (totalRadioListeners / 22000000) * 100 : 0,
+        platforms: radioPlatforms,
+      },
+    ];
+  }, [
+    unifiQuery.data,
+    mytvQuery.data,
+    astroQuery.data,
+    rtmklikQuery.data,
+    pbQuery.data,
+  ]);
 
   const KPICard = ({ item, index }) => {
     // Sort platforms by stat value (highest first)
@@ -1291,12 +1414,12 @@ const KPISection = () => {
             {item.name}
           </CardTitle>
         </CardHeader>
-        
+
         <CardContent className="p-0">
           <div className="flex flex-col gap-6 w-full">
             {/* Left side - Main KPI using Stats09 */}
             <div className="w-full">
-              <Stats09 
+              <Stats09
                 name={item.name}
                 stat={item.stat}
                 limit={item.limit}
@@ -1309,14 +1432,22 @@ const KPISection = () => {
               <Card className="h-full w-full gap-2">
                 <CardHeader className="pb-0">
                   <CardTitle className="text-sm font-medium text-gray-600 p-0">
-                    {item.name.includes('Viewers') ? 'Viewers by Platform' : 'Listeners by Platform'}
+                    {item.name.includes("Viewers")
+                      ? "Viewers by Platform"
+                      : "Listeners by Platform"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="pl-3 pr-6">
                     {sortedPlatforms.map((platform) => (
-                      <div key={platform.name} className="flex items-center justify-between py-1 gap-0">
-                        <Link href={platform.link} className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0 space-x-1`}>
+                      <div
+                        key={platform.name}
+                        className="flex items-center justify-between py-1 gap-0"
+                      >
+                        <Link
+                          href={platform.link}
+                          className={`bg-${platform.color}-100 text-${platform.color}-800 font-semibold rounded-md py-1 px-2 min-w-0 flex-shrink-0 space-x-1`}
+                        >
                           <span className="">{platform.name}</span>
                           <ExternalLink className="inline-block ml-1 mb-0.5 w-3 h-3 text-gray-600" />
                         </Link>
@@ -1324,8 +1455,10 @@ const KPISection = () => {
                           <div className="text-sm font-semibold text-gray-900 ml-8 whitespace-nowrap justify-end">
                             {platform.stat.toLocaleString()}
                           </div>
-                          <div className="text-sm font-semibold text-gray-400 ml-8 whitespace-nowrap justify-end w-8">
-                            {(platform.stat / item.stat * 100).toPrecision(2).toLocaleString()}%
+                          <div className="text-sm font-semibold text-gray-400 ml-4 whitespace-nowrap justify-end w-8">
+                            {((platform.stat / item.stat) * 100)
+                              .toFixed(2)}
+                            %
                           </div>
                         </div>
                       </div>
@@ -1337,12 +1470,12 @@ const KPISection = () => {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   };
 
   return (
     <section id="KPI" className="pt-6">
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6">
         <div className="text-center w-full">
           <h1 className="text-3xl font-bold tracking-tight">
             Key Performance Indicators (KPI)
@@ -1352,13 +1485,19 @@ const KPISection = () => {
           </p>
         </div>
       </div>
-      <div className="flex flex-row gap-6 mt-6 h-fit w-full">
-        {KPIdata.map((item, index) => (
-          <KPICard key={index} item={item} index={index} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="text-center py-8 text-gray-600">
+          Loading KPI data...
+        </div>
+      ) : (
+        <div className="flex flex-row gap-6 mt-6 h-fit w-full">
+          {kpiData.map((item, index) => (
+            <KPICard key={index} item={item} index={index} />
+          ))}
+        </div>
+      )}
     </section>
-  )
+  );
 };
 
 export default function HomepageDashboard () {

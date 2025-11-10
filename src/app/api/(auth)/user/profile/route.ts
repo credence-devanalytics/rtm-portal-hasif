@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db } from '@/index';
 import { users } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
 
 // PUT - Update user profile (name and email)
 export async function PUT(request: NextRequest) {
@@ -61,5 +60,38 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Error updating profile:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user?.id) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is admin
+    const currentUser = await db
+      .select({ 
+        name: users.name, 
+        email: users.email,
+        role: users.role,
+        status: users.status,
+        systemId: users.systemId,
+        position: users.position,
+        taskRole: users.taskRole
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    return Response.json({ user: currentUser[0] });
+
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

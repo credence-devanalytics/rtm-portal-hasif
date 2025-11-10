@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -13,6 +13,25 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const TVMonthlyPerformanceChart = ({ data = [] }) => {
+  // Determine which years have data
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    if (data && Array.isArray(data)) {
+      data.forEach((item) => {
+        if (item[2022] && item[2022] > 0) years.add(2022);
+        if (item[2023] && item[2023] > 0) years.add(2023);
+        if (item[2024] && item[2024] > 0) years.add(2024);
+      });
+    }
+    return Array.from(years).sort();
+  }, [data]);
+
+  const yearColors = {
+    2022: "#94a3b8",
+    2023: "#3b82f6",
+    2024: "#10b981",
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-MY", {
       style: "currency",
@@ -54,13 +73,13 @@ const TVMonthlyPerformanceChart = ({ data = [] }) => {
           TV Monthly Income Performance
         </CardTitle>
         <p className="text-sm text-gray-600 font-sans">
-          Monthly revenue trends across three years
+          Monthly revenue trends {availableYears.length > 1 ? `across ${availableYears.length} years` : `for ${availableYears[0]}`}
         </p>
       </CardHeader>
       <CardContent className="">
         <ResponsiveContainer width="100%" height={400}>
           <LineChart
-            data={data}
+            data={data || []}
             margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -83,30 +102,17 @@ const TVMonthlyPerformanceChart = ({ data = [] }) => {
                 fontFamily: "var(--font-geist-sans)",
               }}
             />
-            <Line
-              type="linear"
-              dataKey="2022"
-              stroke="#94a3b8"
-              strokeWidth={3}
-              dot={{ fill: "#94a3b8", strokeWidth: 2, r: 6 }}
-              activeDot={{ r: 8, stroke: "#94a3b8", strokeWidth: 2 }}
-            />
-            <Line
-              type="linear"
-              dataKey="2023"
-              stroke="#3b82f6"
-              strokeWidth={3}
-              dot={{ fill: "#3b82f6", strokeWidth: 2, r: 6 }}
-              activeDot={{ r: 8, stroke: "#3b82f6", strokeWidth: 2 }}
-            />
-            <Line
-              type="linear"
-              dataKey="2024"
-              stroke="#10b981"
-              strokeWidth={3}
-              dot={{ fill: "#10b981", strokeWidth: 2, r: 6 }}
-              activeDot={{ r: 8, stroke: "#10b981", strokeWidth: 2 }}
-            />
+            {availableYears.map((year) => (
+              <Line
+                key={year}
+                type="linear"
+                dataKey={year.toString()}
+                stroke={yearColors[year]}
+                strokeWidth={3}
+                dot={{ fill: yearColors[year], strokeWidth: 2, r: 6 }}
+                activeDot={{ r: 8, stroke: yearColors[year], strokeWidth: 2 }}
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

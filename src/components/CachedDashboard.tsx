@@ -238,7 +238,6 @@ export default function CachedDashboard() {
               <div className="mt-4 p-3 bg-gray-50 rounded">
                 <p className="text-sm">
                   <strong>Cache Status:</strong> {health.overall} |
-                  <strong> Redis:</strong> {health.redis.status} |
                   <strong> Node Cache:</strong> {health.nodeCache.status}
                 </p>
               </div>

@@ -1,0 +1,46 @@
+<html>
+<head>
+<title>Trusted Ticket Requester</title>
+<script type="text/javascript">
+  function submitForm(){
+    document.getElementById('form1').action =
+    document.getElementById('server').value + "/trusted";
+  }
+</script>
+<style type="text/css">
+  .style1 {width: 100%;}
+  .style2 {width: 429px;}
+  #server {width: 254px;}
+</style>
+</head>
+<body>
+<h3>Trusted Ticketer</h3>
+<form method="POST" id="form1" onSubmit="submitForm()">
+  <table class="style1">
+    <tr>
+      <td class="style2">Username</td>
+      <td><input type="text" name="username" value="" /></td>
+    </tr>
+    <tr>
+      <td class="style2">Server</td>
+      <td><input type="text" id="server" name="server" value="https://" /></td>
+    </tr>
+    <tr>
+      <td class="style2">Client IP (optional)</td>
+      <td><input type="text" id="client_ip" name="client_ip" value="" /></td>
+    </tr>
+    <tr>
+      <td class="style2">Site (leave blank for Default site; otherwise enter the site name)</td>
+      <td><input type="text" id="target_site" name="target_site" value="" /></td>
+    </tr>
+    <tr>
+      <td class="style2"><input type="submit" name="submittable" value="Get Ticket" /></td>
+      <td>&#160;</td>
+    </tr>
+  </table>
+</form>
+<h4>Be sure to add your IP as a Trusted IP address to the server</h4>
+<script type='module' src='http://100.83.250.224:8080/javascripts/api/tableau.embedding.3.latest.min.js'></script><tableau-viz id='tableau-viz' src='https://202.165.15.23/trusted/K1oatE25TNmUDMlbqMUCWg==:ztN-0HF_jYrqcOQKyeRPh82-/views/RTMKlik_17576649176570/RadioAnalysis2/e5a6af72-acba-4558-be12-2053ab01763b/cd4308e2-2538-425e-982a-c8eee03599be' width='1700' height='1240' hide-tabs toolbar='bottom' ></tableau-viz>
+</body>
+</html>
+

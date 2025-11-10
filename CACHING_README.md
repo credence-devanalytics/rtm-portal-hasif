@@ -1,21 +1,22 @@
 # Dashboard Caching System
 
-A high-performance caching solution for handling 40k+ rows efficiently in your dashboard application. This system uses Redis (with in-memory fallback) to cache aggregated queries and provides instant responses for common dashboard operations.
+A high-performance caching solution for handling 40k+ rows efficiently in your dashboard application. This system uses **TanStack Query** for client-side caching with an in-memory server-side cache for aggregated queries, providing instant responses for common dashboard operations.
 
 ## 🚀 Features
 
-- **Redis + In-Memory Fallback**: Automatically falls back to Node.js in-memory cache if Redis is unavailable
+- **TanStack Query**: Modern client-side caching with automatic cache invalidation and refetching
+- **In-Memory Server Cache**: Node.js in-memory cache for server-side query results
 - **Smart Cache Keys**: MD5-hashed keys based on filters for consistent caching
 - **Aggregated Queries**: Caches processed data, not raw rows, for optimal performance
-- **5-minute TTL**: Configurable cache expiration (default: 5 minutes)
-- **React Hooks**: Easy integration with React components
+- **Configurable TTL**: Default 5-minute cache expiration (customizable)
+- **React Hooks**: Easy integration with React components via custom hooks
 - **Cache Management**: API endpoints for monitoring and managing cache
 - **Cross-filtering Support**: Handles multiple interactive filters seamlessly
 
 ## 📦 Installation
 
 ```bash
-npm install redis node-cache crypto
+pnpm install @tanstack/react-query @tanstack/react-query-devtools node-cache
 ```
 
 ## 🔧 Configuration
@@ -25,9 +26,6 @@ npm install redis node-cache crypto
 Create a `.env.local` file (copy from `.env.example`):
 
 ```bash
-# Redis Configuration (Optional)
-REDIS_URL=redis://localhost:6379
-
 # Cache Settings
 CACHE_DEFAULT_TTL=300
 CACHE_MAX_MEMORY_MB=100
@@ -36,25 +34,6 @@ CACHE_MAX_MEMORY_MB=100
 MAX_QUERY_TIMEOUT=30000
 DEFAULT_PAGE_SIZE=50
 MAX_PAGE_SIZE=1000
-```
-
-### Redis Setup (Optional)
-
-If you want to use Redis for distributed caching:
-
-```bash
-# Install Redis locally
-# Windows (with Chocolatey)
-choco install redis-64
-
-# macOS (with Homebrew)
-brew install redis
-
-# Start Redis
-redis-server
-
-# Or use Docker
-docker run -d -p 6379:6379 redis:alpine
 ```
 
 ## 🎯 API Endpoints

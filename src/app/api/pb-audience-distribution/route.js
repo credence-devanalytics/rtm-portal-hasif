@@ -1,11 +1,39 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { pberitaAudience } from "../../../../drizzle/schema";
-import { sql, ne } from "drizzle-orm";
+import { sql, ne, and, gte, lte } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request) {
 	try {
 		console.log("PB Audience Distribution API called");
+
+		// Get query parameters for filtering
+		const { searchParams } = new URL(request.url);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
+
+		console.log('Filter params:', { yearParam, monthParam });
+
+		// Build date filter conditions
+		const dateFilters = [ne(pberitaAudience.audiencename, "All Users")];
+
+		if (monthParam) {
+			// Month filter: YYYY-MM format
+			const [year, month] = monthParam.split('-');
+			const startDate = `${year}-${month}-01`;
+			const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+			const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+			dateFilters.push(gte(pberitaAudience.date, startDate));
+			dateFilters.push(lte(pberitaAudience.date, endDate));
+			console.log('Month filter applied:', { startDate, endDate });
+		} else if (yearParam) {
+			// Year only filter
+			const startDate = `${yearParam}-01-01`;
+			const endDate = `${yearParam}-12-31`;
+			dateFilters.push(gte(pberitaAudience.date, startDate));
+			dateFilters.push(lte(pberitaAudience.date, endDate));
+			console.log('Year filter applied:', { startDate, endDate });
+		}
 
 		// Fetch audience distribution data, excluding 'All Users'
 		const audienceDistribution = await db
@@ -14,7 +42,7 @@ export async function GET() {
 				totalUsers: sql`SUM(${pberitaAudience.totalusers})`.as("totalUsers"),
 			})
 			.from(pberitaAudience)
-			.where(ne(pberitaAudience.audiencename, "All Users"))
+			.where(and(...dateFilters))
 			.groupBy(pberitaAudience.audiencename)
 			.orderBy(sql`SUM(${pberitaAudience.totalusers}) DESC`);
 
@@ -35,7 +63,7 @@ export async function GET() {
 		const chartData = audienceDistribution
 			.filter((item) => item.totalUsers > 0) // Only include segments with users
 			.map((item, index) => ({
-				audienceName: item.audiencename,
+				audienceName: item.audienceName,
 				totalUsers: parseInt(item.totalUsers) || 0,
 				fill: colors[index % colors.length],
 				percentage: 0, // Will be calculated below
@@ -70,8 +98,8 @@ export async function GET() {
 					totalSegments,
 					totalUsers: totalAllSegments,
 					largestSegment: {
-						name: largestSegment.audiencename,
-						users: largestSegment.totalusers,
+						name: largestSegment.audienceName,
+						users: largestSegment.totalUsers,
 						percentage: largestSegment.percentage,
 					},
 					avgUsersPerSegment,

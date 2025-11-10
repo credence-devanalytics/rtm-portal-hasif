@@ -1,6 +1,8 @@
 ﻿"use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import * as htmlToImage from "html-to-image";
+import jsPDF from "jspdf";
 import {
   Card,
   CardContent,
@@ -34,6 +36,8 @@ import {
   FilterIcon,
   RefreshCwIcon,
   InfoIcon,
+  Download,
+  RefreshCw,
 } from "lucide-react";
 
 // Import recharts components
@@ -66,6 +70,7 @@ const UnifiTVPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
@@ -238,6 +243,163 @@ const UnifiTVPage = () => {
       sortBy: "mau",
       sortOrder: "desc",
     });
+  };
+
+  const handleRefresh = () => {
+    fetchData();
+  };
+
+  // Export data function - PDF Export with high quality
+  const exportData = async () => {
+    try {
+      // Show export overlay
+      setIsExporting(true);
+
+      // Wait a brief moment for the overlay to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Get the dashboard container
+      const dashboardElement = document.querySelector(
+        ".dashboard-container"
+      ) as HTMLElement;
+
+      if (!dashboardElement) {
+        alert("Dashboard container not found. Please refresh and try again.");
+        setIsExporting(false);
+        return;
+      }
+
+      // Hide the export button temporarily
+      const exportButton = document.querySelector(
+        'button[title*="Opens print dialog"]'
+      ) as HTMLElement | null;
+
+      if (exportButton) exportButton.style.display = "none";
+
+      // Temporarily remove max-width constraints to capture full content
+      const originalMaxWidth = dashboardElement.style.maxWidth;
+      const originalWidth = dashboardElement.style.width;
+      const originalMargin = dashboardElement.style.margin;
+      dashboardElement.style.maxWidth = "none";
+      dashboardElement.style.width = "fit-content";
+      dashboardElement.style.margin = "0";
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+
+      // Wait for layout to stabilize after width change
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Get the full scrollable width and height (including overflow)
+      const fullWidth = Math.max(
+        dashboardElement.scrollWidth,
+        dashboardElement.offsetWidth,
+        dashboardElement.clientWidth
+      );
+      const fullHeight = Math.max(
+        dashboardElement.scrollHeight,
+        dashboardElement.offsetHeight,
+        dashboardElement.clientHeight
+      );
+
+      console.log("📐 Capturing dimensions:", {
+        scrollWidth: dashboardElement.scrollWidth,
+        offsetWidth: dashboardElement.offsetWidth,
+        clientWidth: dashboardElement.clientWidth,
+        fullWidth,
+        fullHeight,
+      });
+
+      // Capture with html-to-image with ULTRA HIGH QUALITY settings
+      const dataUrl = await htmlToImage.toPng(dashboardElement, {
+        quality: 1.0, // Maximum quality
+        pixelRatio: 2, // 2x resolution (optimal for capturing wide content)
+        cacheBust: true, // Prevent caching issues
+        backgroundColor: "#ffffff",
+        width: fullWidth, // Use full width including scrollable area
+        height: fullHeight, // Use full height including scrollable area
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+        },
+      });
+
+      // Restore original styles
+      dashboardElement.style.maxWidth = originalMaxWidth;
+      dashboardElement.style.width = originalWidth;
+      dashboardElement.style.margin = originalMargin;
+
+      // Show hidden elements again
+      if (exportButton) exportButton.style.display = "";
+
+      // Create an image to get dimensions
+      const img = new Image();
+      img.src = dataUrl;
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Create PDF - scale down to fit A4
+      const scaleFactor = 0.44;
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+
+      // Calculate dimensions with scale factor (300 DPI for print quality)
+      let scaledWidth = img.width * scaleFactor * 0.084667; // Convert pixels to mm (300 DPI)
+      let scaledHeight = img.height * scaleFactor * 0.084667;
+
+      // Determine orientation based on scaled dimensions
+      const orientation = scaledHeight > scaledWidth ? "portrait" : "landscape";
+      const pageWidth = orientation === "portrait" ? pdfWidth : pdfHeight;
+      const pageHeight = orientation === "portrait" ? pdfHeight : pdfWidth;
+
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Add margin for safety (5mm on each side)
+      const margin = 5;
+      const availableWidth = pageWidth - margin * 2;
+      const availableHeight = pageHeight - margin * 2;
+
+      // If image exceeds page bounds, scale it down proportionally to fit
+      if (scaledWidth > availableWidth || scaledHeight > availableHeight) {
+        const widthRatio = availableWidth / scaledWidth;
+        const heightRatio = availableHeight / scaledHeight;
+        const scaleRatio = Math.min(widthRatio, heightRatio);
+
+        scaledWidth = scaledWidth * scaleRatio;
+        scaledHeight = scaledHeight * scaleRatio;
+      }
+
+      // Center the image on the page
+      const xOffset = (pageWidth - scaledWidth) / 2;
+      const yOffset = (pageHeight - scaledHeight) / 2;
+
+      // Add image centered on the page
+      pdf.addImage(dataUrl, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
+
+      // Save PDF with dynamic filename
+      const fileName = `UnifiTV_Export_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      pdf.save(fileName);
+
+      console.log("✅ PDF exported successfully!");
+    } catch (error) {
+      console.error("❌ Error exporting PDF:", error);
+      alert(
+        `Failed to export PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      // Hide export overlay
+      setIsExporting(false);
+    }
   };
 
   // Chart colors
@@ -775,135 +937,165 @@ const UnifiTVPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6 pt-16">
-      {/* Header */}
-      <div className="bg-card border-b border-border px-6 py-6 rounded-lg shadow-sm">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center space-x-3">
-              <WifiIcon className="h-8 w-8 text-primary" />
-              <span>Unifi TV Analytics</span>
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Program viewership and MAU analytics for Unifi TV platform
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Badge
-              variant="outline"
-              className={
-                loading
-                  ? "bg-amber-50 text-amber-700 border-amber-200"
-                  : "bg-primary/10 text-primary border-primary/20"
-              }
-            >
-              {loading ? "Syncing..." : "Live Data"}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              Updated: {new Date().toLocaleTimeString()}
-            </span>
+    <>
+      {/* Export Overlay - MUST be outside dashboard-container */}
+      {isExporting && (
+        <div className="export-overlay fixed inset-0 z-[100] flex items-center justify-center" style={{ minHeight: '100vh', height: '100%' }}>
+          {/* Blurred backdrop - scrollable, extended to cover full document height */}
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-md" style={{ minHeight: '100vh', height: '100%', width: '100vw' }}></div>
+          
+          {/* Loading message */}
+          <div className="relative z-10 bg-white rounded-lg shadow-2xl border-2 border-blue-500 p-8 max-w-md mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Download className="h-16 w-16 text-blue-600 animate-bounce" />
+                <div className="absolute inset-0 h-16 w-16 text-blue-400 animate-ping opacity-75">
+                  <Download className="h-16 w-16" />
+                </div>  
+              </div>
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Exporting in Progress
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Please wait while we generate your PDF...
+                </p>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse w-full"></div>
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">
-              ⚠️ Data loading issue: {error}. Displaying with sample data.
-            </p>
-          </div>
-        )}
+      <div className="container mx-auto p-6 space-y-6 pt-16 dashboard-container">
+      {/* Subtle loading indicator at the top */}
+      {loading && (
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-blue-600 animate-pulse"></div>
+      )}
+
+      {/* Page Header */}
+      <div className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center space-x-3">
+            <WifiIcon className="h-8 w-8 text-primary" />
+            <span>Unifi TV Analytics</span>
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Program viewership and MAU analytics for Unifi TV platform
+          </p>
+        </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm">
+            ⚠️ Data loading issue: {error}. Displaying with sample data.
+          </p>
+        </div>
+      )}
 
       {/* Filters Section */}
       <div className="bg-card border border-border px-6 py-4 rounded-lg shadow-sm">
-        <div className="flex flex-wrap items-center gap-6">
-          {/* Time Period */}
-          <div className="flex items-center space-x-3">
-            <CalendarIcon className="h-5 w-5 text-primary" />
-            <label className="text-sm font-semibold text-foreground">
-              Period:
-            </label>
-            <Select
-              value={filters.monthYear}
-              onValueChange={(value) => handleFilterChange("monthYear", value)}
-            >
-              <SelectTrigger className="w-36 bg-white/80">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="">
-                {availableMonths.map((month) => (
-                  <SelectItem className="" key={month} value={month}>
-                    {month.slice(0, 4)}-{month.slice(4)}
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Time Period */}
+            <div className="flex items-center space-x-3">
+              <CalendarIcon className="h-5 w-5 text-primary" />
+              <label className="text-sm font-semibold text-foreground">
+                Period:
+              </label>
+              <Select
+                value={filters.monthYear}
+                onValueChange={(value) => handleFilterChange("monthYear", value)}
+              >
+                <SelectTrigger className="w-36 bg-white/80">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="">
+                  {availableMonths.map((month) => (
+                    <SelectItem className="" key={month} value={month}>
+                      {month.slice(0, 4)}-{month.slice(4)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Channel Filter */}
+            <div className="flex items-center space-x-3">
+              <TvIcon className="h-5 w-5 text-primary" />
+              <label className="text-sm font-semibold text-foreground">
+                Channel:
+              </label>
+              <Select
+                value={filters.channel}
+                onValueChange={(value) =>
+                  handleFilterChange("channel", value === "all" ? "" : value)
+                }
+              >
+                <SelectTrigger className="w-40 bg-white/80">
+                  <SelectValue placeholder="All Channels" />
+                </SelectTrigger>
+                <SelectContent className="">
+                  <SelectItem className="" value="all">
+                    All Channels
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {availableChannels.map((channel) => (
+                    <SelectItem className="" key={channel} value={channel}>
+                      {channel}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={applyFilters}
+                variant="default"
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <FilterIcon className="h-4 w-4 mr-1" />
+                Apply
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Reset
+              </Button>
+            </div>
           </div>
 
-          {/* Channel Filter */}
-          <div className="flex items-center space-x-3">
-            <TvIcon className="h-5 w-5 text-primary" />
-            <label className="text-sm font-semibold text-foreground">
-              Channel:
-            </label>
-            <Select
-              value={filters.channel}
-              onValueChange={(value) =>
-                handleFilterChange("channel", value === "all" ? "" : value)
-              }
-            >
-              <SelectTrigger className="w-40 bg-white/80">
-                <SelectValue placeholder="All Channels" />
-              </SelectTrigger>
-              <SelectContent className="">
-                <SelectItem className="" value="all">
-                  All Channels
-                </SelectItem>
-                {availableChannels.map((channel) => (
-                  <SelectItem className="" key={channel} value={channel}>
-                    {channel}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Program Name Filter */}
-          <div className="flex items-center space-x-3">
-            <PlayCircleIcon className="h-5 w-5 text-primary" />
-            <label className="text-sm font-semibold text-foreground">
-              Program:
-            </label>
-            <input
-              type="text"
-              placeholder="Search programs..."
-              value={filters.programName}
-              onChange={(e) =>
-                handleFilterChange("programName", e.target.value)
-              }
-              className="px-3 py-2 border border-input rounded-lg bg-background text-sm w-40"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-2">
+          {/* Controls - Right Side */}
+          <div className="flex gap-2 flex-wrap items-center">
             <Button
-              onClick={applyFilters}
-              variant="default"
+              onClick={handleRefresh}
+              variant="outline"
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className={`${loading ? "animate-pulse" : ""}`}
+              disabled={loading}
             >
-              <FilterIcon className="h-4 w-4 mr-1" />
-              Apply
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
+              Refresh
             </Button>
             <Button
-              variant="ghost"
+              onClick={exportData}
+              variant="outline"
               size="sm"
-              onClick={resetFilters}
-              className="text-muted-foreground hover:text-foreground"
+              title="Opens print dialog. Set Scale to 21 in More Settings for best results."
             >
-              Reset
+              <Download className="h-4 w-4 mr-2" />
+              Print/Export PDF
             </Button>
           </div>
         </div>
@@ -1116,7 +1308,7 @@ const UnifiTVPage = () => {
 
             {/* MAU Trends Over Time - Full Width Row (2 columns) */}
             <Card className="bg-card shadow-sm col-span-2">
-              <CardHeader className="">
+              <CardHeader className="items-start">
                 <CardTitle className="flex items-center space-x-2">
                   <TrendingUpIcon className="h-5 w-5 text-accent" />
                   <span>MAU Trends Over Time</span>
@@ -1129,7 +1321,61 @@ const UnifiTVPage = () => {
                 <ResponsiveContainer width="100%" height={400}>
                   <AreaChart data={data.analytics.monthlyTrends}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0f2fe" />
-                    <XAxis dataKey="displayMonth" tick={{ fontSize: 12 }} />
+                    <XAxis 
+                      dataKey="displayMonth"
+                      interval={0}
+                      tick={(props) => {
+                        const { x, y, payload } = props;
+                        // Parse the displayMonth (format: "2024-01" or similar)
+                        const dateStr = payload.value;
+                        let month = '';
+                        let year = '';
+                        
+                        if (dateStr) {
+                          // Try to parse the date string
+                          const parts = dateStr.split('-');
+                          if (parts.length >= 2) {
+                            const monthNum = parseInt(parts[1], 10);
+                            year = parts[0];
+                            const monthNames = [
+                              'January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'
+                            ];
+                            month = monthNames[monthNum - 1] || '';
+                          } else {
+                            // Fallback if format is different
+                            month = dateStr;
+                          }
+                        }
+                        
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text
+                              x={0}
+                              y={0}
+                              dy={16}
+                              textAnchor="middle"
+                              fill="#666"
+                              fontSize={11}
+                              fontWeight={500}
+                            >
+                              {month}
+                            </text>
+                            <text
+                              x={0}
+                              y={0}
+                              dy={30}
+                              textAnchor="middle"
+                              fill="#666"
+                              fontSize={11}
+                            >
+                              {year}
+                            </text>
+                          </g>
+                        );
+                      }}
+                      height={60}
+                    />
                     <YAxis
                       tickFormatter={(value) => {
                         if (value >= 1000000)
@@ -1217,7 +1463,6 @@ const UnifiTVPage = () => {
                         type="number"
                         dataKey="avgDuration"
                         name="Avg Duration"
-                        unit=" min"
                         label={{
                           value: "Average Duration (minutes)",
                           position: "insideBottom",
@@ -1495,7 +1740,7 @@ const UnifiTVPage = () => {
                                 : "0"}
                             </td>
                             <td className="p-3 text-right">
-                              {program.avgDurationMinutes || 0} min
+                              {program.avgDurationMinutes || 0}
                             </td>
                             <td className="p-3 text-center">
                               <Badge
@@ -1584,6 +1829,7 @@ const UnifiTVPage = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

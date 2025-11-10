@@ -33,8 +33,19 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error.message || "Invalid email or password")
       } else {
+        const response = await fetch('/api/user/profile', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const userData = await response.json();
+        // console.log("Fetched user profile data:", result);
+        // console.log("Fetched user profile data:", userData);
+
         // Check if user status is 'new' and redirect to change-password
-        if (result.data?.user && (result.data.user as any).status === "new") {
+        if (userData?.user.status === "new") {
           router.push("/change-password")
         } else {
           router.push("/")

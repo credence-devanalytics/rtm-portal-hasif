@@ -1,21 +1,6 @@
 /**
  * Popular Posts API
- * Provides most popular social media     console.log('⭐ Popular Posts API - Processing filters:', filters, 'Sort by:', sortBy);
-
-    // Build WHERE conditions
-    const whereConditions = buildWhereConditions(filters);
-
-    // Base condition to only include records with valid sentiment
-    const baseConditions = [
-      sql`${mentionsClassifyPublic.autosentiment} IS NOT NULL`
-    ];
-
-    const allConditions = [...baseConditions, ...whereConditions];
-
-    try {
-      // TEMPORARY: Force fallback data for debugging
-      console.log('🧪 DEBUGGING: Forcing fallback data to test component');
-      throw new Error('Temporary: Using fallback data for component testing');ed metrics
+ * Provides most popular social media posts with engagement metrics
  */
 
 import { NextResponse } from "next/server";
@@ -213,11 +198,7 @@ export async function GET(request) {
 					totalInteractions: processedPosts[0].totalInteractions,
 				});
 			} else {
-				console.log(
-					"⚠️  No posts found with engagement metrics, will use fallback data"
-				);
-				// If no engaging posts found, throw error to trigger fallback
-				throw new Error("No posts found with meaningful engagement data");
+				console.log("⚠️  No posts found matching the current filters");
 			}
 
 			const response = {
@@ -241,54 +222,18 @@ export async function GET(request) {
 
 			return NextResponse.json(response);
 		} catch (dbError) {
-			console.error("❌ Database error, using fallback data:", dbError.message);
+			console.error("❌ Database error:", dbError.message);
 
-			// Generate fallback popular posts data with realistic engagement numbers
-			const generateFallbackPost = (index) => ({
-				id: `fallback-${index}`,
-				content: `This is a sample social media post #${
-					index + 1
-				}. It contains engaging content that would typically perform well on social media platforms. #trending #viral`,
-				title: `Sample Post ${index + 1}`,
-				author: `User${index + 1}`,
-				type: ["Facebook", "Twitter", "Instagram", "LinkedIn"][index % 4],
-				url: `https://example.com/post-${index + 1}`,
-				inserttime: new Date(
-					Date.now() - index * 24 * 60 * 60 * 1000
-				).toISOString(),
-				sentiment: ["positive", "neutral", "negative"][index % 3],
-				reach: Math.floor(Math.random() * 50000) + 25000, // 25k-75k reach
-				likecount: Math.floor(Math.random() * 500) + 100, // 100-600 likes
-				sharecount: Math.floor(Math.random() * 100) + 20, // 20-120 shares
-				commentcount: Math.floor(Math.random() * 50) + 10, // 10-60 comments
-				engagementrate: Math.random() * 3 + 2, // 2-5% engagement
-				confidence: 0.8 + Math.random() * 0.2, // 80-100% confidence
-				totalInteractions: 0, // Will be calculated below
-			});
-
-			const fallbackPosts = Array.from(
-				{ length: Math.min(limit, 15) },
-				(_, index) => {
-					const post = generateFallbackPost(index);
-					post.totalInteractions =
-						post.likecount + post.sharecount + post.commentcount;
-					return post;
-				}
-			);
-
-			return NextResponse.json({
-				success: true,
-				data: fallbackPosts,
-				meta: {
-					filters,
-					queryTime: new Date().toISOString(),
-					dataSource: "fallback",
-					warning: "Using fallback data due to database connectivity issues",
-					totalPosts: fallbackPosts.length,
-					sortBy,
-					limit,
+			// Return error instead of fallback data
+			return NextResponse.json(
+				{
+					success: false,
+					error: "Database query failed",
+					details: dbError.message,
+					timestamp: new Date().toISOString(),
 				},
-			});
+				{ status: 500 }
+			);
 		}
 	} catch (error) {
 		console.error("🚨 Popular Posts API error:", error);

@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, Calendar, Filter } from "lucide-react";
+import { TrendingUp, Calendar, Filter, Search } from "lucide-react";
 
 // Color palette for different channels
 const CHANNEL_COLORS = [
@@ -38,6 +38,7 @@ const PlatformMentionsChart = ({
 }) => {
   const [chartType, setChartType] = useState<"horizontal">("horizontal"); // Horizontal bar chart only
   const [showTop, setShowTop] = useState(10); // Show top N channels
+  const [searchQuery, setSearchQuery] = useState(""); // Search query for filtering channels
 
   // Process the daily channel data to get top channels by total posts
   const processedData = useMemo(() => {
@@ -45,11 +46,71 @@ const PlatformMentionsChart = ({
     const hasChannelFilter =
       (activeFilters as any)?.channel && (activeFilters as any).channel !== "";
 
+    // Check if platform/unit filter is active (to show only channels from that platform/unit)
+    const hasPlatformFilter =
+      (activeFilters as any)?.platform &&
+      (activeFilters as any).platform !== "";
+    const hasUnitFilter =
+      (activeFilters as any)?.unit && (activeFilters as any).unit !== "";
+
+    console.log("🔍 PlatformMentionsChart - Processing data:", {
+      hasUnitFilter,
+      unitFilter: (activeFilters as any)?.unit,
+      hasPlatformFilter,
+      platformFilter: (activeFilters as any)?.platform,
+      dailyChannelDataLength: dailyChannelData?.length,
+      sampleItem: dailyChannelData?.[0],
+    });
+
     // Use API data if available
     if (dailyChannelData && dailyChannelData.length > 0) {
+      // Filter by platform/unit first if filter is active
+      let filteredChannelData = dailyChannelData;
+
+      if (hasPlatformFilter || hasUnitFilter) {
+        const targetPlatform = (
+          (activeFilters as any).platform || ""
+        ).toLowerCase();
+        const rawTargetUnit = ((activeFilters as any).unit || "").toLowerCase();
+
+        // Map frontend unit filter to database CASE values
+        const targetUnit =
+          rawTargetUnit === "berita" || rawTargetUnit === "news"
+            ? "news"
+            : rawTargetUnit;
+
+        console.log("📊 Filtering channels:", {
+          targetPlatform,
+          rawTargetUnit,
+          targetUnit,
+          beforeFilterCount: dailyChannelData.length,
+        });
+
+        filteredChannelData = dailyChannelData.filter((item: any) => {
+          // Check both platform and unit fields for compatibility
+          const itemPlatform = (item.platform || "").toLowerCase();
+          const itemUnit = (item.unit || "").toLowerCase();
+
+          // Match either platform or unit filter
+          if (hasPlatformFilter && itemPlatform === targetPlatform) return true;
+          if (hasUnitFilter && itemUnit === targetUnit) return true;
+
+          return false;
+        });
+
+        console.log("✅ After filtering:", {
+          afterFilterCount: filteredChannelData.length,
+          sampleFilteredItem: filteredChannelData[0],
+        });
+      }
+
       // Get total posts per channel
-      const channelTotals = dailyChannelData.reduce((acc, item) => {
+      const channelTotals = filteredChannelData.reduce((acc, item) => {
         const channelName = item.channel || "Unknown";
+        // Skip N/A and Unknown entries
+        if (channelName === "N/A" || channelName === "Unknown") {
+          return acc;
+        }
         const itemCount = Number(item.count);
         acc[channelName] = (acc[channelName] || 0) + itemCount;
         return acc;
@@ -69,6 +130,14 @@ const PlatformMentionsChart = ({
           channel,
           posts: total,
         }));
+
+      // Apply search filter (ILIKE %pattern% style)
+      if (searchQuery.trim()) {
+        const searchPattern = searchQuery.toLowerCase();
+        topChannels = topChannels.filter((item) =>
+          item.channel.toLowerCase().includes(searchPattern)
+        );
+      }
 
       // If channel filter is active, only show that channel
       if (hasChannelFilter) {
@@ -90,10 +159,31 @@ const PlatformMentionsChart = ({
       return { data: [], channels: [], grandTotal: 0 };
     }
 
+    // Filter by platform/unit if needed
+    let filteredData = data;
+    if (hasPlatformFilter || hasUnitFilter) {
+      const targetPlatform = (
+        (activeFilters as any).platform || ""
+      ).toLowerCase();
+      const targetUnit = ((activeFilters as any).unit || "").toLowerCase();
+
+      filteredData = data.filter((item: any) => {
+        const itemPlatform = (item.platform || "").toLowerCase();
+        const itemUnit = (item.unit || "").toLowerCase();
+
+        if (hasPlatformFilter && itemPlatform === targetPlatform) return true;
+        if (hasUnitFilter && itemUnit === targetUnit) return true;
+
+        return false;
+      });
+    }
+
     // Count by channel
     const channelTotals: Record<string, number> = {};
-    data.forEach((item) => {
+    filteredData.forEach((item) => {
       if (!item.channel) return;
+      // Skip N/A and Unknown entries
+      if (item.channel === "N/A" || item.channel === "Unknown") return;
       channelTotals[item.channel] = (channelTotals[item.channel] || 0) + 1;
     });
 
@@ -112,6 +202,14 @@ const PlatformMentionsChart = ({
         posts: total,
       }));
 
+    // Apply search filter (ILIKE %pattern% style)
+    if (searchQuery.trim()) {
+      const searchPattern = searchQuery.toLowerCase();
+      topChannels = topChannels.filter((item) =>
+        item.channel.toLowerCase().includes(searchPattern)
+      );
+    }
+
     // Filter by channel if needed
     if (hasChannelFilter) {
       const targetChannel = (activeFilters as any).channel;
@@ -125,7 +223,7 @@ const PlatformMentionsChart = ({
       channels: topChannels.map((c) => c.channel),
       grandTotal,
     };
-  }, [data, dailyChannelData, activeFilters, showTop]);
+  }, [data, dailyChannelData, activeFilters, showTop, searchQuery]);
 
   const { data: chartData, channels, grandTotal } = processedData;
 
@@ -169,25 +267,12 @@ const PlatformMentionsChart = ({
     );
   }
 
-  // Empty state
-  if (
-    !chartData ||
-    chartData.length === 0 ||
-    !channels ||
-    channels.length === 0
-  ) {
-    return (
-      <div className="bg-white h-full flex flex-col items-center justify-center p-4 text-center">
-        <Calendar className="h-8 w-8 text-gray-400 mb-2" />
-        <h3 className="text-sm font-medium text-gray-900 mb-1">
-          No Data Available
-        </h3>
-        <p className="text-xs text-gray-500">
-          No channel posts data found for the selected period.
-        </p>
-      </div>
-    );
-  }
+  // Check if we have search query active
+  const hasSearchQuery = searchQuery.trim() !== "";
+
+  // Empty state - differentiate between no data and no search results
+  const hasNoData =
+    !chartData || chartData.length === 0 || !channels || channels.length === 0;
 
   return (
     <div className="bg-white h-[600px] flex flex-col">
@@ -205,12 +290,18 @@ const PlatformMentionsChart = ({
 
           {/* Active filters display */}
           {((activeFilters as any)?.platform ||
+            (activeFilters as any)?.unit ||
             (activeFilters as any)?.channel) && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-gray-600">Filtered by:</span>
               {(activeFilters as any)?.platform && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs font-medium">
                   Platform: {(activeFilters as any).platform}
+                </span>
+              )}
+              {(activeFilters as any)?.unit && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-md text-xs font-medium">
+                  Unit: {(activeFilters as any).unit}
                 </span>
               )}
               {(activeFilters as any)?.channel && (
@@ -223,6 +314,19 @@ const PlatformMentionsChart = ({
 
           {/* Controls */}
           <div className="flex space-x-2">
+            {/* Search bar */}
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search channels..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Top N selector */}
             <select
               value={showTop}
               onChange={(e) => setShowTop(Number(e.target.value))}
@@ -232,6 +336,7 @@ const PlatformMentionsChart = ({
               <option value={10}>Top 10 Channels</option>
               <option value={15}>Top 15 Channels</option>
               <option value={20}>Top 20 Channels</option>
+              <option value={999999}>All Channels</option>
             </select>
           </div>
         </div>
@@ -239,53 +344,76 @@ const PlatformMentionsChart = ({
 
       {/* Chart */}
       <div className="flex-1 p-3 min-h-0">
-        <div style={{ width: "100%", height: 450 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              layout="vertical"
-              margin={{ top: 20, right: 30, bottom: 20, left: 20 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                horizontal={true}
-                vertical={false}
-              />
-              <XAxis
-                type="number"
-                stroke="#666"
-                tick={{ fontSize: 12 }}
-                tickLine={{ stroke: "#666" }}
-              />
-              <YAxis
-                type="category"
-                dataKey="channel"
-                stroke="#666"
-                tick={{ fontSize: 11 }}
-                width={100}
-                tickLine={{ stroke: "#666" }}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar
-                dataKey="posts"
-                radius={[0, 4, 4, 0]}
-                onClick={handleBarClick}
-                cursor={onFilterChange ? "pointer" : "default"}
+        {hasNoData ? (
+          // Show empty state message but keep the container
+          <div className="h-full flex flex-col items-center justify-center text-center">
+            <Search className="h-12 w-12 text-gray-300 mb-3" />
+            <h3 className="text-sm font-medium text-gray-900 mb-1">
+              {hasSearchQuery ? "No Matching Channels" : "No Data Available"}
+            </h3>
+            <p className="text-xs text-gray-500 max-w-xs">
+              {hasSearchQuery
+                ? `No channels found matching "${searchQuery}". Try adjusting your search.`
+                : "No channel posts data found for the selected period."}
+            </p>
+            {hasSearchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="mt-3 px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
               >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={CHANNEL_COLORS[index % CHANNEL_COLORS.length]}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+                Clear Search
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={{ width: "100%", height: 450 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 20, right: 30, bottom: 20, left: 20 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={true}
+                  vertical={false}
+                />
+                <XAxis
+                  type="number"
+                  stroke="#666"
+                  tick={{ fontSize: 12 }}
+                  tickLine={{ stroke: "#666" }}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="channel"
+                  stroke="#666"
+                  tick={{ fontSize: 11 }}
+                  width={100}
+                  tickLine={{ stroke: "#666" }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar
+                  dataKey="posts"
+                  radius={[0, 4, 4, 0]}
+                  onClick={handleBarClick}
+                  cursor={onFilterChange ? "pointer" : "default"}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={CHANNEL_COLORS[index % CHANNEL_COLORS.length]}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* Clickable hint */}
-      {onFilterChange && (
+      {onFilterChange && !hasNoData && (
         <div className="px-3 pb-2 shrink-0">
           <p className="text-xs text-gray-400 italic text-center">
             💡 Click on bars to filter by channel

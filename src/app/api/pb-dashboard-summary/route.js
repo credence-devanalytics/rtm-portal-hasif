@@ -1,17 +1,56 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import {
-	pberitaAudience,
-	pberitaAudienceRegion,
-	pberitaFirstUser,
-	pberitaFirstUserSource,
+  pberitaAudience,
+  pberitaAudienceRegion,
+  pberitaFirstUser,
+  pberitaFirstUserSource,
 } from "../../../../drizzle/schema";
-import { sql, eq } from "drizzle-orm";
+import { sql, eq, and, gte, lte } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request) {
   try {
     console.log('PB Dashboard Summary API called');
-    
+
+    // Get query parameters for filtering
+    const { searchParams } = new URL(request.url);
+    const yearParam = searchParams.get("year");
+    const monthParam = searchParams.get("month");
+
+    console.log('Filter params:', { yearParam, monthParam });
+
+    // Build date filter conditions for each table
+    let audienceDateFilters = [];
+    let regionDateFilters = [];
+    let firstUserDateFilters = [];
+    let firstUserSourceDateFilters = [];
+
+    if (monthParam) {
+      // Month filter: YYYY-MM format
+      const [year, month] = monthParam.split('-');
+      const startDate = `${year}-${month}-01`;
+      const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+      const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+
+      audienceDateFilters = [gte(pberitaAudience.date, startDate), lte(pberitaAudience.date, endDate)];
+      regionDateFilters = [gte(pberitaAudienceRegion.date, startDate), lte(pberitaAudienceRegion.date, endDate)];
+      firstUserDateFilters = [gte(pberitaFirstUser.date, startDate), lte(pberitaFirstUser.date, endDate)];
+      firstUserSourceDateFilters = [gte(pberitaFirstUserSource.date, startDate), lte(pberitaFirstUserSource.date, endDate)];
+
+      console.log('Month filter applied:', { startDate, endDate });
+    } else if (yearParam) {
+      // Year only filter
+      const startDate = `${yearParam}-01-01`;
+      const endDate = `${yearParam}-12-31`;
+
+      audienceDateFilters = [gte(pberitaAudience.date, startDate), lte(pberitaAudience.date, endDate)];
+      regionDateFilters = [gte(pberitaAudienceRegion.date, startDate), lte(pberitaAudienceRegion.date, endDate)];
+      firstUserDateFilters = [gte(pberitaFirstUser.date, startDate), lte(pberitaFirstUser.date, endDate)];
+      firstUserSourceDateFilters = [gte(pberitaFirstUserSource.date, startDate), lte(pberitaFirstUserSource.date, endDate)];
+
+      console.log('Year filter applied:', { startDate, endDate });
+    }
+
     // Get the latest date from pb_audience table
     const latestDateResult = await db
       .select({
@@ -21,90 +60,127 @@ export async function GET() {
 
     console.log('Latest date result:', latestDateResult);
     const latestDate = latestDateResult[0]?.maxDate || null;
-    
+
     // 1. Total Audience - Sum totalUsers where audienceName = "All Users"
-    const totalAudienceResult = await db
+    let totalAudienceQuery = db
       .select({
         totalUsers: sql`SUM(${pberitaAudience.totalusers})`.as('totalUsers')
       })
-      .from(pberitaAudience)
-      .where(eq(pberitaAudience.audiencename, 'All Users'));
+      .from(pberitaAudience);
+
+    // Apply filters
+    if (audienceDateFilters.length > 0) {
+      totalAudienceQuery = totalAudienceQuery.where(
+        and(eq(pberitaAudience.audiencename, 'All Users'), ...audienceDateFilters)
+      );
+    } else {
+      totalAudienceQuery = totalAudienceQuery.where(eq(pberitaAudience.audiencename, 'All Users'));
+    }
+
+    const totalAudienceResult = await totalAudienceQuery;
 
     console.log('Total audience result:', totalAudienceResult);
-		const totalAudience = parseInt(totalAudienceResult[0]?.totalUsers) || 0;
+    const totalAudience = parseInt(totalAudienceResult[0]?.totalUsers) || 0;
 
-		// 2. Top Region - Most active users by region
-		const topRegionResult = await db
-			.select({
-				region: pberitaAudienceRegion.region,
-				totalActiveUsers: sql`SUM(${pberitaAudienceRegion.activeusers})`.as(
-					"totalActiveUsers"
-				),
-			})
-			.from(pberitaAudienceRegion)
-			.groupBy(pberitaAudienceRegion.region)
-			.orderBy(sql`SUM(${pberitaAudienceRegion.activeusers}) DESC`)
-			.limit(1);
+    // 2. Top Region - Most active users by region
+    let topRegionQuery = db
+      .select({
+        region: pberitaAudienceRegion.region,
+        totalActiveUsers: sql`SUM(${pberitaAudienceRegion.activeusers})`.as(
+          "totalActiveUsers"
+        ),
+      })
+      .from(pberitaAudienceRegion);
 
-		console.log('Top region result:', topRegionResult);
-		// Clean up region name
-		let cleanRegionName = "No data";
-		let regionUsers = 0;
+    // Apply date filters
+    if (regionDateFilters.length > 0) {
+      topRegionQuery = topRegionQuery.where(and(...regionDateFilters));
+    }
 
-		if (topRegionResult[0]) {
-			cleanRegionName = topRegionResult[0].region;
-			regionUsers = parseInt(topRegionResult[0].totalActiveUsers) || 0;
+    topRegionQuery = topRegionQuery
+      .groupBy(pberitaAudienceRegion.region)
+      .orderBy(sql`SUM(${pberitaAudienceRegion.activeusers}) DESC`)
+      .limit(1);
 
-			// Apply region name cleanup
-			if (cleanRegionName === "Federal Territory of Kuala Lumpur") {
-				cleanRegionName = "Kuala Lumpur";
-			} else if (cleanRegionName === "Labuan Federal Territory") {
-				cleanRegionName = "Labuan";
-			}
-		}
+    const topRegionResult = await topRegionQuery;
 
-		const topRegion = {
-			name: cleanRegionName,
-			users: regionUsers,
-		};
+    console.log('Top region result:', topRegionResult);
+    // Clean up region name
+    let cleanRegionName = "No data";
+    let regionUsers = 0;
 
-		// 3. Top Traffic Source - Top firstUserPrimaryChannelGroup
-		const topTrafficSourceResult = await db
-			.select({
-				channelGroup: pberitaFirstUser.firstuserprimarychannelgroup,
-				totalUsers: sql`SUM(${pberitaFirstUser.totalusers})`.as("totalUsers"),
-			})
-			.from(pberitaFirstUser)
-			.groupBy(pberitaFirstUser.firstuserprimarychannelgroup)
-			.orderBy(sql`SUM(${pberitaFirstUser.totalusers}) DESC`)
-			.limit(1);
+    if (topRegionResult[0]) {
+      cleanRegionName = topRegionResult[0].region;
+      regionUsers = parseInt(topRegionResult[0].totalActiveUsers) || 0;
 
-		const topTrafficSource = topTrafficSourceResult[0]
-			? {
-					name: topTrafficSourceResult[0].channelGroup,
-					users: parseInt(topTrafficSourceResult[0].totalUsers) || 0,
-			  }
-			: { name: "No data", users: 0 };
+      // Apply region name cleanup
+      if (cleanRegionName === "Federal Territory of Kuala Lumpur") {
+        cleanRegionName = "Kuala Lumpur";
+      } else if (cleanRegionName === "Labuan Federal Territory") {
+        cleanRegionName = "Labuan";
+      }
+    }
 
-		// 4. Top External Source - Top main_source
-		const topExternalSourceResult = await db
-			.select({
-				mainSource: pberitaFirstUserSource.mainSource,
-				totalActiveUsers: sql`SUM(${pberitaFirstUserSource.activeusers})`.as(
-					"totalActiveUsers"
-				),
-			})
-			.from(pberitaFirstUserSource)
-			.groupBy(pberitaFirstUserSource.mainSource)
-			.orderBy(sql`SUM(${pberitaFirstUserSource.activeusers}) DESC`)
-			.limit(1);
+    const topRegion = {
+      name: cleanRegionName,
+      users: regionUsers,
+    };
 
-		const topExternalSource = topExternalSourceResult[0]
-			? {
-					name: topExternalSourceResult[0].mainSource,
-					users: parseInt(topExternalSourceResult[0].totalActiveUsers) || 0,
-			  }
-			: { name: "No data", users: 0 };
+    // 3. Top Traffic Source - Top firstUserPrimaryChannelGroup
+    let topTrafficSourceQuery = db
+      .select({
+        channelGroup: pberitaFirstUser.firstuserprimarychannelgroup,
+        totalUsers: sql`SUM(${pberitaFirstUser.totalusers})`.as("totalUsers"),
+      })
+      .from(pberitaFirstUser);
+
+    // Apply date filters
+    if (firstUserDateFilters.length > 0) {
+      topTrafficSourceQuery = topTrafficSourceQuery.where(and(...firstUserDateFilters));
+    }
+
+    topTrafficSourceQuery = topTrafficSourceQuery
+      .groupBy(pberitaFirstUser.firstuserprimarychannelgroup)
+      .orderBy(sql`SUM(${pberitaFirstUser.totalusers}) DESC`)
+      .limit(1);
+
+    const topTrafficSourceResult = await topTrafficSourceQuery;
+
+    const topTrafficSource = topTrafficSourceResult[0]
+      ? {
+        name: topTrafficSourceResult[0].channelGroup,
+        users: parseInt(topTrafficSourceResult[0].totalUsers) || 0,
+      }
+      : { name: "No data", users: 0 };
+
+    // 4. Top External Source - Top main_source
+    let topExternalSourceQuery = db
+      .select({
+        mainSource: pberitaFirstUserSource.mainSource,
+        totalActiveUsers: sql`SUM(${pberitaFirstUserSource.activeusers})`.as(
+          "totalActiveUsers"
+        ),
+      })
+      .from(pberitaFirstUserSource);
+
+    // Apply date filters
+    if (firstUserSourceDateFilters.length > 0) {
+      topExternalSourceQuery = topExternalSourceQuery.where(and(...firstUserSourceDateFilters));
+    }
+
+    topExternalSourceQuery = topExternalSourceQuery
+      .groupBy(pberitaFirstUserSource.mainSource)
+      .orderBy(sql`SUM(${pberitaFirstUserSource.activeusers}) DESC`)
+      .limit(1);
+
+    const topExternalSourceResult = await topExternalSourceQuery;
+
+    const topExternalSource = topExternalSourceResult[0]
+      ? {
+        name: topExternalSourceResult[0].mainSource,
+        users: parseInt(topExternalSourceResult[0].totalActiveUsers) || 0,
+      }
+      : { name: "No data", users: 0 };
 
     const response = {
       success: true,
@@ -155,10 +231,10 @@ export async function GET() {
   } catch (error) {
     console.error('PB Dashboard Summary API error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to fetch PB dashboard summary data',
-        details: error.message 
+        details: error.message
       },
       { status: 500 }
     );

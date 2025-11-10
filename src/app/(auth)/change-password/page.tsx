@@ -17,13 +17,8 @@ export default function ChangePasswordPage() {
   const router = useRouter()
   const { data: session, isPending } = useSession()
 
-  // Redirect if not logged in or if status is not 'new'
-  if (!isPending && !session) {
-    router.push("/login")
-    return <div>Redirecting to login...</div>
-  }
-
-  if (!isPending && session?.user && (session.user as any).status !== "new") {
+  // Redirect if user is not first time user
+  if (!isPending && session?.user && session.user.status !== "new") {
     router.push("/")
     return <div>Redirecting to home...</div>
   }
@@ -47,6 +42,8 @@ export default function ChangePasswordPage() {
       return
     }
 
+    const currentPassword = session.user.email
+
     try {
       const response = await fetch("/api/user/change-password", {
         method: "PUT",
@@ -54,7 +51,9 @@ export default function ChangePasswordPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          currentPassword,
           newPassword,
+          firstTime: true,
         }),
       })
 
@@ -88,9 +87,9 @@ export default function ChangePasswordPage() {
       <div className="w-full max-w-md">
         <Card className="">
           <CardHeader className="">
-            <CardTitle className="">Change Password</CardTitle>
-            <CardDescription className="">
-              This is your first time logging in. Please change your password to continue.
+            <CardTitle className="text-center">Change Password</CardTitle>
+            <CardDescription className="text-center">
+              This is your first time logging in. Please change your password.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -135,7 +134,7 @@ export default function ChangePasswordPage() {
                 />
               </div>
             </CardContent>
-            <CardFooter className="">
+            <CardFooter className="pt-8">
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Changing Password..." : "Change Password"}
               </Button>

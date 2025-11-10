@@ -3,33 +3,42 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-	NavigationMenu,
-	NavigationMenuContent,
-	NavigationMenuItem,
-	NavigationMenuLink,
-	NavigationMenuList,
-	NavigationMenuTrigger,
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, Settings, User } from "lucide-react";
 import MedinaLogo from "./MedinaLogo";
 import { signOut, useSession } from "@/lib/auth-client";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
 
 export default function Header() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const hideHeaderPaths = ["/login","/change-password"]; // Paths where header not be rendered cosmetic
-  const hideHeader = pathname === "/" ? !session : hideHeaderPaths.some(path => pathname.startsWith(path));
-  
-  const specialPaths = ["/settings"];
-  const hideHeaderItems = specialPaths.some(path => pathname.startsWith(path)) || pathname === "/";
-  
+  // Condition where header not rendered cosmetic
+  const hideHeader = pathname === "/" && !session;
+
+  // Paths where header items are hidden
+  const specialPaths = ["/login", "/change-password", "/contact", "/settings"];
+  const hideHeaderItems = specialPaths.some((path) =>
+    pathname.startsWith(path)
+  );
+
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -39,21 +48,20 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-
   // Reusable User Menu Component
-  function UserMenu({ 
-    session, 
-    variant = "default" 
-  }: { 
-    session: any; 
-    variant?: "default" | "floating" | "mobile" 
-  }) {    
+  function UserMenu({
+    session,
+    variant = "default",
+  }: {
+    session: any;
+    variant?: "default" | "floating" | "mobile";
+  }) {
     const router = useRouter();
 
     const handleSignOut = async () => {
       await signOut();
       router.push("/");
-    }
+    };
 
     // Truncate username based on variant
     const getDisplayName = (name: string) => {
@@ -65,10 +73,14 @@ export default function Header() {
     };
 
     const userMenuItems = [
-      { name: "Settings", href: "/settings", icon: <Settings className="h-4 aspect-square mr-2" /> },
+      {
+        name: "Settings",
+        href: "/settings",
+        icon: <Settings className="h-4 aspect-square mr-2" />,
+      },
     ];
 
-    if ( variant === "mobile" ) {
+    if (variant === "mobile") {
     }
 
     if (!session) {
@@ -85,25 +97,21 @@ export default function Header() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button 
-            className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/20 data-[state=open]:bg-white/20 drop-shadow-sm space-x-3"
-          >
-            <span 
+          <button className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/20 data-[state=open]:bg-white/20 drop-shadow-sm space-x-3">
+            <span
               title={session?.user?.name} // Show full name on hover
             >
               {getDisplayName(session?.user?.name)}
             </span>
-            <div 
+            <div
               className={`aspect-square rounded-full border-1 flex items-center justify-center bg-white border-gray-700`}
             >
-              <User 
-                className={`w-4 h-4 text-gray-900`} 
-              />
+              <User className={`w-4 h-4 text-gray-900`} />
             </div>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent 
-          align="end" 
+        <DropdownMenuContent
+          align="end"
           className="grid w-[200px] gap-1 p-4 backdrop-blur-xl rounded-lg border border-black bg-white"
         >
           {userMenuItems.map((item) => (
@@ -112,12 +120,12 @@ export default function Header() {
                 key={item.name}
                 onClick={() => router.push(item.href)}
                 className="cursor-pointer flex flex-row items-center space-x-2 select-none rounded-md p-2 no-underline outline-none transition-colors text-sm font-medium leading-none hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 text-gray-900"
-            >
-              {item.icon}
-              {item.name}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-gray-700"  />
-          </>
+              >
+                {item.icon}
+                {item.name}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-gray-700" />
+            </>
           ))}
           <DropdownMenuItem
             onClick={() => handleSignOut()}
@@ -131,11 +139,11 @@ export default function Header() {
     );
   }
 
-    if (hideHeader) {
+  if (hideHeader) {
     return null;
   }
 
-  if (hideHeaderItems) {
+  if (hideHeaderItems || pathname === "/") {
     return (
       <header
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
@@ -156,8 +164,9 @@ export default function Header() {
                 )}
               </div>
             </Link>
-            
+
             {/* Desktop Navigation */}
+            {session && 
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList className="space-x-1">
                 <NavigationMenuItem>
@@ -165,6 +174,7 @@ export default function Header() {
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
+            }
 
             {/* Mobile menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -190,14 +200,14 @@ export default function Header() {
           </div>
         </div>
       </header>
-    )
+    );
   }
 
   const dashboardItems = [
+    { name: "Key Performance Index", href: "/KPI" },
     { name: "SocMed RTM Account", href: "/SocMedAcc" },
     { name: "SocMed Public Sentiment", href: "/dashboard" },
     { name: "Multiplatform", href: "/Multiplatform" },
-    { name: "Key Performance Index", href: "/KPI" },
   ];
 
   const aiItems = [
@@ -381,7 +391,7 @@ export default function Header() {
                       {item.name}
                     </a>
                   ))}
-                  <UserMenu session={session} variant="mobile" />
+                <UserMenu session={session} variant="mobile" />
               </nav>
             </SheetContent>
           </Sheet>

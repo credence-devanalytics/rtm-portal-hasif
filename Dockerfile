@@ -3,7 +3,7 @@ FROM node:20-alpine AS base
 
 # Install pnpm globally once for better caching
 FROM base AS pnpm-base
-RUN npm install -g pnpm --location=global
+RUN npm install -g pnpm@8 --location=global
 
 # Install dependencies only when needed
 FROM pnpm-base AS builder

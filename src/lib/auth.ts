@@ -29,6 +29,22 @@ export const auth = betterAuth({
 			useNumberId: true,
 		},
 	},
+	user: {
+		additionalFields: {
+			role: {
+				type: "string",
+				required: false,
+				defaultValue: "user",
+				input: false, // don't allow user to set role
+			},
+			status: {
+				type: "string",
+				required: false,
+				defaultValue: "pending",
+				input: false, // don't allow user to set status
+			},
+		},
+	},
 
 	trustedOrigins: [
 		process.env.CORS_ORIGIN || "",

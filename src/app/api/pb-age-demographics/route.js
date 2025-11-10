@@ -1,14 +1,41 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { pberitaAudienceAge } from "../../../../drizzle/schema";
-import { sql } from "drizzle-orm";
+import { sql, and, gte, lte } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request) {
 	try {
 		console.log("PB Age Demographics API called");
 
+		// Get query parameters for filtering
+		const { searchParams } = new URL(request.url);
+		const yearParam = searchParams.get("year");
+		const monthParam = searchParams.get("month");
+
+		console.log('Filter params:', { yearParam, monthParam });
+
+		// Build date filter conditions
+		const dateFilters = [];
+		if (monthParam) {
+			// Month filter: YYYY-MM format
+			const [year, month] = monthParam.split('-');
+			const startDate = `${year}-${month}-01`;
+			const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+			const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+			dateFilters.push(gte(pberitaAudienceAge.date, startDate));
+			dateFilters.push(lte(pberitaAudienceAge.date, endDate));
+			console.log('Month filter applied:', { startDate, endDate });
+		} else if (yearParam) {
+			// Year only filter
+			const startDate = `${yearParam}-01-01`;
+			const endDate = `${yearParam}-12-31`;
+			dateFilters.push(gte(pberitaAudienceAge.date, startDate));
+			dateFilters.push(lte(pberitaAudienceAge.date, endDate));
+			console.log('Year filter applied:', { startDate, endDate });
+		}
+
 		// Fetch age demographics data and group by age bracket
-		const ageData = await db
+		let ageDataQuery = db
 			.select({
 				userAgeBracket: pberitaAudienceAge.useragebracket,
 				totalActiveUsers: sql`SUM(${pberitaAudienceAge.activeusers})`.as(
@@ -17,8 +44,16 @@ export async function GET() {
 				totalNewUsers: sql`SUM(${pberitaAudienceAge.newusers})`.as("totalNewUsers"),
 				recordCount: sql`COUNT(*)`.as("recordCount"),
 			})
-			.from(pberitaAudienceAge)
-			.groupBy(pberitaAudienceAge.useragebracket);
+			.from(pberitaAudienceAge);
+
+		// Apply date filters if present
+		if (dateFilters.length > 0) {
+			ageDataQuery = ageDataQuery.where(and(...dateFilters));
+		}
+
+		ageDataQuery = ageDataQuery.groupBy(pberitaAudienceAge.useragebracket);
+
+		const ageData = await ageDataQuery;
 
 		console.log("PB Age data:", ageData);
 

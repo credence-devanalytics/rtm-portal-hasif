@@ -24,15 +24,11 @@ export async function GET(request: Request) {
       case 'health':
         // Health check for cache system
         const healthData = {
-          redis: {
-            connected: cacheManager.isRedisConnected,
-            status: cacheManager.isRedisConnected ? 'healthy' : 'disconnected'
-          },
           nodeCache: {
             status: 'healthy',
             stats: cacheManager.nodeCache.getStats()
           },
-          overall: cacheManager.isRedisConnected ? 'optimal' : 'fallback'
+          overall: 'healthy'
         };
         
         return NextResponse.json({
