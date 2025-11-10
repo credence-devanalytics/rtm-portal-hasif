@@ -37,21 +37,35 @@ export async function GET(request: Request) {
 				.from(mentionsClassify)
 				.where(and(...whereConditions)),
 
-			// 2. Total Engagements
-			db
-				.select({
-					total_engagements: sql`SUM(
-						CASE 
-							WHEN ${mentionsClassify.interaction} IS NOT NULL AND ${mentionsClassify.interaction} > 0 
-							THEN ${mentionsClassify.interaction}
-							ELSE COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0)
-						END
-					)`,
-				})
-				.from(mentionsClassify)
-				.where(and(...whereConditions)),
-
-			// 3. Total Reach
+		// 2. Total Engagements
+		// FIX: Filter out NaN values to prevent calculation errors
+		db
+			.select({
+				total_engagements: sql`COALESCE(SUM(
+					CASE 
+						WHEN ${mentionsClassify.interaction} IS NOT NULL 
+						     AND ${mentionsClassify.interaction} > 0 
+						     AND ${mentionsClassify.interaction} != 'NaN'::double precision
+						THEN ${mentionsClassify.interaction}
+						ELSE (
+							COALESCE(
+								CASE WHEN ${mentionsClassify.likecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.likecount} END, 
+								0
+							) + 
+							COALESCE(
+								CASE WHEN ${mentionsClassify.commentcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.commentcount} END, 
+								0
+							) + 
+							COALESCE(
+								CASE WHEN ${mentionsClassify.sharecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.sharecount} END, 
+								0
+							)
+						)
+					END
+				), 0)`,
+			})
+			.from(mentionsClassify)
+			.where(and(...whereConditions)),			// 3. Total Reach
 			db
 				.select({
 					total_reach: sql`SUM(COALESCE(${mentionsClassify.reach}, 0))`,

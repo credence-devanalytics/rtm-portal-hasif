@@ -6,9 +6,10 @@ export async function GET(request: Request) {
 		const { searchParams } = new URL(request.url);
 		const yearParam = searchParams.get("year");
 		const monthParam = searchParams.get("month");
+		const monthOnlyParam = searchParams.get("month_only");
 
 		console.log("Radio Monthly Marketing API called");
-		console.log("Filter params:", { yearParam, monthParam });
+		console.log("Filter params:", { yearParam, monthParam, monthOnlyParam });
 
 		// Build WHERE clause with filters
 		let whereClause = `WHERE report_type = 'Chart 4'`;
@@ -18,14 +19,20 @@ export async function GET(request: Request) {
 			console.log("Filtering by year:", yearParam);
 		}
 
-		if (monthParam && monthParam !== "all") {
+		// Map month number to Malay month name
+		const monthNames: Record<string, string> = {
+			'01': 'Januari', '02': 'Februari', '03': 'Mac', '04': 'April',
+			'05': 'Mei', '06': 'Jun', '07': 'Julai', '08': 'Ogos',
+			'09': 'September', '10': 'Oktober', '11': 'November', '12': 'Disember'
+		};
+
+		if (monthOnlyParam && monthOnlyParam !== "all") {
+			// Filter by specific month across all years
+			const monthName = monthNames[monthOnlyParam];
+			whereClause += ` AND month = '${monthName}'`;
+			console.log("Filtering by month only:", monthName);
+		} else if (monthParam && monthParam !== "all") {
 			const [year, month] = monthParam.split('-');
-			// Map month number to Malay month name
-			const monthNames: Record<string, string> = {
-				'01': 'Januari', '02': 'Februari', '03': 'Mac', '04': 'April',
-				'05': 'Mei', '06': 'Jun', '07': 'Julai', '08': 'Ogos',
-				'09': 'September', '10': 'Oktober', '11': 'November', '12': 'Disember'
-			};
 			const monthName = monthNames[month];
 			whereClause += ` AND month = '${monthName}'`;
 			if (year) {

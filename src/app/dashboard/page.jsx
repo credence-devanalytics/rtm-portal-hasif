@@ -43,8 +43,6 @@ import {
   AlertCircle,
   Filter,
   X,
-  Minimize2,
-  Maximize2,
 } from "lucide-react";
 
 // Active Filters Display Component (Floating & Draggable)
@@ -121,10 +119,39 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
     return String(value);
   };
 
+  // Minimized view
+  if (isMinimized) {
+    return (
+      <Card
+        ref={setCardRef}
+        className="active-filters-card fixed z-50 shadow-2xl border-2 border-slate-200 bg-white transition-shadow hover:shadow-3xl cursor-pointer"
+        style={{
+          left: `${position.x}px`,
+          bottom: `${position.y}px`,
+        }}
+        onClick={() => setIsMinimized(false)}
+        onMouseDown={handleMouseDown}
+      >
+        <CardContent className="p-4 drag-handle cursor-grab active:cursor-grabbing">
+          <div className="flex items-center gap-2 select-none">
+            <Filter className="h-5 w-5 text-blue-600" />
+            <Badge className="bg-blue-600 text-white hover:bg-blue-700">
+              {activeFilters.length}
+            </Badge>
+            <span className="text-sm font-medium">
+              Filter{activeFilters.length > 1 ? "s" : ""} Active
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Expanded view
   return (
     <Card
       ref={setCardRef}
-      className="fixed z-50 shadow-2xl border-2 border-slate-200 max-w-lg bg-white transition-shadow hover:shadow-3xl"
+      className="active-filters-card fixed z-50 shadow-2xl border-2 border-slate-200 max-w-lg bg-white transition-shadow hover:shadow-3xl"
       style={{
         left: `${position.x}px`,
         bottom: `${position.y}px`,
@@ -133,69 +160,54 @@ const ActiveFilters = ({ filters, onRemoveFilter, onClearAll }) => {
       onMouseDown={handleMouseDown}
     >
       <CardHeader className="pb-4 px-6 pt-5 drag-handle cursor-grab active:cursor-grabbing">
-        <CardTitle className="text-base font-semibold flex items-center justify-between gap-2.5 select-none">
-          <div className="flex items-center gap-2.5">
-            <Filter className="h-5 w-5 text-blue-600" />
-            Active Filters
-            {isMinimized && (
-              <Badge variant="secondary" className="ml-2">
-                {activeFilters.length}
-              </Badge>
-            )}
-            {!isMinimized && (
-              <span className="text-xs text-gray-400 font-normal ml-2">
-                (drag to move)
-              </span>
-            )}
-          </div>
+        <CardTitle className="text-base font-semibold flex items-center gap-2.5 select-none">
+          <Filter className="h-5 w-5 text-blue-600" />
+          Active Filters
+          <span className="text-xs text-gray-400 font-normal ml-2">
+            (drag to move)
+          </span>
           <Button
             variant="ghost"
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              setIsMinimized(!isMinimized);
+              setIsMinimized(true);
             }}
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="ml-auto h-6 w-6 p-0 hover:bg-slate-100"
           >
-            {isMinimized ? (
-              <Maximize2 className="h-4 w-4" />
-            ) : (
-              <Minimize2 className="h-4 w-4" />
-            )}
+            <span className="text-lg leading-none">−</span>
           </Button>
         </CardTitle>
       </CardHeader>
-      {!isMinimized && (
-        <CardContent className="pt-0 px-6 pb-5 space-y-4">
-          <div className="flex flex-wrap gap-3">
-            {activeFilters.map(([key, value]) => (
-              <Badge
-                key={key}
-                variant="outline"
-                className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 text-sm"
-              >
-                <span className="font-semibold capitalize">{key}:</span>
-                <span className="font-normal">
-                  {formatFilterValue(key, value)}
-                </span>
-                <X
-                  className="h-4 w-4 cursor-pointer hover:text-red-600 transition-colors ml-1"
-                  onClick={() => onRemoveFilter(key)}
-                />
-              </Badge>
-            ))}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onClearAll}
-            className="w-full text-xs hover:bg-red-50 hover:text-red-600 border-red-200 text-red-600"
-          >
-            <X className="h-3.5 w-3.5 mr-2" />
-            Clear All Filters
-          </Button>
-        </CardContent>
-      )}
+      <CardContent className="pt-0 px-6 pb-5 space-y-4">
+        <div className="flex flex-wrap gap-3">
+          {activeFilters.map(([key, value]) => (
+            <Badge
+              key={key}
+              variant="outline"
+              className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-1.5 text-sm"
+            >
+              <span className="font-semibold capitalize">{key}:</span>
+              <span className="font-normal">
+                {formatFilterValue(key, value)}
+              </span>
+              <X
+                className="h-4 w-4 cursor-pointer hover:text-red-600 transition-colors ml-1"
+                onClick={() => onRemoveFilter(key)}
+              />
+            </Badge>
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onClearAll}
+          className="w-full text-xs hover:bg-red-50 hover:text-red-600 border-red-200 text-red-600"
+        >
+          <X className="h-3.5 w-3.5 mr-2" />
+          Clear All Filters
+        </Button>
+      </CardContent>
     </Card>
   );
 };
@@ -388,7 +400,8 @@ const SocialMediaDashboard = () => {
   const { data: popularPostsData, isLoading: isLoadingPopular } = useQuery({
     queryKey: QUERY_KEYS.popularPosts(filters, postsSortBy),
     queryFn: () => fetchPopularPosts(filters, postsSortBy),
-    staleTime: 30 * 1000,
+    staleTime: 0, // Always fetch fresh data when sort changes
+    gcTime: 0, // Don't cache old sort results
     retry: 2,
   });
 
@@ -1026,7 +1039,7 @@ const SocialMediaDashboard = () => {
               </span>
             </div>
             <div className="flex items-center gap-4 text-sm text-blue-700">
-              <span>Last updated: {new Date().toLocaleTimeString()}</span>
+              <span suppressHydrationWarning>Last updated: {new Date().toLocaleTimeString()}</span>
               <span>Data source: Real-time API</span>
               <span>Response time: &lt;30s</span>
             </div>

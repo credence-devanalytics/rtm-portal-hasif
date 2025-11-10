@@ -63,7 +63,49 @@ const EngagementRateChart: React.FC<EngagementRateChartProps> = ({
 
   // Always use API data (platformsData or platformByUnitData)
   const processedData = useMemo(() => {
-    // Use platformByUnitData if unit filter is active and available
+    // PRIORITY 1: Use platformsData from useEngagementByPlatform hook (always preferred if available)
+    // This respects all filters including unit filter
+    if (platformsData && platformsData.length > 0) {
+      console.log("✅ Using API data from useEngagementByPlatform (respects all filters):", platformsData);
+      return platformsData
+        .map((p) => {
+          // Calculate engagement rate ourselves if not provided or is null
+          const reach = p.totalReach || p.total_reach || 0;
+          const interactions = p.totalInteractions || p.total_interactions || 0;
+          
+          // Calculate engagement rate: (interactions / reach) * 100
+          const calculatedRate = reach > 0 ? (interactions / reach) * 100 : 0;
+          
+          // Use provided engagement_rate_pct/avgEngagementRate if available and valid, otherwise use calculated
+          let engagementRate = calculatedRate;
+          if (p.engagement_rate_pct !== undefined && p.engagement_rate_pct !== null && !isNaN(p.engagement_rate_pct)) {
+            engagementRate = p.engagement_rate_pct;
+          } else if (p.avgEngagementRate !== undefined && p.avgEngagementRate !== null && !isNaN(p.avgEngagementRate)) {
+            engagementRate = p.avgEngagementRate;
+          }
+          
+          console.log(`📊 Platform ${p.platform}:`, {
+            reach,
+            interactions,
+            engagement_rate_pct: p.engagement_rate_pct,
+            avgEngagementRate: p.avgEngagementRate,
+            calculatedRate: calculatedRate.toFixed(2),
+            finalRate: engagementRate.toFixed(2)
+          });
+          
+          return {
+            platform: p.platform,
+            avgEngagementRate: Number(engagementRate.toFixed(2)),
+            mentionCount: p.count || p.mentions_count || 0,
+            totalReach: reach,
+            totalInteractions: interactions,
+            color: getColorForPlatform(p.platform),
+          };
+        })
+        .sort((a, b) => b.avgEngagementRate - a.avgEngagementRate);
+    }
+    
+    // PRIORITY 2: Fallback to platformByUnitData (old API, only if platformsData is not available)
     if (
       activeFilters &&
       activeFilters.unit &&
@@ -71,6 +113,7 @@ const EngagementRateChart: React.FC<EngagementRateChartProps> = ({
       platformByUnitData &&
       platformByUnitData.length > 0
     ) {
+      console.log("⚠️ Using fallback platformByUnitData (old API):", platformByUnitData);
       let unitName = activeFilters.unit ?? "";
       if (unitName === "berita") unitName = "News";
       else if (unitName === "radio") unitName = "Radio";
@@ -90,23 +133,9 @@ const EngagementRateChart: React.FC<EngagementRateChartProps> = ({
         }))
         .sort((a, b) => b.avgEngagementRate - a.avgEngagementRate);
     }
-    // Use platformsData from API (already filtered)
-    if (platformsData && platformsData.length > 0) {
-      console.log("✅ Using API data (respects all filters):", platformsData);
-      return platformsData
-        .map((p) => ({
-          platform: p.platform,
-          avgEngagementRate: Number(
-            (p.avgEngagementRate || p.engagement_rate_pct || 0).toFixed(2)
-          ),
-          mentionCount: p.count || p.mentions_count || 0,
-          totalReach: p.totalReach || p.total_reach || 0,
-          totalInteractions: p.totalInteractions || p.total_interactions || 0,
-          color: getColorForPlatform(p.platform),
-        }))
-        .sort((a, b) => b.avgEngagementRate - a.avgEngagementRate);
-    }
-    // Fallback: empty
+    
+    // PRIORITY 3: Empty fallback
+    console.log("❌ No data available for chart");
     return [];
   }, [platformsData, platformByUnitData, activeFilters]);
 

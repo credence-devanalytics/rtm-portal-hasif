@@ -71,11 +71,11 @@ const MarketingDashboard = () => {
     } else if (selectedYear !== "all" && selectedMonth === "all") {
       return `year=${selectedYear}`; // Year only
     } else if (selectedYear === "all" && selectedMonth !== "all") {
-      // Month only - use current year
-      const currentYear = new Date().getFullYear();
-      return `month=${currentYear}-${selectedMonth}`;
+      // Month only - compare across all years (2022-2024)
+      // Pass month_only parameter to show that specific month across all years
+      return `month_only=${selectedMonth}`;
     } else {
-      // Both year and month selected
+      // Both year and month selected - specific year and month
       return `month=${selectedYear}-${selectedMonth}`;
     }
   }, [selectedYear, selectedMonth]);
@@ -459,32 +459,35 @@ const MarketingDashboard = () => {
               {/* Export Button */}
               <Button
                 onClick={exportData}
-                variant="default"
+                variant="outline"
                 size="sm"
-                className="flex items-center gap-2"
+                className=""
+                title="Opens print dialog. Set Scale to 19 in More Settings for best results."
                 disabled={isExporting}
               >
-                <Download className="h-4 w-4" />
-                {isExporting ? "Exporting..." : "Export PDF"}
+                <Download className="h-4 w-4 mr-2" />
+                {isExporting ? "Exporting..." : "Print/Export PDF"}
               </Button>
             </div>
           </div>
 
-        {/* Yearly Performance Section */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold tracking-tight mb-6 text-center font-sans">
-            Yearly Performance
-          </h2>
+        {/* Yearly Performance Section - Only show when no month filter is active */}
+        {selectedMonth === "all" && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold tracking-tight mb-6 text-center font-sans">
+              Yearly Performance
+            </h2>
 
-          {/* Charts Row */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Income Comparison Chart */}
-            <MarketingIncomeComparisonChart data={saluranMetrics} />
+            {/* Charts Row */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Income Comparison Chart */}
+              <MarketingIncomeComparisonChart data={saluranMetrics} />
 
-            {/* Performance Table */}
-            <MarketingPerformanceTable data={saluranMetrics} selectedYear={selectedYear} />
+              {/* Performance Table */}
+              <MarketingPerformanceTable data={saluranMetrics} selectedYear={selectedYear} />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* TV Performance Section */}
         <div className="mt-12">
@@ -498,13 +501,15 @@ const MarketingDashboard = () => {
             <TVMonthlyPerformanceChart data={tvChartData} />
           </div>
 
-          {/* Channel Breakdown Table under TV section */}
-          <div className="mt-8">
-            <MarketingChannelBreakdownTable 
-              data={table2Data?.data} 
-              selectedYear={selectedYear}
-            />
-          </div>
+          {/* Channel Breakdown Table under TV section - Only show when no month filter is active */}
+          {selectedMonth === "all" && (
+            <div className="mt-8">
+              <MarketingChannelBreakdownTable 
+                data={table2Data?.data} 
+                selectedYear={selectedYear}
+              />
+            </div>
+          )}
         </div>
 
         {/* Radio Performance Section */}
@@ -519,13 +524,15 @@ const MarketingDashboard = () => {
             <RadioMonthlyPerformanceChart data={radioMonthlyData?.data} />
           </div>
 
-          {/* Radio Channel Breakdown Table */}
-          <div className="mt-8">
-            <RadioChannelBreakdownTable 
-              data={radioChannelsData?.data}
-              selectedYear={selectedYear}
-            />
-          </div>
+          {/* Radio Channel Breakdown Table - Only show when no month filter is active */}
+          {selectedMonth === "all" && (
+            <div className="mt-8">
+              <RadioChannelBreakdownTable 
+                data={radioChannelsData?.data}
+                selectedYear={selectedYear}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

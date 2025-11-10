@@ -15,7 +15,7 @@ import {
 	sum,
 	avg,
 	inArray,
-	like,
+	or,
 } from "drizzle-orm";
 
 // Helper function to build WHERE conditions (shared with other APIs)
@@ -48,15 +48,15 @@ const buildWhereConditions = (filters) => {
 		);
 	}
 
-	// Source/Platform filters
+	// Source/Platform filters (case-insensitive)
 	if (filters.sources && filters.sources.length > 0) {
 		const sourceConditions = filters.sources.map((source) =>
-			like(mentionsClassifyPublic.type, `%${source}%`)
+			sql`LOWER(${mentionsClassifyPublic.type}) LIKE LOWER(${'%' + source + '%'})`
 		);
 		if (sourceConditions.length === 1) {
 			conditions.push(sourceConditions[0]);
 		} else {
-			conditions.push(sql`(${sourceConditions.join(" OR ")})`);
+			conditions.push(or(...sourceConditions));
 		}
 	}
 
@@ -102,10 +102,18 @@ export async function GET(request) {
 					totalPosts: count(),
 					totalMentions: count(),
 					totalReach: sum(mentionsClassifyPublic.reach),
+					// Use interaction field (works for Twitter), fallback to sum of individual fields (works for Facebook/TikTok)
 					totalInteractions: sql`SUM(
-            COALESCE(${mentionsClassifyPublic.likecount}, 0) +
-            COALESCE(${mentionsClassifyPublic.sharecount}, 0) +
-            COALESCE(${mentionsClassifyPublic.commentcount}, 0)
+            CASE 
+              WHEN ${mentionsClassifyPublic.interaction} IS NOT NULL 
+                   AND ${mentionsClassifyPublic.interaction} != 'NaN'::double precision 
+              THEN ${mentionsClassifyPublic.interaction}
+              ELSE (
+                CASE WHEN ${mentionsClassifyPublic.likecount} = 'NaN'::double precision THEN 0 ELSE COALESCE(${mentionsClassifyPublic.likecount}, 0) END +
+                CASE WHEN ${mentionsClassifyPublic.sharecount} = 'NaN'::double precision THEN 0 ELSE COALESCE(${mentionsClassifyPublic.sharecount}, 0) END +
+                CASE WHEN ${mentionsClassifyPublic.commentcount} = 'NaN'::double precision THEN 0 ELSE COALESCE(${mentionsClassifyPublic.commentcount}, 0) END
+              )
+            END
           )`,
 					avgEngagement: avg(mentionsClassifyPublic.engagementrate),
 					avgConfidence: avg(mentionsClassifyPublic.confidence),

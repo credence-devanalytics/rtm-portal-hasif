@@ -102,20 +102,24 @@ const MostPopularPosts = ({
     if (!postsArray || postsArray.length === 0) return [];
 
     return postsArray.map((post) => {
-      // Ensure numeric values are properly converted
+      // Data already comes processed from API with correct Twitter columns
+      // The API handles Twitter-specific columns: favoritecount, retweetcount, replycount, quotecount
       const reach = parseInt(post.reach) || 0;
       const likecount = parseInt(post.likecount) || 0;
       const sharecount = parseInt(post.sharecount) || 0;
       const commentcount = parseInt(post.commentcount) || 0;
+      const quotecount = parseInt(post.quotecount) || 0;
 
       console.log("Post data:", {
         id: post.id,
+        type: post.type,
+        isTwitter: post.isTwitter,
         reach,
         likecount,
         sharecount,
         commentcount,
-        originalReach: post.reach,
-        originalLikes: post.likecount,
+        quotecount,
+        totalInteractions: post.totalInteractions,
       });
 
       return {
@@ -124,7 +128,8 @@ const MostPopularPosts = ({
         likecount,
         sharecount,
         commentcount,
-        totalInteractions: likecount + sharecount + commentcount,
+        quotecount,
+        totalInteractions: post.totalInteractions || (likecount + sharecount + commentcount + quotecount),
         formattedDate: post.inserttime
           ? format(parseISO(post.inserttime), "MMM dd, yyyy")
           : "Unknown",
@@ -297,16 +302,31 @@ const MostPopularPosts = ({
                   </div>
                   <div className="flex items-center gap-1">
                     <Heart className="h-3 w-3" />
-                    <span>{formatNumber(post.likecount || 0)} likes</span>
+                    <span>
+                      {formatNumber(post.likecount || 0)}{" "}
+                      {post.isTwitter ? "favorites" : "likes"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Share2 className="h-3 w-3" />
-                    <span>{formatNumber(post.sharecount || 0)} shares</span>
+                    <span>
+                      {formatNumber(post.sharecount || 0)}{" "}
+                      {post.isTwitter ? "retweets" : "shares"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <MessageCircle className="h-3 w-3" />
-                    <span>{formatNumber(post.commentcount || 0)} comments</span>
+                    <span>
+                      {formatNumber(post.commentcount || 0)}{" "}
+                      {post.isTwitter ? "replies" : "comments"}
+                    </span>
                   </div>
+                  {post.isTwitter && post.quotecount > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Share2 className="h-3 w-3" />
+                      <span>{formatNumber(post.quotecount || 0)} quotes</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
