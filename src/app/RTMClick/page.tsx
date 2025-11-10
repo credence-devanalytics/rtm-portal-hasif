@@ -112,22 +112,41 @@ function TableauDashboards({ username }: { username: string | undefined }) {
 
 
 export default function RTMClickPage() {
-  const { data:session } = useSession();
-  const [access, setAccess] = useState<boolean>(null);
+  const { data: session, isPending } = useSession();
+  const [access, setAccess] = useState<boolean | null>(null);
   const username = session?.user?.role === "superadmin" ? "superadmin" : session?.user?.email;
 
   useEffect(() => {
     const userAccess = async () => {
-      const response = await fetch("/api/user/access", {
-        method: "GET",
-        cache: "no-store",
-      });
-      const access = ((await response.json()).access?.rtmklik || session?.user?.role === "superadmin") || false;
-      // console.log("RTMklik access:", access);
-      setAccess(access);
+      // Don't run access check if session is still loading
+      if (isPending || !session) {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/user/access", {
+          method: "GET",
+          cache: "no-store",
+        });
+        
+        if (!response.ok) {
+          console.error("Failed to fetch user access");
+          setAccess(false);
+          return;
+        }
+        
+        const result = await response.json();
+        const access = (result.access?.rtmklik || session?.user?.role === "superadmin") || false;
+        console.log("RTMklik access:", access, "Session:", session?.user);
+        setAccess(access);
+      } catch (error) {
+        console.error("Error fetching user access:", error);
+        setAccess(false);
+      }
     };
+    
     userAccess();
-  }, []);
+  }, [session, isPending]); // Add session and isPending as dependencies
   // const access: boolean | null = true;
   // const username = "dataops"
 
@@ -161,14 +180,14 @@ export default function RTMClickPage() {
           </div>
         </div>
       )}
-      {access === null && (
+      {(access === null || isPending) && (
         <div className="flex flex-col items-center justify-center py-8 space-y-3">
           <div className="p-3 rounded-full bg-gray-50 border border-gray-200">
             <Monitor className="h-6 w-6 text-gray-400" />
           </div>
           <div className="text-center">
             <p className="text-gray-500 font-medium text-sm">
-              Loading data...
+              {isPending ? "Loading session..." : "Loading data..."}
             </p>
           </div>
         </div>
