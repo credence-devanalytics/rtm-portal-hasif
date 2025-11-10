@@ -13,7 +13,8 @@ import { and, sql, between } from "drizzle-orm";
  * - endDate: End date (YYYY-MM-DD)
  * - platform: Filter by specific platform (optional)
  * - type: Filter by type (optional, for cross-filtering)
- * - author: Filter by author/channel (optional, for cross-filtering)
+ * - channel: Filter by author/channel (optional, for cross-filtering)
+ * - unit: Filter by unit/groupname (optional, for cross-filtering)
  * 
  * Returns engagement rate percentage, total interactions, total reach, and mentions count per platform.
  */
@@ -26,7 +27,8 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate");
     const platformFilter = searchParams.get("platform");
     const typeFilter = searchParams.get("type");
-  const channelFilter = searchParams.get("channel");
+    const channelFilter = searchParams.get("channel");
+    const unitFilter = searchParams.get("unit");
 
     console.log("[Engagement By Platform API] Request params:", {
       startDate,
@@ -34,6 +36,7 @@ export async function GET(request: NextRequest) {
       platformFilter,
       typeFilter,
       channelFilter,
+      unitFilter,
     });
 
     // Build WHERE conditions
@@ -62,10 +65,28 @@ export async function GET(request: NextRequest) {
       whereConditions.push(sql`${mentionsClassify.channel} ILIKE ${`%${channelFilter}%`}`);
     }
 
+    // Unit filter (for cross-filtering by unit/groupname)
+    if (unitFilter && unitFilter !== "" && unitFilter !== "all" && unitFilter !== "overall") {
+      // Map unit filter values to groupname patterns
+      if (unitFilter === "official") {
+        whereConditions.push(sql`${mentionsClassify.groupname} ILIKE '%Official%'`);
+      } else if (unitFilter === "tv") {
+        whereConditions.push(sql`${mentionsClassify.groupname} ILIKE '%TV%'`);
+      } else if (unitFilter === "berita") {
+        whereConditions.push(sql`${mentionsClassify.groupname} ILIKE '%BERITA%'`);
+      } else if (unitFilter === "radio") {
+        whereConditions.push(sql`${mentionsClassify.groupname} ILIKE '%Radio%'`);
+      } else {
+        // Generic unit filter - case-insensitive partial match
+        whereConditions.push(sql`${mentionsClassify.groupname} ILIKE ${`%${unitFilter}%`}`);
+      }
+    }
+
     console.log("[Engagement By Platform API] Executing Drizzle query...");
     const queryStartTime = Date.now();
 
     // Execute the query using Drizzle ORM with the SQL logic from your working query
+    // FIX: Filter out NaN values before casting to bigint to prevent "bigint out of range" error
     const result = await db.execute(sql`
       SELECT
         COALESCE(type, 'Unknown') AS platform,
@@ -76,20 +97,27 @@ export async function GET(request: NextRequest) {
       FROM (
         SELECT
           -- choose reach: prefer reach, then viewcount, then followerscount, then sourcereach
-          COALESCE(
-            NULLIF(reach, 0),
-            NULLIF(viewcount, 0),
-            NULLIF(followerscount, 0),
-            NULLIF(sourcereach, 0)
-          )::bigint AS reach_used,
+          -- Filter out NaN values using CASE to prevent bigint cast errors
+          CASE 
+            WHEN COALESCE(NULLIF(reach, 0), NULLIF(viewcount, 0), NULLIF(followerscount, 0), NULLIF(sourcereach, 0)) = 'NaN'::double precision 
+            THEN 0
+            ELSE COALESCE(NULLIF(reach, 0), NULLIF(viewcount, 0), NULLIF(followerscount, 0), NULLIF(sourcereach, 0))
+          END::bigint AS reach_used,
 
           -- choose interactions: prefer explicit interaction column, then totalreactionscount,
           -- otherwise sum of common engagement fields as a fallback
+          -- Filter out NaN values in each field before summing
           COALESCE(
-            interaction,
-            totalreactionscount,
-            (COALESCE(likecount,0) + COALESCE(commentcount,0) + COALESCE(sharecount,0)
-              + COALESCE(playcount,0) + COALESCE(replycount,0) + COALESCE(retweetcount,0))
+            CASE WHEN interaction = 'NaN'::double precision THEN NULL ELSE interaction END,
+            CASE WHEN totalreactionscount = 'NaN'::double precision THEN NULL ELSE totalreactionscount END,
+            (
+              COALESCE(CASE WHEN likecount = 'NaN'::double precision THEN 0 ELSE likecount END, 0) + 
+              COALESCE(CASE WHEN commentcount = 'NaN'::double precision THEN 0 ELSE commentcount END, 0) + 
+              COALESCE(CASE WHEN sharecount = 'NaN'::double precision THEN 0 ELSE sharecount END, 0) +
+              COALESCE(CASE WHEN playcount = 'NaN'::double precision THEN 0 ELSE playcount END, 0) + 
+              COALESCE(CASE WHEN replycount = 'NaN'::double precision THEN 0 ELSE replycount END, 0) + 
+              COALESCE(CASE WHEN retweetcount = 'NaN'::double precision THEN 0 ELSE retweetcount END, 0)
+            )
           )::bigint AS interactions,
 
           type
@@ -135,6 +163,7 @@ export async function GET(request: NextRequest) {
             platform: platformFilter,
             type: typeFilter,
             channel: channelFilter,
+            unit: unitFilter,
           },
         },
       },
@@ -146,7 +175,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("[Engagement By Platform API] Error:", error);
-    
+
     // Log the full error stack for debugging
     if (error instanceof Error) {
       console.error("[Engagement By Platform API] Error stack:", error.stack);

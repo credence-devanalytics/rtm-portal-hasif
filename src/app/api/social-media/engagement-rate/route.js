@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { mentionsClassifyPublic } from "@/lib/schema";
-import { gte, lte, and, sql, inArray, like, isNotNull } from "drizzle-orm";
+import { gte, lte, and, sql, inArray, or, isNotNull } from "drizzle-orm";
 
 // Helper function to build WHERE conditions
 const buildWhereConditions = (filters) => {
@@ -32,15 +32,15 @@ const buildWhereConditions = (filters) => {
 		);
 	}
 
-	// Source/Platform filters
+	// Source/Platform filters (case-insensitive)
 	if (filters.sources && filters.sources.length > 0) {
 		const sourceConditions = filters.sources.map((source) =>
-			like(mentionsClassifyPublic.type, `%${source}%`)
+			sql`LOWER(${mentionsClassifyPublic.type}) LIKE LOWER(${'%' + source + '%'})`
 		);
 		if (sourceConditions.length === 1) {
 			conditions.push(sourceConditions[0]);
 		} else {
-			conditions.push(sql`(${sourceConditions.join(" OR ")})`);
+			conditions.push(or(...sourceConditions));
 		}
 	}
 
@@ -109,7 +109,7 @@ export async function GET(request) {
 							"totalReach"
 						),
 					totalInteractions:
-						sql`COALESCE(SUM(${mentionsClassifyPublic.interaction}), 0)::bigint`.as(
+						sql`COALESCE(SUM(CASE WHEN ${mentionsClassifyPublic.interaction} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassifyPublic.interaction} END), 0)::bigint`.as(
 							"totalInteractions"
 						),
 				})

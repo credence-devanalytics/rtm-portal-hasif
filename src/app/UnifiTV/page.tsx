@@ -138,7 +138,6 @@ const UnifiTVPage = () => {
   // Filters State
   const [filters, setFilters] = useState({
     monthYear: "202501",
-    channel: "all",
     programName: "",
     dateFrom: "",
     dateTo: "",
@@ -147,15 +146,6 @@ const UnifiTVPage = () => {
   });
 
   // Available options for filters
-  const availableChannels = [
-    "TV1",
-    "TV2",
-    "OKEY",
-    "BERITA RTM",
-    "SUKAN RTM",
-    "TV6",
-    "BERNAMA",
-  ];
   const availableMonths = ["202501", "202502", "202503", "202504", "202505"];
 
   // Fetch data function
@@ -236,7 +226,6 @@ const UnifiTVPage = () => {
   const resetFilters = () => {
     setFilters({
       monthYear: "202501",
-      channel: "all",
       programName: "",
       dateFrom: "",
       dateTo: "",
@@ -1018,34 +1007,6 @@ const UnifiTVPage = () => {
                   {availableMonths.map((month) => (
                     <SelectItem className="" key={month} value={month}>
                       {month.slice(0, 4)}-{month.slice(4)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Channel Filter */}
-            <div className="flex items-center space-x-3">
-              <TvIcon className="h-5 w-5 text-primary" />
-              <label className="text-sm font-semibold text-foreground">
-                Channel:
-              </label>
-              <Select
-                value={filters.channel}
-                onValueChange={(value) =>
-                  handleFilterChange("channel", value === "all" ? "" : value)
-                }
-              >
-                <SelectTrigger className="w-40 bg-white/80">
-                  <SelectValue placeholder="All Channels" />
-                </SelectTrigger>
-                <SelectContent className="">
-                  <SelectItem className="" value="all">
-                    All Channels
-                  </SelectItem>
-                  {availableChannels.map((channel) => (
-                    <SelectItem className="" key={channel} value={channel}>
-                      {channel}
                     </SelectItem>
                   ))}
                 </SelectContent>

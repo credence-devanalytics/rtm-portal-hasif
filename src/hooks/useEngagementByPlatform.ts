@@ -6,6 +6,7 @@ interface EngagementFilters {
   platform?: string;
   type?: string;
   channel?: string;
+  unit?: string;
 }
 
 interface EngagementPlatformData {
@@ -23,13 +24,14 @@ interface EngagementByPlatformResponse {
     total_platforms: number;
     query_time_ms: number;
     total_time_ms: number;
-      filters: {
-        startDate?: string;
-        endDate?: string;
-        platform?: string;
-        type?: string;
-        channel?: string;
-      };
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      platform?: string;
+      type?: string;
+      channel?: string;
+      unit?: string;
+    };
   };
 }
 
@@ -38,10 +40,11 @@ const fetchEngagementByPlatform = async (
 ): Promise<EngagementByPlatformResponse> => {
   const queryParams = new URLSearchParams({
     startDate: filters.from || "",
-  endDate: filters.to || "",
-  platform: filters.platform || "",
-  type: filters.type || "",
-  channel: filters.channel || "",
+    endDate: filters.to || "",
+    platform: filters.platform || "",
+    type: filters.type || "",
+    channel: filters.channel || "",
+    unit: filters.unit || "",
   });
 
   console.log(

@@ -7,7 +7,7 @@ export async function GET(request: Request) {
 	const startTime = Date.now();
 	try {
 		const { searchParams } = new URL(request.url);
-		
+
 		// Extract filter parameters
 		const fromDate = searchParams.get("from") || "";
 		const toDate = searchParams.get("to") || "";
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
 		// Build where conditions manually for better control
 		const whereConditions = [];
-		
+
 		// Date filtering using insertdate (NOW() - INTERVAL '30 days')
 		if (fromDate && toDate) {
 			whereConditions.push(sql`${mentionsClassify.insertdate} >= ${fromDate}::date`);
@@ -64,9 +64,24 @@ export async function GET(request: Request) {
 					total_engagement: sql<number>`SUM(
 						COALESCE(
 							CASE 
-								WHEN ${mentionsClassify.interaction} IS NOT NULL AND ${mentionsClassify.interaction} > 0 
+								WHEN ${mentionsClassify.interaction} IS NOT NULL 
+								     AND ${mentionsClassify.interaction} > 0 
+								     AND ${mentionsClassify.interaction} != 'NaN'::double precision
 								THEN ${mentionsClassify.interaction}
-								ELSE COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0)
+								ELSE (
+									COALESCE(
+										CASE WHEN ${mentionsClassify.likecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.likecount} END, 
+										0
+									) + 
+									COALESCE(
+										CASE WHEN ${mentionsClassify.commentcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.commentcount} END, 
+										0
+									) + 
+									COALESCE(
+										CASE WHEN ${mentionsClassify.sharecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.sharecount} END, 
+										0
+									)
+								)
 							END, 
 							0
 						)
@@ -112,9 +127,24 @@ export async function GET(request: Request) {
 					total_engagement: sql<number>`SUM(
 						COALESCE(
 							CASE 
-								WHEN ${mentionsClassify.interaction} IS NOT NULL AND ${mentionsClassify.interaction} > 0 
+								WHEN ${mentionsClassify.interaction} IS NOT NULL 
+								     AND ${mentionsClassify.interaction} > 0 
+								     AND ${mentionsClassify.interaction} != 'NaN'::double precision
 								THEN ${mentionsClassify.interaction}
-								ELSE COALESCE(${mentionsClassify.likecount}, 0) + COALESCE(${mentionsClassify.commentcount}, 0) + COALESCE(${mentionsClassify.sharecount}, 0)
+								ELSE (
+									COALESCE(
+										CASE WHEN ${mentionsClassify.likecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.likecount} END, 
+										0
+									) + 
+									COALESCE(
+										CASE WHEN ${mentionsClassify.commentcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.commentcount} END, 
+										0
+									) + 
+									COALESCE(
+										CASE WHEN ${mentionsClassify.sharecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.sharecount} END, 
+										0
+									)
+								)
 							END, 
 							0
 						)
@@ -126,8 +156,8 @@ export async function GET(request: Request) {
 			console.log(`⏱️ Database query took ${Date.now() - queryStartTime}ms`);
 
 			console.log("✅ RTM Media Table (units) response:", result.length, "units");
-			console.log("📊 Raw units data:", result.map(r => ({ 
-				unit: r.name, 
+			console.log("📊 Raw units data:", result.map(r => ({
+				unit: r.name,
 				mentions: r.total_mentions,
 				reach: r.total_reach
 			})));
@@ -140,7 +170,7 @@ export async function GET(request: Request) {
 			// Calculate grand totals
 			const grandTotalMentions = result.reduce((sum, r) => sum + Number(r.total_mentions), 0);
 			const grandTotalReach = result.reduce((sum, r) => sum + Number(r.total_reach), 0);
-			console.log("🔢 Media Table Grand Totals:", { 
+			console.log("🔢 Media Table Grand Totals:", {
 				totalMentions: grandTotalMentions,
 				totalReach: grandTotalReach
 			});

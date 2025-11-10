@@ -384,6 +384,7 @@ const RTMDashboard = () => {
     to: selectedDateRange.to.toISOString(),
     platform: globalFilters.platform || "",
     channel: globalFilters.channel || "",
+    unit: activeTab === "overall" ? "" : activeTab, // Add unit filter based on active tab
   });
 
   // Extract engagement data

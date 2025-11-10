@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/index";
 import { mentionsClassifyPublic } from "@/lib/schema";
-import { desc, asc, gte, lte, and, sql, inArray, like } from "drizzle-orm";
+import { desc, asc, gte, lte, and, sql, inArray, or } from "drizzle-orm";
 
 // Helper function to build WHERE conditions
 const buildWhereConditions = (filters) => {
@@ -38,15 +38,15 @@ const buildWhereConditions = (filters) => {
 		);
 	}
 
-	// Source/Platform filters
+	// Source/Platform filters (case-insensitive)
 	if (filters.sources && filters.sources.length > 0) {
 		const sourceConditions = filters.sources.map((source) =>
-			like(mentionsClassifyPublic.type, `%${source}%`)
+			sql`LOWER(${mentionsClassifyPublic.type}) LIKE LOWER(${'%' + source + '%'})`
 		);
 		if (sourceConditions.length === 1) {
 			conditions.push(sourceConditions[0]);
 		} else {
-			conditions.push(sql`(${sourceConditions.join(" OR ")})`);
+			conditions.push(or(...sourceConditions));
 		}
 	}
 

@@ -6,9 +6,10 @@ export async function GET(request: Request) {
 		const { searchParams } = new URL(request.url);
 		const yearParam = searchParams.get("year");
 		const monthParam = searchParams.get("month");
+		const monthOnlyParam = searchParams.get("month_only");
 
 		console.log("Radio Channel Table API called");
-		console.log("Filter params:", { yearParam, monthParam });
+		console.log("Filter params:", { yearParam, monthParam, monthOnlyParam });
 
 		// Build WHERE clause with filters
 		let whereClause = `WHERE report_type = 'Table 4'`;

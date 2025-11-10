@@ -7,9 +7,10 @@ export async function GET(request: Request) {
 		const { searchParams } = new URL(request.url);
 		const yearParam = searchParams.get("year");
 		const monthParam = searchParams.get("month");
+		const monthOnlyParam = searchParams.get("month_only");
 
 		console.log("=== Marketing API called ===");
-		console.log("Filter params:", { yearParam, monthParam });
+		console.log("Filter params:", { yearParam, monthParam, monthOnlyParam });
 		console.log("Database connection:", db ? "Connected" : "Not connected");
 
 		// Determine which years to fetch based on filters
@@ -19,40 +20,35 @@ export async function GET(request: Request) {
 			console.log("Filtering by year:", yearParam);
 		}
 
-		// For now, we'll fetch all years for comparison but filter display
-		// This maintains the comparison logic while respecting filters
-
-		// First, check what data exists in the table using raw SQL
-		let allData;
-		try {
-			const result = await db.execute(sql`
-				SELECT * FROM marketing_channel_byyear LIMIT 10
-			`);
-			allData = result.rows;
-
-			console.log("Sample data from table:", JSON.stringify(allData, null, 2));
-			console.log("Total sample records:", allData.length);
-		} catch (dbError) {
-			console.error("Error fetching sample data:", dbError);
-			return NextResponse.json({
-				success: false,
-				error: "Database query failed",
-				details: dbError.message
-			}, { status: 500 });
-		}
-
-		// Extract unique years and report types from sample data
-		const years = [...new Set(allData.map(item => item.year))];
-		const reportTypes = [...new Set(allData.map(item => item.report_type))];
-
-		console.log("Years in sample data:", years);
-		console.log("Report types in sample data:", reportTypes);
+		// Map month number to Malay month name
+		const monthNames: Record<string, string> = {
+			'01': 'Januari', '02': 'Februari', '03': 'Mac', '04': 'April',
+			'05': 'Mei', '06': 'Jun', '07': 'Julai', '08': 'Ogos',
+			'09': 'September', '10': 'Oktober', '11': 'November', '12': 'Disember'
+		};
 
 		// Fetch data for each year based on filter
 		const fetchYearData = async (year: number) => {
 			if (yearParam && yearParam !== "all" && parseInt(yearParam) !== year) {
 				return [];
 			}
+
+			// If month_only is specified, fetch from bymonth table and aggregate
+			if (monthOnlyParam && monthOnlyParam !== "all") {
+				const monthName = monthNames[monthOnlyParam];
+				console.log(`Fetching month-only data for ${monthName} ${year}`);
+				const result = await db.execute(
+					sql`SELECT saluran, SUM(CAST(value AS NUMERIC)) as value 
+					    FROM marketing_channel_bymonth 
+					    WHERE year = ${year} 
+					      AND month = ${monthName}
+					      AND report_type = 'Table 1'
+					    GROUP BY saluran`
+				);
+				return result.rows;
+			}
+
+			// Otherwise fetch yearly data
 			const result = await db.execute(
 				sql`SELECT * FROM marketing_channel_byyear WHERE year = ${year} AND report_type = 'Table 1'`
 			);

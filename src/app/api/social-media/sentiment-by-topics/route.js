@@ -16,6 +16,7 @@ import {
 	sum,
 	avg,
 	inArray,
+	or,
 	like,
 } from "drizzle-orm";
 
@@ -49,15 +50,15 @@ const buildWhereConditions = (filters) => {
 		);
 	}
 
-	// Source/Platform filters
+	// Source/Platform filters (case-insensitive)
 	if (filters.sources && filters.sources.length > 0) {
 		const sourceConditions = filters.sources.map((source) =>
-			like(mentionsClassifyPublic.type, `%${source}%`)
+			sql`LOWER(${mentionsClassifyPublic.type}) LIKE LOWER(${'%' + source + '%'})`
 		);
 		if (sourceConditions.length === 1) {
 			conditions.push(sourceConditions[0]);
 		} else {
-			conditions.push(sql`(${sourceConditions.join(" OR ")})`);
+			conditions.push(or(...sourceConditions));
 		}
 	}
 

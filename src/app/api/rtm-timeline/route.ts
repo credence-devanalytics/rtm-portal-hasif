@@ -90,10 +90,19 @@ export async function GET(request: Request) {
 					`,
 					total_interactions: sql<number>`
 						SUM(
-							COALESCE(NULLIF(${mentionsClassify.interaction}, 0),
-							NULLIF(${mentionsClassify.totalreactionscount}, 0),
-							${mentionsClassify.likecount} + ${mentionsClassify.commentcount} + ${mentionsClassify.sharecount} + ${mentionsClassify.playcount} + ${mentionsClassify.replycount} + ${mentionsClassify.retweetcount},
-							0)
+							COALESCE(
+								CASE WHEN NULLIF(${mentionsClassify.interaction}, 0) = 'NaN'::double precision THEN NULL ELSE NULLIF(${mentionsClassify.interaction}, 0) END,
+								CASE WHEN NULLIF(${mentionsClassify.totalreactionscount}, 0) = 'NaN'::double precision THEN NULL ELSE NULLIF(${mentionsClassify.totalreactionscount}, 0) END,
+								(
+									COALESCE(CASE WHEN ${mentionsClassify.likecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.likecount} END, 0) + 
+									COALESCE(CASE WHEN ${mentionsClassify.commentcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.commentcount} END, 0) + 
+									COALESCE(CASE WHEN ${mentionsClassify.sharecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.sharecount} END, 0) + 
+									COALESCE(CASE WHEN ${mentionsClassify.playcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.playcount} END, 0) + 
+									COALESCE(CASE WHEN ${mentionsClassify.replycount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.replycount} END, 0) + 
+									COALESCE(CASE WHEN ${mentionsClassify.retweetcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.retweetcount} END, 0)
+								),
+								0
+							)
 						)
 					`,
 					posts_count: sql<number>`COUNT(*)`,
@@ -128,10 +137,19 @@ export async function GET(request: Request) {
 					sentiment: mentionsClassify.sentiment,
 					reach: mentionsClassify.reach, // Use reach column directly
 					interactions: sql<number>`
-						COALESCE(NULLIF(${mentionsClassify.interaction}, 0),
-						NULLIF(${mentionsClassify.totalreactionscount}, 0),
-						${mentionsClassify.likecount} + ${mentionsClassify.commentcount} + ${mentionsClassify.sharecount} + ${mentionsClassify.playcount} + ${mentionsClassify.replycount} + ${mentionsClassify.retweetcount},
-						0)
+						COALESCE(
+							CASE WHEN NULLIF(${mentionsClassify.interaction}, 0) = 'NaN'::double precision THEN NULL ELSE NULLIF(${mentionsClassify.interaction}, 0) END,
+							CASE WHEN NULLIF(${mentionsClassify.totalreactionscount}, 0) = 'NaN'::double precision THEN NULL ELSE NULLIF(${mentionsClassify.totalreactionscount}, 0) END,
+							(
+								COALESCE(CASE WHEN ${mentionsClassify.likecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.likecount} END, 0) + 
+								COALESCE(CASE WHEN ${mentionsClassify.commentcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.commentcount} END, 0) + 
+								COALESCE(CASE WHEN ${mentionsClassify.sharecount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.sharecount} END, 0) + 
+								COALESCE(CASE WHEN ${mentionsClassify.playcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.playcount} END, 0) + 
+								COALESCE(CASE WHEN ${mentionsClassify.replycount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.replycount} END, 0) + 
+								COALESCE(CASE WHEN ${mentionsClassify.retweetcount} = 'NaN'::double precision THEN 0 ELSE ${mentionsClassify.retweetcount} END, 0)
+							),
+							0
+						)
 					`,
 					likecount: mentionsClassify.likecount,
 					commentcount: mentionsClassify.commentcount,
