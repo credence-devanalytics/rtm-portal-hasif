@@ -417,7 +417,8 @@ export default function AdminPage() {
                                                 prev ? { ...prev, role: e.target.value } : { name: '', email: '', role: e.target.value, permissions: [] }
                                             )}
                                             className="px-3 py-2 border rounded-md text-sm w-full"
-                                            disabled={userData?.role === 'superadmin'}
+                                            disabled={userData?.role !== 'superadmin'}
+                                            defaultValue={"user"}
                                         >
                                             <option value="user">User</option>
                                             <option value="admin">Admin</option>
