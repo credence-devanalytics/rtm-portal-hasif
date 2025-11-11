@@ -43,24 +43,24 @@ function TableauEmbedServer({
 		fetchTicket();
 	}, []);
 
-	// if (!ticket) {
-	// 	return (
-	// 	/* No Data State */
-	// 	<div className="flex flex-col items-center justify-center py-8 space-y-3">
-	// 	<div className="p-3 rounded-full bg-gray-50 border border-gray-200">
-	// 		<Monitor className="h-6 w-6 text-gray-400" />
-	// 	</div>
-	// 	<div className="text-center">
-	// 		<p className="text-gray-500 font-medium text-sm">
-	// 		More data coming soon
-	// 		</p>
-	// 		<p className="text-gray-400 text-xs mt-1">
-	// 		Check back later for updates
-	// 		</p>
-	// 	</div>
-	// 	</div>
-	// 	)
-	// }
+	if (!ticket) {
+		return (
+		/* No Data State */
+		<div className="flex flex-col items-center justify-center py-8 space-y-3">
+		<div className="p-3 rounded-full bg-gray-50 border border-gray-200">
+			<Monitor className="h-6 w-6 text-gray-400" />
+		</div>
+		<div className="text-center">
+			<p className="text-gray-500 font-medium text-sm">
+			More data coming soon
+			</p>
+			<p className="text-gray-400 text-xs mt-1">
+			Check back later for updates
+			</p>
+		</div>
+		</div>
+		)
+	}
 
 	const trustedUrl = `${ticket}/views/${viewUrl}`;
 	console.log("TableauEmbedServer trustedUrl:", trustedUrl);
@@ -73,7 +73,7 @@ function TableauEmbedServer({
 				strategy="lazyOnload"
 			/>
 			{trustedUrl && 
-			<div>
+			<>
 				<div className="w-full flex justify-center mt-2 mb-4">
 					<span className="text-center leading-tight text-sm text-slate-600">
 						<a href={trustedUrl} target="_blank" rel="noopener noreferrer" className="underline">Click here</a> 
@@ -92,7 +92,7 @@ function TableauEmbedServer({
 						hide-tabs={hideTabs ? "" : undefined}
 					/>
 				</div>
-			</div>
+			</>
 			}
 			
 		</>
