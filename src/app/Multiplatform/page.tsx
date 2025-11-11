@@ -581,7 +581,7 @@ const MultiplatformPage = () => {
   // Platform data structure
   const platforms = [
     {
-      id: "rtmclick",
+      id: "rtmklik",
       name: "RTMKlik",
       icon: (
         <Image
@@ -596,7 +596,7 @@ const MultiplatformPage = () => {
       borderColor: "border-amber-200",
       bgColor: "bg-amber-50",
       textColor: "text-amber-900",
-      link: "/RTMClick",
+      link: "/RTMKlik",
       hasData: rtmklikMetrics.hasData,
       dataSource: "api", // Retrieved via API
       dataSourceSpec: "Google Analytics", // Specification
@@ -1512,7 +1512,7 @@ const MultiplatformPage = () => {
     }
 
     // Special layout for RTMKlik with enhanced analytics
-    if (platform.id === "rtmclick" && hasAnyData && rtmklikMetrics.hasData) {
+    if (platform.id === "rtmklik" && hasAnyData && rtmklikMetrics.hasData) {
       return (
         <Link href={platform.link} className="block group">
           <Card className="h-full cursor-pointer hover:shadow-md transition-shadow">

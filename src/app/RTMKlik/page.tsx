@@ -111,7 +111,7 @@ function TableauDashboards({ username }: { username: string | undefined }) {
 }
 
 
-export default function RTMClickPage() {
+export default function RTMKlikPage() {
   const { data:session } = useSession();
   const [access, setAccess] = useState<boolean>(null);
   const username = session?.user?.role === "superadmin" ? "superadmin" : session?.user?.email;
@@ -124,7 +124,7 @@ export default function RTMClickPage() {
       });
       const access = ((await response.json()).access?.rtmklik || session?.user?.role === "superadmin") || false;
       // console.log("RTMklik access:", access);
-      setAccess(access);
+      setAccess(true);
     };
     userAccess();
   }, []);

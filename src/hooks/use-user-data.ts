@@ -46,7 +46,7 @@ export function useUserData() {
       const accessMapping: { [key: string]: string } = {
         socMedAcc: 'SocMedAcc',
         socMedSent: 'SocMedSent', 
-        rtmklik: 'RTMClick',
+        rtmklik: 'RTMKlik',
         mytv: 'MyTV',
         astro: 'ASTRO',
         unifitv: 'UnifiTV',
