@@ -1,6 +1,8 @@
 "use client"
 
-import { Monitor } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, Monitor } from "lucide-react";
+import Link from "next/link";
 import Script from "next/script";
 import { use, useEffect, useState } from "react";
 
@@ -37,24 +39,24 @@ function TableauEmbedServer({
 		fetchTicket();
 	}, []);
 
-	if (!ticket) {
-		return (
-		/* No Data State */
-		<div className="flex flex-col items-center justify-center py-8 space-y-3">
-		<div className="p-3 rounded-full bg-gray-50 border border-gray-200">
-			<Monitor className="h-6 w-6 text-gray-400" />
-		</div>
-		<div className="text-center">
-			<p className="text-gray-500 font-medium text-sm">
-			More data coming soon
-			</p>
-			<p className="text-gray-400 text-xs mt-1">
-			Check back later for updates
-			</p>
-		</div>
-		</div>
-		)
-	}
+	// if (!ticket) {
+	// 	return (
+	// 	/* No Data State */
+	// 	<div className="flex flex-col items-center justify-center py-8 space-y-3">
+	// 	<div className="p-3 rounded-full bg-gray-50 border border-gray-200">
+	// 		<Monitor className="h-6 w-6 text-gray-400" />
+	// 	</div>
+	// 	<div className="text-center">
+	// 		<p className="text-gray-500 font-medium text-sm">
+	// 		More data coming soon
+	// 		</p>
+	// 		<p className="text-gray-400 text-xs mt-1">
+	// 		Check back later for updates
+	// 		</p>
+	// 	</div>
+	// 	</div>
+	// 	)
+	// }
 
 	const trustedUrl = `${ticket}/views/${viewUrl}?:embed=yes&:toolbar=${
 		hideToolbar ? "no" : "yes"
@@ -68,17 +70,28 @@ function TableauEmbedServer({
 				src={`https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js`}
 				strategy="lazyOnload"
 			/>
-			{trustedUrl && <div style={{ width: '100%', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
-				{/* @ts-ignore */}
-				<tableau-viz
-					id="tableauViz"
-					src={trustedUrl}
-					width="100%"
-					device={device}
-					toolbar={hideToolbar ? "hidden" : "bottom"}
-					hide-tabs={hideTabs ? "" : undefined}
-				/>
-			</div>}
+			{trustedUrl && 
+			<div>
+				<div className="w-full flex justify-center mt-2 mb-4">
+					<span className="text-center leading-tight text-sm text-slate-600">
+						<a href={trustedUrl} target="_blank" rel="noopener noreferrer" className="underline">Click here</a> 
+						<span> if dashboard is not appearing.</span>
+						<ExternalLink className="h-4 w-4 text-white flex-shrink-0" />
+					</span>
+				</div>
+				<div style={{ width: '100%', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
+					{/* @ts-ignore */}
+					<tableau-viz
+						id="tableauViz"
+						src={trustedUrl}
+						width="100%"
+						device={device}
+						toolbar={hideToolbar ? "hidden" : "bottom"}
+						hide-tabs={hideTabs ? "" : undefined}
+					/>
+				</div>
+			</div>
+			}
 			
 		</>
 	);

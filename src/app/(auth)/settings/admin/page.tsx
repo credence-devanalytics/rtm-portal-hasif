@@ -34,7 +34,7 @@ export default function AdminPage() {
         {name:'SocMed Sentiment', key:'SocMedSent'},
     ];
     const tvPages = [
-        {name:'RTMClick', key:'RTMClick'},
+        {name:'RTMKlik', key:'RTMKlik'},
         {name:'MyTV', key:'MyTV'},
         {name:'ASTRO', key:'ASTRO'},
         {name:'UnifiTV', key:'UnifiTV'},

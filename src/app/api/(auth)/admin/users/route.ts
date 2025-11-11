@@ -53,7 +53,7 @@ export async function GET(request: Request) {
 					const accessMapping: { [key: string]: string } = {
 						socMedAcc: "SocMedAcc",
 						socMedSent: "SocMedSent",
-						rtmklik: "RTMClick",
+						rtmklik: "RTMKlik",
 						mytv: "MyTV",
 						astro: "ASTRO",
 						unifitv: "UnifiTV",
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
         const permissionMapping: { [key: string]: string } = {
           'SocMedAcc': 'socMedAcc',
           'SocMedSent': 'socMedSent',
-          'RTMClick': 'rtmklik',
+          'RTMKlik': 'rtmklik',
           'MyTV': 'mytv',
           'ASTRO': 'astro',
           'UnifiTV': 'unifitv',
@@ -263,7 +263,7 @@ export async function PUT(request: Request) {
 			const permissionMapping: { [key: string]: string } = {
 				SocMedAcc: "socMedAcc",
 				SocMedSent: "socMedSent",
-				RTMClick: "rtmklik",
+				RTMKlik: "rtmklik",
 				MyTV: "mytv",
 				ASTRO: "astro",
 				UnifiTV: "unifitv",

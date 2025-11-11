@@ -338,14 +338,14 @@ const MultiplatformSection = () => {
   // Platform data structure
   const platforms = [
     {
-      id: "rtmclick",
+      id: "rtmklik",
       name: "RTMKlik",
       icon: <Radio className="h-8 w-8" />,
       color: "from-amber-500 to-amber-600",
       borderColor: "border-amber-200",
       bgColor: "bg-amber-50",
       textColor: "text-amber-900",
-      link: "/RTMClick",
+      link: "/RTMKlik",
       hasData: false,
       metrics: {
         topChannel: "No data available yet",
@@ -500,7 +500,7 @@ const MultiplatformSection = () => {
           return "bg-emerald-100 text-emerald-700";
         case "astro":
           return "bg-purple-100 text-purple-700";
-        case "rtmclick":
+        case "rtmklik":
           return "bg-amber-100 text-amber-700";
         case "mytv":
           return "bg-blue-100 text-blue-700";
@@ -1343,7 +1343,7 @@ const KPISection = () => {
       {
         name: "RTMKlik",
         stat: rtmklikTVViewers,
-        link: "/RTMClick",
+        link: "/RTMKlik",
         color: "yellow",
       },
       {
@@ -1368,7 +1368,7 @@ const KPISection = () => {
       {
         name: "RTMKlik",
         stat: rtmklikRadioListeners,
-        link: "/RTMClick",
+        link: "/RTMKlik",
         color: "yellow",
       },
     ].sort((a, b) => {

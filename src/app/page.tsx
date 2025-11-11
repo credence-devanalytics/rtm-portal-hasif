@@ -192,7 +192,7 @@ const KPISection = () => {
       {
         name: "RTMKlik",
         stat: rtmklikTVViewers,
-        link: "/RTMClick",
+        link: "/RTMKlik",
         color: "yellow",
       },
       {
@@ -217,7 +217,7 @@ const KPISection = () => {
       {
         name: "RTMKlik",
         stat: rtmklikRadioListeners,
-        link: "/RTMClick",
+        link: "/RTMKlik",
         color: "yellow",
       },
     ].sort((a, b) => {
