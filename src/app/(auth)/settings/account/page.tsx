@@ -10,8 +10,6 @@ import { PasswordInput } from "@/components/ui/password-input";
 
 export default function AccountPage() {
     const { data: session, isPending } = useSession();
-    const [email, setEmail] = useState(session?.user?.email || "");
-    const [fullName, setFullName] = useState(session?.user?.name || "");
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,41 +23,7 @@ export default function AccountPage() {
         );
     }
 
-    const handleAccountUpdate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        
-        try {
-            const response = await fetch('/api/user/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: fullName,
-                    email: email
-                })
-            });
 
-            const data = await response.json();
-            
-            if (response.ok) {
-                alert('Profile updated successfully!');
-                // Update local session data if needed
-                if (session?.user) {
-                    session.user.name = data.user.name;
-                    session.user.email = data.user.email;
-                }
-            } else {
-                alert(data.error || 'Failed to update profile');
-            }
-        } catch (error) {
-            console.error("Error updating profile:", error);
-            alert("Error updating profile. Please try again.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -111,114 +75,93 @@ export default function AccountPage() {
     };
     
     return (
-        <div className="space-y-6 px-12">
+        <div className="space-y-4 px-12">
             {/* Profile Header */}
             <div className="flex flex-col items-start">
                 <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
                 <p className="text-gray-600">Manage your account information and security settings</p>
             </div>
 
-            {/* Full Name Change Form */}
+            {/* Account Details Display */}
             <Card className="p-6 border-0 shadow-none">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-4">
                     <User className="w-5 h-5 text-gray-600" />
-                    <h2 className="text-xl font-semibold">Update Account Details</h2>
+                    <h2 className="text-xl font-semibold">Account Details</h2>
                 </div>
-                <form onSubmit={handleAccountUpdate} className="space-y-4">
-                    <div>
-                        <label htmlFor="full-name" className="block text-sm font-medium text-gray-700 mb-2">
-                            Full Name
-                        </label>
-                        <Input
-                            id="full-name"
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            placeholder="Enter your full name"
-                            className="max-w-md"
-                            required
-                        />
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Full Name
+                            </label>
+                            <div className="text-gray-900 font-medium">
+                                {session?.user?.name || 'Not specified'}
+                            </div>
+                        </div>
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Email Address
+                            </label>
+                            <div className="text-gray-900 font-medium">
+                                {session?.user?.email || 'Not specified'}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Role
+                            </label>
+                            <div className="text-gray-900 font-medium capitalize">
+                                {(session?.user as any)?.role || 'Not specified'}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Position
+                            </label>
+                            <div className="text-gray-900 font-medium">
+                                {(session?.user as any)?.position || 'Not specified'}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Task Role
+                            </label>
+                            <div className="text-gray-900 font-medium">
+                                {(session?.user as any)?.taskRole || 'Not specified'}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                System ID
+                            </label>
+                            <div className="text-gray-900 font-medium">
+                                {(session?.user as any)?.systemId || 'Not assigned'}
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                            Current Email
-                        </label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your new email address"
-                            className="max-w-md"
-                            required
-                        />
-                    </div>
-                    <Button 
-                        type="submit" 
-                        disabled={isLoading || (email === session?.user?.email && fullName === session?.user?.name)}
-                    >
-                        {isLoading ? "Updating..." : "Save"}
-                    </Button>
-                </form>
+                </div>
             </Card>
-
-            {/* Password Change Form */}
-            <Card className="p-6 border-0 shadow-none">
-                <div className="flex items-center gap-2 mb-2">
-                    <Lock className="w-5 h-5 text-gray-600" />
-                    <h2 className="text-xl font-semibold">Change Password</h2>
-                </div>
-                <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            
+            {/* Contact Section */}
+            <Card className="px-6 py-4 border-0 shadow-none">
+                <div className="flex flex-col items-start gap-4">
                     <div>
-                        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                            Current Password
-                        </label>
-                        <PasswordInput
-                            id="currentPassword"
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            placeholder="Enter your current password"
-                            className="max-w-md"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                            New Password
-                        </label>
-                        <PasswordInput
-                            id="newPassword"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Enter your new password"
-                            className="max-w-md"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                            Confirm New Password
-                        </label>
-                        <PasswordInput
-                            id="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm your new password"
-                            className="max-w-md"
-                            required
-                        />
+                        <h2 className="text-xl font-semibold mb-2">Need Help?</h2>
+                        <p className="text-gray-600">Got issues with your account?</p>
                     </div>
                     <Button 
-                        type="submit" 
-                        disabled={isLoading || !currentPassword || !newPassword || !confirmPassword}
+                        onClick={() => window.location.href = '/contact'}
+                        variant="outline"
+                        className="flex items-center gap-2"
                     >
-                        {isLoading ? "Updating..." : "Save"}
+                        <User className="w-4 h-4" />
+                        Contact Support
                     </Button>
-                </form>
+                </div>
             </Card>
 
             {/* Logout Section */}
-            <Card className="p-6 border-0 shadow-none">
+            <Card className="px-6 py-4 border-0 shadow-none">
                 <div className="flex flex-col items-start gap-4">
                     <div>
                         <h2 className="text-xl font-semibold mb-2">Log Out</h2>
