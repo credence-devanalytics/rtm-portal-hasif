@@ -41,12 +41,20 @@ import {
   Area,
   AreaChart,
 } from "recharts";
+import CalendarDatePicker from "@/components/CalendarDatePicker";
 
 const PortalBeritaPage = () => {
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedYear, setSelectedYear] = useState("2025");
-  const [selectedMonth, setSelectedMonth] = useState("all");
+  const [selectedDateRange, setSelectedDateRange] = useState(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    return {
+      from: thirtyDaysAgo,
+      to: today,
+    };
+  });
   const [dashboardData, setDashboardData] = useState(null);
   const [audienceData, setAudienceData] = useState(null);
   const [ageData, setAgeData] = useState(null);
@@ -63,53 +71,21 @@ const PortalBeritaPage = () => {
   const [trafficSourceData, setTrafficSourceData] = useState(null);
   const [trafficSourceLimit, setTrafficSourceLimit] = useState(5);
 
-  // Generate year options (last 2 years: 2025, 2024)
-  const yearOptions = useMemo(() => {
-    const options = [{ value: "all", label: "All Years" }];
-    const currentYear = new Date().getFullYear();
-    
-    for (let i = 0; i < 2; i++) {
-      const year = currentYear - i;
-      options.push({ value: year.toString(), label: year.toString() });
-    }
-    
-    return options;
-  }, []);
-
-  // Month options
-  const monthOptions = useMemo(() => {
-    return [
-      { value: "all", label: "All Months" },
-      { value: "01", label: "January" },
-      { value: "02", label: "February" },
-      { value: "03", label: "March" },
-      { value: "04", label: "April" },
-      { value: "05", label: "May" },
-      { value: "06", label: "June" },
-      { value: "07", label: "July" },
-      { value: "08", label: "August" },
-      { value: "09", label: "September" },
-      { value: "10", label: "October" },
-      { value: "11", label: "November" },
-      { value: "12", label: "December" },
-    ];
-  }, []);
-
   // Compute the filter parameter for API calls
   const filterParam = useMemo(() => {
-    if (selectedYear === "all" && selectedMonth === "all") {
-      return null; // No filter
-    } else if (selectedYear !== "all" && selectedMonth === "all") {
-      return `year=${selectedYear}`; // Year only
-    } else if (selectedYear === "all" && selectedMonth !== "all") {
-      // Month only - use current year
-      const currentYear = new Date().getFullYear();
-      return `month=${currentYear}-${selectedMonth}`;
-    } else {
-      // Both year and month selected
-      return `month=${selectedYear}-${selectedMonth}`;
+    // Convert date range to filter parameters
+    const fromDate = selectedDateRange.from.toISOString().split('T')[0];
+    const toDate = selectedDateRange.to.toISOString().split('T')[0];
+    
+    return `from=${fromDate}&to=${toDate}`;
+  }, [selectedDateRange]);
+
+  // Handle date range changes
+  const handleDateRangeChange = (newDateRange) => {
+    if (newDateRange?.from && newDateRange?.to) {
+      setSelectedDateRange(newDateRange);
     }
-  }, [selectedYear, selectedMonth]);
+  };
 
   // Fetch dashboard summary data
   useEffect(() => {
@@ -900,33 +876,11 @@ const PortalBeritaPage = () => {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Year Filter */}
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="px-3 py-2 text-sm border border-black rounded-md bg-white text-black hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black"
-                title="Filter data by year"
-              >
-                {yearOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Month Filter */}
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-3 py-2 text-sm border border-black rounded-md bg-white text-black hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black"
-                title="Filter data by month"
-              >
-                {monthOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              {/* Date Range Filter */}
+              <CalendarDatePicker
+                selectedDateRange={selectedDateRange}
+                onDateRangeChange={handleDateRangeChange}
+              />
               
               <Button
                 onClick={handleRefresh}

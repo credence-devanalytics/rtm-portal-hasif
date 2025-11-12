@@ -16,8 +16,10 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const yearParam = searchParams.get("year");
     const monthParam = searchParams.get("month");
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
 
-    console.log('Filter params:', { yearParam, monthParam });
+    console.log('Filter params:', { yearParam, monthParam, fromParam, toParam });
 
     // Build date filter conditions for each table
     let audienceDateFilters = [];
@@ -25,7 +27,18 @@ export async function GET(request) {
     let firstUserDateFilters = [];
     let firstUserSourceDateFilters = [];
 
-    if (monthParam) {
+    if (fromParam && toParam) {
+      // Date range filter: from and to in YYYY-MM-DD format
+      const startDate = fromParam;
+      const endDate = toParam;
+
+      audienceDateFilters = [gte(pberitaAudience.date, startDate), lte(pberitaAudience.date, endDate)];
+      regionDateFilters = [gte(pberitaAudienceRegion.date, startDate), lte(pberitaAudienceRegion.date, endDate)];
+      firstUserDateFilters = [gte(pberitaFirstUser.date, startDate), lte(pberitaFirstUser.date, endDate)];
+      firstUserSourceDateFilters = [gte(pberitaFirstUserSource.date, startDate), lte(pberitaFirstUserSource.date, endDate)];
+
+      console.log('Date range filter applied:', { startDate, endDate });
+    } else if (monthParam) {
       // Month filter: YYYY-MM format
       const [year, month] = monthParam.split('-');
       const startDate = `${year}-${month}-01`;
