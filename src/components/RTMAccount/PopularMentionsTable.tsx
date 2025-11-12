@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -95,20 +96,20 @@ const PopularMentionsTable = ({
       .slice(0, debouncedSearchQuery.trim().length > 0 ? 50 : 10);
   }, [displayData, debouncedSearchQuery]);
 
-  // Handle row click for cross-filtering
-  const handleRowClick = (mention: any) => {
-    if (onFilterChange && mention) {
-      // Filter by channel/author
-      if (mention.channel) {
-        // Toggle filter - if already filtered by this channel, clear it
-        if (activeFilters.channel === mention.channel) {
-          onFilterChange("channel", null);
-        } else {
-          onFilterChange("channel", mention.channel);
-        }
-      }
-    }
-  };
+  // Handle row click - disabled cross-filtering
+  // const handleRowClick = (mention: any) => {
+  //   if (onFilterChange && mention) {
+  //     // Filter by channel/author
+  //     if (mention.channel) {
+  //       // Toggle filter - if already filtered by this channel, clear it
+  //       if (activeFilters.channel === mention.channel) {
+  //         onFilterChange("channel", null);
+  //       } else {
+  //         onFilterChange("channel", mention.channel);
+  //       }
+  //     }
+  //   }
+  // };
 
   // Platform colors and icons
   const platformStyles = {
@@ -316,14 +317,7 @@ const PopularMentionsTable = ({
               return (
                 <tr
                   key={`mention-${index}-${mention?.id || Math.random()}`}
-                  className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    onFilterChange ? "cursor-pointer" : ""
-                  } ${
-                    activeFilters.channel === mention?.channel
-                      ? "bg-blue-50"
-                      : ""
-                  }`}
-                  onClick={() => handleRowClick(mention)}
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   {/* Post Column */}
                   <td className="p-4 max-w-xs">
@@ -393,7 +387,13 @@ const PopularMentionsTable = ({
                   <td className="p-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <Heart className="w-4 h-4 text-gray-500" />
+                        <Image
+                          src="/icon/social-engagement.png"
+                          alt="Social Engagement"
+                          width={16}
+                          height={16}
+                          className="opacity-60"
+                        />
                         <span className="font-semibold text-gray-800">
                           {formatNumber(mention?.interactions)}
                         </span>

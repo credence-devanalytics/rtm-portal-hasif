@@ -1,8 +1,7 @@
 import { db } from "@/index";
 import { mentionsClassify } from "@/lib/schema";
-import { and, sql, desc, or, gte } from "drizzle-orm";
+import { and, sql, desc, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { buildWhereConditions } from "@/lib/cache";
 
 /**
  * RTM Mentions Search API
@@ -14,24 +13,24 @@ export async function GET(request: Request) {
 	const startTime = Date.now();
 	try {
 		const { searchParams } = new URL(request.url);
-		
+
 		// Extract filter parameters
 		const searchQuery = searchParams.get("q") || "";
 		const platform = searchParams.get("platform") || "";
 		const channel = searchParams.get("channel") || "";
 		const unit = searchParams.get("unit") || "";
-		
+
 		// Calculate date 30 days ago from today
 		const thirtyDaysAgo = new Date();
 		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 		const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-		console.log("🔍 RTM Mentions Search API called:", { 
-			searchQuery, 
-			platform, 
-			channel, 
+		console.log("🔍 RTM Mentions Search API called:", {
+			searchQuery,
+			platform,
+			channel,
 			unit,
-			thirtyDaysAgo: thirtyDaysAgoStr 
+			thirtyDaysAgo: thirtyDaysAgoStr
 		});
 
 		// If no search query, return empty results
@@ -47,16 +46,53 @@ export async function GET(request: Request) {
 			});
 		}
 
-		// Build filter conditions
-		const filters = {
-			fromDate: thirtyDaysAgoStr,
-			toDate: "", // No end date restriction
-			platform,
-			channel,
-			unit,
-		};
+		// Build filter conditions manually (don't use buildWhereConditions as it uses inserttime)
+		const whereConditions: any[] = [];
 
-		const whereConditions = buildWhereConditions(filters, mentionsClassify);
+		// Date filtering - mentions table uses insertdate, not inserttime
+		whereConditions.push(
+			sql`${mentionsClassify.insertdate} >= ${thirtyDaysAgoStr}`
+		);
+
+		// Platform filtering
+		if (platform && platform !== 'all') {
+			whereConditions.push(
+				sql`LOWER(${mentionsClassify.type}) LIKE ${`%${platform.toLowerCase()}%`}`
+			);
+		}
+
+		// Channel filtering
+		if (channel && channel !== '' && channel !== 'all') {
+			whereConditions.push(
+				sql`${mentionsClassify.channel} ILIKE ${`%${channel}%`}`
+			);
+		}
+
+		// Unit filtering
+		if (unit && unit !== 'all') {
+			const unitLower = unit.toLowerCase();
+			if (unitLower === 'berita' || unitLower === 'news') {
+				whereConditions.push(
+					sql`(LOWER(${mentionsClassify.groupname}) LIKE '%berita%' OR LOWER(${mentionsClassify.groupname}) LIKE '%news%')`
+				);
+			} else if (unitLower === 'radio') {
+				whereConditions.push(
+					sql`LOWER(${mentionsClassify.groupname}) LIKE '%radio%'`
+				);
+			} else if (unitLower === 'tv') {
+				whereConditions.push(
+					sql`LOWER(${mentionsClassify.groupname}) LIKE '%tv%'`
+				);
+			} else if (unitLower === 'official') {
+				whereConditions.push(
+					sql`LOWER(${mentionsClassify.groupname}) LIKE '%official%'`
+				);
+			} else {
+				whereConditions.push(
+					sql`LOWER(${mentionsClassify.groupname}) LIKE ${`%${unitLower}%`}`
+				);
+			}
+		}
 
 		// Add search conditions (fuzzy search across multiple fields)
 		const searchConditions = [
