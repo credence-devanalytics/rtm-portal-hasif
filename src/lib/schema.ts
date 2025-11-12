@@ -7,11 +7,13 @@ import {
 	bigint,
 	date,
 	serial,
+	bigserial,
 	integer,
 	unique,
 	boolean,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { group } from "console";
 
 export const mentionsClassify = pgTable("mentions_classify", {
 	id: varchar(),
@@ -462,7 +464,7 @@ export const rtmklikAge = pgTable(
 
 // BetterAuth expects these exact table names and structures + medina user excel sheet fields
 export const users = pgTable("user_profile", {
-	id: text("id").primaryKey(),
+	id: bigserial("id", { mode: "number" }).primaryKey(),
 	name: text("name").notNull(),
 	email: text("email").notNull().unique(),
 	role: text("role").notNull().default("user"), 			// peranan dalam sistem, user|admin|superadmin
@@ -474,27 +476,27 @@ export const users = pgTable("user_profile", {
 	createdAt: timestamp("createdat").notNull(),
 	updatedAt: timestamp("updatedat").notNull(),
 	status: text("status").notNull().default("pending"), 	// pending | active | new | disabled
-
+	group: text("group"),
 });
 
 export const sessions = pgTable("user_session", {
-	id: text("id").primaryKey(),
+	id: bigserial("id", { mode: "number" }).primaryKey(),
 	expiresAt: timestamp("expiresat").notNull(),
 	token: text("token").notNull().unique(),
 	createdAt: timestamp("createdat").notNull(),
 	updatedAt: timestamp("updatedat").notNull(),
 	ipAddress: text("ipaddress"),
 	userAgent: text("useragent"),
-	userId: text("userid")
+	userId: bigint("userid", { mode: "number" })
 		.notNull()
 		.references(() => users.id),
 });
 
 export const accounts = pgTable("user_account", {
-	id: text("id").primaryKey(),
+	id: bigserial("id", { mode: "number" }).primaryKey(),
 	accountId: text("accountid").notNull(),
 	providerId: text("providerid").notNull(),
-	userId: text("userid")
+	userId: bigint("userid", { mode: "number" })
 		.notNull()
 		.references(() => users.id),
 	accessToken: text("accesstoken"),
@@ -509,7 +511,7 @@ export const accounts = pgTable("user_account", {
 });
 
 export const verificationTokens = pgTable("user_verification", {
-	id: text("id").primaryKey(),
+	id: bigserial("id", { mode: "number" }).primaryKey(),
 	identifier: text("identifier").notNull(),
 	value: text("value").notNull(),
 	expiresAt: timestamp("expiresat").notNull(),
@@ -519,7 +521,7 @@ export const verificationTokens = pgTable("user_verification", {
 
 export const userAccess = pgTable("user_access", {
 	id: serial().primaryKey().notNull(),
-	userId: text("userid")
+	userId: bigint("userid", { mode: "number" })
 		.notNull()
 		.references(() => users.id),
 	socMedAcc: boolean('socmedacc').notNull().default(false),
