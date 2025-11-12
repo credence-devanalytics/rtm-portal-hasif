@@ -10,6 +10,7 @@ export async function getLatestTopics(days: number) {
 			mention: mentionsClassifyPublic.mention,
 			inserttime: mentionsClassifyPublic.inserttime,
 			insertdate: mentionsClassifyPublic.insertdate,
+			url: mentionsClassifyPublic.url,
 		})
 		.from(mentionsClassifyPublic)
 		// .orderBy(desc(mentionsClassifyPublic.inserttime))
@@ -27,6 +28,7 @@ export async function getHighInteractionMentions(days: number) {
 			mention: mentionsClassifyPublic.mention,
 			inserttime: mentionsClassifyPublic.inserttime,
 			insertdate: mentionsClassifyPublic.insertdate,
+			url: mentionsClassifyPublic.url,
 		})
 		.from(mentionsClassifyPublic)
 		.where(gte(mentionsClassifyPublic.inserttime, cutoffDate))

@@ -145,8 +145,11 @@ export async function POST(req: Request) {
 
 							const { text } = await generateText({
 								model: azure("gpt-4o-mini"),
-								prompt: `Summarized these mentions for the current latest trending topics.
-                                    ${result.map((item) => item.mention)}
+								prompt: `Summarized these mentions for the current latest trending topics. Create links for each point using the url given.
+                                    ${result.map(
+																			(item) =>
+																				`Mention: ${item.mention}, URL: ${item.url}`
+																		)}
                                 `,
 							});
 
