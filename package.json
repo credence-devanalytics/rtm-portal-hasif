@@ -74,6 +74,7 @@
 		"postgres": "^3.4.7",
 		"react": "19.2.0",
 		"react-dom": "19.2.0",
+		"react-icons": "^5.5.0",
 		"react-papaparse": "^4.4.0",
 		"react-syntax-highlighter": "^15.6.6",
 		"recharts": "^2.15.4",
