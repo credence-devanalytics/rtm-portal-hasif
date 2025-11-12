@@ -63,7 +63,7 @@ export async function POST(req: Request) {
                     <workflow>
                         1. Analyze the user's query type:
                            - **Social Media Content** (mentions, tweets, posts, trends):
-                             → Use getLatestTopicTool OR getHighInteractionsTool
+                             → Use getHighInteractionsTool
                              → DO NOT use braveSearchTool
                            - **General Information** (celebrity info, news, facts, web content):
                              → Proceed to step 2
@@ -85,11 +85,6 @@ export async function POST(req: Request) {
                     </workflow>
 
                     <tools>
-                        <tool name="getLatestTopicTool">
-                            <use_case>When user mentioned 'right now', it usually mean the last 7 days</use_case>
-                            <action>If successful, display the summary in a card format using 'showCardTool'</action>
-                        </tool>
-
                         <tool name="getHighInteractionsTool">
                             <use_case>Use this when user asks for mentions with highest interactions, engagement, or highest discussion mentions</use_case>
                             <use_case>When user mentioned 'right now', it usually mean the last 7 days</use_case>
@@ -120,45 +115,45 @@ export async function POST(req: Request) {
 				messages: convertToModelMessages(messages),
 				stopWhen: stepCountIs(5),
 				tools: {
-					getLatestTopicTool: tool({
-						description: "To find the latest trending topics",
-						inputSchema: z.object({
-							days: z
-								.number()
-								.describe("The number of days for the trending topics"),
-						}),
-						execute: async ({ days }) => {
-							writer.write({
-								type: "data-cardUI",
-								id: `cardUI-${currentId}`,
-								data: {
-									status: "loading",
-								},
-							});
-							const result = await getLatestTopics(days);
+					// getLatestTopicTool: tool({
+					// 	description: "To find the latest trending topics",
+					// 	inputSchema: z.object({
+					// 		days: z
+					// 			.number()
+					// 			.describe("The number of days for the trending topics"),
+					// 	}),
+					// 	execute: async ({ days }) => {
+					// 		writer.write({
+					// 			type: "data-cardUI",
+					// 			id: `cardUI-${currentId}`,
+					// 			data: {
+					// 				status: "loading",
+					// 			},
+					// 		});
+					// 		const result = await getLatestTopics(days);
 
-							if (result.length === 0) {
-								return {
-									status: "No trending topics was found.",
-								};
-							}
+					// 		if (result.length === 0) {
+					// 			return {
+					// 				status: "No trending topics was found.",
+					// 			};
+					// 		}
 
-							const { text } = await generateText({
-								model: azure("gpt-4o-mini"),
-								prompt: `Summarized these mentions for the current latest trending topics. Create links for each point using the url given.
-                                    ${result.map(
-																			(item) =>
-																				`Mention: ${item.mention}, URL: ${item.url}`
-																		)}
-                                `,
-							});
+					// 		const { text } = await generateText({
+					// 			model: azure("gpt-4o-mini"),
+					// 			prompt: `Summarized these mentions for the current latest trending topics. Create links for each point using the url given.
+					//                 ${result.map(
+					// 														(item) =>
+					// 															`Mention: ${item.mention}, URL: ${item.url}`
+					// 													)}
+					//             `,
+					// 		});
 
-							return {
-								status: "Success",
-								summary: text,
-							};
-						},
-					}),
+					// 		return {
+					// 			status: "Success",
+					// 			summary: text,
+					// 		};
+					// 	},
+					// }),
 					showCardTool: tool({
 						description: "To show information or data into card UI",
 						inputSchema: z.object({
@@ -181,6 +176,8 @@ export async function POST(req: Request) {
 									type,
 								},
 							});
+
+							return "Refer to the above card.";
 						},
 					}),
 					getHighInteractionsTool: tool({
@@ -211,8 +208,11 @@ export async function POST(req: Request) {
 
 							const { text } = await generateText({
 								model: azure("gpt-4o-mini"),
-								prompt: `Summarized these mentions with the highest interactions and engagement.
-                                    ${result.map((item) => item.mention)}
+								prompt: `Summarized these mentions with the highest interactions and engagement. Always answer in markdown format, attach links if needed!
+                                    ${result.map(
+																			(item) =>
+																				`Mention: ${item.mention}, URL: ${item.url}`
+																		)}
                                 `,
 							});
 
