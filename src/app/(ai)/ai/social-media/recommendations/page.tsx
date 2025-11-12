@@ -1,39 +1,75 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles } from "lucide-react";
 import { useRecommendations } from "@/hooks/useQueries";
+import { LanguageToggle, Language } from "@/components/language-toggle";
+import { useRecommendationsTranslation } from "@/lib/translations/recommendations";
 
 export default function RecommendationPage() {
-	// Fetch AI recommendations data
+	// Language state management
+	const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
+		if (typeof window !== "undefined") {
+			const savedLanguage = localStorage.getItem("rtm-language") as Language;
+			return savedLanguage || "en";
+		}
+		return "en";
+	});
+
+	// Save language preference to localStorage
+	const handleLanguageChange = (language: Language) => {
+		setCurrentLanguage(language);
+		if (typeof window !== "undefined") {
+			localStorage.setItem("rtm-language", language);
+		}
+	};
+
+	// Load language preference on mount
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			const savedLanguage = localStorage.getItem("rtm-language") as Language;
+			if (savedLanguage && savedLanguage !== currentLanguage) {
+				setCurrentLanguage(savedLanguage);
+			}
+		}
+	}, []);
+
+	// Get translations for current language
+	const t = useRecommendationsTranslation(currentLanguage);
+
+	// Fetch AI recommendations data with language parameter
 	const {
 		data: recommendationsData,
 		isLoading: recommendationsLoading,
 		error: recommendationsError,
 		isError: recommendationsIsError,
-	} = useRecommendations();
+	} = useRecommendations(currentLanguage);
 
 	return (
 		<div className="pt-2 px-4 max-w-7xl mx-auto">
-			<div className="mb-6">
+			<div className="mb-6 flex items-center justify-between">
 				<h1 className="text-2xl font-bold flex items-center gap-2">
 					<Sparkles className="w-6 h-6" />
-					AI Recommendations
+					{t.title}
 				</h1>
+				<LanguageToggle
+					currentLanguage={currentLanguage}
+					onLanguageChange={handleLanguageChange}
+				/>
 			</div>
 
 			<div className="space-y-6">
 				{/* Summary Section */}
 				<Card>
 					<CardHeader>
-						<CardTitle>Summary</CardTitle>
+						<CardTitle>{t.summaryTitle}</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-4">
 							<p className="text-sm text-muted-foreground">
-								Overall performance analysis and key highlights from
-								your mentions data.
+								{t.summaryDescription}
 							</p>
 							<div className="space-y-4">
 								{recommendationsLoading ? (
@@ -41,15 +77,14 @@ export default function RecommendationPage() {
 								) : recommendationsError ? (
 									<div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
 										<p className="text-sm text-red-600 dark:text-red-400">
-											Failed to load AI recommendations. Please try
-											again.
+											{t.failedToLoad} {t.aiRecommendations}
 										</p>
 									</div>
 								) : recommendationsData?.summary ? (
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<div className="p-4 bg-muted/50 rounded-lg">
 											<h4 className="font-medium mb-2">
-												Performance Overview
+												{t.performanceOverview}
 											</h4>
 											<p className="text-sm text-muted-foreground whitespace-pre-wrap">
 												{
@@ -59,18 +94,18 @@ export default function RecommendationPage() {
 											</p>
 										</div>
 										<div className="p-4 bg-muted/50 rounded-lg">
-											<h4 className="font-medium mb-2">Key Trends</h4>
+											<h4 className="font-medium mb-2">{t.keyTrends}</h4>
 											<p className="text-sm text-muted-foreground whitespace-pre-wrap">
 												{recommendationsData.summary.keyTrends}
 											</p>
 											<div className="mt-3 pt-3 border-t border-border">
 												<p className="text-xs text-muted-foreground">
-													Generated:{" "}
+													{t.generated}:{" "}
 													{recommendationsData.meta?.generatedAt
 														? new Date(
 																recommendationsData.meta.generatedAt
 														  ).toLocaleDateString()
-														: "Unknown"}
+														: t.unknown}
 												</p>
 											</div>
 										</div>
@@ -78,7 +113,7 @@ export default function RecommendationPage() {
 								) : (
 									<div className="p-4 bg-muted/50 rounded-lg">
 										<p className="text-sm text-muted-foreground">
-											No recommendations data available. Generate insights to see AI recommendations.
+											{t.noDataSummary}
 										</p>
 									</div>
 								)}
@@ -90,33 +125,32 @@ export default function RecommendationPage() {
 				{/* Sentiment Section */}
 				<Card>
 					<CardHeader>
-						<CardTitle>Sentiment Analysis</CardTitle>
+						<CardTitle>{t.sentimentTitle}</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-4">
 							<p className="text-sm text-muted-foreground">
-								Understanding the emotional tone and sentiment
-								distribution across your mentions.
+								{t.sentimentDescription}
 							</p>
 							{recommendationsLoading ? (
 								<Skeleton className="h-32 w-full" />
 							) : recommendationsError ? (
 								<div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
 									<p className="text-sm text-red-600 dark:text-red-400">
-										Failed to load sentiment analysis. Please try again.
+										{t.failedToLoad} {t.sentimentAnalysis}
 									</p>
 								</div>
 							) : recommendationsData?.sentiment ? (
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 									<div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
 										<h4 className="font-medium text-green-800 dark:text-green-200 mb-2">
-											Positive
+											{t.positive}
 										</h4>
 										<p className="text-2xl font-bold text-green-600 dark:text-green-400">
 											{recommendationsData.sentiment.positive.toLocaleString()}
 										</p>
 										<p className="text-sm text-green-600 dark:text-green-400">
-											Favorable mentions and engagement
+											{t.favorableMentions}
 										</p>
 										<div className="mt-2">
 											<div className="w-full bg-green-200 dark:bg-green-800 rounded-full h-2">
@@ -143,13 +177,13 @@ export default function RecommendationPage() {
 									</div>
 									<div className="p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
 										<h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
-											Neutral
+											{t.neutral}
 										</h4>
 										<p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
 											{recommendationsData.sentiment.neutral.toLocaleString()}
 										</p>
 										<p className="text-sm text-gray-600 dark:text-gray-400">
-											Balanced and objective mentions
+											{t.balancedMentions}
 										</p>
 										<div className="mt-2">
 											<div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
@@ -176,13 +210,13 @@ export default function RecommendationPage() {
 									</div>
 									<div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
 										<h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
-											Negative
+											{t.negative}
 										</h4>
 										<p className="text-2xl font-bold text-red-600 dark:text-red-400">
 											{recommendationsData.sentiment.negative.toLocaleString()}
 										</p>
 										<p className="text-sm text-red-600 dark:text-red-400">
-											Critical or unfavorable mentions
+											{t.criticalMentions}
 										</p>
 										<div className="mt-2">
 											<div className="w-full bg-red-200 dark:bg-red-800 rounded-full h-2">
@@ -211,8 +245,7 @@ export default function RecommendationPage() {
 							) : (
 								<div className="p-4 bg-muted/50 rounded-lg">
 									<p className="text-sm text-muted-foreground">
-										No sentiment data available. Generate insights to analyze sentiment
-										distribution.
+										{t.noDataSentiment}
 									</p>
 								</div>
 							)}
@@ -223,28 +256,26 @@ export default function RecommendationPage() {
 				{/* Tone of Voice Section */}
 				<Card>
 					<CardHeader>
-						<CardTitle>Tone of Voice Analysis</CardTitle>
+						<CardTitle>{t.toneTitle}</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-4">
 							<p className="text-sm text-muted-foreground">
-								Analysis of communication patterns and brand voice
-								consistency across different platforms.
+								{t.toneDescription}
 							</p>
 							{recommendationsLoading ? (
 								<Skeleton className="h-32 w-full" />
 							) : recommendationsError ? (
 								<div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
 									<p className="text-sm text-red-600 dark:text-red-400">
-										Failed to load tone of voice analysis. Please try
-										again.
+										{t.failedToLoad} {t.toneAnalysis}
 									</p>
 								</div>
 							) : recommendationsData?.toneOfVoice ? (
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="p-4 bg-muted/50 rounded-lg">
 										<h4 className="font-medium mb-2">
-											Communication Style
+											{t.communicationStyle}
 										</h4>
 										<p className="text-sm text-muted-foreground whitespace-pre-wrap">
 											{
@@ -255,7 +286,7 @@ export default function RecommendationPage() {
 									</div>
 									<div className="p-4 bg-muted/50 rounded-lg">
 										<h4 className="font-medium mb-2">
-											Platform Adaptation
+											{t.platformAdaptation}
 										</h4>
 										<p className="text-sm text-muted-foreground whitespace-pre-wrap">
 											{
@@ -268,8 +299,7 @@ export default function RecommendationPage() {
 							) : (
 								<div className="p-4 bg-muted/50 rounded-lg">
 									<p className="text-sm text-muted-foreground">
-										No tone of voice analysis available. Generate insights to analyze communication
-										patterns.
+										{t.noDataTone}
 									</p>
 								</div>
 							)}
@@ -280,27 +310,26 @@ export default function RecommendationPage() {
 				{/* Key Insights Section */}
 				<Card>
 					<CardHeader>
-						<CardTitle>Key Insights</CardTitle>
+						<CardTitle>{t.insightsTitle}</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-4">
 							<p className="text-sm text-muted-foreground">
-								Actionable insights and recommendations based on your
-								mentions data analysis.
+								{t.insightsDescription}
 							</p>
 							{recommendationsLoading ? (
 								<Skeleton className="h-40 w-full" />
 							) : recommendationsError ? (
 								<div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
 									<p className="text-sm text-red-600 dark:text-red-400">
-										Failed to load key insights. Please try again.
+										{t.failedToLoad} {t.keyInsightsError}
 									</p>
 								</div>
 							) : recommendationsData?.keyInsights ? (
 								<div className="space-y-4">
 									<div className="p-4 bg-muted/50 rounded-lg">
 										<h4 className="font-medium mb-2">
-											📊 Performance Highlights
+											{t.performanceHighlights}
 										</h4>
 										<p className="text-sm text-muted-foreground whitespace-pre-wrap">
 											{
@@ -311,7 +340,7 @@ export default function RecommendationPage() {
 									</div>
 									<div className="p-4 bg-muted/50 rounded-lg">
 										<h4 className="font-medium mb-2">
-											🎯 Strategic Recommendations
+											{t.strategicRecommendations}
 										</h4>
 										<p className="text-sm text-muted-foreground whitespace-pre-wrap">
 											{
@@ -322,7 +351,7 @@ export default function RecommendationPage() {
 									</div>
 									<div className="p-4 bg-muted/50 rounded-lg">
 										<h4 className="font-medium mb-2">
-											🚀 Growth Opportunities
+											{t.growthOpportunities}
 										</h4>
 										<p className="text-sm text-muted-foreground whitespace-pre-wrap">
 											{
@@ -334,13 +363,13 @@ export default function RecommendationPage() {
 									{recommendationsData?.meta && (
 										<div className="p-4 bg-muted/30 rounded-lg border">
 											<p className="text-xs text-muted-foreground">
-												Analysis based on{" "}
+												{t.analysisBasedOn}{" "}
 												{recommendationsData.meta.totalMentionsAnalyzed}{" "}
-												mentions from{" "}
+												{t.mentionsFrom}{" "}
 												{recommendationsData.meta.dataSource ===
 												"database"
-													? "live database"
-													: "sample data"}
+													? t.liveDatabase
+													: t.sampleData}
 											</p>
 										</div>
 									)}
@@ -348,8 +377,7 @@ export default function RecommendationPage() {
 							) : (
 								<div className="p-4 bg-muted/50 rounded-lg">
 									<p className="text-sm text-muted-foreground">
-										No insights available. Generate insights to see AI recommendations based on your
-										mentions data.
+										{t.noDataInsights}
 									</p>
 								</div>
 							)}
