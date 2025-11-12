@@ -11,13 +11,20 @@ export async function GET(request) {
 		const { searchParams } = new URL(request.url);
 		const yearParam = searchParams.get("year");
 		const monthParam = searchParams.get("month");
+		const fromParam = searchParams.get("from");
+		const toParam = searchParams.get("to");
 
-		console.log('Filter params:', { yearParam, monthParam });
+		console.log('Filter params:', { yearParam, monthParam, fromParam, toParam });
 
 		// Build date filter conditions
 		const dateFilters = [ne(pberitaAudience.audiencename, "All Users")];
 
-		if (monthParam) {
+		if (fromParam && toParam) {
+			// Date range filter: from and to in YYYY-MM-DD format
+			dateFilters.push(gte(pberitaAudience.date, fromParam));
+			dateFilters.push(lte(pberitaAudience.date, toParam));
+			console.log('Date range filter applied:', { fromParam, toParam });
+		} else if (monthParam) {
 			// Month filter: YYYY-MM format
 			const [year, month] = monthParam.split('-');
 			const startDate = `${year}-${month}-01`;

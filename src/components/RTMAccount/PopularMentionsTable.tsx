@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   ExternalLink,
   User,
@@ -6,61 +6,110 @@ import {
   Eye,
   Heart,
   MessageCircle,
+  Search,
+  X,
+  Loader2,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Fetch search results
+const fetchSearchResults = async (searchQuery: string, filters: any) => {
+  if (!searchQuery || searchQuery.trim().length === 0) {
+    return { results: [], meta: {} };
+  }
+
+  const params = new URLSearchParams();
+  params.append("q", searchQuery);
+  
+  if (filters.platform) params.append("platform", filters.platform);
+  if (filters.channel) params.append("channel", filters.channel);
+  if (filters.unit) params.append("unit", filters.unit);
+
+  const response = await fetch(`/api/rtm-mentions-search?${params.toString()}`);
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch search results");
+  }
+
+  return response.json();
+};
 
 const PopularMentionsTable = ({
   data = [],
   onFilterChange = null,
   activeFilters = {} as any,
 }) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 500); // 500ms debounce
+
+  // Fetch search results using TanStack Query
+  const {
+    data: searchData,
+    isLoading: isSearching,
+    error: searchError,
+  } = useQuery({
+    queryKey: ["mentions-search", debouncedSearchQuery, activeFilters],
+    queryFn: () => fetchSearchResults(debouncedSearchQuery, activeFilters),
+    enabled: debouncedSearchQuery.trim().length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+  });
+
+  // Determine which data to display
+  const displayData = useMemo(() => {
+    if (debouncedSearchQuery.trim().length > 0 && searchData?.results) {
+      return searchData.results;
+    }
+    return data;
+  }, [debouncedSearchQuery, searchData, data]);
+
   // Simple deduplication based on id only, with fallback
   const topMentions = React.useMemo(() => {
-    if (!Array.isArray(data) || data.length === 0) return [];
+    if (!Array.isArray(displayData) || displayData.length === 0) return [];
 
     // Remove duplicates based on id
-    const uniqueData = data.filter(
+    const uniqueData = displayData.filter(
       (item, index, self) =>
         item && index === self.findIndex((t) => t?.id === item?.id)
     );
 
     return uniqueData
       .sort((a, b) => (b?.reach || 0) - (a?.reach || 0))
-      .slice(0, 10);
-  }, [data]);
+      .slice(0, debouncedSearchQuery.trim().length > 0 ? 50 : 10);
+  }, [displayData, debouncedSearchQuery]);
 
-  // Handle row click for cross-filtering
-  const handleRowClick = (mention: any) => {
-    if (onFilterChange && mention) {
-      // Filter by channel/author
-      if (mention.channel) {
-        // Toggle filter - if already filtered by this channel, clear it
-        if (activeFilters.channel === mention.channel) {
-          onFilterChange("channel", null);
-        } else {
-          onFilterChange("channel", mention.channel);
-        }
-      }
-    }
-  };
-
-  // Early return if no data
-  if (topMentions.length === 0) {
-    return (
-      <div className="w-full p-6 bg-white rounded-lg shadow-lg">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Most Popular Mentions
-          </h2>
-          <p className="text-gray-600">
-            Most impactful mentions ranked by their reach
-          </p>
-        </div>
-        <div className="text-center py-8">
-          <p className="text-gray-500">No mentions data available</p>
-        </div>
-      </div>
-    );
-  }
+  // Handle row click - disabled cross-filtering
+  // const handleRowClick = (mention: any) => {
+  //   if (onFilterChange && mention) {
+  //     // Filter by channel/author
+  //     if (mention.channel) {
+  //       // Toggle filter - if already filtered by this channel, clear it
+  //       if (activeFilters.channel === mention.channel) {
+  //         onFilterChange("channel", null);
+  //       } else {
+  //         onFilterChange("channel", mention.channel);
+  //       }
+  //     }
+  //   }
+  // };
 
   // Platform colors and icons
   const platformStyles = {
@@ -160,9 +209,78 @@ const PopularMentionsTable = ({
             </span>
           </div>
         )}
+
+        {/* Search Input */}
+        <div className="mt-4">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search mentions (last 30 days)..."
+              className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+            {searchQuery && (
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                {isSearching ? (
+                  <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+                ) : (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Search Info */}
+          {debouncedSearchQuery.trim().length > 0 && (
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                {searchError ? (
+                  <span className="text-red-600">Error loading search results</span>
+                ) : isSearching ? (
+                  <span>Searching...</span>
+                ) : (
+                  <span>
+                    Found <strong>{topMentions.length}</strong> result{topMentions.length !== 1 ? 's' : ''} 
+                    {searchData?.meta?.dateRange && (
+                      <span className="ml-1 text-gray-500">
+                        (from {new Date(searchData.meta.dateRange.from).toLocaleDateString()} to {new Date(searchData.meta.dateRange.to).toLocaleDateString()})
+                      </span>
+                    )}
+                  </span>
+                )}
+              </p>
+              {!isSearching && topMentions.length > 0 && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {topMentions.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">
+            {debouncedSearchQuery.trim().length > 0 
+              ? "No mentions found matching your search criteria" 
+              : "No mentions data available"}
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">{/* Table will be inserted here */}
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b-2 border-gray-200">
@@ -199,14 +317,7 @@ const PopularMentionsTable = ({
               return (
                 <tr
                   key={`mention-${index}-${mention?.id || Math.random()}`}
-                  className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    onFilterChange ? "cursor-pointer" : ""
-                  } ${
-                    activeFilters.channel === mention?.channel
-                      ? "bg-blue-50"
-                      : ""
-                  }`}
-                  onClick={() => handleRowClick(mention)}
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   {/* Post Column */}
                   <td className="p-4 max-w-xs">
@@ -276,7 +387,13 @@ const PopularMentionsTable = ({
                   <td className="p-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <Heart className="w-4 h-4 text-gray-500" />
+                        <Image
+                          src="/icon/social-engagement.png"
+                          alt="Social Engagement"
+                          width={16}
+                          height={16}
+                          className="opacity-60"
+                        />
                         <span className="font-semibold text-gray-800">
                           {formatNumber(mention?.interactions)}
                         </span>
@@ -313,7 +430,8 @@ const PopularMentionsTable = ({
             })}
           </tbody>
         </table>
-      </div>
+        </div>
+      )}
 
       {/* Summary Footer */}
       {/* <div className="mt-6 p-4 bg-gray-50 rounded-lg">

@@ -2,6 +2,7 @@ import { db } from "@/index";
 import { mentionsClassify } from "@/lib/schema";
 import { and, sql, count } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { buildWhereConditions } from "@/lib/cache";
 
 /**
  * RTM Units & Channels API for Pie Chart
@@ -14,52 +15,28 @@ export async function GET(request: Request) {
 	const startTime = Date.now();
 	try {
 		const { searchParams } = new URL(request.url);
-		
+
 		// Extract filter parameters
-		const fromDate = searchParams.get("from") || "";
-		const toDate = searchParams.get("to") || "";
-		const platform = searchParams.get("platform") || "";
-		const channel = searchParams.get("channel") || "";
-		const unit = searchParams.get("unit") || "";
+		const filters = {
+			fromDate: searchParams.get("from") || "",
+			toDate: searchParams.get("to") || "",
+			platform: searchParams.get("platform") || "",
+			channel: searchParams.get("channel") || "",
+			unit: searchParams.get("unit") || "",
+		};
 
-		console.log("📊 RTM Units & Channels API called with filters:", { fromDate, toDate, platform, channel, unit });
+		console.log("📊 RTM Units & Channels API called with filters:", filters);
 
-		// Build where conditions
-		const whereConditions = [];
-		
-		// Date filtering using insertdate (NOW() - INTERVAL '30 days')
-		if (fromDate && toDate) {
-			whereConditions.push(sql`${mentionsClassify.insertdate} >= ${fromDate}::date`);
-			whereConditions.push(sql`${mentionsClassify.insertdate} <= ${toDate}::date`);
-		} else {
-			// Default to last 30 days using PostgreSQL interval
-			whereConditions.push(sql`${mentionsClassify.insertdate} >= NOW() - INTERVAL '30 days'`);
-		}
-
-		// Platform filtering (optional)
-		if (platform && platform !== "" && platform !== "all") {
-			whereConditions.push(
-				sql`LOWER(${mentionsClassify.type}) LIKE ${`%${platform.toLowerCase()}%`}`
-			);
-		}
-
-		// Channel filtering (optional) - use ILIKE for case-insensitive partial match
-		if (channel && channel !== "" && channel !== "all") {
-			whereConditions.push(
-				sql`${mentionsClassify.channel} ILIKE ${`%${channel}%`}`
-			);
-		}
-
-		// Unit filtering (optional) - filter by groupname
-		// Use ILIKE for case-insensitive partial matching
-		// Note: "berita" tab should match database values (no need to map to "news" anymore)
-		if (unit && unit !== "" && unit !== "all") {
-			whereConditions.push(
-				sql`${mentionsClassify.groupname} ILIKE ${`%${unit}%`}`
-			);
-		}
+		// Build where conditions using the same helper as RTM Platforms API
+		// This ensures EXACT same filtering logic and data consistency
+		const whereConditions = buildWhereConditions(
+			filters,
+			mentionsClassify
+		);
 
 		console.log(`⏱️ Building conditions took ${Date.now() - startTime}ms`);
+		console.log("🔍 WHERE CONDITIONS:", whereConditions.length, "conditions");
+		console.log("🔍 Filters being applied:", filters);
 
 		// Query 1: Inner circle - Units (groupname)
 		// SQL: SELECT groupname AS name, COUNT(*) AS total_mentions
@@ -113,10 +90,10 @@ export async function GET(request: Request) {
 		});
 
 		console.log("✅ Channels data:", sortedChannels.length, "channels");
-		console.log("📊 Sample channels:", sortedChannels.slice(0, 10).map(r => ({ 
-			groupname: r.groupname, 
-			name: r.name, 
-			mentions: r.total_mentions 
+		console.log("📊 Sample channels:", sortedChannels.slice(0, 10).map(r => ({
+			groupname: r.groupname,
+			name: r.name,
+			mentions: r.total_mentions
 		})));
 
 		// Calculate totals
@@ -144,7 +121,7 @@ export async function GET(request: Request) {
 			},
 			meta: {
 				queryDate: new Date().toISOString(),
-				filters: { fromDate, toDate, platform, channel, unit },
+				filters: filters,
 			},
 		});
 	} catch (error) {
