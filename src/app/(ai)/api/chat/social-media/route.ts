@@ -81,7 +81,8 @@ export async function POST(req: Request) {
                            - Engagement metrics or discussions
 
                         4. Always display successful results using showCardTool
-                        5. When using showCardTool, inform user to refer to the card shown
+                        5. If there are url, show in markdown link so user can refer to the original post
+                        6. When using showCardTool, inform user to refer to the card shown
                     </workflow>
 
                     <tools>
@@ -108,7 +109,7 @@ export async function POST(req: Request) {
                         </tool>
 
                         <tool name="showCardTool">
-                            <important>When this tool is used, tell the user to refer to the card shown. DO NOT RETURN ANY RESULT FROM OTHER TOOLS.</important>
+                            <important>When this tool is used, tell the user to refer to the card shown. DO NOT RETURN ANY RESULT FROM OTHER TOOLS. DO NOT SAID ANYTHING ELSE.</important>
                         </tool>
                     </tools>
                 </instructions>`,
@@ -206,19 +207,19 @@ export async function POST(req: Request) {
 								};
 							}
 
-							const { text } = await generateText({
-								model: azure("gpt-4o-mini"),
-								prompt: `Summarized these mentions with the highest interactions and engagement. Always answer in markdown format, attach links if needed!
-                                    ${result.map(
-																			(item) =>
-																				`Mention: ${item.mention}, URL: ${item.url}`
-																		)}
-                                `,
-							});
+							// const { text } = await generateText({
+							// 	model: azure("gpt-4o-mini"),
+							// 	prompt: `Summarized these mentions with the highest interactions and engagement. Always answer in markdown format, attach links if needed!
+							//         ${result.map(
+							// 												(item) =>
+							// 													`Mention: ${item.mention}, URL: ${item.url}`
+							// 											)}
+							//     `,
+							// });
 
 							return {
 								status: "Success",
-								summary: text,
+								mentions: result,
 							};
 						},
 					}),
