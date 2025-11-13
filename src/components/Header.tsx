@@ -216,8 +216,7 @@ export default function Header() {
   ];
 
   const mainNavItems = [
-    { name: "AI", href: "#" },
-    { name: "Determ", href: "https://app.determ.com/174980/feed/q/6746731" },
+    { name: "Determ", href: "https://app.determ.com/174980/feed/q/6746731", external: true },
     { name: "Contact Us", href: "/contact" },
   ];
 
@@ -301,11 +300,11 @@ export default function Header() {
 
               {/* Other Nav Items */}
               {mainNavItems
-                .filter((item) => item.name !== "AI")
                 .map((item) => (
                   <NavigationMenuItem key={item.name}>
                     <NavigationMenuLink
                       href={item.href}
+                      target={item.external ? "_blank" : undefined}
                       className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/20 data-[state=open]:bg-white/20 drop-shadow-sm"
                     >
                       {item.name}
