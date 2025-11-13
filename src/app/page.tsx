@@ -83,6 +83,7 @@ const NavButtons = () => {
       href: "https://app.determ.com/174980/feed/q/6746731",
       label: "Determ",
       icon: <Table />,
+      external: true,
     },
     { href: "/contact", label: "Contact Us", icon: <Mail /> },
   ];
@@ -95,15 +96,16 @@ const NavButtons = () => {
       </div>
       <div className="grid grid-cols-4 gap-4 w-fit">
         {buttonData.map((button, index) => (
-          <Link key={index} href={button.href} className="w-full">
+          <Link key={index} href={button.href} target={button.external ? "_blank" : undefined} className="w-full">
             <Button
               variant="default"
+              
               size="lg"
               className="w-full h-auto flex items-center justify-center bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white font-semibold rounded-md py-3 px-4 gap-2 text-sm"
             >
               <span className="flex-shrink-0">{button.icon}</span>
               <span className="text-center leading-tight">{button.label}</span>
-              {button.label === "Determ" && (
+              {button.external && (
                 <ExternalLink className="h-4 w-4 text-white flex-shrink-0" />
               )}
             </Button>
