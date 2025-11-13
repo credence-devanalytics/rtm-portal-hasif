@@ -1534,7 +1534,7 @@ const MultiplatformPage = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Image
-                    src="/multiplatform-logos/new-size-rtmklik.png"
+                    src="/multiplatform-logos/RTMKLIK ICON WITH SHADOW.png"
                     alt="RTMKlik Logo"
                     width={64}
                     height={64}
