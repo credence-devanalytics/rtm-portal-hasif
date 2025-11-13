@@ -585,7 +585,7 @@ const MultiplatformPage = () => {
       name: "RTMKlik",
       icon: (
         <Image
-          src="/multiplatform-logos/new-size-rtmklik.png"
+          src="/multiplatform-logos/RTMKLIK ICON WITH SHADOW.png"
           alt="RTMKlik Logo"
           width={64}
           height={64}
