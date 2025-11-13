@@ -14,14 +14,23 @@ export async function GET(request) {
 		const analysisType = searchParams.get("type") || "region";
 		const yearParam = searchParams.get("year");
 		const monthParam = searchParams.get("month");
+		const fromParam = searchParams.get("from");
+		const toParam = searchParams.get("to");
 
-		console.log('Filter params:', { analysisType, yearParam, monthParam });
+		console.log('Filter params:', { analysisType, yearParam, monthParam, fromParam, toParam });
 
 		// Build date filter conditions
 		const regionDateFilters = [];
 		const regionGenderDateFilters = [];
 
-		if (monthParam) {
+		if (fromParam && toParam) {
+			// Date range filter: from and to in YYYY-MM-DD format
+			regionDateFilters.push(gte(pberitaAudienceRegion.date, fromParam));
+			regionDateFilters.push(lte(pberitaAudienceRegion.date, toParam));
+			regionGenderDateFilters.push(gte(pberitaAudienceRegionGender.date, fromParam));
+			regionGenderDateFilters.push(lte(pberitaAudienceRegionGender.date, toParam));
+			console.log('Date range filter applied:', { fromParam, toParam });
+		} else if (monthParam) {
 			// Month filter: YYYY-MM format
 			const [year, month] = monthParam.split('-');
 			const startDate = `${year}-${month}-01`;

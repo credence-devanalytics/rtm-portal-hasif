@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Next.js application - optimized for production
@@ -20,11 +20,6 @@ services:
       - .env
     environment:
       - NODE_ENV=production
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - app-network
     restart: unless-stopped
     # Add resource limits for better performance
     deploy:

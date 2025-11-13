@@ -11,6 +11,7 @@ export const queryKeys = {
 	timeSeries: (filters) => ["timeSeries", filters],
 	topMentions: (filters) => ["topMentions", filters],
 	sentimentByTopics: (filters) => ["sentimentByTopics", filters],
+	recommendations: (language) => ["recommendations", language],
 	cache: ["cache"],
 };
 
@@ -236,12 +237,13 @@ const fetchCacheStats = async () => {
 	return response.json();
 };
 
-const fetchRecommendations = async () => {
+const fetchRecommendations = async (language = 'en') => {
 	const response = await fetch("/api/recommendations", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 		},
+		body: JSON.stringify({ language }),
 	});
 
 	if (!response.ok) {
@@ -270,25 +272,9 @@ export const usePublicMentions = (filters, options = {}) => {
 		},
 		enabled: !!filters && filters.days > 0, // More specific enabled condition
 		staleTime: 0, // Force refetch every time for debugging
-		cacheTime: 1000, // Very short cache time for debugging
+		gcTime: 1000, // Very short cache time for debugging
 		refetchOnMount: "always", // Always refetch when component mounts
 		refetchOnWindowFocus: false,
-		onSuccess: (data) => {
-			console.log("✅ usePublicMentions SUCCESS - received data:", {
-				hasData: !!data,
-				hasMetrics: !!data?.metrics,
-				metricsKeys: data?.metrics ? Object.keys(data.metrics) : "none",
-				totalMentions: data?.metrics?.totalMentions,
-				totalReach: data?.metrics?.totalReach,
-				totalInteractions: data?.metrics?.totalInteractions,
-				avgEngagement: data?.metrics?.avgEngagement,
-				mentionsCount: data?.mentions?.length,
-				meta: data?.meta,
-			});
-		},
-		onError: (error) => {
-			console.error("❌ usePublicMentions ERROR:", error);
-		},
 		...options,
 	});
 };
@@ -404,12 +390,12 @@ export const useCacheStats = (options = {}) => {
 	});
 };
 
-export const useRecommendations = (options = {}) => {
+export const useRecommendations = (language = 'en', options = {}) => {
 	return useQuery({
-		queryKey: queryKeys.recommendations,
-		queryFn: fetchRecommendations,
+		queryKey: queryKeys.recommendations(language),
+		queryFn: () => fetchRecommendations(language),
 		staleTime: 5 * 60 * 1000, // 5 minutes cache
-		cacheTime: 10 * 60 * 1000, // 10 minutes cache
+		gcTime: 10 * 60 * 1000, // 10 minutes cache (renamed from cacheTime)
 		refetchOnWindowFocus: false,
 		retry: 2, // Retry up to 2 times on failure
 		...options,

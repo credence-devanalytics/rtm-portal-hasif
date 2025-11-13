@@ -91,11 +91,22 @@ const PlatformMentionsChart = ({
           const itemPlatform = (item.platform || "").toLowerCase();
           const itemUnit = (item.unit || "").toLowerCase();
 
-          // Match either platform or unit filter
-          if (hasPlatformFilter && itemPlatform === targetPlatform) return true;
-          if (hasUnitFilter && itemUnit === targetUnit) return true;
+          // If BOTH filters are active, BOTH must match
+          if (hasPlatformFilter && hasUnitFilter) {
+            return itemPlatform === targetPlatform && itemUnit === targetUnit;
+          }
 
-          return false;
+          // If ONLY platform filter is active
+          if (hasPlatformFilter && !hasUnitFilter) {
+            return itemPlatform === targetPlatform;
+          }
+
+          // If ONLY unit filter is active
+          if (hasUnitFilter && !hasPlatformFilter) {
+            return itemUnit === targetUnit;
+          }
+
+          return true;
         });
 
         console.log("✅ After filtering:", {
@@ -122,22 +133,24 @@ const PlatformMentionsChart = ({
         0
       );
 
-      // Sort by total and get top N
-      let topChannels = Object.entries(channelTotals)
+      // Sort all channels by total first
+      let allChannels = Object.entries(channelTotals)
         .sort(([, a], [, b]) => (b as number) - (a as number))
-        .slice(0, showTop)
         .map(([channel, total]) => ({
           channel,
           posts: total,
         }));
 
-      // Apply search filter (ILIKE %pattern% style)
+      // Apply search filter BEFORE limiting to top N (ILIKE %pattern% style)
       if (searchQuery.trim()) {
         const searchPattern = searchQuery.toLowerCase();
-        topChannels = topChannels.filter((item) =>
+        allChannels = allChannels.filter((item) =>
           item.channel.toLowerCase().includes(searchPattern)
         );
       }
+
+      // Now apply top N limit AFTER search filtering
+      let topChannels = allChannels.slice(0, showTop);
 
       // If channel filter is active, only show that channel
       if (hasChannelFilter) {
@@ -193,22 +206,24 @@ const PlatformMentionsChart = ({
       0
     );
 
-    // Get top channels
-    let topChannels = Object.entries(channelTotals)
+    // Sort all channels by total first
+    let allChannels = Object.entries(channelTotals)
       .sort(([, a], [, b]) => (b as number) - (a as number))
-      .slice(0, showTop)
       .map(([channel, total]) => ({
         channel,
         posts: total,
       }));
 
-    // Apply search filter (ILIKE %pattern% style)
+    // Apply search filter BEFORE limiting to top N (ILIKE %pattern% style)
     if (searchQuery.trim()) {
       const searchPattern = searchQuery.toLowerCase();
-      topChannels = topChannels.filter((item) =>
+      allChannels = allChannels.filter((item) =>
         item.channel.toLowerCase().includes(searchPattern)
       );
     }
+
+    // Now apply top N limit AFTER search filtering
+    let topChannels = allChannels.slice(0, showTop);
 
     // Filter by channel if needed
     if (hasChannelFilter) {
@@ -250,6 +265,37 @@ const PlatformMentionsChart = ({
     if (onFilterChange && data?.channel) {
       onFilterChange("channel", data.channel);
     }
+  };
+
+  // Custom YAxis tick that is clickable
+  const CustomYAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const channel = payload.value;
+
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={4}
+          textAnchor="end"
+          fill="#666"
+          fontSize={11}
+          onClick={() => {
+            if (onFilterChange && channel) {
+              onFilterChange("channel", channel);
+            }
+          }}
+          style={{
+            cursor: onFilterChange ? "pointer" : "default",
+            userSelect: "none",
+          }}
+          className={onFilterChange ? "hover:fill-blue-600 hover:font-semibold transition-all" : ""}
+        >
+          {channel}
+        </text>
+      </g>
+    );
   };
 
   // Loading state
@@ -388,7 +434,7 @@ const PlatformMentionsChart = ({
                   type="category"
                   dataKey="channel"
                   stroke="#666"
-                  tick={{ fontSize: 11 }}
+                  tick={<CustomYAxisTick />}
                   width={100}
                   tickLine={{ stroke: "#666" }}
                 />
@@ -416,7 +462,7 @@ const PlatformMentionsChart = ({
       {onFilterChange && !hasNoData && (
         <div className="px-3 pb-2 shrink-0">
           <p className="text-xs text-gray-400 italic text-center">
-            💡 Click on bars to filter by channel
+            💡 Click on channel names or bars to filter by channel
           </p>
         </div>
       )}

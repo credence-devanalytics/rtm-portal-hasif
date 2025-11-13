@@ -746,7 +746,14 @@ const RTMUnitsPieChart = ({
     <Card className="flex flex-col shadow-none" style={{ border: "none" }}>
       <CardHeader className="items-center pb-2">
         <CardTitle className="text-[24px] font-bold">{title}</CardTitle>
-        <CardDescription className="">{description}</CardDescription>
+        <CardDescription className="">
+          {description}
+          {(activeFilters?.platform || activeFilters?.channel) && (
+            <span className="block text-xs text-blue-600 font-medium mt-1">
+              ⚠️ Filtered results - percentages show distribution within active filters
+            </span>
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pt-0">
         <div className="mx-auto w-full max-w-[500px] h-[400px] overflow-visible p-4">

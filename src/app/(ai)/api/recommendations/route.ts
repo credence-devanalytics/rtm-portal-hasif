@@ -45,9 +45,12 @@ const recommendationsSchema = z.object({
 	}),
 });
 
-export async function POST() {
+export async function POST(request: Request) {
 	try {
-		console.log("🚀 AI Recommendations API: Starting analysis...");
+		const body = await request.json().catch(() => ({}));
+		const language = body.language || 'en'; // Default to English if not provided
+
+		console.log("🚀 AI Recommendations API: Starting analysis...", { language });
 
 		// Get current date and calculate 7-day range
 		const currentDate = new Date();
@@ -190,19 +193,45 @@ export async function POST() {
 			.join('\n');
 
 		// Generate AI recommendations using generateObject
-		const { object: recommendations } = await generateObject({
-			model: azure("gpt-4.1"),
-			prompt: `Analyze the following social media mentions about RTM (Radio Televisyen Malaysia) from the past 7 days and provide actionable insights for the RTM social media team:
+		const languageInstruction = language === 'bm'
+			? `Please provide all your responses in Bahasa Malaysia. Generate your analysis, insights, and recommendations entirely in Bahasa Malaysia.`
+			: `Please provide all your responses in English. Generate your analysis, insights, and recommendations entirely in English.`;
 
-MENTIONS:
-${mentionsText}
+		const contextInstruction = language === 'bm'
+			? `Anda menganalisis sebutan media sosial untuk RTM (Radio Televisyen Malaysia), penyiar negara Malaysia. Pasukan media sosial menguruskan kandungan merentangi pelbagai platform dan memerlukan pandangan untuk meningkatkan strategi komunikasi penyiaran mereka.`
+			: `You are analyzing social media mentions for RTM (Radio Televisyen Malaysia), Malaysia's national broadcaster. The social media team manages content across multiple platforms and needs insights to improve their broadcasting communication strategy.`;
 
-PLATFORM ANALYSIS:
-${platformSummary}
+		const analysisInstruction = language === 'bm'
+			? `Berdasarkan sebutan ini, sila berikan:
 
-Context: You are analyzing social media mentions for RTM (Radio Televisyen Malaysia), Malaysia's national broadcaster. The social media team manages content across multiple platforms and needs insights to improve their broadcasting communication strategy.
+1. Ringkasan sorotan prestasi dan trend utama untuk kehadiran media sosial RTM
 
-Based on these mentions, please provide:
+2. Analisis nada suara yang terdapat dalam SEBUTAN SEBENAR tentang RTM:
+   - Gaya Komunikasi: Analisis bagaimana orang bercakap tentang RTM - corak bahasa, perbendaharaan kata, dan pendekatan komunikasi mereka
+   - Penyesuaian Platform: Bagaimana sebutan tentang RTM berbeza merentangi platform media sosial yang berbeza (mengambil kira preferensi audiens Malaysia)
+
+3. Pandangan dan cadangan yang boleh ditindakkan khusus untuk pasukan media sosial RTM:
+   - Peningkatan strategi kandungan untuk penglibatan audiens yang lebih baik
+   - Pendekatan komunikasi yang beresonansi dengan audiens Malaysia
+   - Strategi khusus platform untuk kandungan penyiaran RTM
+   - Cara untuk meningkatkan persepsi awam dan penglibatan
+
+Untuk analisis nada suara, fokus pada:
+- Bagaimana rakyat Malaysia membincangkan kandungan dan program RTM
+- Preferensi bahasa (Bahasa Malaysia, Bahasa Inggeris, pertukaran kod)
+- Konteks budaya dalam cara orang merujuk RTM
+- Tindak balas emosi terhadap kandungan penyiaran RTM
+- Corak komunikasi khusus platform tentang RTM
+
+Sediakan cadangan yang membantu RTM:
+- Lebih baik menghubungkan dengan audiens Malaysia merentasi demografi yang berbeza
+- Meningkatkan promosi kandungan dan kesedaran program
+- Meningkatkan keberkesanan komunikasi perkhidmatan awam
+- Menangani maklum balas dan sentimen audiens secara konstruktif
+- Mengoptimumkan strategi media sosial untuk objektif penyiaran negara
+
+Jadikan semua cadangan praktikal dan boleh ditindakkan untuk organisasi media kerajaan yang berkhidmat untuk orang ramai Malaysia.`
+			: `Based on these mentions, please provide:
 
 1. A summary of performance highlights and key trends for RTM's social media presence
 
@@ -230,7 +259,23 @@ Provide recommendations that help RTM:
 - Address audience feedback and sentiment constructively
 - Optimize social media strategy for national broadcasting objectives
 
-Make all recommendations practical and actionable for a government media organization serving the Malaysian public.`,
+Make all recommendations practical and actionable for a government media organization serving the Malaysian public.`;
+
+		const { object: recommendations } = await generateObject({
+			model: azure("gpt-4.1"),
+			prompt: `${languageInstruction}
+
+Analyze the following social media mentions about RTM (Radio Televisyen Malaysia) from the past 7 days and provide actionable insights for the RTM social media team:
+
+MENTIONS:
+${mentionsText}
+
+PLATFORM ANALYSIS:
+${platformSummary}
+
+Context: ${contextInstruction}
+
+${analysisInstruction}`,
 			schema: recommendationsSchema,
 		});
 
